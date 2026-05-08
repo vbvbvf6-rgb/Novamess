@@ -389,7 +389,7 @@ export default function Settings() {
         )}
       </header>
 
-      <div className="flex-1 overflow-y-auto p-4 md:p-6 max-w-2xl w-full mx-auto scrollbar-thin space-y-6">
+      <div className="flex-1 overflow-y-auto p-4 md:p-6 max-w-2xl w-full mx-auto scrollbar-thin space-y-6 pb-24">
 
         {/* ── ПРОФИЛЬ ── */}
         <Section title="Мой профиль" icon={<Edit3 size={13} />}>
@@ -613,11 +613,12 @@ export default function Settings() {
               {FONT_SIZE_OPTIONS.map(opt => (
                 <button
                   key={opt.value}
-                  onClick={() => { setFontSize(opt.value); setLs("pulse-font-size", opt.value); }}
-                  className={`py-2.5 rounded-xl border text-center transition-all ${fontSize === opt.value ? "border-primary bg-primary/8 text-primary" : "border-border hover:border-primary/30"}`}
+                  onClick={() => { setFontSize(opt.value); setLs("pulse-font-size", opt.value); toast({ title: "Сохранено", description: `Размер шрифта: ${opt.label}` }); }}
+                  className={`py-2.5 rounded-xl border text-center transition-all flex flex-col items-center gap-0.5 ${fontSize === opt.value ? "border-primary bg-primary/8 text-primary" : "border-border hover:border-primary/30"}`}
                   style={{ fontSize: opt.size }}
                 >
                   {opt.label}
+                  {fontSize === opt.value && <CheckCircle size={12} className="text-primary" />}
                 </button>
               ))}
             </div>
@@ -656,7 +657,7 @@ export default function Settings() {
             right={
               <Switch
                 checked={notifyMessages}
-                onCheckedChange={v => { setNotifyMessages(v); setLs("pulse-notify-messages", v); }}
+                onCheckedChange={v => { setNotifyMessages(v); setLs("pulse-notify-messages", v); toast({ title: v ? "Включено" : "Выключено", description: "Уведомления о сообщениях" }); }}
               />
             }
           />
@@ -668,7 +669,7 @@ export default function Settings() {
             right={
               <Switch
                 checked={notifyCalls}
-                onCheckedChange={v => { setNotifyCalls(v); setLs("pulse-notify-calls", v); }}
+                onCheckedChange={v => { setNotifyCalls(v); setLs("pulse-notify-calls", v); toast({ title: v ? "Включено" : "Выключено", description: "Уведомления о звонках" }); }}
               />
             }
           />
@@ -680,7 +681,7 @@ export default function Settings() {
             right={
               <Switch
                 checked={notifyGifts}
-                onCheckedChange={v => { setNotifyGifts(v); setLs("pulse-notify-gifts", v); }}
+                onCheckedChange={v => { setNotifyGifts(v); setLs("pulse-notify-gifts", v); toast({ title: v ? "Включено" : "Выключено", description: "Уведомления о подарках" }); }}
               />
             }
           />
@@ -692,7 +693,7 @@ export default function Settings() {
             right={
               <Switch
                 checked={notifySounds}
-                onCheckedChange={v => { setNotifySounds(v); setLs("pulse-notify-sounds", v); }}
+                onCheckedChange={v => { setNotifySounds(v); setLs("pulse-notify-sounds", v); toast({ title: v ? "Включено" : "Выключено", description: "Звуки уведомлений" }); }}
               />
             }
           />
@@ -710,7 +711,7 @@ export default function Settings() {
               </div>
               <Switch
                 checked={notifyPreview}
-                onCheckedChange={v => { setNotifyPreview(v); setLs("pulse-notify-preview", v); }}
+                onCheckedChange={v => { setNotifyPreview(v); setLs("pulse-notify-preview", v); toast({ title: v ? "Включено" : "Выключено", description: "Предпросмотр в уведомлениях" }); }}
               />
             </div>
             {!notifyMessages && (
@@ -736,10 +737,11 @@ export default function Settings() {
               {LAST_SEEN_OPTIONS.map(opt => (
                 <button
                   key={opt.value}
-                  onClick={() => { setLastSeenVisibility(opt.value); setLs("pulse-privacy-last-seen", opt.value); }}
-                  className={`flex-1 py-2 rounded-xl border text-xs font-medium transition-all ${lastSeenVisibility === opt.value ? "border-primary bg-primary/8 text-primary" : "border-border hover:border-primary/30"}`}
+                  onClick={() => { setLastSeenVisibility(opt.value); setLs("pulse-privacy-last-seen", opt.value); toast({ title: "Сохранено", description: `Последний визит: ${opt.label}` }); }}
+                  className={`flex-1 py-2 rounded-xl border text-xs font-medium transition-all flex flex-col items-center gap-0.5 ${lastSeenVisibility === opt.value ? "border-primary bg-primary/8 text-primary" : "border-border hover:border-primary/30"}`}
                 >
                   {opt.label}
+                  {lastSeenVisibility === opt.value && <CheckCircle size={10} className="text-primary" />}
                 </button>
               ))}
             </div>
@@ -753,7 +755,7 @@ export default function Settings() {
             right={
               <Switch
                 checked={readReceipts}
-                onCheckedChange={v => { setReadReceipts(v); setLs("pulse-privacy-read-receipts", v); }}
+                onCheckedChange={v => { setReadReceipts(v); setLs("pulse-privacy-read-receipts", v); toast({ title: "Сохранено", description: v ? "Галочки прочтения включены" : "Галочки прочтения скрыты" }); }}
               />
             }
           />
@@ -765,7 +767,7 @@ export default function Settings() {
             right={
               <Switch
                 checked={profilePhotoVisible}
-                onCheckedChange={v => { setProfilePhotoVisible(v); setLs("pulse-privacy-photo-visible", v); }}
+                onCheckedChange={v => { setProfilePhotoVisible(v); setLs("pulse-privacy-photo-visible", v); toast({ title: "Сохранено", description: v ? "Фото профиля видно всем" : "Фото профиля скрыто" }); }}
               />
             }
           />
@@ -928,6 +930,41 @@ export default function Settings() {
           </button>
         </div>
       </div>
+
+      {/* Sticky bottom save bar — visible whenever profile has unsaved changes */}
+      {hasChanges && (
+        <div className="absolute bottom-0 left-0 right-0 z-20 p-4 bg-card/95 backdrop-blur-md border-t border-border shadow-lg">
+          <div className="max-w-2xl mx-auto flex items-center justify-between gap-3">
+            <p className="text-sm text-muted-foreground">Есть несохранённые изменения профиля</p>
+            <div className="flex gap-2 shrink-0">
+              <button
+                onClick={() => {
+                  if (user) {
+                    setDisplayName(user.displayName || "");
+                    setBio(user.bio || "");
+                    setStatusText((user as any).statusText || "");
+                    setAvatarColor(user.avatarColor || "#3B82F6");
+                    setAvatarUrl((user as any).avatarUrl || "");
+                    setPhoneNumber((user as any).phoneNumber || "");
+                    setOnlineStatus((user.status as any) || "online");
+                  }
+                }}
+                className="px-4 py-2 rounded-xl text-sm font-medium text-muted-foreground hover:bg-secondary transition-colors border border-border"
+              >
+                Отмена
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={updateMe.isPending}
+                className="flex items-center gap-2 px-5 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50"
+              >
+                {saved ? <CheckCircle size={16} /> : <Save size={16} />}
+                {updateMe.isPending ? "Сохраняем..." : saved ? "Сохранено!" : "Сохранить"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
         <AlertDialogContent>
