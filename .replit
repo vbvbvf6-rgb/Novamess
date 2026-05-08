@@ -24,6 +24,10 @@ args = "API Server"
 task = "workflow.run"
 args = "Pulse Frontend"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "artifacts/mockup-sandbox: Component Preview Server"
+
 [[workflows.workflow]]
 name = "API Server"
 author = "agent"
@@ -48,6 +52,19 @@ task = "shell.exec"
 args = "PORT=23821 BASE_PATH=/ pnpm --filter @workspace/pulse run dev"
 waitForPort = 23821
 
+[[workflows.workflow]]
+name = "artifacts/mockup-sandbox: Component Preview Server"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "PORT=8000 BASE_PATH=/__mockup/ pnpm --filter @workspace/mockup-sandbox run dev"
+waitForPort = 8000
+
+[workflows.workflow.metadata]
+outputType = "console"
+isCanvasWorkflow = true
+
 [agent]
 stack = "BEST_EFFORT_FALLBACK"
 expertMode = true
@@ -55,6 +72,10 @@ expertMode = true
 [postMerge]
 path = "scripts/post-merge.sh"
 timeoutMs = 20000
+
+[[ports]]
+localPort = 8000
+externalPort = 8000
 
 [[ports]]
 localPort = 8080
