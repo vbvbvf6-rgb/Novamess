@@ -9,6 +9,7 @@ import { useAppContext } from "@/contexts/AppContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { StoriesBar } from "@/components/stories/StoriesBar";
 import { useToast } from "@/hooks/use-toast";
+import { motion, AnimatePresence } from "framer-motion";
 
 function VerifiedBadge() {
   return (
@@ -73,7 +74,7 @@ function formatTime(dateStr: string): string {
 }
 
 export function ChatList({ onMenuClick }: { onMenuClick?: () => void }) {
-  const { selectedChatId, setSelectedChatId } = useAppContext();
+  const { selectedChatId, setSelectedChatId, typingByChat } = useAppContext();
   const { t } = useLanguage();
   const { data: chats, isLoading } = useGetChats();
   const { toast } = useToast();
@@ -235,16 +236,53 @@ export function ChatList({ onMenuClick }: { onMenuClick?: () => void }) {
                   </div>
 
                   <div className="flex justify-between items-center gap-2">
-                    <p className={`text-xs truncate ${chat.unreadCount > 0 ? "text-foreground font-medium" : "text-muted-foreground"}`}>
-                      {chat.type !== "direct" && lastMessage?.sender ? (
-                        <span>
-                          <span className="text-primary font-medium">
-                            {(lastMessage.sender as any)?.displayName?.split(" ")[0]}:
-                          </span>{" "}
-                          {lastMsgText}
-                        </span>
-                      ) : lastMsgText}
-                    </p>
+                    <div className={`text-xs truncate flex-1 min-w-0 ${chat.unreadCount > 0 ? "text-foreground font-medium" : "text-muted-foreground"}`}>
+                      <AnimatePresence mode="wait" initial={false}>
+                        {typingByChat[chat.id]?.length > 0 ? (
+                          <motion.span
+                            key="typing"
+                            initial={{ opacity: 0, y: 4 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -4 }}
+                            transition={{ duration: 0.15 }}
+                            className="flex items-center gap-1.5 text-primary font-medium"
+                          >
+                            <span className="truncate">
+                              {typingByChat[chat.id].length === 1
+                                ? `${typingByChat[chat.id][0]} печатает`
+                                : "печатают"}
+                            </span>
+                            <span className="flex items-center gap-0.5 shrink-0">
+                              {[0, 0.15, 0.3].map((delay, i) => (
+                                <span
+                                  key={i}
+                                  className="w-1 h-1 rounded-full bg-primary inline-block"
+                                  style={{ animation: `typingBounce 1.2s ease-in-out infinite`, animationDelay: `${delay}s` }}
+                                />
+                              ))}
+                            </span>
+                          </motion.span>
+                        ) : (
+                          <motion.span
+                            key="msg"
+                            initial={{ opacity: 0, y: 4 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -4 }}
+                            transition={{ duration: 0.15 }}
+                            className="block truncate"
+                          >
+                            {chat.type !== "direct" && lastMessage?.sender ? (
+                              <span>
+                                <span className="text-primary font-medium">
+                                  {(lastMessage.sender as any)?.displayName?.split(" ")[0]}:
+                                </span>{" "}
+                                {lastMsgText}
+                              </span>
+                            ) : lastMsgText}
+                          </motion.span>
+                        )}
+                      </AnimatePresence>
+                    </div>
                     <div className="flex items-center gap-1 shrink-0">
                       {chat.isMuted && <VolumeX size={12} className="text-muted-foreground" />}
                       {chat.unreadCount > 0 && (

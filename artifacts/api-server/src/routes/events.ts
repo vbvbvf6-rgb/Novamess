@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { subscribeToChatEvents, unsubscribeFromChatEvents, setTyping } from "../lib/sse";
+import { subscribeToChatEvents, unsubscribeFromChatEvents, setTyping, stopTyping } from "../lib/sse";
 import { db } from "@workspace/db";
 import { sql } from "drizzle-orm";
 
@@ -44,6 +44,21 @@ router.post("/chats/:chatId/typing", async (req, res) => {
     const userRow = await db.execute(sql`SELECT display_name FROM users WHERE id = ${uid} LIMIT 1`);
     const displayName = (userRow.rows[0] as any)?.display_name || "User";
     setTyping(chatId, uid, displayName);
+    res.json({ ok: true });
+  } catch {
+    res.json({ ok: false });
+  }
+});
+
+router.post("/chats/:chatId/typing/stop", async (req, res) => {
+  const chatId = Number(req.params.chatId);
+  const uid = req.currentUserId;
+  if (!chatId) return res.status(400).end();
+
+  try {
+    const userRow = await db.execute(sql`SELECT display_name FROM users WHERE id = ${uid} LIMIT 1`);
+    const displayName = (userRow.rows[0] as any)?.display_name || "User";
+    stopTyping(chatId, uid, displayName);
     res.json({ ok: true });
   } catch {
     res.json({ ok: false });

@@ -48,7 +48,7 @@ function formatAutoDeleteLabel(seconds: number | null | undefined, t: (k: any) =
 }
 
 export function ChatWindow({ chatId }: ChatWindowProps) {
-  const { setSelectedChatId, setActiveCall } = useAppContext();
+  const { setSelectedChatId, setActiveCall, setTypingForChat } = useAppContext();
   const { t } = useLanguage();
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
@@ -99,12 +99,15 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
         const data = JSON.parse(e.data) as { userId: number; displayName: string; typing: boolean };
         if (data.userId === currentUid) return;
         setTypingUsers(prev => {
+          let next: { userId: number; displayName: string }[];
           if (data.typing) {
-            if (prev.some(u => u.userId === data.userId)) return prev;
-            return [...prev, { userId: data.userId, displayName: data.displayName }];
+            if (prev.some(u => u.userId === data.userId)) next = prev;
+            else next = [...prev, { userId: data.userId, displayName: data.displayName }];
           } else {
-            return prev.filter(u => u.userId !== data.userId);
+            next = prev.filter(u => u.userId !== data.userId);
           }
+          setTypingForChat(chatId, next.map(u => u.displayName));
+          return next;
         });
       } catch {}
     });
@@ -128,6 +131,7 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
     setShowAutoDeleteMenu(false);
     setBotTyping(false);
     setTypingUsers([]);
+    setTypingForChat(chatId, []);
     if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
   }, [chatId]);
 

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
 import { Call } from "@workspace/api-client-react";
 
 interface AppState {
@@ -10,6 +10,8 @@ interface AppState {
   isDark: boolean;
   toggleTheme: () => void;
   logout: () => void;
+  typingByChat: Record<number, string[]>;
+  setTypingForChat: (chatId: number, names: string[]) => void;
 }
 
 const AppContext = createContext<AppState | undefined>(undefined);
@@ -22,6 +24,7 @@ interface AppProviderProps {
 export function AppProvider({ children, onLogout }: AppProviderProps) {
   const [selectedChatId, setSelectedChatId] = useState<number | null>(null);
   const [activeCall, setActiveCall] = useState<Call | null>(null);
+  const [typingByChat, setTypingByChat] = useState<Record<number, string[]>>({});
   const [isDark, setIsDark] = useState(() => {
     const stored = localStorage.getItem("pulse-theme");
     return stored !== "light";
@@ -48,6 +51,19 @@ export function AppProvider({ children, onLogout }: AppProviderProps) {
     onLogout();
   };
 
+  const setTypingForChat = useCallback((chatId: number, names: string[]) => {
+    setTypingByChat(prev => {
+      const current = prev[chatId] || [];
+      if (JSON.stringify(current) === JSON.stringify(names)) return prev;
+      if (names.length === 0) {
+        const next = { ...prev };
+        delete next[chatId];
+        return next;
+      }
+      return { ...prev, [chatId]: names };
+    });
+  }, []);
+
   const state: AppState = {
     currentUserId,
     selectedChatId,
@@ -57,6 +73,8 @@ export function AppProvider({ children, onLogout }: AppProviderProps) {
     isDark,
     toggleTheme,
     logout,
+    typingByChat,
+    setTypingForChat,
   };
 
   return <AppContext.Provider value={state}>{children}</AppContext.Provider>;

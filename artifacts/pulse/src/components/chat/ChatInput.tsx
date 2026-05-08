@@ -48,15 +48,30 @@ export function ChatInput({ chatId, onMessageSent }: { chatId: number; onMessage
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const stopTypingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const sendTypingEvent = () => {
-    if (typingTimeoutRef.current) return;
     const uid = localStorage.getItem("pulse-user-id");
-    fetch(`/api/chats/${chatId}/typing`, {
-      method: "POST",
-      headers: uid ? { "x-user-id": uid } : {},
-    }).catch(() => {});
-    typingTimeoutRef.current = setTimeout(() => {
-      typingTimeoutRef.current = null;
+    if (!typingTimeoutRef.current) {
+      fetch(`/api/chats/${chatId}/typing`, {
+        method: "POST",
+        headers: uid ? { "x-user-id": uid } : {},
+      }).catch(() => {});
+      typingTimeoutRef.current = setTimeout(() => {
+        typingTimeoutRef.current = null;
+      }, 2500);
+    }
+    if (stopTypingTimeoutRef.current) clearTimeout(stopTypingTimeoutRef.current);
+    stopTypingTimeoutRef.current = setTimeout(() => {
+      fetch(`/api/chats/${chatId}/typing/stop`, {
+        method: "POST",
+        headers: uid ? { "x-user-id": uid } : {},
+      }).catch(() => {});
+      stopTypingTimeoutRef.current = null;
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = null;
+      }
     }, 3000);
   };
 
@@ -64,6 +79,7 @@ export function ChatInput({ chatId, onMessageSent }: { chatId: number; onMessage
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
       if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      if (stopTypingTimeoutRef.current) clearTimeout(stopTypingTimeoutRef.current);
       mediaRecorderRef.current?.stream?.getTracks().forEach(t => t.stop());
     };
   }, []);

@@ -39,3 +39,12 @@ export function setTyping(chatId: number, userId: number, displayName: string) {
   }, 4000);
   chatTyping.set(userId, timeout);
 }
+
+export function stopTyping(chatId: number, userId: number, displayName: string) {
+  const chatTyping = typingUsers.get(chatId);
+  if (!chatTyping) return;
+  const existing = chatTyping.get(userId);
+  if (existing) clearTimeout(existing);
+  chatTyping.delete(userId);
+  broadcastToChat(chatId, "typing", { userId, displayName, typing: false });
+}
