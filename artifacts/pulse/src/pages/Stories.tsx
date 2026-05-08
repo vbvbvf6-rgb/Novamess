@@ -27,6 +27,7 @@ export default function Stories() {
   const [storyImageUrl, setStoryImageUrl] = useState("");
   const [storyType, setStoryType] = useState<"text" | "image">("text");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [createError, setCreateError] = useState("");
   const [viewingGroup, setViewingGroup] = useState<any>(null);
   const [viewingIndex, setViewingIndex] = useState(0);
 
@@ -43,6 +44,7 @@ export default function Stories() {
     if (storyType === "text" && !storyText.trim()) return;
     if (storyType === "image" && !storyImageUrl.trim()) return;
     setIsSubmitting(true);
+    setCreateError("");
     try {
       await createStory({
         data: {
@@ -58,7 +60,9 @@ export default function Stories() {
       setStoryImageUrl("");
       setStoryBg("#1a1a2e");
       setStoryType("text");
-    } catch {}
+    } catch (e: any) {
+      setCreateError(e?.message ?? "Ошибка при публикации истории");
+    }
     setIsSubmitting(false);
   };
 
@@ -249,9 +253,13 @@ export default function Stories() {
               </div>
             </div>
 
+            {createError && (
+              <p className="text-sm text-red-500 text-center bg-red-500/10 rounded-xl px-3 py-2">{createError}</p>
+            )}
+
             <div className="flex gap-3">
               <button
-                onClick={() => setShowCreate(false)}
+                onClick={() => { setShowCreate(false); setCreateError(""); }}
                 className="flex-1 py-2.5 rounded-xl border border-border text-sm font-medium text-muted-foreground hover:bg-secondary transition-colors"
               >
                 Отмена
