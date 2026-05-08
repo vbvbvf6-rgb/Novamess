@@ -2,11 +2,12 @@ import React, { useState } from "react";
 import { useGetChats, Chat } from "@workspace/api-client-react";
 import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
-import { Search, Pin, VolumeX, Users, Radio, Bot } from "lucide-react";
+import { Search, Pin, VolumeX, Users, Radio, Bot, HeadphonesIcon, Menu } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAppContext } from "@/contexts/AppContext";
 import { StoriesBar } from "@/components/stories/StoriesBar";
+import { useToast } from "@/hooks/use-toast";
 
 function VerifiedBadge() {
   return (
@@ -70,10 +71,31 @@ function formatTime(dateStr: string): string {
   }
 }
 
-export function ChatList() {
+export function ChatList({ onMenuClick }: { onMenuClick?: () => void }) {
   const { selectedChatId, setSelectedChatId } = useAppContext();
   const { data: chats, isLoading } = useGetChats();
+  const { toast } = useToast();
   const [search, setSearch] = useState("");
+
+  const openSupportChat = async () => {
+    const uid = localStorage.getItem("pulse-user-id");
+    if (!uid) return;
+    try {
+      const aiRes = await fetch("/api/users/search?q=deepseek_ai", { headers: { "x-user-id": uid } });
+      const botUsers = aiRes.ok ? await aiRes.json() : [];
+      if (!botUsers.length) { toast({ variant: "destructive", title: "Бот недоступен" }); return; }
+      const bot = botUsers[0];
+      const chatRes = await fetch("/api/chats/direct", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-user-id": uid },
+        body: JSON.stringify({ userId: bot.id }),
+      });
+      if (chatRes.ok) {
+        const chat = await chatRes.json();
+        setSelectedChatId(chat.id);
+      }
+    } catch {}
+  };
 
   const filtered = chats?.filter((chat: Chat) => {
     if (!search) return true;
@@ -95,14 +117,22 @@ export function ChatList() {
   return (
     <div className="w-full md:w-80 lg:w-96 flex flex-col h-full bg-card border-r border-border">
       <div className="p-4 border-b border-border">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
-          <Input
-            placeholder="Поиск чатов..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 bg-background border-none focus-visible:ring-primary"
-          />
+        <div className="flex items-center gap-2">
+          <button
+            onClick={onMenuClick}
+            className="md:hidden p-2 -ml-1 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors shrink-0"
+          >
+            <Menu size={20} />
+          </button>
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+            <Input
+              placeholder="Поиск чатов..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9 bg-background border-none focus-visible:ring-primary"
+            />
+          </div>
         </div>
       </div>
 
@@ -111,6 +141,25 @@ export function ChatList() {
       </div>
 
       <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin">
+        {/* Support chat shortcut */}
+        {!search && (
+          <button
+            onClick={openSupportChat}
+            className="w-full flex items-center gap-3 px-4 py-3 transition-colors text-left hover:bg-secondary border-b border-border/50"
+          >
+            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+              <HeadphonesIcon size={22} className="text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex justify-between items-baseline mb-0.5">
+                <h3 className="font-semibold text-sm text-foreground">Поддержка</h3>
+                <span className="text-xs text-muted-foreground shrink-0">ИИ</span>
+              </div>
+              <p className="text-xs text-muted-foreground truncate">Задайте вопрос ИИ-помощнику</p>
+            </div>
+          </button>
+        )}
+
         {isLoading ? (
           <div className="p-4 space-y-4">
             {[1, 2, 3, 4].map((i) => (

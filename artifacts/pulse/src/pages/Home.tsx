@@ -1,10 +1,19 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { ChatList } from "@/components/chat/ChatList";
 import { ChatWindow } from "@/components/chat/ChatWindow";
 import { useAppContext } from "@/contexts/AppContext";
 
 export default function Home() {
-  const { selectedChatId } = useAppContext();
+  const { selectedChatId, setSelectedChatId } = useAppContext();
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const chatId = (e as CustomEvent).detail;
+      if (chatId) setSelectedChatId(Number(chatId));
+    };
+    window.addEventListener("open-chat", handler);
+    return () => window.removeEventListener("open-chat", handler);
+  }, [setSelectedChatId]);
 
   return (
     <div className="flex w-full h-full">

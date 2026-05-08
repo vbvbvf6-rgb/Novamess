@@ -19,6 +19,8 @@ export const usersTable = pgTable("users", {
   ageGroup: text("age_group"),
   passwordHash: text("password_hash"),
   balance: numeric("balance").notNull().default("0"),
+  hasPrime: boolean("has_prime").notNull().default(false),
+  primeExpiresAt: timestamp("prime_expires_at", { withTimezone: true }),
   usernameChangedAt: timestamp("username_changed_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),

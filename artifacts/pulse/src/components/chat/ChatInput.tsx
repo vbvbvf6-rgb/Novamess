@@ -28,7 +28,7 @@ function readFileAsDataUrl(file: File): Promise<string> {
   });
 }
 
-export function ChatInput({ chatId }: { chatId: number }) {
+export function ChatInput({ chatId, onMessageSent }: { chatId: number; onMessageSent?: () => void }) {
   const [text, setText] = useState("");
   const [showEmoji, setShowEmoji] = useState(false);
   const [emojiCategory, setEmojiCategory] = useState(0);
@@ -75,34 +75,25 @@ export function ChatInput({ chatId }: { chatId: number }) {
     try {
       if (imagePreviews.length > 0) {
         for (let i = 0; i < imagePreviews.length; i++) {
-          await new Promise<void>((resolve, reject) => {
-            sendMessage.mutate(
-              {
-                data: {
-                  chatId,
-                  type: "image",
-                  mediaUrl: imagePreviews[i],
-                  text: i === imagePreviews.length - 1 && text.trim() ? text.trim() : undefined,
-                }
-              },
-              { onSuccess: () => resolve(), onError: reject }
-            );
+          await sendMessage.mutateAsync({
+            data: {
+              chatId,
+              type: "image",
+              mediaUrl: imagePreviews[i],
+              text: i === imagePreviews.length - 1 && text.trim() ? text.trim() : undefined,
+            }
           });
         }
         setImagePreviews([]);
         setText("");
       } else {
-        await new Promise<void>((resolve, reject) => {
-          sendMessage.mutate(
-            { data: { chatId, text, type: "text" } },
-            { onSuccess: () => resolve(), onError: reject }
-          );
-        });
+        await sendMessage.mutateAsync({ data: { chatId, text, type: "text" } });
         setText("");
         if (textareaRef.current) textareaRef.current.style.height = "40px";
       }
       queryClient.invalidateQueries({ queryKey: getGetMessagesQueryKey({ chatId }) });
       queryClient.invalidateQueries({ queryKey: getGetChatsQueryKey() });
+      onMessageSent?.();
     } finally {
       setIsSending(false);
     }

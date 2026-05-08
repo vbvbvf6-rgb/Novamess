@@ -44,12 +44,16 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
   const [showSearch, setShowSearch] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [botTyping, setBotTyping] = useState(false);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
+
+  const isBot = chat && chat.type === "direct" && (chat.otherUser as any)?.isBot;
 
   useEffect(() => {
     if (chatId) {
@@ -61,7 +65,32 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
     }
     setSearchQuery("");
     setShowSearch(false);
+    setBotTyping(false);
+    if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
   }, [chatId]);
+
+  const startBotTypingPoll = () => {
+    if (!isBot) return;
+    setBotTyping(true);
+    const lastCount = messages?.length ?? 0;
+    let attempts = 0;
+    if (pollRef.current) clearInterval(pollRef.current);
+    pollRef.current = setInterval(() => {
+      attempts++;
+      queryClient.invalidateQueries({ queryKey: getGetMessagesQueryKey({ chatId }) });
+      const currentCount = queryClient.getQueryData<any[]>(getGetMessagesQueryKey({ chatId }))?.length ?? 0;
+      if (currentCount > lastCount || attempts >= 20) {
+        setBotTyping(false);
+        if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
+      }
+    }, 1500);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
+  }, []);
 
   const handleStartCall = (type: "audio" | "video") => {
     if (!chat?.otherUser?.id) return;
@@ -278,9 +307,21 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
         )}
       </div>
 
+      {/* Bot typing indicator */}
+      {botTyping && (
+        <div className="px-4 pb-2 flex items-center gap-2 text-muted-foreground">
+          <div className="flex gap-1 items-center bg-card border border-border rounded-2xl rounded-bl-sm px-4 py-3">
+            <span className="w-2 h-2 bg-primary/70 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+            <span className="w-2 h-2 bg-primary/70 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+            <span className="w-2 h-2 bg-primary/70 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+          </div>
+          <span className="text-xs">печатает...</span>
+        </div>
+      )}
+
       {/* Input */}
       <div className="p-4 bg-card/80 backdrop-blur-md border-t border-border z-10 shrink-0">
-        <ChatInput chatId={chatId} />
+        <ChatInput chatId={chatId} onMessageSent={isBot ? startBotTypingPoll : undefined} />
       </div>
 
       {/* Delete Dialog */}

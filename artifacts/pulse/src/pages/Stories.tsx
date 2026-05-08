@@ -17,7 +17,7 @@ const BG_COLORS = [
 
 export default function Stories() {
   const { data: stories, isLoading } = useGetStories();
-  const createStory = useCreateStory();
+  const createStoryMutation = useCreateStory();
   const queryClient = useQueryClient();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -46,7 +46,7 @@ export default function Stories() {
     setIsSubmitting(true);
     setCreateError("");
     try {
-      await createStory({
+      await createStoryMutation.mutateAsync({
         data: {
           type: storyType,
           text: storyType === "text" ? storyText.trim() : undefined,

@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Crown, Zap, Check, Star, Shield, MessageCircle, Gift, Image, Infinity } from "lucide-react";
-import { useGetMe } from "@workspace/api-client-react";
+import { useGetMe, getGetMeQueryKey } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 
 const PLANS = [
@@ -46,26 +47,44 @@ const FEATURES = [
 export default function Prime() {
   const { data: me } = useGetMe();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [selected, setSelected] = useState("halfyear");
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [success, setSuccess] = useState((me as any)?.hasPrime ?? false);
 
   const plan = PLANS.find(p => p.id === selected)!;
   const wallet = (me as any)?.balance ?? 0;
+  const hasPrime = (me as any)?.hasPrime ?? false;
 
   const handleSubscribe = async () => {
     setLoading(true);
-    await new Promise(r => setTimeout(r, 1200));
-    setLoading(false);
-    if (wallet < plan.spark) {
-      toast({
-        variant: "destructive",
-        title: "Недостаточно Spark ⚡",
-        description: `Нужно ${plan.spark} ⚡, у вас ${wallet} ⚡. Пополните кошелёк.`,
+    try {
+      const uid = localStorage.getItem("pulse-user-id");
+      const res = await fetch("/api/prime/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-user-id": uid ?? "" },
+        body: JSON.stringify({ planId: selected }),
       });
-      return;
+      const data = await res.json();
+      if (!res.ok) {
+        toast({
+          variant: "destructive",
+          title: "Ошибка подписки",
+          description: data.error || "Не удалось оформить подписку",
+        });
+        return;
+      }
+      queryClient.invalidateQueries({ queryKey: getGetMeQueryKey() });
+      setSuccess(true);
+      toast({
+        title: "Pulse Prime активирован! ⭐",
+        description: `Остаток: ${data.balance} ⚡ Spark`,
+      });
+    } catch {
+      toast({ variant: "destructive", title: "Ошибка соединения" });
+    } finally {
+      setLoading(false);
     }
-    setSuccess(true);
   };
 
   return (

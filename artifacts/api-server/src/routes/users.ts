@@ -10,10 +10,11 @@ router.get("/users/me", async (req, res) => {
     const uid = req.currentUserId;
     const user = await db.query.usersTable.findFirst({ where: eq(usersTable.id, uid) });
     if (!user) return res.status(404).json({ error: "User not found" });
-    const rows = await db.execute(sql`SELECT balance, username_changed_at FROM users WHERE id = ${uid}`);
+    const rows = await db.execute(sql`SELECT balance, username_changed_at, has_prime, prime_expires_at FROM users WHERE id = ${uid}`);
     const row = rows.rows[0] as any;
     const balance = row ? Number(row.balance) : 0;
-    res.json({ ...user, balance, usernameChangedAt: row?.username_changed_at ?? null });
+    const hasPrime = row?.has_prime === true || row?.has_prime === "t" || row?.has_prime === 1;
+    res.json({ ...user, balance, hasPrime, primeExpiresAt: row?.prime_expires_at ?? null, usernameChangedAt: row?.username_changed_at ?? null });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });
@@ -25,10 +26,11 @@ router.put("/users/me", async (req, res) => {
     const uid = req.currentUserId;
     const body = UpdateMeBody.parse(req.body);
     const [updated] = await db.update(usersTable).set(body).where(eq(usersTable.id, uid)).returning();
-    const rows = await db.execute(sql`SELECT balance, username_changed_at FROM users WHERE id = ${uid}`);
+    const rows = await db.execute(sql`SELECT balance, username_changed_at, has_prime, prime_expires_at FROM users WHERE id = ${uid}`);
     const row = rows.rows[0] as any;
     const balance = row ? Number(row.balance) : 0;
-    res.json({ ...updated, balance, usernameChangedAt: row?.username_changed_at ?? null });
+    const hasPrime = row?.has_prime === true || row?.has_prime === "t" || row?.has_prime === 1;
+    res.json({ ...updated, balance, hasPrime, primeExpiresAt: row?.prime_expires_at ?? null, usernameChangedAt: row?.username_changed_at ?? null });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });
@@ -158,6 +160,51 @@ router.post("/wallet/spend", async (req, res) => {
     const result = await db.execute(sql`SELECT balance FROM users WHERE id = ${uid}`);
     const newBalance = Number((result.rows[0] as any).balance);
     res.json({ balance: newBalance });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.post("/prime/subscribe", async (req, res) => {
+  try {
+    const uid = req.currentUserId;
+    const { planId } = req.body;
+    const PLAN_COSTS: Record<string, { cost: number; months: number }> = {
+      monthly: { cost: 299, months: 1 },
+      halfyear: { cost: 1494, months: 6 },
+      yearly: { cost: 2388, months: 12 },
+    };
+    const plan = PLAN_COSTS[planId];
+    if (!plan) return res.status(400).json({ error: "Неверный план" });
+
+    const rows = await db.execute(sql`SELECT balance, has_prime, prime_expires_at FROM users WHERE id = ${uid}`);
+    const user = rows.rows[0] as any;
+    if (!user) return res.status(404).json({ error: "Пользователь не найден" });
+
+    const balance = Number(user.balance ?? 0);
+    if (balance < plan.cost) {
+      return res.status(400).json({ error: `Недостаточно Spark. Нужно ${plan.cost} ⚡, у вас ${balance} ⚡.`, balance });
+    }
+
+    // Calculate expiry
+    const now = new Date();
+    let expiresAt: Date;
+    if (user.has_prime && user.prime_expires_at && new Date(user.prime_expires_at) > now) {
+      expiresAt = new Date(user.prime_expires_at);
+    } else {
+      expiresAt = new Date(now);
+    }
+    expiresAt.setMonth(expiresAt.getMonth() + plan.months);
+
+    await db.execute(
+      sql`UPDATE users SET balance = balance - ${plan.cost}, has_prime = true, prime_expires_at = ${expiresAt.toISOString()} WHERE id = ${uid}`
+    );
+
+    const updated = await db.execute(sql`SELECT balance FROM users WHERE id = ${uid}`);
+    const newBalance = Number((updated.rows[0] as any).balance ?? 0);
+
+    res.json({ success: true, hasPrime: true, primeExpiresAt: expiresAt.toISOString(), balance: newBalance });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });

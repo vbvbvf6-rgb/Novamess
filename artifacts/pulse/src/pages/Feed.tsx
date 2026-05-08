@@ -243,20 +243,20 @@ export default function Feed() {
     e.target.value = "";
   };
 
-  const handleCreatePost = (e: React.FormEvent) => {
+  const handleCreatePost = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPostText.trim() && !newPostImage) return;
-    createPost.mutate(
-      { data: { text: newPostText || " ", imageUrl: newPostImage || undefined } },
-      {
-        onSuccess: () => {
-          setNewPostText("");
-          setNewPostImage(null);
-          setShowCreatePost(false);
-          queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
-        }
-      }
-    );
+    try {
+      await createPost.mutateAsync(
+        { data: { text: newPostText || " ", imageUrl: newPostImage || undefined } },
+      );
+      setNewPostText("");
+      setNewPostImage(null);
+      setShowCreatePost(false);
+      queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
+    } catch {
+      // error handled silently, button resets
+    }
   };
 
   return (
