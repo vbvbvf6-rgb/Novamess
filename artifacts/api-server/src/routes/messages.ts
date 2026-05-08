@@ -79,9 +79,6 @@ router.post("/messages", async (req, res) => {
           const bot = (members.rows as any[]).find(m => m.is_bot);
           if (!bot) return;
 
-          const apiKey = process.env["DEEPSEEK_API_KEY"];
-          if (!apiKey) return;
-
           const history = await db.select().from(messagesTable)
             .where(eq(messagesTable.chatId, body.chatId))
             .orderBy(desc(messagesTable.createdAt))
@@ -96,14 +93,12 @@ router.post("/messages", async (req, res) => {
             ? "Ты — дружелюбный и умный ИИ-помощник в мессенджере Pulse. Отвечай кратко, по существу и преимущественно на русском языке. Ты умеешь помогать с любыми вопросами."
             : "Ты — помощник службы поддержки мессенджера Pulse. Отвечай дружелюбно и по-русски. Помогай пользователям с вопросами по использованию приложения.";
 
-          const response = await fetch("https://api.deepseek.com/chat/completions", {
+          // Use Pollinations AI — free, no API key required
+          const response = await fetch("https://text.pollinations.ai/openai", {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${apiKey}`,
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              model: "deepseek-chat",
+              model: "openai",
               messages: [
                 { role: "system", content: systemPrompt },
                 ...historyMessages,
@@ -111,6 +106,7 @@ router.post("/messages", async (req, res) => {
               ],
               max_tokens: 600,
               temperature: 0.7,
+              private: true,
             }),
           });
 
