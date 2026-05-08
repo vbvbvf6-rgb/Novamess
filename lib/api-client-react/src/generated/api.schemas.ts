@@ -25,9 +25,11 @@ export interface User {
   avatarUrl?: string | null;
   avatarColor: string;
   status: UserStatus;
+  statusText?: string | null;
   lastSeen?: string | null;
   phoneNumber?: string | null;
   isBot: boolean;
+  isVerified: boolean;
   createdAt: string;
 }
 
@@ -44,6 +46,8 @@ export interface UpdateUserBody {
   displayName?: string;
   bio?: string;
   avatarUrl?: string;
+  avatarColor?: string;
+  statusText?: string;
   status?: UpdateUserBodyStatus;
 }
 
@@ -357,6 +361,36 @@ export interface CreateStoryBody {
   type: CreateStoryBodyType;
   text?: string;
   backgroundColor?: string;
+}
+
+export interface Post {
+  id: number;
+  userId: number;
+  text: string;
+  imageUrl?: string | null;
+  likesCount: number;
+  commentsCount: number;
+  isLiked: boolean;
+  author?: User | null;
+  createdAt: string;
+}
+
+export interface PostComment {
+  id: number;
+  postId: number;
+  userId: number;
+  text: string;
+  author?: User | null;
+  createdAt: string;
+}
+
+export interface CreatePostBody {
+  text: string;
+  imageUrl?: string;
+}
+
+export interface CreatePostCommentBody {
+  text: string;
 }
 
 export interface UserStats {

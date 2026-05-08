@@ -10,9 +10,11 @@ export const usersTable = pgTable("users", {
   avatarUrl: text("avatar_url"),
   avatarColor: text("avatar_color").notNull().default("#3B82F6"),
   status: text("status").notNull().default("offline"),
+  statusText: text("status_text"),
   lastSeen: text("last_seen"),
   phoneNumber: text("phone_number"),
   isBot: boolean("is_bot").notNull().default(false),
+  isVerified: boolean("is_verified").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

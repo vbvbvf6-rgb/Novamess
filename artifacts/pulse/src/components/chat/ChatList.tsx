@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useGetChats, Chat } from "@workspace/api-client-react";
 import { formatDistanceToNow } from "date-fns";
 import { Search, Pin, VolumeX } from "lucide-react";
@@ -7,13 +7,31 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAppContext } from "@/contexts/AppContext";
 import { StoriesBar } from "@/components/stories/StoriesBar";
 
+function VerifiedBadge() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" className="shrink-0 inline-block">
+      <circle cx="12" cy="12" r="12" fill="#00BCD4"/>
+      <path d="M7 12l3.5 3.5L17 8" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+}
+
 export function ChatList() {
   const { selectedChatId, setSelectedChatId } = useAppContext();
   const { data: chats, isLoading } = useGetChats();
+  const [search, setSearch] = useState("");
 
   const handleChatSelect = (chatId: number) => {
     setSelectedChatId(chatId);
   };
+
+  const filtered = chats?.filter((chat: Chat) => {
+    if (!search) return true;
+    const name = chat.type === "direct"
+      ? (chat.otherUser?.displayName || chat.name || "")
+      : (chat.name || "");
+    return name.toLowerCase().includes(search.toLowerCase());
+  });
 
   return (
     <div className="w-full md:w-80 lg:w-96 flex flex-col h-full bg-card border-r border-border">
@@ -22,6 +40,8 @@ export function ChatList() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
           <Input 
             placeholder="Search chats..." 
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
             className="pl-9 bg-background border-none focus-visible:ring-primary"
           />
         </div>
@@ -44,20 +64,21 @@ export function ChatList() {
               </div>
             ))}
           </div>
-        ) : chats?.length === 0 ? (
+        ) : filtered?.length === 0 ? (
           <div className="p-4 text-center text-muted-foreground text-sm">
-            No chats yet
+            {search ? "No chats found" : "No chats yet"}
           </div>
         ) : (
-          chats?.map((chat: Chat) => {
+          filtered?.map((chat: Chat) => {
             const isSelected = selectedChatId === chat.id;
             const lastMessage = chat.lastMessage;
-            const displayName = chat.type === 'direct'
-              ? (chat.otherUser?.displayName || chat.name || 'Unknown')
-              : (chat.name || 'Group');
-            const avatarColor = chat.type === 'direct'
-              ? (chat.otherUser?.avatarColor || chat.avatarColor || '#333')
-              : (chat.avatarColor || '#333');
+            const displayName = chat.type === "direct"
+              ? (chat.otherUser?.displayName || chat.name || "Unknown")
+              : (chat.name || "Group");
+            const avatarColor = chat.type === "direct"
+              ? (chat.otherUser?.avatarColor || chat.avatarColor || "#333")
+              : (chat.avatarColor || "#333");
+            const isVerified = chat.type === "direct" && (chat.otherUser as any)?.isVerified;
             
             return (
               <button
@@ -67,9 +88,9 @@ export function ChatList() {
                   isSelected ? "bg-secondary" : ""
                 }`}
               >
-                <div className="relative">
+                <div className="relative shrink-0">
                   <div 
-                    className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg overflow-hidden shrink-0"
+                    className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg overflow-hidden"
                     style={{ backgroundColor: avatarColor }}
                   >
                     {chat.avatarUrl ? (
@@ -88,22 +109,28 @@ export function ChatList() {
                 </div>
                 
                 <div className="flex-1 min-w-0">
-                  <div className="flex justify-between items-baseline mb-1">
-                    <h3 className="font-semibold truncate pr-2">{displayName}</h3>
+                  <div className="flex justify-between items-baseline mb-0.5">
+                    <div className="flex items-center gap-1 min-w-0">
+                      <h3 className="font-semibold truncate text-sm">{displayName}</h3>
+                      {isVerified && <VerifiedBadge />}
+                    </div>
                     {lastMessage && (
-                      <span className="text-xs text-muted-foreground shrink-0">
-                        {formatDistanceToNow(new Date(lastMessage.createdAt), { addSuffix: false }).replace('about ', '')}
+                      <span className="text-xs text-muted-foreground shrink-0 ml-1">
+                        {formatDistanceToNow(new Date(lastMessage.createdAt), { addSuffix: false }).replace("about ", "")}
                       </span>
                     )}
                   </div>
                   <div className="flex justify-between items-center gap-2">
-                    <p className={`text-sm truncate ${chat.unreadCount > 0 ? "text-foreground font-medium" : "text-muted-foreground"}`}>
+                    <p className={`text-xs truncate ${chat.unreadCount > 0 ? "text-foreground font-medium" : "text-muted-foreground"}`}>
                       {lastMessage ? (
-                        lastMessage.type === 'text' ? lastMessage.text : `[${lastMessage.type}]`
+                        lastMessage.type === "text" ? lastMessage.text :
+                        lastMessage.type === "image" ? "📷 Photo" :
+                        lastMessage.type === "gift" ? "🎁 Gift" :
+                        `[${lastMessage.type}]`
                       ) : "No messages"}
                     </p>
                     <div className="flex items-center gap-1 shrink-0">
-                      {chat.isMuted && <VolumeX size={14} className="text-muted-foreground" />}
+                      {chat.isMuted && <VolumeX size={12} className="text-muted-foreground" />}
                       {chat.unreadCount > 0 && (
                         <div className="bg-primary text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
                           {chat.unreadCount}

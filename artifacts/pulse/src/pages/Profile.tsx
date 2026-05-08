@@ -1,8 +1,9 @@
 import React from "react";
 import { useGetMyStats, useGetMe } from "@workspace/api-client-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MessageSquare, Phone, Gift, Users, Clock, CalendarDays } from "lucide-react";
+import { MessageSquare, Phone, Gift, Users, Clock, CalendarDays, Settings, BadgeCheck } from "lucide-react";
 import { format } from "date-fns";
+import { Link } from "wouter";
 
 export default function Profile() {
   const { data: user, isLoading: userLoading } = useGetMe();
@@ -11,7 +12,13 @@ export default function Profile() {
   return (
     <div className="flex-1 flex flex-col h-full bg-background overflow-hidden relative">
       <header className="h-16 border-b border-border flex items-center px-6 justify-between bg-card/80 backdrop-blur-md z-10 shrink-0">
-        <h1 className="text-xl font-bold">Profile</h1>
+        <h1 className="text-xl font-bold">My Profile</h1>
+        <Link href="/settings">
+          <button className="flex items-center gap-2 px-4 py-2 bg-secondary hover:bg-secondary/80 rounded-xl text-sm font-medium transition-colors">
+            <Settings size={16} className="text-primary" />
+            Edit Profile
+          </button>
+        </Link>
       </header>
 
       <div className="flex-1 overflow-y-auto p-4 md:p-6 max-w-3xl w-full mx-auto scrollbar-thin">
@@ -34,7 +41,7 @@ export default function Profile() {
               
               <div 
                 className="w-32 h-32 rounded-full flex items-center justify-center text-white font-bold text-5xl mb-4 relative z-10 shadow-2xl border-4 border-background"
-                style={{ backgroundColor: user?.avatarColor || '#333' }}
+                style={{ backgroundColor: user?.avatarColor || "#333" }}
               >
                 {user?.avatarUrl ? (
                   <img src={user.avatarUrl} alt={user.displayName} className="w-full h-full rounded-full object-cover" />
@@ -42,20 +49,32 @@ export default function Profile() {
                   (user?.displayName || "U")[0].toUpperCase()
                 )}
                 <div className={`absolute bottom-2 right-2 w-6 h-6 rounded-full border-4 border-background ${
-                  user?.status === 'online' ? 'bg-green-500' : 
-                  user?.status === 'away' ? 'bg-yellow-500' : 'bg-gray-500'
+                  user?.status === "online" ? "bg-green-500" : 
+                  user?.status === "away" ? "bg-yellow-500" : "bg-gray-500"
                 }`} />
               </div>
               
-              <h2 className="text-3xl font-bold text-foreground mb-1 relative z-10">{user?.displayName}</h2>
-              <p className="text-primary font-medium mb-3 relative z-10">@{user?.username}</p>
+              <div className="flex items-center gap-2 mb-1 relative z-10">
+                <h2 className="text-3xl font-bold text-foreground">{user?.displayName}</h2>
+                {(user as any)?.isVerified && (
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="12" fill="#00BCD4"/>
+                    <path d="M7 12l3.5 3.5L17 8" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                )}
+              </div>
+              <p className="text-primary font-medium mb-1 relative z-10">@{user?.username}</p>
+              
+              {(user as any)?.statusText && (
+                <p className="text-sm text-muted-foreground mb-2 relative z-10">{(user as any).statusText}</p>
+              )}
               
               {user?.bio && (
-                <p className="text-muted-foreground max-w-md relative z-10">"{user.bio}"</p>
+                <p className="text-muted-foreground max-w-md relative z-10 text-sm italic">"{user.bio}"</p>
               )}
               
               <div className="flex items-center gap-2 mt-4 text-xs text-muted-foreground uppercase tracking-wider font-semibold relative z-10 bg-black/20 px-4 py-2 rounded-full backdrop-blur-md">
-                <CalendarDays size={14} /> Joined {user?.createdAt ? format(new Date(user.createdAt), 'MMMM yyyy') : 'Unknown'}
+                <CalendarDays size={14} /> Joined {user?.createdAt ? format(new Date(user.createdAt), "MMMM yyyy") : "Unknown"}
               </div>
             </div>
 
@@ -71,37 +90,37 @@ export default function Profile() {
                   <StatCard 
                     icon={<MessageSquare className="text-blue-500" />} 
                     label="Messages" 
-                    value={stats?.messagesSent?.toLocaleString() || '0'} 
+                    value={stats?.messagesSent?.toLocaleString() || "0"} 
                     color="bg-blue-500/10 border-blue-500/20" 
                   />
                   <StatCard 
                     icon={<Phone className="text-green-500" />} 
                     label="Calls Made" 
-                    value={stats?.callsMade?.toLocaleString() || '0'} 
+                    value={stats?.callsMade?.toLocaleString() || "0"} 
                     color="bg-green-500/10 border-green-500/20" 
                   />
                   <StatCard 
                     icon={<Clock className="text-orange-500" />} 
                     label="Call Time" 
-                    value={stats?.callDurationSeconds ? `${Math.floor(stats.callDurationSeconds / 60)}m` : '0m'} 
+                    value={stats?.callDurationSeconds ? `${Math.floor(stats.callDurationSeconds / 60)}m` : "0m"} 
                     color="bg-orange-500/10 border-orange-500/20" 
                   />
                   <StatCard 
                     icon={<Gift className="text-purple-500" />} 
                     label="Gifts Sent" 
-                    value={stats?.giftsSent?.toLocaleString() || '0'} 
+                    value={stats?.giftsSent?.toLocaleString() || "0"} 
                     color="bg-purple-500/10 border-purple-500/20" 
                   />
                   <StatCard 
                     icon={<Gift className="text-pink-500" />} 
                     label="Gifts Received" 
-                    value={stats?.giftsReceived?.toLocaleString() || '0'} 
+                    value={stats?.giftsReceived?.toLocaleString() || "0"} 
                     color="bg-pink-500/10 border-pink-500/20" 
                   />
                   <StatCard 
                     icon={<Users className="text-cyan-500" />} 
                     label="Contacts" 
-                    value={stats?.contactsCount?.toLocaleString() || '0'} 
+                    value={stats?.contactsCount?.toLocaleString() || "0"} 
                     color="bg-cyan-500/10 border-cyan-500/20" 
                   />
                 </div>

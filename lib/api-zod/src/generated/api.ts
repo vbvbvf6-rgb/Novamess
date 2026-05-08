@@ -25,9 +25,11 @@ export const GetMeResponse = zod.object({
   avatarUrl: zod.string().nullish(),
   avatarColor: zod.string(),
   status: zod.enum(["online", "offline", "away"]),
+  statusText: zod.string().nullish(),
   lastSeen: zod.string().nullish(),
   phoneNumber: zod.string().nullish(),
   isBot: zod.boolean(),
+  isVerified: zod.boolean(),
   createdAt: zod.string(),
 });
 
@@ -38,6 +40,8 @@ export const UpdateMeBody = zod.object({
   displayName: zod.string().optional(),
   bio: zod.string().optional(),
   avatarUrl: zod.string().optional(),
+  avatarColor: zod.string().optional(),
+  statusText: zod.string().optional(),
   status: zod.enum(["online", "offline", "away"]).optional(),
 });
 
@@ -49,9 +53,11 @@ export const UpdateMeResponse = zod.object({
   avatarUrl: zod.string().nullish(),
   avatarColor: zod.string(),
   status: zod.enum(["online", "offline", "away"]),
+  statusText: zod.string().nullish(),
   lastSeen: zod.string().nullish(),
   phoneNumber: zod.string().nullish(),
   isBot: zod.boolean(),
+  isVerified: zod.boolean(),
   createdAt: zod.string(),
 });
 
@@ -70,9 +76,11 @@ export const SearchUsersResponseItem = zod.object({
   avatarUrl: zod.string().nullish(),
   avatarColor: zod.string(),
   status: zod.enum(["online", "offline", "away"]),
+  statusText: zod.string().nullish(),
   lastSeen: zod.string().nullish(),
   phoneNumber: zod.string().nullish(),
   isBot: zod.boolean(),
+  isVerified: zod.boolean(),
   createdAt: zod.string(),
 });
 export const SearchUsersResponse = zod.array(SearchUsersResponseItem);
@@ -89,9 +97,11 @@ export const GetUserByIdResponse = zod.object({
   avatarUrl: zod.string().nullish(),
   avatarColor: zod.string(),
   status: zod.enum(["online", "offline", "away"]),
+  statusText: zod.string().nullish(),
   lastSeen: zod.string().nullish(),
   phoneNumber: zod.string().nullish(),
   isBot: zod.boolean(),
+  isVerified: zod.boolean(),
   createdAt: zod.string(),
 });
 
@@ -106,9 +116,11 @@ export const GetContactsResponseItem = zod.object({
   avatarUrl: zod.string().nullish(),
   avatarColor: zod.string(),
   status: zod.enum(["online", "offline", "away"]),
+  statusText: zod.string().nullish(),
   lastSeen: zod.string().nullish(),
   phoneNumber: zod.string().nullish(),
   isBot: zod.boolean(),
+  isVerified: zod.boolean(),
   createdAt: zod.string(),
 });
 export const GetContactsResponse = zod.array(GetContactsResponseItem);
@@ -173,9 +185,11 @@ export const GetChatsResponseItem = zod.object({
               avatarUrl: zod.string().nullish(),
               avatarColor: zod.string(),
               status: zod.enum(["online", "offline", "away"]),
+              statusText: zod.string().nullish(),
               lastSeen: zod.string().nullish(),
               phoneNumber: zod.string().nullish(),
               isBot: zod.boolean(),
+              isVerified: zod.boolean(),
               createdAt: zod.string(),
             })
             .nullish(),
@@ -191,9 +205,11 @@ export const GetChatsResponseItem = zod.object({
           avatarUrl: zod.string().nullish(),
           avatarColor: zod.string(),
           status: zod.enum(["online", "offline", "away"]),
+          statusText: zod.string().nullish(),
           lastSeen: zod.string().nullish(),
           phoneNumber: zod.string().nullish(),
           isBot: zod.boolean(),
+          isVerified: zod.boolean(),
           createdAt: zod.string(),
         })
         .nullish(),
@@ -235,9 +251,11 @@ export const GetChatsResponseItem = zod.object({
               avatarUrl: zod.string().nullish(),
               avatarColor: zod.string(),
               status: zod.enum(["online", "offline", "away"]),
+              statusText: zod.string().nullish(),
               lastSeen: zod.string().nullish(),
               phoneNumber: zod.string().nullish(),
               isBot: zod.boolean(),
+              isVerified: zod.boolean(),
               createdAt: zod.string(),
             })
             .nullish(),
@@ -250,9 +268,11 @@ export const GetChatsResponseItem = zod.object({
               avatarUrl: zod.string().nullish(),
               avatarColor: zod.string(),
               status: zod.enum(["online", "offline", "away"]),
+              statusText: zod.string().nullish(),
               lastSeen: zod.string().nullish(),
               phoneNumber: zod.string().nullish(),
               isBot: zod.boolean(),
+              isVerified: zod.boolean(),
               createdAt: zod.string(),
             })
             .nullish(),
@@ -280,9 +300,11 @@ export const GetChatsResponseItem = zod.object({
             avatarUrl: zod.string().nullish(),
             avatarColor: zod.string(),
             status: zod.enum(["online", "offline", "away"]),
+            statusText: zod.string().nullish(),
             lastSeen: zod.string().nullish(),
             phoneNumber: zod.string().nullish(),
             isBot: zod.boolean(),
+            isVerified: zod.boolean(),
             createdAt: zod.string(),
           })
           .optional(),
@@ -298,9 +320,11 @@ export const GetChatsResponseItem = zod.object({
       avatarUrl: zod.string().nullish(),
       avatarColor: zod.string(),
       status: zod.enum(["online", "offline", "away"]),
+      statusText: zod.string().nullish(),
       lastSeen: zod.string().nullish(),
       phoneNumber: zod.string().nullish(),
       isBot: zod.boolean(),
+      isVerified: zod.boolean(),
       createdAt: zod.string(),
     })
     .nullish(),
@@ -369,9 +393,11 @@ export const GetChatByIdResponse = zod.object({
               avatarUrl: zod.string().nullish(),
               avatarColor: zod.string(),
               status: zod.enum(["online", "offline", "away"]),
+              statusText: zod.string().nullish(),
               lastSeen: zod.string().nullish(),
               phoneNumber: zod.string().nullish(),
               isBot: zod.boolean(),
+              isVerified: zod.boolean(),
               createdAt: zod.string(),
             })
             .nullish(),
@@ -387,9 +413,11 @@ export const GetChatByIdResponse = zod.object({
           avatarUrl: zod.string().nullish(),
           avatarColor: zod.string(),
           status: zod.enum(["online", "offline", "away"]),
+          statusText: zod.string().nullish(),
           lastSeen: zod.string().nullish(),
           phoneNumber: zod.string().nullish(),
           isBot: zod.boolean(),
+          isVerified: zod.boolean(),
           createdAt: zod.string(),
         })
         .nullish(),
@@ -431,9 +459,11 @@ export const GetChatByIdResponse = zod.object({
               avatarUrl: zod.string().nullish(),
               avatarColor: zod.string(),
               status: zod.enum(["online", "offline", "away"]),
+              statusText: zod.string().nullish(),
               lastSeen: zod.string().nullish(),
               phoneNumber: zod.string().nullish(),
               isBot: zod.boolean(),
+              isVerified: zod.boolean(),
               createdAt: zod.string(),
             })
             .nullish(),
@@ -446,9 +476,11 @@ export const GetChatByIdResponse = zod.object({
               avatarUrl: zod.string().nullish(),
               avatarColor: zod.string(),
               status: zod.enum(["online", "offline", "away"]),
+              statusText: zod.string().nullish(),
               lastSeen: zod.string().nullish(),
               phoneNumber: zod.string().nullish(),
               isBot: zod.boolean(),
+              isVerified: zod.boolean(),
               createdAt: zod.string(),
             })
             .nullish(),
@@ -476,9 +508,11 @@ export const GetChatByIdResponse = zod.object({
             avatarUrl: zod.string().nullish(),
             avatarColor: zod.string(),
             status: zod.enum(["online", "offline", "away"]),
+            statusText: zod.string().nullish(),
             lastSeen: zod.string().nullish(),
             phoneNumber: zod.string().nullish(),
             isBot: zod.boolean(),
+            isVerified: zod.boolean(),
             createdAt: zod.string(),
           })
           .optional(),
@@ -494,9 +528,11 @@ export const GetChatByIdResponse = zod.object({
       avatarUrl: zod.string().nullish(),
       avatarColor: zod.string(),
       status: zod.enum(["online", "offline", "away"]),
+      statusText: zod.string().nullish(),
       lastSeen: zod.string().nullish(),
       phoneNumber: zod.string().nullish(),
       isBot: zod.boolean(),
+      isVerified: zod.boolean(),
       createdAt: zod.string(),
     })
     .nullish(),
@@ -561,9 +597,11 @@ export const UpdateChatResponse = zod.object({
               avatarUrl: zod.string().nullish(),
               avatarColor: zod.string(),
               status: zod.enum(["online", "offline", "away"]),
+              statusText: zod.string().nullish(),
               lastSeen: zod.string().nullish(),
               phoneNumber: zod.string().nullish(),
               isBot: zod.boolean(),
+              isVerified: zod.boolean(),
               createdAt: zod.string(),
             })
             .nullish(),
@@ -579,9 +617,11 @@ export const UpdateChatResponse = zod.object({
           avatarUrl: zod.string().nullish(),
           avatarColor: zod.string(),
           status: zod.enum(["online", "offline", "away"]),
+          statusText: zod.string().nullish(),
           lastSeen: zod.string().nullish(),
           phoneNumber: zod.string().nullish(),
           isBot: zod.boolean(),
+          isVerified: zod.boolean(),
           createdAt: zod.string(),
         })
         .nullish(),
@@ -623,9 +663,11 @@ export const UpdateChatResponse = zod.object({
               avatarUrl: zod.string().nullish(),
               avatarColor: zod.string(),
               status: zod.enum(["online", "offline", "away"]),
+              statusText: zod.string().nullish(),
               lastSeen: zod.string().nullish(),
               phoneNumber: zod.string().nullish(),
               isBot: zod.boolean(),
+              isVerified: zod.boolean(),
               createdAt: zod.string(),
             })
             .nullish(),
@@ -638,9 +680,11 @@ export const UpdateChatResponse = zod.object({
               avatarUrl: zod.string().nullish(),
               avatarColor: zod.string(),
               status: zod.enum(["online", "offline", "away"]),
+              statusText: zod.string().nullish(),
               lastSeen: zod.string().nullish(),
               phoneNumber: zod.string().nullish(),
               isBot: zod.boolean(),
+              isVerified: zod.boolean(),
               createdAt: zod.string(),
             })
             .nullish(),
@@ -668,9 +712,11 @@ export const UpdateChatResponse = zod.object({
             avatarUrl: zod.string().nullish(),
             avatarColor: zod.string(),
             status: zod.enum(["online", "offline", "away"]),
+            statusText: zod.string().nullish(),
             lastSeen: zod.string().nullish(),
             phoneNumber: zod.string().nullish(),
             isBot: zod.boolean(),
+            isVerified: zod.boolean(),
             createdAt: zod.string(),
           })
           .optional(),
@@ -686,9 +732,11 @@ export const UpdateChatResponse = zod.object({
       avatarUrl: zod.string().nullish(),
       avatarColor: zod.string(),
       status: zod.enum(["online", "offline", "away"]),
+      statusText: zod.string().nullish(),
       lastSeen: zod.string().nullish(),
       phoneNumber: zod.string().nullish(),
       isBot: zod.boolean(),
+      isVerified: zod.boolean(),
       createdAt: zod.string(),
     })
     .nullish(),
@@ -719,9 +767,11 @@ export const GetChatMembersResponseItem = zod.object({
       avatarUrl: zod.string().nullish(),
       avatarColor: zod.string(),
       status: zod.enum(["online", "offline", "away"]),
+      statusText: zod.string().nullish(),
       lastSeen: zod.string().nullish(),
       phoneNumber: zod.string().nullish(),
       isBot: zod.boolean(),
+      isVerified: zod.boolean(),
       createdAt: zod.string(),
     })
     .optional(),
@@ -794,9 +844,11 @@ export const PinChatResponse = zod.object({
               avatarUrl: zod.string().nullish(),
               avatarColor: zod.string(),
               status: zod.enum(["online", "offline", "away"]),
+              statusText: zod.string().nullish(),
               lastSeen: zod.string().nullish(),
               phoneNumber: zod.string().nullish(),
               isBot: zod.boolean(),
+              isVerified: zod.boolean(),
               createdAt: zod.string(),
             })
             .nullish(),
@@ -812,9 +864,11 @@ export const PinChatResponse = zod.object({
           avatarUrl: zod.string().nullish(),
           avatarColor: zod.string(),
           status: zod.enum(["online", "offline", "away"]),
+          statusText: zod.string().nullish(),
           lastSeen: zod.string().nullish(),
           phoneNumber: zod.string().nullish(),
           isBot: zod.boolean(),
+          isVerified: zod.boolean(),
           createdAt: zod.string(),
         })
         .nullish(),
@@ -856,9 +910,11 @@ export const PinChatResponse = zod.object({
               avatarUrl: zod.string().nullish(),
               avatarColor: zod.string(),
               status: zod.enum(["online", "offline", "away"]),
+              statusText: zod.string().nullish(),
               lastSeen: zod.string().nullish(),
               phoneNumber: zod.string().nullish(),
               isBot: zod.boolean(),
+              isVerified: zod.boolean(),
               createdAt: zod.string(),
             })
             .nullish(),
@@ -871,9 +927,11 @@ export const PinChatResponse = zod.object({
               avatarUrl: zod.string().nullish(),
               avatarColor: zod.string(),
               status: zod.enum(["online", "offline", "away"]),
+              statusText: zod.string().nullish(),
               lastSeen: zod.string().nullish(),
               phoneNumber: zod.string().nullish(),
               isBot: zod.boolean(),
+              isVerified: zod.boolean(),
               createdAt: zod.string(),
             })
             .nullish(),
@@ -901,9 +959,11 @@ export const PinChatResponse = zod.object({
             avatarUrl: zod.string().nullish(),
             avatarColor: zod.string(),
             status: zod.enum(["online", "offline", "away"]),
+            statusText: zod.string().nullish(),
             lastSeen: zod.string().nullish(),
             phoneNumber: zod.string().nullish(),
             isBot: zod.boolean(),
+            isVerified: zod.boolean(),
             createdAt: zod.string(),
           })
           .optional(),
@@ -919,9 +979,11 @@ export const PinChatResponse = zod.object({
       avatarUrl: zod.string().nullish(),
       avatarColor: zod.string(),
       status: zod.enum(["online", "offline", "away"]),
+      statusText: zod.string().nullish(),
       lastSeen: zod.string().nullish(),
       phoneNumber: zod.string().nullish(),
       isBot: zod.boolean(),
+      isVerified: zod.boolean(),
       createdAt: zod.string(),
     })
     .nullish(),
@@ -975,9 +1037,11 @@ export const GetMessagesResponseItem = zod.object({
           avatarUrl: zod.string().nullish(),
           avatarColor: zod.string(),
           status: zod.enum(["online", "offline", "away"]),
+          statusText: zod.string().nullish(),
           lastSeen: zod.string().nullish(),
           phoneNumber: zod.string().nullish(),
           isBot: zod.boolean(),
+          isVerified: zod.boolean(),
           createdAt: zod.string(),
         })
         .nullish(),
@@ -993,9 +1057,11 @@ export const GetMessagesResponseItem = zod.object({
       avatarUrl: zod.string().nullish(),
       avatarColor: zod.string(),
       status: zod.enum(["online", "offline", "away"]),
+      statusText: zod.string().nullish(),
       lastSeen: zod.string().nullish(),
       phoneNumber: zod.string().nullish(),
       isBot: zod.boolean(),
+      isVerified: zod.boolean(),
       createdAt: zod.string(),
     })
     .nullish(),
@@ -1037,9 +1103,11 @@ export const GetMessagesResponseItem = zod.object({
           avatarUrl: zod.string().nullish(),
           avatarColor: zod.string(),
           status: zod.enum(["online", "offline", "away"]),
+          statusText: zod.string().nullish(),
           lastSeen: zod.string().nullish(),
           phoneNumber: zod.string().nullish(),
           isBot: zod.boolean(),
+          isVerified: zod.boolean(),
           createdAt: zod.string(),
         })
         .nullish(),
@@ -1052,9 +1120,11 @@ export const GetMessagesResponseItem = zod.object({
           avatarUrl: zod.string().nullish(),
           avatarColor: zod.string(),
           status: zod.enum(["online", "offline", "away"]),
+          statusText: zod.string().nullish(),
           lastSeen: zod.string().nullish(),
           phoneNumber: zod.string().nullish(),
           isBot: zod.boolean(),
+          isVerified: zod.boolean(),
           createdAt: zod.string(),
         })
         .nullish(),
@@ -1124,9 +1194,11 @@ export const EditMessageResponse = zod.object({
           avatarUrl: zod.string().nullish(),
           avatarColor: zod.string(),
           status: zod.enum(["online", "offline", "away"]),
+          statusText: zod.string().nullish(),
           lastSeen: zod.string().nullish(),
           phoneNumber: zod.string().nullish(),
           isBot: zod.boolean(),
+          isVerified: zod.boolean(),
           createdAt: zod.string(),
         })
         .nullish(),
@@ -1142,9 +1214,11 @@ export const EditMessageResponse = zod.object({
       avatarUrl: zod.string().nullish(),
       avatarColor: zod.string(),
       status: zod.enum(["online", "offline", "away"]),
+      statusText: zod.string().nullish(),
       lastSeen: zod.string().nullish(),
       phoneNumber: zod.string().nullish(),
       isBot: zod.boolean(),
+      isVerified: zod.boolean(),
       createdAt: zod.string(),
     })
     .nullish(),
@@ -1186,9 +1260,11 @@ export const EditMessageResponse = zod.object({
           avatarUrl: zod.string().nullish(),
           avatarColor: zod.string(),
           status: zod.enum(["online", "offline", "away"]),
+          statusText: zod.string().nullish(),
           lastSeen: zod.string().nullish(),
           phoneNumber: zod.string().nullish(),
           isBot: zod.boolean(),
+          isVerified: zod.boolean(),
           createdAt: zod.string(),
         })
         .nullish(),
@@ -1201,9 +1277,11 @@ export const EditMessageResponse = zod.object({
           avatarUrl: zod.string().nullish(),
           avatarColor: zod.string(),
           status: zod.enum(["online", "offline", "away"]),
+          statusText: zod.string().nullish(),
           lastSeen: zod.string().nullish(),
           phoneNumber: zod.string().nullish(),
           isBot: zod.boolean(),
+          isVerified: zod.boolean(),
           createdAt: zod.string(),
         })
         .nullish(),
@@ -1256,9 +1334,11 @@ export const GetCallHistoryResponseItem = zod.object({
       avatarUrl: zod.string().nullish(),
       avatarColor: zod.string(),
       status: zod.enum(["online", "offline", "away"]),
+      statusText: zod.string().nullish(),
       lastSeen: zod.string().nullish(),
       phoneNumber: zod.string().nullish(),
       isBot: zod.boolean(),
+      isVerified: zod.boolean(),
       createdAt: zod.string(),
     })
     .nullish(),
@@ -1271,9 +1351,11 @@ export const GetCallHistoryResponseItem = zod.object({
       avatarUrl: zod.string().nullish(),
       avatarColor: zod.string(),
       status: zod.enum(["online", "offline", "away"]),
+      statusText: zod.string().nullish(),
       lastSeen: zod.string().nullish(),
       phoneNumber: zod.string().nullish(),
       isBot: zod.boolean(),
+      isVerified: zod.boolean(),
       createdAt: zod.string(),
     })
     .nullish(),
@@ -1313,9 +1395,11 @@ export const GetCallByIdResponse = zod.object({
       avatarUrl: zod.string().nullish(),
       avatarColor: zod.string(),
       status: zod.enum(["online", "offline", "away"]),
+      statusText: zod.string().nullish(),
       lastSeen: zod.string().nullish(),
       phoneNumber: zod.string().nullish(),
       isBot: zod.boolean(),
+      isVerified: zod.boolean(),
       createdAt: zod.string(),
     })
     .nullish(),
@@ -1328,9 +1412,11 @@ export const GetCallByIdResponse = zod.object({
       avatarUrl: zod.string().nullish(),
       avatarColor: zod.string(),
       status: zod.enum(["online", "offline", "away"]),
+      statusText: zod.string().nullish(),
       lastSeen: zod.string().nullish(),
       phoneNumber: zod.string().nullish(),
       isBot: zod.boolean(),
+      isVerified: zod.boolean(),
       createdAt: zod.string(),
     })
     .nullish(),
@@ -1364,9 +1450,11 @@ export const UpdateCallStatusResponse = zod.object({
       avatarUrl: zod.string().nullish(),
       avatarColor: zod.string(),
       status: zod.enum(["online", "offline", "away"]),
+      statusText: zod.string().nullish(),
       lastSeen: zod.string().nullish(),
       phoneNumber: zod.string().nullish(),
       isBot: zod.boolean(),
+      isVerified: zod.boolean(),
       createdAt: zod.string(),
     })
     .nullish(),
@@ -1379,9 +1467,11 @@ export const UpdateCallStatusResponse = zod.object({
       avatarUrl: zod.string().nullish(),
       avatarColor: zod.string(),
       status: zod.enum(["online", "offline", "away"]),
+      statusText: zod.string().nullish(),
       lastSeen: zod.string().nullish(),
       phoneNumber: zod.string().nullish(),
       isBot: zod.boolean(),
+      isVerified: zod.boolean(),
       createdAt: zod.string(),
     })
     .nullish(),
@@ -1450,9 +1540,11 @@ export const GetSentGiftsResponseItem = zod.object({
       avatarUrl: zod.string().nullish(),
       avatarColor: zod.string(),
       status: zod.enum(["online", "offline", "away"]),
+      statusText: zod.string().nullish(),
       lastSeen: zod.string().nullish(),
       phoneNumber: zod.string().nullish(),
       isBot: zod.boolean(),
+      isVerified: zod.boolean(),
       createdAt: zod.string(),
     })
     .nullish(),
@@ -1465,9 +1557,11 @@ export const GetSentGiftsResponseItem = zod.object({
       avatarUrl: zod.string().nullish(),
       avatarColor: zod.string(),
       status: zod.enum(["online", "offline", "away"]),
+      statusText: zod.string().nullish(),
       lastSeen: zod.string().nullish(),
       phoneNumber: zod.string().nullish(),
       isBot: zod.boolean(),
+      isVerified: zod.boolean(),
       createdAt: zod.string(),
     })
     .nullish(),
@@ -1514,9 +1608,11 @@ export const GetReceivedGiftsResponseItem = zod.object({
       avatarUrl: zod.string().nullish(),
       avatarColor: zod.string(),
       status: zod.enum(["online", "offline", "away"]),
+      statusText: zod.string().nullish(),
       lastSeen: zod.string().nullish(),
       phoneNumber: zod.string().nullish(),
       isBot: zod.boolean(),
+      isVerified: zod.boolean(),
       createdAt: zod.string(),
     })
     .nullish(),
@@ -1529,9 +1625,11 @@ export const GetReceivedGiftsResponseItem = zod.object({
       avatarUrl: zod.string().nullish(),
       avatarColor: zod.string(),
       status: zod.enum(["online", "offline", "away"]),
+      statusText: zod.string().nullish(),
       lastSeen: zod.string().nullish(),
       phoneNumber: zod.string().nullish(),
       isBot: zod.boolean(),
+      isVerified: zod.boolean(),
       createdAt: zod.string(),
     })
     .nullish(),
@@ -1564,9 +1662,11 @@ export const GetStoriesResponseItem = zod.object({
     avatarUrl: zod.string().nullish(),
     avatarColor: zod.string(),
     status: zod.enum(["online", "offline", "away"]),
+    statusText: zod.string().nullish(),
     lastSeen: zod.string().nullish(),
     phoneNumber: zod.string().nullish(),
     isBot: zod.boolean(),
+    isVerified: zod.boolean(),
     createdAt: zod.string(),
   }),
   stories: zod.array(
@@ -1589,9 +1689,11 @@ export const GetStoriesResponseItem = zod.object({
           avatarUrl: zod.string().nullish(),
           avatarColor: zod.string(),
           status: zod.enum(["online", "offline", "away"]),
+          statusText: zod.string().nullish(),
           lastSeen: zod.string().nullish(),
           phoneNumber: zod.string().nullish(),
           isBot: zod.boolean(),
+          isVerified: zod.boolean(),
           createdAt: zod.string(),
         })
         .nullish(),
@@ -1614,6 +1716,127 @@ export const CreateStoryBody = zod.object({
 
 export const DeleteStoryParams = zod.object({
   storyId: zod.coerce.number(),
+});
+
+/**
+ * @summary Mark all messages in a chat as read
+ */
+export const MarkChatAsReadParams = zod.object({
+  chatId: zod.coerce.number(),
+});
+
+/**
+ * @summary Get feed posts
+ */
+export const GetPostsResponseItem = zod.object({
+  id: zod.number(),
+  userId: zod.number(),
+  text: zod.string(),
+  imageUrl: zod.string().nullish(),
+  likesCount: zod.number(),
+  commentsCount: zod.number(),
+  isLiked: zod.boolean(),
+  author: zod
+    .object({
+      id: zod.number(),
+      username: zod.string(),
+      displayName: zod.string(),
+      bio: zod.string().nullish(),
+      avatarUrl: zod.string().nullish(),
+      avatarColor: zod.string(),
+      status: zod.enum(["online", "offline", "away"]),
+      statusText: zod.string().nullish(),
+      lastSeen: zod.string().nullish(),
+      phoneNumber: zod.string().nullish(),
+      isBot: zod.boolean(),
+      isVerified: zod.boolean(),
+      createdAt: zod.string(),
+    })
+    .nullish(),
+  createdAt: zod.string(),
+});
+export const GetPostsResponse = zod.array(GetPostsResponseItem);
+
+/**
+ * @summary Create a new post
+ */
+export const CreatePostBody = zod.object({
+  text: zod.string(),
+  imageUrl: zod.string().optional(),
+});
+
+export const DeletePostParams = zod.object({
+  postId: zod.coerce.number(),
+});
+
+export const LikePostParams = zod.object({
+  postId: zod.coerce.number(),
+});
+
+export const LikePostResponse = zod.object({
+  id: zod.number(),
+  userId: zod.number(),
+  text: zod.string(),
+  imageUrl: zod.string().nullish(),
+  likesCount: zod.number(),
+  commentsCount: zod.number(),
+  isLiked: zod.boolean(),
+  author: zod
+    .object({
+      id: zod.number(),
+      username: zod.string(),
+      displayName: zod.string(),
+      bio: zod.string().nullish(),
+      avatarUrl: zod.string().nullish(),
+      avatarColor: zod.string(),
+      status: zod.enum(["online", "offline", "away"]),
+      statusText: zod.string().nullish(),
+      lastSeen: zod.string().nullish(),
+      phoneNumber: zod.string().nullish(),
+      isBot: zod.boolean(),
+      isVerified: zod.boolean(),
+      createdAt: zod.string(),
+    })
+    .nullish(),
+  createdAt: zod.string(),
+});
+
+export const GetPostCommentsParams = zod.object({
+  postId: zod.coerce.number(),
+});
+
+export const GetPostCommentsResponseItem = zod.object({
+  id: zod.number(),
+  postId: zod.number(),
+  userId: zod.number(),
+  text: zod.string(),
+  author: zod
+    .object({
+      id: zod.number(),
+      username: zod.string(),
+      displayName: zod.string(),
+      bio: zod.string().nullish(),
+      avatarUrl: zod.string().nullish(),
+      avatarColor: zod.string(),
+      status: zod.enum(["online", "offline", "away"]),
+      statusText: zod.string().nullish(),
+      lastSeen: zod.string().nullish(),
+      phoneNumber: zod.string().nullish(),
+      isBot: zod.boolean(),
+      isVerified: zod.boolean(),
+      createdAt: zod.string(),
+    })
+    .nullish(),
+  createdAt: zod.string(),
+});
+export const GetPostCommentsResponse = zod.array(GetPostCommentsResponseItem);
+
+export const CreatePostCommentParams = zod.object({
+  postId: zod.coerce.number(),
+});
+
+export const CreatePostCommentBody = zod.object({
+  text: zod.string(),
 });
 
 /**

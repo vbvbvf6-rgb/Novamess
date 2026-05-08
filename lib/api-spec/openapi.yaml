@@ -24,6 +24,8 @@ tags:
     description: Stories operations
   - name: contacts
     description: Contact operations
+  - name: posts
+    description: Feed/posts operations
 
 paths:
   /healthz:
@@ -624,6 +626,127 @@ paths:
         "204":
           description: Story deleted
 
+  /chats/{chatId}/read:
+    post:
+      operationId: markChatAsRead
+      tags: [chats]
+      summary: Mark all messages in a chat as read
+      parameters:
+        - name: chatId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Marked as read
+
+  /posts:
+    get:
+      operationId: getPosts
+      tags: [posts]
+      summary: Get feed posts
+      responses:
+        "200":
+          description: List of posts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Post"
+    post:
+      operationId: createPost
+      tags: [posts]
+      summary: Create a new post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePostBody"
+      responses:
+        "201":
+          description: Post created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Post"
+
+  /posts/{postId}:
+    delete:
+      operationId: deletePost
+      tags: [posts]
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Post deleted
+
+  /posts/{postId}/like:
+    post:
+      operationId: likePost
+      tags: [posts]
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Liked/unliked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Post"
+
+  /posts/{postId}/comments:
+    get:
+      operationId: getPostComments
+      tags: [posts]
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Post comments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PostComment"
+    post:
+      operationId: createPostComment
+      tags: [posts]
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePostCommentBody"
+      responses:
+        "201":
+          description: Comment created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PostComment"
+
   /stats/me:
     get:
       operationId: getMyStats
@@ -667,6 +790,9 @@ components:
         status:
           type: string
           enum: [online, offline, away]
+        statusText:
+          type: string
+          nullable: true
         lastSeen:
           type: string
           nullable: true
@@ -674,6 +800,8 @@ components:
           type: string
           nullable: true
         isBot:
+          type: boolean
+        isVerified:
           type: boolean
         createdAt:
           type: string
@@ -684,6 +812,7 @@ components:
         - avatarColor
         - status
         - isBot
+        - isVerified
         - createdAt
 
     UpdateUserBody:
@@ -694,6 +823,10 @@ components:
         bio:
           type: string
         avatarUrl:
+          type: string
+        avatarColor:
+          type: string
+        statusText:
           type: string
         status:
           type: string
@@ -1144,6 +1277,79 @@ components:
           type: string
       required:
         - type
+
+    Post:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        text:
+          type: string
+        imageUrl:
+          type: string
+          nullable: true
+        likesCount:
+          type: integer
+        commentsCount:
+          type: integer
+        isLiked:
+          type: boolean
+        author:
+          $ref: "#/components/schemas/User"
+          nullable: true
+        createdAt:
+          type: string
+      required:
+        - id
+        - userId
+        - text
+        - likesCount
+        - commentsCount
+        - isLiked
+        - createdAt
+
+    PostComment:
+      type: object
+      properties:
+        id:
+          type: integer
+        postId:
+          type: integer
+        userId:
+          type: integer
+        text:
+          type: string
+        author:
+          $ref: "#/components/schemas/User"
+          nullable: true
+        createdAt:
+          type: string
+      required:
+        - id
+        - postId
+        - userId
+        - text
+        - createdAt
+
+    CreatePostBody:
+      type: object
+      properties:
+        text:
+          type: string
+        imageUrl:
+          type: string
+      required:
+        - text
+
+    CreatePostCommentBody:
+      type: object
+      properties:
+        text:
+          type: string
+      required:
+        - text
 
     UserStats:
       type: object

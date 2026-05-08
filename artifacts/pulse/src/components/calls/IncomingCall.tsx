@@ -8,26 +8,25 @@ export function IncomingCall() {
   const { activeCall, setActiveCall, currentUserId } = useAppContext();
   const updateCall = useUpdateCallStatus();
 
-  // Only show if it's an incoming call that is ringing
-  if (!activeCall || activeCall.status !== 'ringing' || activeCall.callerId === currentUserId) return null;
+  if (!activeCall || activeCall.status !== "ringing" || activeCall.callerId === currentUserId) return null;
 
   const handleAccept = () => {
-    updateCall.mutate({ status: 'active' }, {
+    updateCall.mutate({ callId: activeCall.id, data: { status: "active" } }, {
       onSuccess: () => {
-        setActiveCall({ ...activeCall, status: 'active' });
+        setActiveCall({ ...activeCall, status: "active" });
       }
     });
   };
 
   const handleDecline = () => {
-    updateCall.mutate({ status: 'declined' }, {
+    updateCall.mutate({ callId: activeCall.id, data: { status: "declined" } }, {
       onSuccess: () => {
         setActiveCall(null);
       }
     });
   };
 
-  const isVideo = activeCall.type === 'video';
+  const isVideo = activeCall.type === "video";
 
   return (
     <AnimatePresence>
@@ -44,7 +43,7 @@ export function IncomingCall() {
             <div className="absolute inset-0 bg-primary/20 rounded-full animate-ping" />
             <div 
               className="w-20 h-20 rounded-full flex items-center justify-center text-white font-bold text-2xl relative z-10 shadow-lg border-2 border-background"
-              style={{ backgroundColor: activeCall.caller?.avatarColor || '#333' }}
+              style={{ backgroundColor: activeCall.caller?.avatarColor || "#333" }}
             >
               {activeCall.caller?.avatarUrl ? (
                 <img src={activeCall.caller.avatarUrl} alt="" className="w-full h-full rounded-full object-cover" />
@@ -57,24 +56,18 @@ export function IncomingCall() {
           <h3 className="text-xl font-bold text-foreground mb-1">{activeCall.caller?.displayName}</h3>
           <p className="text-muted-foreground flex items-center justify-center gap-2">
             {isVideo ? <Video size={16} /> : <Phone size={16} />}
-            Incoming {isVideo ? 'Video' : 'Audio'} Call...
+            Incoming {isVideo ? "Video" : "Audio"} Call...
           </p>
           
           <div className="flex items-center justify-center gap-8 mt-8 w-full">
-            <button 
-              onClick={handleDecline}
-              className="flex flex-col items-center gap-2 group"
-            >
+            <button onClick={handleDecline} className="flex flex-col items-center gap-2 group">
               <div className="w-14 h-14 rounded-full bg-destructive/10 text-destructive flex items-center justify-center group-hover:bg-destructive group-hover:text-white transition-colors">
                 <PhoneOff size={24} />
               </div>
               <span className="text-xs font-medium text-muted-foreground">Decline</span>
             </button>
             
-            <button 
-              onClick={handleAccept}
-              className="flex flex-col items-center gap-2 group"
-            >
+            <button onClick={handleAccept} className="flex flex-col items-center gap-2 group">
               <div className="w-14 h-14 rounded-full bg-green-500/10 text-green-500 flex items-center justify-center group-hover:bg-green-500 group-hover:text-white transition-colors shadow-[0_0_15px_rgba(34,197,94,0.3)] animate-pulse">
                 {isVideo ? <Video size={24} /> : <Phone size={24} className="animate-bounce" />}
               </div>

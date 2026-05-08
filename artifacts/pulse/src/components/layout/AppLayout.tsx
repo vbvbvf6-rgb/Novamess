@@ -7,11 +7,6 @@ import { IncomingCall } from "@/components/calls/IncomingCall";
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const { activeCall } = useAppContext();
 
-  // Ensure dark mode is active by default
-  React.useEffect(() => {
-    document.documentElement.classList.add("dark");
-  }, []);
-
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background">
       <Sidebar />

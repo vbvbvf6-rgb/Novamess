@@ -192,6 +192,19 @@ router.delete("/chats/:chatId/members/:memberId", async (req, res) => {
   }
 });
 
+router.post("/chats/:chatId/read", async (req, res) => {
+  try {
+    const chatId = Number(req.params.chatId);
+    await db.update(chatMembersTable)
+      .set({ lastReadAt: new Date() })
+      .where(and(eq(chatMembersTable.chatId, chatId), eq(chatMembersTable.userId, CURRENT_USER_ID)));
+    res.status(204).send();
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 router.put("/chats/:chatId/pin", async (req, res) => {
   try {
     const chatId = Number(req.params.chatId);

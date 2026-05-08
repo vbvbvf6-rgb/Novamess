@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { Link, useLocation } from "wouter";
 import { 
   MessageCircle, 
@@ -7,13 +7,15 @@ import {
   Gift, 
   History,
   UserCircle,
-  Settings
+  Settings,
+  Rss
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
   { href: "/", icon: MessageCircle, label: "Chats" },
   { href: "/calls", icon: Phone, label: "Calls" },
+  { href: "/feed", icon: Rss, label: "Feed" },
   { href: "/contacts", icon: Users, label: "Contacts" },
   { href: "/gifts", icon: Gift, label: "Gifts" },
   { href: "/stories", icon: History, label: "Stories" },
@@ -33,9 +35,9 @@ export function Sidebar() {
         <span className="hidden lg:block ml-3 font-bold text-xl tracking-tight text-white">Pulse</span>
       </div>
 
-      <nav className="flex-1 w-full flex flex-col gap-2 px-2 lg:px-4">
+      <nav className="flex-1 w-full flex flex-col gap-1 px-2 lg:px-4 overflow-y-auto">
         {NAV_ITEMS.map((item) => {
-          const isActive = location === item.href;
+          const isActive = location === item.href || (item.href !== "/" && location.startsWith(item.href));
           return (
             <Link key={item.href} href={item.href} className={cn(
               "flex items-center gap-3 p-3 rounded-xl transition-all duration-200 group relative",
@@ -44,10 +46,10 @@ export function Sidebar() {
                 : "text-muted-foreground hover:bg-secondary hover:text-foreground"
             )}>
               <item.icon size={22} className={cn(
-                "transition-transform group-hover:scale-110",
-                isActive && "animate-pulse"
+                "transition-transform group-hover:scale-110 shrink-0",
+                isActive && "drop-shadow-[0_0_6px_hsl(var(--primary))]"
               )} />
-              <span className="hidden lg:block font-medium">{item.label}</span>
+              <span className="hidden lg:block font-medium truncate">{item.label}</span>
             </Link>
           );
         })}
