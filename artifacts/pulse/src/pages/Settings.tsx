@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useGetMe, useUpdateMe } from "@workspace/api-client-react";
 import { useAppContext } from "@/contexts/AppContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -24,6 +25,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import type { Lang } from "@/i18n/translations";
 
 const AVATAR_COLORS = [
   "#3B82F6","#EC4899","#10B981","#F59E0B","#8B5CF6",
@@ -32,37 +34,19 @@ const AVATAR_COLORS = [
 ];
 
 const STATUS_PRESETS = [
-  { emoji: "💬", text: "Доступен" },
-  { emoji: "🔕", text: "Не беспокоить" },
-  { emoji: "📍", text: "В офисе" },
-  { emoji: "🏠", text: "Дома" },
-  { emoji: "🚗", text: "В дороге" },
-  { emoji: "😴", text: "Сплю" },
-  { emoji: "🎮", text: "Играю" },
-  { emoji: "🎧", text: "Слушаю музыку" },
+  { emoji: "💬", ru: "Доступен",       en: "Available" },
+  { emoji: "🔕", ru: "Не беспокоить",  en: "Do not disturb" },
+  { emoji: "📍", ru: "В офисе",        en: "At the office" },
+  { emoji: "🏠", ru: "Дома",           en: "At home" },
+  { emoji: "🚗", ru: "В дороге",       en: "On the road" },
+  { emoji: "😴", ru: "Сплю",           en: "Sleeping" },
+  { emoji: "🎮", ru: "Играю",          en: "Gaming" },
+  { emoji: "🎧", ru: "Слушаю музыку",  en: "Listening to music" },
 ];
-
-const ONLINE_STATUS_OPTIONS = [
-  { value: "online", label: "В сети", color: "bg-green-500", desc: "Виден как активный" },
-  { value: "away", label: "Отошёл", color: "bg-yellow-500", desc: "Временно недоступен" },
-  { value: "offline", label: "Не в сети", color: "bg-gray-400", desc: "Скрыть активность" },
-] as const;
-
-const FONT_SIZE_OPTIONS = [
-  { value: "small", label: "Маленький", size: "13px" },
-  { value: "medium", label: "Средний", size: "15px" },
-  { value: "large", label: "Большой", size: "17px" },
-] as const;
 
 const LANGUAGE_OPTIONS = [
   { value: "ru", label: "Русский", flag: "🇷🇺" },
   { value: "en", label: "English", flag: "🇬🇧" },
-] as const;
-
-const LAST_SEEN_OPTIONS = [
-  { value: "everyone", label: "Все" },
-  { value: "contacts", label: "Контакты" },
-  { value: "nobody", label: "Никто" },
 ] as const;
 
 function ls(key: string, def: string): string {
@@ -109,10 +93,30 @@ function Row({ icon, color, label, desc, right, onClick }: {
 
 export default function Settings() {
   const { isDark, toggleTheme, logout } = useAppContext();
+  const { t, lang, setLang } = useLanguage();
   const { data: user } = useGetMe();
   const updateMe = useUpdateMe();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+
+  // Online status options — translated
+  const ONLINE_STATUS_OPTIONS = [
+    { value: "online",  label: t("status.online"),  color: "bg-green-500",  desc: t("status.online.desc") },
+    { value: "away",    label: t("status.away"),    color: "bg-yellow-500", desc: t("status.away.desc") },
+    { value: "offline", label: t("status.offline"), color: "bg-gray-400",   desc: t("status.offline.desc") },
+  ] as const;
+
+  const FONT_SIZE_OPTIONS = [
+    { value: "small",  label: t("settings.fontSmall"),  size: "13px" },
+    { value: "medium", label: t("settings.fontMedium"), size: "15px" },
+    { value: "large",  label: t("settings.fontLarge"),  size: "17px" },
+  ] as const;
+
+  const LAST_SEEN_OPTIONS = [
+    { value: "everyone", label: t("settings.lastSeenEveryone") },
+    { value: "contacts", label: t("settings.lastSeenContacts") },
+    { value: "nobody",   label: t("settings.lastSeenNobody") },
+  ] as const;
 
   // Profile fields
   const [displayName, setDisplayName] = useState("");
@@ -167,7 +171,7 @@ export default function Settings() {
   useEffect(() => {
     const opt = FONT_SIZE_OPTIONS.find(f => f.value === fontSize);
     if (opt) document.documentElement.style.setProperty("--app-font-size", opt.size);
-  }, [fontSize]);
+  }, [fontSize, lang]);
 
   // Calculate storage size
   useEffect(() => {
@@ -227,10 +231,10 @@ export default function Settings() {
           setHasChanges(false);
           setSaved(true);
           setTimeout(() => setSaved(false), 2000);
-          toast({ title: "Сохранено", description: "Изменения профиля сохранены." });
+          toast({ title: t("settings.saveSuccess"), description: t("settings.saveSuccessDesc") });
         },
         onError: () => {
-          toast({ title: "Ошибка", description: "Не удалось сохранить изменения.", variant: "destructive" });
+          toast({ title: t("settings.saveError"), description: t("settings.saveErrorDesc"), variant: "destructive" });
         },
       }
     );
@@ -238,15 +242,15 @@ export default function Settings() {
 
   const handleChangePassword = async () => {
     if (!currentPassword || !newPassword) {
-      toast({ title: "Ошибка", description: "Заполните все поля.", variant: "destructive" });
+      toast({ title: t("common.error"), description: lang === "ru" ? "Заполните все поля." : "Fill in all fields.", variant: "destructive" });
       return;
     }
     if (newPassword !== confirmPassword) {
-      toast({ title: "Ошибка", description: "Новые пароли не совпадают.", variant: "destructive" });
+      toast({ title: t("common.error"), description: lang === "ru" ? "Новые пароли не совпадают." : "New passwords don't match.", variant: "destructive" });
       return;
     }
     if (newPassword.length < 6) {
-      toast({ title: "Ошибка", description: "Пароль — минимум 6 символов.", variant: "destructive" });
+      toast({ title: t("common.error"), description: lang === "ru" ? "Пароль — минимум 6 символов." : "Password must be at least 6 characters.", variant: "destructive" });
       return;
     }
     setPwLoading(true);
@@ -259,14 +263,14 @@ export default function Settings() {
       });
       const data = await res.json();
       if (!res.ok) {
-        toast({ title: "Ошибка", description: data.error || "Ошибка смены пароля.", variant: "destructive" });
+        toast({ title: t("common.error"), description: data.error || (lang === "ru" ? "Ошибка смены пароля." : "Password change error."), variant: "destructive" });
       } else {
-        toast({ title: "Готово", description: "Пароль успешно изменён." });
+        toast({ title: t("settings.passwordChanged"), description: t("settings.passwordChangedDesc") });
         setShowChangePassword(false);
         setCurrentPassword(""); setNewPassword(""); setConfirmPassword("");
       }
     } catch {
-      toast({ title: "Ошибка", description: "Ошибка соединения.", variant: "destructive" });
+      toast({ title: t("common.error"), description: lang === "ru" ? "Ошибка соединения." : "Connection error.", variant: "destructive" });
     }
     setPwLoading(false);
   };
@@ -279,7 +283,7 @@ export default function Settings() {
       }
     }
     setCacheCleared(c => !c);
-    toast({ title: "Готово", description: "Кэш очищен." });
+    toast({ title: t("settings.cacheCleared"), description: t("settings.cacheClearedDesc") });
   };
 
   const handleExportData = async () => {
@@ -302,9 +306,9 @@ export default function Settings() {
       const a = document.createElement("a");
       a.href = url; a.download = `pulse-data-${Date.now()}.json`; a.click();
       URL.revokeObjectURL(url);
-      toast({ title: "Экспорт готов", description: "Данные загружены в файл." });
+      toast({ title: t("settings.exportReady"), description: t("settings.exportReadyDesc") });
     } catch {
-      toast({ title: "Ошибка", description: "Не удалось экспортировать данные.", variant: "destructive" });
+      toast({ title: t("common.error"), description: lang === "ru" ? "Не удалось экспортировать данные." : "Could not export data.", variant: "destructive" });
     }
   };
 
@@ -313,19 +317,19 @@ export default function Settings() {
     navigator.clipboard.writeText(link).catch(() => {});
     setLinkCopied(true);
     setTimeout(() => setLinkCopied(false), 2000);
-    toast({ title: "Скопировано", description: "Ссылка на профиль скопирована." });
+    toast({ title: t("settings.linkCopied"), description: t("settings.linkCopiedDesc") });
   };
 
   const handleEndSessions = () => {
     sessionStorage.clear();
-    toast({ title: "Готово", description: "Все другие сессии завершены." });
+    toast({ title: lang === "ru" ? "Готово" : "Done", description: lang === "ru" ? "Все другие сессии завершены." : "All other sessions ended." });
   };
 
   const handleChangeUsername = async () => {
     const trimmed = newUsername.trim().toLowerCase();
-    if (!trimmed) { setUsernameError("Введите новый никнейм"); return; }
-    if (trimmed.length < 3 || trimmed.length > 32) { setUsernameError("От 3 до 32 символов"); return; }
-    if (!/^[a-z0-9_]+$/.test(trimmed)) { setUsernameError("Только латинские буквы, цифры и _"); return; }
+    if (!trimmed) { setUsernameError(lang === "ru" ? "Введите новый никнейм" : "Enter a new username"); return; }
+    if (trimmed.length < 3 || trimmed.length > 32) { setUsernameError(lang === "ru" ? "От 3 до 32 символов" : "3 to 32 characters"); return; }
+    if (!/^[a-z0-9_]+$/.test(trimmed)) { setUsernameError(lang === "ru" ? "Только латинские буквы, цифры и _" : "Letters, digits and _ only"); return; }
     setUsernameLoading(true);
     setUsernameError("");
     try {
@@ -337,15 +341,15 @@ export default function Settings() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setUsernameError(data.error || "Ошибка смены никнейма");
+        setUsernameError(data.error || (lang === "ru" ? "Ошибка смены никнейма" : "Username change error"));
       } else {
         queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
         setShowUsernameEdit(false);
         setNewUsername("");
-        toast({ title: "Никнейм изменён", description: `Ваш новый никнейм: @${data.username}` });
+        toast({ title: lang === "ru" ? "Никнейм изменён" : "Username changed", description: `@${data.username}` });
       }
     } catch {
-      setUsernameError("Ошибка соединения");
+      setUsernameError(lang === "ru" ? "Ошибка соединения" : "Connection error");
     }
     setUsernameLoading(false);
   };
@@ -359,8 +363,13 @@ export default function Settings() {
     if (diffMs <= 0) return null;
     const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
     const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    if (days > 0) return `${days} ${days === 1 ? "день" : days < 5 ? "дня" : "дней"}`;
-    return `${hours} ${hours === 1 ? "час" : hours < 5 ? "часа" : "часов"}`;
+    if (lang === "ru") {
+      if (days > 0) return `${days} ${days === 1 ? "день" : days < 5 ? "дня" : "дней"}`;
+      return `${hours} ${hours === 1 ? "час" : hours < 5 ? "часа" : "часов"}`;
+    } else {
+      if (days > 0) return `${days} ${days === 1 ? "day" : "days"}`;
+      return `${hours} ${hours === 1 ? "hour" : "hours"}`;
+    }
   };
 
   const usernameCooldown = getUsernameCooldown();
@@ -375,7 +384,7 @@ export default function Settings() {
       {/* Header */}
       <header className="h-16 border-b border-border flex items-center px-6 justify-between bg-card/80 backdrop-blur-md z-10 shrink-0">
         <h1 className="text-xl font-bold flex items-center gap-2">
-          <SettingsIcon className="text-primary" size={22} /> Настройки
+          <SettingsIcon className="text-primary" size={22} /> {t("settings.title")}
         </h1>
         {hasChanges && (
           <button
@@ -384,15 +393,15 @@ export default function Settings() {
             className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
           >
             {saved ? <CheckCircle size={16} /> : <Save size={16} />}
-            {saved ? "Сохранено!" : "Сохранить"}
+            {saved ? t("common.saved") : t("common.save")}
           </button>
         )}
       </header>
 
       <div className="flex-1 overflow-y-auto p-4 md:p-6 max-w-2xl w-full mx-auto scrollbar-thin space-y-6 pb-24">
 
-        {/* ── ПРОФИЛЬ ── */}
-        <Section title="Мой профиль" icon={<Edit3 size={13} />}>
+        {/* ── PROFILE ── */}
+        <Section title={t("settings.profile")} icon={<Edit3 size={13} />}>
           {/* Avatar + preview */}
           <div className="p-4">
             <div className="flex items-center gap-4 mb-4">
@@ -405,14 +414,14 @@ export default function Settings() {
                   : displayName[0]?.toUpperCase() || "?"}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-semibold truncate">{displayName || "Ваше имя"}</p>
+                <p className="font-semibold truncate">{displayName || "..."}</p>
                 <p className="text-sm text-muted-foreground truncate">@{user?.username || "username"}</p>
                 {statusText && <p className="text-xs text-muted-foreground mt-0.5 truncate">{statusText}</p>}
               </div>
               <button
                 onClick={handleCopyProfileLink}
                 className="shrink-0 p-2 rounded-xl hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground"
-                title="Скопировать ссылку на профиль"
+                title={t("settings.copyLink")}
               >
                 {linkCopied ? <Check size={18} className="text-green-500" /> : <Copy size={18} />}
               </button>
@@ -421,7 +430,7 @@ export default function Settings() {
             {/* Avatar URL */}
             <div className="mb-3">
               <Label className="text-xs text-muted-foreground mb-1.5 block flex items-center gap-1.5">
-                <Link size={11} /> URL аватара
+                <Link size={11} /> {t("settings.avatarUrl")}
               </Label>
               <Input
                 value={avatarUrl}
@@ -433,7 +442,7 @@ export default function Settings() {
 
             {/* Avatar colors */}
             <div>
-              <Label className="text-xs text-muted-foreground mb-1.5 block">Цвет аватара</Label>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">{t("settings.avatarColor")}</Label>
               <div className="flex flex-wrap gap-2">
                 {AVATAR_COLORS.map(color => (
                   <button
@@ -450,14 +459,14 @@ export default function Settings() {
           {/* Fields */}
           <div className="p-4 space-y-3">
             <div>
-              <Label className="text-sm font-medium mb-1 block">Имя</Label>
-              <Input value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="Ваше имя" className="bg-background" />
+              <Label className="text-sm font-medium mb-1 block">{t("settings.name")}</Label>
+              <Input value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder={t("settings.name")} className="bg-background" />
             </div>
 
             {/* Username change */}
             <div>
               <Label className="text-sm font-medium mb-1 block flex items-center gap-1.5">
-                <User size={13} /> Никнейм
+                <User size={13} /> {t("settings.username")}
               </Label>
               {!showUsernameEdit ? (
                 <div className="flex items-center gap-2">
@@ -468,14 +477,14 @@ export default function Settings() {
                   {usernameCooldown ? (
                     <div className="flex items-center gap-1.5 px-3 py-2 bg-yellow-500/10 border border-yellow-500/20 rounded-xl shrink-0">
                       <Clock size={13} className="text-yellow-500 shrink-0" />
-                      <span className="text-xs text-yellow-600 dark:text-yellow-400 font-medium whitespace-nowrap">через {usernameCooldown}</span>
+                      <span className="text-xs text-yellow-600 dark:text-yellow-400 font-medium whitespace-nowrap">{t("settings.usernameCooldown")} {usernameCooldown}</span>
                     </div>
                   ) : (
                     <button
                       onClick={() => { setShowUsernameEdit(true); setNewUsername(user?.username || ""); setUsernameError(""); }}
                       className="flex items-center gap-1.5 px-3 py-2 bg-primary/10 border border-primary/20 rounded-xl text-primary text-xs font-medium hover:bg-primary/20 transition-colors shrink-0"
                     >
-                      <Edit3 size={13} /> Изменить
+                      <Edit3 size={13} /> {t("settings.usernameChange")}
                     </button>
                   )}
                 </div>
@@ -488,7 +497,7 @@ export default function Settings() {
                         value={newUsername}
                         onChange={e => { setNewUsername(e.target.value); setUsernameError(""); }}
                         onKeyDown={e => { if (e.key === "Enter") handleChangeUsername(); if (e.key === "Escape") setShowUsernameEdit(false); }}
-                        placeholder={user?.username || "новый_ник"}
+                        placeholder={user?.username || "new_username"}
                         autoFocus
                         className="flex-1 py-2 pr-3 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none font-mono"
                         maxLength={32}
@@ -499,7 +508,7 @@ export default function Settings() {
                       disabled={usernameLoading}
                       className="px-3 py-2 bg-primary text-primary-foreground rounded-xl text-xs font-bold hover:bg-primary/90 transition-colors disabled:opacity-50 shrink-0"
                     >
-                      {usernameLoading ? "..." : "Сохранить"}
+                      {usernameLoading ? "..." : t("settings.usernameSave")}
                     </button>
                     <button
                       onClick={() => { setShowUsernameEdit(false); setUsernameError(""); }}
@@ -513,53 +522,54 @@ export default function Settings() {
                       <AlertTriangle size={12} className="shrink-0" /> {usernameError}
                     </div>
                   )}
-                  <p className="text-xs text-muted-foreground">
-                    Только латиница, цифры и _ · Смена раз в 7 дней
-                  </p>
+                  <p className="text-xs text-muted-foreground">{t("settings.usernameNote")}</p>
                 </div>
               )}
             </div>
 
             <div>
-              <Label className="text-sm font-medium mb-1 block">О себе</Label>
-              <Textarea value={bio} onChange={e => setBio(e.target.value)} placeholder="Расскажите о себе..." rows={3} className="bg-background resize-none" />
+              <Label className="text-sm font-medium mb-1 block">{t("settings.bio")}</Label>
+              <Textarea value={bio} onChange={e => setBio(e.target.value)} placeholder={t("settings.bioPlaceholder")} rows={3} className="bg-background resize-none" />
             </div>
             <div>
               <Label className="text-sm font-medium mb-1 block flex items-center gap-1.5">
-                <Phone size={13} /> Номер телефона
+                <Phone size={13} /> {t("settings.phone")}
               </Label>
               <Input
                 value={phoneNumber}
                 onChange={e => setPhoneNumber(e.target.value)}
-                placeholder="+7 (999) 123-45-67"
+                placeholder={t("settings.phonePlaceholder")}
                 type="tel"
                 className="bg-background"
               />
-              <p className="text-xs text-muted-foreground mt-1">Виден только вашим контактам</p>
+              <p className="text-xs text-muted-foreground mt-1">{t("settings.phoneNote")}</p>
             </div>
           </div>
 
           {/* Status */}
           <div className="p-4">
-            <Label className="text-sm font-medium mb-2 block">Текстовый статус</Label>
-            <Input value={statusText} onChange={e => setStatusText(e.target.value)} placeholder="Что происходит?" className="bg-background mb-3" />
+            <Label className="text-sm font-medium mb-2 block">{t("settings.statusText")}</Label>
+            <Input value={statusText} onChange={e => setStatusText(e.target.value)} placeholder={t("settings.statusPlaceholder")} className="bg-background mb-3" />
             <div className="flex flex-wrap gap-2">
-              {STATUS_PRESETS.map(preset => (
-                <button
-                  key={preset.text}
-                  onClick={() => setStatusText(`${preset.emoji} ${preset.text}`)}
-                  className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${statusText === `${preset.emoji} ${preset.text}` ? "bg-primary/10 border-primary text-primary" : "border-border hover:border-primary/50 hover:bg-secondary"}`}
-                >
-                  {preset.emoji} {preset.text}
-                </button>
-              ))}
+              {STATUS_PRESETS.map(preset => {
+                const presetText = `${preset.emoji} ${lang === "ru" ? preset.ru : preset.en}`;
+                return (
+                  <button
+                    key={preset.ru}
+                    onClick={() => setStatusText(presetText)}
+                    className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${statusText === presetText ? "bg-primary/10 border-primary text-primary" : "border-border hover:border-primary/50 hover:bg-secondary"}`}
+                  >
+                    {presetText}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
           {/* Online status */}
           <div className="p-4">
             <Label className="text-sm font-medium mb-2 block flex items-center gap-1.5">
-              <Radio size={13} /> Статус присутствия
+              <Radio size={13} /> {t("settings.onlineStatus")}
             </Label>
             <div className="grid grid-cols-3 gap-2">
               {ONLINE_STATUS_OPTIONS.map(opt => (
@@ -579,20 +589,20 @@ export default function Settings() {
           </div>
         </Section>
 
-        {/* ── ОФОРМЛЕНИЕ ── */}
-        <Section title="Оформление" icon={<Palette size={13} />}>
+        {/* ── APPEARANCE ── */}
+        <Section title={t("settings.appearance")} icon={<Palette size={13} />}>
           <Row
             icon={isDark ? <Moon size={18} /> : <Sun size={18} />}
             color="bg-primary/10 text-primary"
-            label={isDark ? "Тёмная тема" : "Светлая тема"}
-            desc={isDark ? "Тёмное оформление" : "Светлое оформление"}
+            label={isDark ? t("settings.darkTheme") : t("settings.lightTheme")}
+            desc={isDark ? t("settings.darkThemeDesc") : t("settings.lightThemeDesc")}
             right={<Switch checked={isDark} onCheckedChange={toggleTheme} />}
           />
           <Row
             icon={<Smartphone size={18} />}
             color="bg-green-500/10 text-green-500"
-            label="Уменьшить анимации"
-            desc="Отключить сложные переходы"
+            label={t("settings.reduceAnimations")}
+            desc={t("settings.reduceAnimationsDesc")}
             right={
               <Switch
                 checked={reduceAnimations}
@@ -605,15 +615,15 @@ export default function Settings() {
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 bg-orange-500/10 text-orange-500 rounded-xl"><Type size={18} /></div>
               <div>
-                <p className="text-sm font-medium">Размер шрифта</p>
-                <p className="text-xs text-muted-foreground">Размер текста в чатах</p>
+                <p className="text-sm font-medium">{t("settings.fontSize")}</p>
+                <p className="text-xs text-muted-foreground">{t("settings.fontSizeDesc")}</p>
               </div>
             </div>
             <div className="grid grid-cols-3 gap-2">
               {FONT_SIZE_OPTIONS.map(opt => (
                 <button
                   key={opt.value}
-                  onClick={() => { setFontSize(opt.value); setLs("pulse-font-size", opt.value); toast({ title: "Сохранено", description: `Размер шрифта: ${opt.label}` }); }}
+                  onClick={() => { setFontSize(opt.value); setLs("pulse-font-size", opt.value); toast({ title: t("common.saved"), description: `${t("settings.fontSize")}: ${opt.label}` }); }}
                   className={`py-2.5 rounded-xl border text-center transition-all flex flex-col items-center gap-0.5 ${fontSize === opt.value ? "border-primary bg-primary/8 text-primary" : "border-border hover:border-primary/30"}`}
                   style={{ fontSize: opt.size }}
                 >
@@ -628,15 +638,19 @@ export default function Settings() {
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 bg-blue-500/10 text-blue-500 rounded-xl"><Globe size={18} /></div>
               <div>
-                <p className="text-sm font-medium">Язык интерфейса</p>
-                <p className="text-xs text-muted-foreground">Выбор языка приложения</p>
+                <p className="text-sm font-medium">{t("settings.language")}</p>
+                <p className="text-xs text-muted-foreground">{t("settings.languageDesc")}</p>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-2">
               {LANGUAGE_OPTIONS.map(opt => (
                 <button
                   key={opt.value}
-                  onClick={() => { setLanguage(opt.value); setLs("pulse-language", opt.value); toast({ title: "Язык сохранён", description: `Выбран: ${opt.label}` }); }}
+                  onClick={() => {
+                    setLanguage(opt.value);
+                    setLang(opt.value as Lang);
+                    toast({ title: t("settings.languageSaved"), description: opt.label });
+                  }}
                   className={`py-2.5 px-4 rounded-xl border text-sm font-medium transition-all flex items-center gap-2 ${language === opt.value ? "border-primary bg-primary/8 text-primary" : "border-border hover:border-primary/30"}`}
                 >
                   <span className="text-lg">{opt.flag}</span> {opt.label}
@@ -647,53 +661,53 @@ export default function Settings() {
           </div>
         </Section>
 
-        {/* ── УВЕДОМЛЕНИЯ ── */}
-        <Section title="Уведомления" icon={<Bell size={13} />}>
+        {/* ── NOTIFICATIONS ── */}
+        <Section title={t("settings.notifications")} icon={<Bell size={13} />}>
           <Row
             icon={<MessageSquare size={18} />}
             color="bg-blue-500/10 text-blue-500"
-            label="Сообщения"
-            desc="Уведомления о новых сообщениях"
+            label={t("settings.notifyMessages")}
+            desc={t("settings.notifyMessagesDesc")}
             right={
               <Switch
                 checked={notifyMessages}
-                onCheckedChange={v => { setNotifyMessages(v); setLs("pulse-notify-messages", v); toast({ title: v ? "Включено" : "Выключено", description: "Уведомления о сообщениях" }); }}
+                onCheckedChange={v => { setNotifyMessages(v); setLs("pulse-notify-messages", v); toast({ title: v ? t("notify.on") : t("notify.off"), description: t("settings.notifyMessages") }); }}
               />
             }
           />
           <Row
             icon={<PhoneCall size={18} />}
             color="bg-green-500/10 text-green-500"
-            label="Звонки"
-            desc="Уведомления о входящих звонках"
+            label={t("settings.notifyCalls")}
+            desc={t("settings.notifyCallsDesc")}
             right={
               <Switch
                 checked={notifyCalls}
-                onCheckedChange={v => { setNotifyCalls(v); setLs("pulse-notify-calls", v); toast({ title: v ? "Включено" : "Выключено", description: "Уведомления о звонках" }); }}
+                onCheckedChange={v => { setNotifyCalls(v); setLs("pulse-notify-calls", v); toast({ title: v ? t("notify.on") : t("notify.off"), description: t("settings.notifyCalls") }); }}
               />
             }
           />
           <Row
             icon={<Gift size={18} />}
             color="bg-pink-500/10 text-pink-500"
-            label="Подарки"
-            desc="Уведомления о полученных подарках"
+            label={t("settings.notifyGifts")}
+            desc={t("settings.notifyGiftsDesc")}
             right={
               <Switch
                 checked={notifyGifts}
-                onCheckedChange={v => { setNotifyGifts(v); setLs("pulse-notify-gifts", v); toast({ title: v ? "Включено" : "Выключено", description: "Уведомления о подарках" }); }}
+                onCheckedChange={v => { setNotifyGifts(v); setLs("pulse-notify-gifts", v); toast({ title: v ? t("notify.on") : t("notify.off"), description: t("settings.notifyGifts") }); }}
               />
             }
           />
           <Row
             icon={notifySounds ? <Volume2 size={18} /> : <VolumeX size={18} />}
             color="bg-orange-500/10 text-orange-500"
-            label="Звуки"
-            desc="Звук при получении уведомлений"
+            label={t("settings.notifySounds")}
+            desc={t("settings.notifySoundsDesc")}
             right={
               <Switch
                 checked={notifySounds}
-                onCheckedChange={v => { setNotifySounds(v); setLs("pulse-notify-sounds", v); toast({ title: v ? "Включено" : "Выключено", description: "Звуки уведомлений" }); }}
+                onCheckedChange={v => { setNotifySounds(v); setLs("pulse-notify-sounds", v); toast({ title: v ? t("notify.on") : t("notify.off"), description: t("settings.notifySounds") }); }}
               />
             }
           />
@@ -703,41 +717,41 @@ export default function Settings() {
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-purple-500/10 text-purple-500 rounded-xl"><Eye size={18} /></div>
                 <div>
-                  <p className="text-sm font-medium">Предпросмотр</p>
+                  <p className="text-sm font-medium">{t("settings.notifyPreview")}</p>
                   <p className="text-xs text-muted-foreground">
-                    {notifyPreview ? "Показывать текст сообщения" : "Скрывать текст в уведомлении"}
+                    {notifyPreview ? t("settings.notifyPreviewOn") : t("settings.notifyPreviewOff")}
                   </p>
                 </div>
               </div>
               <Switch
                 checked={notifyPreview}
-                onCheckedChange={v => { setNotifyPreview(v); setLs("pulse-notify-preview", v); toast({ title: v ? "Включено" : "Выключено", description: "Предпросмотр в уведомлениях" }); }}
+                onCheckedChange={v => { setNotifyPreview(v); setLs("pulse-notify-preview", v); toast({ title: v ? t("notify.on") : t("notify.off"), description: t("settings.notifyPreview") }); }}
               />
             </div>
             {!notifyMessages && (
               <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-xl px-3 py-2">
-                <BellOff size={13} /> Уведомления о сообщениях отключены
+                <BellOff size={13} /> {t("settings.notifyDisabled")}
               </div>
             )}
           </div>
         </Section>
 
-        {/* ── КОНФИДЕНЦИАЛЬНОСТЬ ── */}
-        <Section title="Конфиденциальность" icon={<Shield size={13} />}>
+        {/* ── PRIVACY ── */}
+        <Section title={t("settings.privacy")} icon={<Shield size={13} />}>
           {/* Last seen */}
           <div className="p-4">
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 bg-teal-500/10 text-teal-500 rounded-xl"><Clock size={18} /></div>
               <div>
-                <p className="text-sm font-medium">Последний визит</p>
-                <p className="text-xs text-muted-foreground">Кто видит время вашего последнего визита</p>
+                <p className="text-sm font-medium">{t("settings.lastSeen")}</p>
+                <p className="text-xs text-muted-foreground">{t("settings.lastSeenDesc")}</p>
               </div>
             </div>
             <div className="flex gap-2">
               {LAST_SEEN_OPTIONS.map(opt => (
                 <button
                   key={opt.value}
-                  onClick={() => { setLastSeenVisibility(opt.value); setLs("pulse-privacy-last-seen", opt.value); toast({ title: "Сохранено", description: `Последний визит: ${opt.label}` }); }}
+                  onClick={() => { setLastSeenVisibility(opt.value); setLs("pulse-privacy-last-seen", opt.value); toast({ title: t("common.saved"), description: `${t("settings.lastSeen")}: ${opt.label}` }); }}
                   className={`flex-1 py-2 rounded-xl border text-xs font-medium transition-all flex flex-col items-center gap-0.5 ${lastSeenVisibility === opt.value ? "border-primary bg-primary/8 text-primary" : "border-border hover:border-primary/30"}`}
                 >
                   {opt.label}
@@ -750,31 +764,31 @@ export default function Settings() {
           <Row
             icon={<CheckCircle size={18} />}
             color="bg-blue-500/10 text-blue-500"
-            label="Отчёты о прочтении"
-            desc="Показывать галочки прочтения"
+            label={t("settings.readReceipts")}
+            desc={t("settings.readReceiptsDesc")}
             right={
               <Switch
                 checked={readReceipts}
-                onCheckedChange={v => { setReadReceipts(v); setLs("pulse-privacy-read-receipts", v); toast({ title: "Сохранено", description: v ? "Галочки прочтения включены" : "Галочки прочтения скрыты" }); }}
+                onCheckedChange={v => { setReadReceipts(v); setLs("pulse-privacy-read-receipts", v); toast({ title: t("common.saved"), description: v ? t("settings.readReceiptsOn") : t("settings.readReceiptsOff") }); }}
               />
             }
           />
           <Row
             icon={<User size={18} />}
             color="bg-violet-500/10 text-violet-500"
-            label="Фото профиля"
-            desc={profilePhotoVisible ? "Видно всем" : "Скрыто от других"}
+            label={t("settings.profilePhoto")}
+            desc={profilePhotoVisible ? t("settings.profilePhotoOn") : t("settings.profilePhotoOff")}
             right={
               <Switch
                 checked={profilePhotoVisible}
-                onCheckedChange={v => { setProfilePhotoVisible(v); setLs("pulse-privacy-photo-visible", v); toast({ title: "Сохранено", description: v ? "Фото профиля видно всем" : "Фото профиля скрыто" }); }}
+                onCheckedChange={v => { setProfilePhotoVisible(v); setLs("pulse-privacy-photo-visible", v); toast({ title: t("common.saved"), description: v ? t("settings.profilePhotoSavedOn") : t("settings.profilePhotoSavedOff") }); }}
               />
             }
           />
         </Section>
 
-        {/* ── БЕЗОПАСНОСТЬ ── */}
-        <Section title="Безопасность" icon={<Lock size={13} />}>
+        {/* ── SECURITY ── */}
+        <Section title={t("settings.security")} icon={<Lock size={13} />}>
           <div
             className="p-4 flex items-center justify-between cursor-pointer hover:bg-secondary transition-colors"
             onClick={() => setShowChangePassword(!showChangePassword)}
@@ -782,8 +796,8 @@ export default function Settings() {
             <div className="flex items-center gap-3">
               <div className="p-2 bg-purple-500/10 text-purple-500 rounded-xl"><Key size={18} /></div>
               <div>
-                <p className="text-sm font-medium">Сменить пароль</p>
-                <p className="text-xs text-muted-foreground">Обновить пароль аккаунта</p>
+                <p className="text-sm font-medium">{t("settings.changePassword")}</p>
+                <p className="text-xs text-muted-foreground">{t("settings.changePasswordDesc")}</p>
               </div>
             </div>
             {showChangePassword ? <ChevronDown size={18} className="text-muted-foreground" /> : <ChevronRight size={18} className="text-muted-foreground" />}
@@ -792,12 +806,12 @@ export default function Settings() {
           {showChangePassword && (
             <div className="p-4 space-y-3 bg-background/50">
               <div className="relative">
-                <Label className="text-sm mb-1 block">Текущий пароль</Label>
+                <Label className="text-sm mb-1 block">{t("settings.currentPassword")}</Label>
                 <Input
                   type={showCurrentPw ? "text" : "password"}
                   value={currentPassword}
                   onChange={e => setCurrentPassword(e.target.value)}
-                  placeholder="Текущий пароль"
+                  placeholder={t("settings.currentPassword")}
                   className="bg-background pr-10"
                 />
                 <button type="button" onClick={() => setShowCurrentPw(v => !v)} className="absolute right-3 bottom-2.5 text-muted-foreground hover:text-foreground">
@@ -805,12 +819,12 @@ export default function Settings() {
                 </button>
               </div>
               <div className="relative">
-                <Label className="text-sm mb-1 block">Новый пароль</Label>
+                <Label className="text-sm mb-1 block">{t("settings.newPassword")}</Label>
                 <Input
                   type={showNewPw ? "text" : "password"}
                   value={newPassword}
                   onChange={e => setNewPassword(e.target.value)}
-                  placeholder="Минимум 6 символов"
+                  placeholder={t("settings.passwordMinLength")}
                   className="bg-background pr-10"
                 />
                 <button type="button" onClick={() => setShowNewPw(v => !v)} className="absolute right-3 bottom-2.5 text-muted-foreground hover:text-foreground">
@@ -818,24 +832,24 @@ export default function Settings() {
                 </button>
               </div>
               <div>
-                <Label className="text-sm mb-1 block">Подтвердите пароль</Label>
+                <Label className="text-sm mb-1 block">{t("settings.confirmPassword")}</Label>
                 <Input
                   type="password"
                   value={confirmPassword}
                   onChange={e => setConfirmPassword(e.target.value)}
-                  placeholder="Повторите новый пароль"
+                  placeholder={t("settings.confirmPassword")}
                   className="bg-background"
                 />
               </div>
               {newPassword && confirmPassword && newPassword !== confirmPassword && (
-                <p className="text-xs text-destructive flex items-center gap-1"><AlertTriangle size={12} /> Пароли не совпадают</p>
+                <p className="text-xs text-destructive flex items-center gap-1"><AlertTriangle size={12} /> {t("settings.passwordMismatch")}</p>
               )}
               <button
                 onClick={handleChangePassword}
                 disabled={pwLoading}
                 className="w-full py-2.5 bg-primary text-primary-foreground rounded-xl font-medium text-sm hover:bg-primary/90 transition-colors disabled:opacity-50"
               >
-                {pwLoading ? "Сохраняем..." : "Сменить пароль"}
+                {pwLoading ? t("settings.passwordChanging") : t("settings.passwordChange")}
               </button>
             </div>
           )}
@@ -843,23 +857,23 @@ export default function Settings() {
           <Row
             icon={<Monitor size={18} />}
             color="bg-cyan-500/10 text-cyan-500"
-            label="Активные сессии"
-            desc={`Браузер: ${navigator.userAgent.includes("Chrome") ? "Chrome" : navigator.userAgent.includes("Firefox") ? "Firefox" : "Другой"}`}
+            label={t("settings.activeSessions")}
+            desc={`${lang === "ru" ? "Браузер" : "Browser"}: ${navigator.userAgent.includes("Chrome") ? "Chrome" : navigator.userAgent.includes("Firefox") ? "Firefox" : (lang === "ru" ? "Другой" : "Other")}`}
             onClick={handleEndSessions}
-            right={<span className="text-xs text-muted-foreground">Завершить другие →</span>}
+            right={<span className="text-xs text-muted-foreground">{t("settings.endSessions")}</span>}
           />
         </Section>
 
-        {/* ── ХРАНИЛИЩЕ ── */}
-        <Section title="Хранилище и данные" icon={<Database size={13} />}>
+        {/* ── STORAGE ── */}
+        <Section title={t("settings.storage")} icon={<Database size={13} />}>
           {/* Storage bar */}
           <div className="p-4">
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 bg-orange-500/10 text-orange-500 rounded-xl"><Database size={18} /></div>
               <div className="flex-1">
                 <div className="flex justify-between items-baseline">
-                  <p className="text-sm font-medium">Локальный кэш</p>
-                  <span className="text-sm font-bold text-orange-500">{storageSize} КБ</span>
+                  <p className="text-sm font-medium">{t("settings.localCache")}</p>
+                  <span className="text-sm font-bold text-orange-500">{storageSize} {lang === "ru" ? "КБ" : "KB"}</span>
                 </div>
                 <div className="mt-2 h-1.5 bg-muted rounded-full overflow-hidden">
                   <div
@@ -873,7 +887,7 @@ export default function Settings() {
               onClick={handleClearCache}
               className="flex items-center gap-2 w-full py-2.5 px-4 rounded-xl border border-destructive/30 text-destructive hover:bg-destructive/5 transition-colors text-sm font-medium"
             >
-              <Trash2 size={15} /> Очистить кэш приложения
+              <Trash2 size={15} /> {t("settings.clearCache")}
             </button>
           </div>
 
@@ -882,16 +896,16 @@ export default function Settings() {
             <div className="flex items-center gap-3">
               <div className="p-2 bg-green-500/10 text-green-500 rounded-xl"><Download size={18} /></div>
               <div>
-                <p className="text-sm font-medium">Экспорт данных</p>
-                <p className="text-xs text-muted-foreground">Скачать профиль и статистику (JSON)</p>
+                <p className="text-sm font-medium">{t("settings.exportData")}</p>
+                <p className="text-xs text-muted-foreground">{t("settings.exportDataDesc")}</p>
               </div>
             </div>
             <ChevronRight size={18} className="text-muted-foreground" />
           </div>
         </Section>
 
-        {/* ── О ПРИЛОЖЕНИИ ── */}
-        <Section title="О приложении" icon={<Zap size={13} />}>
+        {/* ── ABOUT ── */}
+        <Section title={t("settings.about")} icon={<Zap size={13} />}>
           <div className="p-4">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-500 to-purple-600 flex items-center justify-center">
@@ -899,43 +913,43 @@ export default function Settings() {
               </div>
               <div>
                 <p className="font-bold text-base">Pulse Messenger</p>
-                <p className="text-xs text-muted-foreground">Версия 2.0.0 · Сборка 2026</p>
+                <p className="text-xs text-muted-foreground">{t("settings.version")}</p>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
               <div className="bg-muted/50 rounded-xl p-2.5">
-                <p className="font-medium text-foreground mb-0.5">Аккаунт</p>
+                <p className="font-medium text-foreground mb-0.5">{t("settings.accountInfo")}</p>
                 <p>@{user?.username}</p>
                 <p>ID: {user?.id}</p>
               </div>
               <div className="bg-muted/50 rounded-xl p-2.5">
-                <p className="font-medium text-foreground mb-0.5">Статус</p>
+                <p className="font-medium text-foreground mb-0.5">{t("settings.statusInfo")}</p>
                 <div className="flex items-center gap-1.5">
                   <span className={`w-2 h-2 rounded-full ${currentStatusOpt?.color}`} />
                   {currentStatusOpt?.label}
                 </div>
-                <p>{user?.isVerified ? "✅ Верифицирован" : "Не верифицирован"}</p>
+                <p>{user?.isVerified ? t("settings.verified") : t("settings.notVerified")}</p>
               </div>
             </div>
           </div>
         </Section>
 
-        {/* ── ВЫХОД ── */}
+        {/* ── LOGOUT ── */}
         <div className="flex justify-center pt-2 pb-12">
           <button
             onClick={() => setShowLogoutDialog(true)}
             className="flex items-center gap-2 text-destructive hover:bg-destructive/10 px-6 py-3 rounded-xl font-bold transition-colors"
           >
-            <LogOut size={18} /> Выйти из аккаунта
+            <LogOut size={18} /> {t("settings.logout")}
           </button>
         </div>
       </div>
 
-      {/* Sticky bottom save bar — visible whenever profile has unsaved changes */}
+      {/* Sticky bottom save bar */}
       {hasChanges && (
         <div className="absolute bottom-0 left-0 right-0 z-20 p-4 bg-card/95 backdrop-blur-md border-t border-border shadow-lg">
           <div className="max-w-2xl mx-auto flex items-center justify-between gap-3">
-            <p className="text-sm text-muted-foreground">Есть несохранённые изменения профиля</p>
+            <p className="text-sm text-muted-foreground">{t("settings.unsavedChanges")}</p>
             <div className="flex gap-2 shrink-0">
               <button
                 onClick={() => {
@@ -951,7 +965,7 @@ export default function Settings() {
                 }}
                 className="px-4 py-2 rounded-xl text-sm font-medium text-muted-foreground hover:bg-secondary transition-colors border border-border"
               >
-                Отмена
+                {t("common.cancel")}
               </button>
               <button
                 onClick={handleSave}
@@ -959,7 +973,7 @@ export default function Settings() {
                 className="flex items-center gap-2 px-5 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50"
               >
                 {saved ? <CheckCircle size={16} /> : <Save size={16} />}
-                {updateMe.isPending ? "Сохраняем..." : saved ? "Сохранено!" : "Сохранить"}
+                {updateMe.isPending ? t("common.saving") : saved ? t("common.saved") : t("common.save")}
               </button>
             </div>
           </div>
@@ -969,13 +983,13 @@ export default function Settings() {
       <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Выход из аккаунта</AlertDialogTitle>
-            <AlertDialogDescription>Вы уверены, что хотите выйти из Pulse?</AlertDialogDescription>
+            <AlertDialogTitle>{t("settings.logoutConfirmTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>{t("settings.logoutConfirmDesc")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={logout} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Выйти
+              {t("menu.logout")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

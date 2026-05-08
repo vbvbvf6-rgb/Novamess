@@ -6,6 +6,7 @@ import { Search, Pin, VolumeX, Users, Radio, Bot, HeadphonesIcon, Menu } from "l
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAppContext } from "@/contexts/AppContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { StoriesBar } from "@/components/stories/StoriesBar";
 import { useToast } from "@/hooks/use-toast";
 
@@ -73,6 +74,7 @@ function formatTime(dateStr: string): string {
 
 export function ChatList({ onMenuClick }: { onMenuClick?: () => void }) {
   const { selectedChatId, setSelectedChatId } = useAppContext();
+  const { t } = useLanguage();
   const { data: chats, isLoading } = useGetChats();
   const { toast } = useToast();
   const [search, setSearch] = useState("");
@@ -83,7 +85,7 @@ export function ChatList({ onMenuClick }: { onMenuClick?: () => void }) {
     try {
       const aiRes = await fetch("/api/users/search?q=deepseek_ai", { headers: { "x-user-id": uid } });
       const botUsers = aiRes.ok ? await aiRes.json() : [];
-      if (!botUsers.length) { toast({ variant: "destructive", title: "Бот недоступен" }); return; }
+      if (!botUsers.length) { toast({ variant: "destructive", title: t("support.unavailable") }); return; }
       const bot = botUsers[0];
       const chatRes = await fetch("/api/chats/direct", {
         method: "POST",
@@ -127,7 +129,7 @@ export function ChatList({ onMenuClick }: { onMenuClick?: () => void }) {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
-              placeholder="Поиск чатов..."
+              placeholder={t("chatlist.search")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9 bg-background border-none focus-visible:ring-primary"

@@ -1,0 +1,368 @@
+export type Lang = "ru" | "en";
+
+const translations = {
+  ru: {
+    // Navigation
+    "nav.chats": "Чаты",
+    "nav.calls": "Звонки",
+    "nav.feed": "Лента",
+    "nav.contacts": "Контакты",
+    "nav.gifts": "Подарки",
+    "nav.stories": "Истории",
+    "nav.wallet": "Кошелёк",
+    "nav.profile": "Профиль",
+    "nav.settings": "Настройки",
+    "nav.prime": "Pulse Prime",
+    "nav.admin": "Админ-панель",
+
+    // User menu dropdown
+    "menu.myProfile": "Мой профиль",
+    "menu.settings": "Настройки",
+    "menu.administrator": "Администратор",
+    "menu.logout": "Выйти",
+
+    // Support
+    "support.unavailable": "Бот недоступен",
+    "support.unavailableDesc": "Бот поддержки временно недоступен.",
+
+    // Chat list
+    "chatlist.search": "Поиск чатов...",
+    "chatlist.noChats": "Нет чатов",
+    "chatlist.startConversation": "Начните общение!",
+    "chatlist.noMessages": "Нет сообщений",
+    "chatlist.you": "Вы",
+    "chatlist.pinned": "Закреплён",
+
+    // Settings page
+    "settings.title": "Настройки",
+    "settings.unsavedChanges": "Есть несохранённые изменения профиля",
+    "settings.saveSuccess": "Сохранено",
+    "settings.saveSuccessDesc": "Изменения профиля сохранены.",
+    "settings.saveError": "Ошибка",
+    "settings.saveErrorDesc": "Не удалось сохранить изменения.",
+
+    // Settings — Profile
+    "settings.profile": "Мой профиль",
+    "settings.avatarUrl": "URL аватара",
+    "settings.avatarColor": "Цвет аватара",
+    "settings.name": "Имя",
+    "settings.username": "Никнейм",
+    "settings.bio": "О себе",
+    "settings.bioPlaceholder": "Расскажите о себе...",
+    "settings.phone": "Номер телефона",
+    "settings.phonePlaceholder": "+7 (999) 123-45-67",
+    "settings.phoneNote": "Виден только вашим контактам",
+    "settings.statusText": "Текстовый статус",
+    "settings.statusPlaceholder": "Что происходит?",
+    "settings.onlineStatus": "Статус присутствия",
+    "settings.copyLink": "Скопировать ссылку на профиль",
+    "settings.linkCopied": "Скопировано",
+    "settings.linkCopiedDesc": "Ссылка на профиль скопирована.",
+
+    // Status options
+    "status.online": "В сети",
+    "status.away": "Отошёл",
+    "status.offline": "Не в сети",
+    "status.online.desc": "Виден как активный",
+    "status.away.desc": "Временно недоступен",
+    "status.offline.desc": "Скрыть активность",
+
+    // Username change
+    "settings.usernameChange": "Изменить",
+    "settings.usernameSave": "Сохранить",
+    "settings.usernameCooldown": "через",
+    "settings.usernameNote": "Только латиница, цифры и _ · Смена раз в 7 дней",
+
+    // Settings — Appearance
+    "settings.appearance": "Оформление",
+    "settings.darkTheme": "Тёмная тема",
+    "settings.darkThemeDesc": "Тёмное оформление",
+    "settings.lightTheme": "Светлая тема",
+    "settings.lightThemeDesc": "Светлое оформление",
+    "settings.reduceAnimations": "Уменьшить анимации",
+    "settings.reduceAnimationsDesc": "Отключить сложные переходы",
+    "settings.fontSize": "Размер шрифта",
+    "settings.fontSizeDesc": "Размер текста в чатах",
+    "settings.fontSmall": "Маленький",
+    "settings.fontMedium": "Средний",
+    "settings.fontLarge": "Большой",
+    "settings.language": "Язык интерфейса",
+    "settings.languageDesc": "Выбор языка приложения",
+    "settings.languageSaved": "Язык сохранён",
+
+    // Settings — Notifications
+    "settings.notifications": "Уведомления",
+    "settings.notifyMessages": "Сообщения",
+    "settings.notifyMessagesDesc": "Уведомления о новых сообщениях",
+    "settings.notifyCalls": "Звонки",
+    "settings.notifyCallsDesc": "Уведомления о входящих звонках",
+    "settings.notifyGifts": "Подарки",
+    "settings.notifyGiftsDesc": "Уведомления о полученных подарках",
+    "settings.notifySounds": "Звуки",
+    "settings.notifySoundsDesc": "Звук при получении уведомлений",
+    "settings.notifyPreview": "Предпросмотр",
+    "settings.notifyPreviewOn": "Показывать текст сообщения",
+    "settings.notifyPreviewOff": "Скрывать текст в уведомлении",
+    "settings.notifyDisabled": "Уведомления о сообщениях отключены",
+    "notify.on": "Включено",
+    "notify.off": "Выключено",
+
+    // Settings — Privacy
+    "settings.privacy": "Конфиденциальность",
+    "settings.lastSeen": "Последний визит",
+    "settings.lastSeenDesc": "Кто видит время вашего последнего визита",
+    "settings.lastSeenEveryone": "Все",
+    "settings.lastSeenContacts": "Контакты",
+    "settings.lastSeenNobody": "Никто",
+    "settings.readReceipts": "Отчёты о прочтении",
+    "settings.readReceiptsDesc": "Показывать галочки прочтения",
+    "settings.readReceiptsOn": "Галочки прочтения включены",
+    "settings.readReceiptsOff": "Галочки прочтения скрыты",
+    "settings.profilePhoto": "Фото профиля",
+    "settings.profilePhotoOn": "Видно всем",
+    "settings.profilePhotoOff": "Скрыто от других",
+    "settings.profilePhotoSavedOn": "Фото профиля видно всем",
+    "settings.profilePhotoSavedOff": "Фото профиля скрыто",
+
+    // Settings — Security
+    "settings.security": "Безопасность",
+    "settings.changePassword": "Сменить пароль",
+    "settings.changePasswordDesc": "Обновить пароль аккаунта",
+    "settings.currentPassword": "Текущий пароль",
+    "settings.newPassword": "Новый пароль",
+    "settings.confirmPassword": "Подтвердите пароль",
+    "settings.passwordMinLength": "Минимум 6 символов",
+    "settings.passwordMismatch": "Пароли не совпадают",
+    "settings.passwordChanging": "Сохраняем...",
+    "settings.passwordChange": "Сменить пароль",
+    "settings.activeSessions": "Активные сессии",
+    "settings.endSessions": "Завершить другие →",
+    "settings.passwordChanged": "Готово",
+    "settings.passwordChangedDesc": "Пароль успешно изменён.",
+
+    // Settings — Storage
+    "settings.storage": "Хранилище и данные",
+    "settings.localCache": "Локальный кэш",
+    "settings.clearCache": "Очистить кэш приложения",
+    "settings.exportData": "Экспорт данных",
+    "settings.exportDataDesc": "Скачать профиль и статистику (JSON)",
+    "settings.cacheCleared": "Готово",
+    "settings.cacheClearedDesc": "Кэш очищен.",
+    "settings.exportReady": "Экспорт готов",
+    "settings.exportReadyDesc": "Данные загружены в файл.",
+
+    // Settings — About
+    "settings.about": "О приложении",
+    "settings.version": "Версия 2.0.0 · Сборка 2026",
+    "settings.accountInfo": "Аккаунт",
+    "settings.statusInfo": "Статус",
+    "settings.verified": "✅ Верифицирован",
+    "settings.notVerified": "Не верифицирован",
+
+    // Settings — Logout
+    "settings.logout": "Выйти из аккаунта",
+    "settings.logoutConfirmTitle": "Выход из аккаунта",
+    "settings.logoutConfirmDesc": "Вы уверены, что хотите выйти из Pulse?",
+
+    // Common
+    "common.save": "Сохранить",
+    "common.cancel": "Отмена",
+    "common.saved": "Сохранено!",
+    "common.saving": "Сохраняем...",
+    "common.error": "Ошибка",
+    "common.confirm": "Подтвердить",
+    "common.change": "Изменить",
+    "common.loading": "Загрузка...",
+    "common.yes": "Да",
+    "common.no": "Нет",
+    "common.close": "Закрыть",
+    "common.delete": "Удалить",
+    "common.edit": "Редактировать",
+    "common.send": "Отправить",
+    "common.search": "Поиск...",
+  },
+
+  en: {
+    // Navigation
+    "nav.chats": "Chats",
+    "nav.calls": "Calls",
+    "nav.feed": "Feed",
+    "nav.contacts": "Contacts",
+    "nav.gifts": "Gifts",
+    "nav.stories": "Stories",
+    "nav.wallet": "Wallet",
+    "nav.profile": "Profile",
+    "nav.settings": "Settings",
+    "nav.prime": "Pulse Prime",
+    "nav.admin": "Admin Panel",
+
+    // User menu dropdown
+    "menu.myProfile": "My Profile",
+    "menu.settings": "Settings",
+    "menu.administrator": "Administrator",
+    "menu.logout": "Log Out",
+
+    // Support
+    "support.unavailable": "Bot unavailable",
+    "support.unavailableDesc": "Support bot is temporarily unavailable.",
+
+    // Chat list
+    "chatlist.search": "Search chats...",
+    "chatlist.noChats": "No chats",
+    "chatlist.startConversation": "Start a conversation!",
+    "chatlist.noMessages": "No messages",
+    "chatlist.you": "You",
+    "chatlist.pinned": "Pinned",
+
+    // Settings page
+    "settings.title": "Settings",
+    "settings.unsavedChanges": "You have unsaved profile changes",
+    "settings.saveSuccess": "Saved",
+    "settings.saveSuccessDesc": "Profile changes saved.",
+    "settings.saveError": "Error",
+    "settings.saveErrorDesc": "Could not save changes.",
+
+    // Settings — Profile
+    "settings.profile": "My Profile",
+    "settings.avatarUrl": "Avatar URL",
+    "settings.avatarColor": "Avatar Color",
+    "settings.name": "Name",
+    "settings.username": "Username",
+    "settings.bio": "Bio",
+    "settings.bioPlaceholder": "Tell us about yourself...",
+    "settings.phone": "Phone Number",
+    "settings.phonePlaceholder": "+1 (555) 000-0000",
+    "settings.phoneNote": "Visible only to your contacts",
+    "settings.statusText": "Status Text",
+    "settings.statusPlaceholder": "What's happening?",
+    "settings.onlineStatus": "Online Status",
+    "settings.copyLink": "Copy profile link",
+    "settings.linkCopied": "Copied",
+    "settings.linkCopiedDesc": "Profile link copied.",
+
+    // Status options
+    "status.online": "Online",
+    "status.away": "Away",
+    "status.offline": "Offline",
+    "status.online.desc": "Visible as active",
+    "status.away.desc": "Temporarily unavailable",
+    "status.offline.desc": "Hide activity",
+
+    // Username change
+    "settings.usernameChange": "Change",
+    "settings.usernameSave": "Save",
+    "settings.usernameCooldown": "in",
+    "settings.usernameNote": "Letters, digits and _ only · Can change every 7 days",
+
+    // Settings — Appearance
+    "settings.appearance": "Appearance",
+    "settings.darkTheme": "Dark Theme",
+    "settings.darkThemeDesc": "Dark color scheme",
+    "settings.lightTheme": "Light Theme",
+    "settings.lightThemeDesc": "Light color scheme",
+    "settings.reduceAnimations": "Reduce Animations",
+    "settings.reduceAnimationsDesc": "Disable complex transitions",
+    "settings.fontSize": "Font Size",
+    "settings.fontSizeDesc": "Text size in chats",
+    "settings.fontSmall": "Small",
+    "settings.fontMedium": "Medium",
+    "settings.fontLarge": "Large",
+    "settings.language": "Interface Language",
+    "settings.languageDesc": "Choose app language",
+    "settings.languageSaved": "Language saved",
+
+    // Settings — Notifications
+    "settings.notifications": "Notifications",
+    "settings.notifyMessages": "Messages",
+    "settings.notifyMessagesDesc": "Notifications for new messages",
+    "settings.notifyCalls": "Calls",
+    "settings.notifyCallsDesc": "Notifications for incoming calls",
+    "settings.notifyGifts": "Gifts",
+    "settings.notifyGiftsDesc": "Notifications for received gifts",
+    "settings.notifySounds": "Sounds",
+    "settings.notifySoundsDesc": "Sound when receiving notifications",
+    "settings.notifyPreview": "Preview",
+    "settings.notifyPreviewOn": "Show message text",
+    "settings.notifyPreviewOff": "Hide text in notification",
+    "settings.notifyDisabled": "Message notifications are off",
+    "notify.on": "Enabled",
+    "notify.off": "Disabled",
+
+    // Settings — Privacy
+    "settings.privacy": "Privacy",
+    "settings.lastSeen": "Last Seen",
+    "settings.lastSeenDesc": "Who can see your last activity time",
+    "settings.lastSeenEveryone": "Everyone",
+    "settings.lastSeenContacts": "Contacts",
+    "settings.lastSeenNobody": "Nobody",
+    "settings.readReceipts": "Read Receipts",
+    "settings.readReceiptsDesc": "Show read checkmarks",
+    "settings.readReceiptsOn": "Read receipts enabled",
+    "settings.readReceiptsOff": "Read receipts hidden",
+    "settings.profilePhoto": "Profile Photo",
+    "settings.profilePhotoOn": "Visible to everyone",
+    "settings.profilePhotoOff": "Hidden from others",
+    "settings.profilePhotoSavedOn": "Profile photo visible to everyone",
+    "settings.profilePhotoSavedOff": "Profile photo hidden",
+
+    // Settings — Security
+    "settings.security": "Security",
+    "settings.changePassword": "Change Password",
+    "settings.changePasswordDesc": "Update your account password",
+    "settings.currentPassword": "Current Password",
+    "settings.newPassword": "New Password",
+    "settings.confirmPassword": "Confirm Password",
+    "settings.passwordMinLength": "At least 6 characters",
+    "settings.passwordMismatch": "Passwords don't match",
+    "settings.passwordChanging": "Saving...",
+    "settings.passwordChange": "Change Password",
+    "settings.activeSessions": "Active Sessions",
+    "settings.endSessions": "End others →",
+    "settings.passwordChanged": "Done",
+    "settings.passwordChangedDesc": "Password changed successfully.",
+
+    // Settings — Storage
+    "settings.storage": "Storage & Data",
+    "settings.localCache": "Local Cache",
+    "settings.clearCache": "Clear App Cache",
+    "settings.exportData": "Export Data",
+    "settings.exportDataDesc": "Download profile & stats (JSON)",
+    "settings.cacheCleared": "Done",
+    "settings.cacheClearedDesc": "Cache cleared.",
+    "settings.exportReady": "Export Ready",
+    "settings.exportReadyDesc": "Data downloaded to file.",
+
+    // Settings — About
+    "settings.about": "About",
+    "settings.version": "Version 2.0.0 · Build 2026",
+    "settings.accountInfo": "Account",
+    "settings.statusInfo": "Status",
+    "settings.verified": "✅ Verified",
+    "settings.notVerified": "Not verified",
+
+    // Settings — Logout
+    "settings.logout": "Log Out",
+    "settings.logoutConfirmTitle": "Log Out",
+    "settings.logoutConfirmDesc": "Are you sure you want to log out of Pulse?",
+
+    // Common
+    "common.save": "Save",
+    "common.cancel": "Cancel",
+    "common.saved": "Saved!",
+    "common.saving": "Saving...",
+    "common.error": "Error",
+    "common.confirm": "Confirm",
+    "common.change": "Change",
+    "common.loading": "Loading...",
+    "common.yes": "Yes",
+    "common.no": "No",
+    "common.close": "Close",
+    "common.delete": "Delete",
+    "common.edit": "Edit",
+    "common.send": "Send",
+    "common.search": "Search...",
+  },
+} as const;
+
+export type TranslationKey = keyof typeof translations.ru;
+export default translations;

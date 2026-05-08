@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAppContext } from "@/contexts/AppContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useGetMe, useGetChats } from "@workspace/api-client-react";
 import {
   DropdownMenu,
@@ -31,18 +32,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 const ADMIN_USER_IDS = [4];
-
-const NAV_ITEMS = [
-  { href: "/", icon: MessageCircle, label: "Чаты" },
-  { href: "/calls", icon: Phone, label: "Звонки" },
-  { href: "/feed", icon: Rss, label: "Лента" },
-  { href: "/contacts", icon: Users, label: "Контакты" },
-  { href: "/gifts", icon: Gift, label: "Подарки" },
-  { href: "/stories", icon: History, label: "Истории" },
-  { href: "/wallet", icon: Wallet, label: "Кошелёк" },
-  { href: "/profile", icon: UserCircle, label: "Профиль" },
-  { href: "/settings", icon: Settings, label: "Настройки" },
-];
 
 function VerifiedBadge() {
   return (
@@ -70,6 +59,7 @@ interface SidebarProps {
 export function Sidebar({ mobileSidebarOpen, onMobileClose, onMobileOpen }: SidebarProps) {
   const [location, navigate] = useLocation();
   const { logout } = useAppContext();
+  const { t } = useLanguage();
   const { data: me } = useGetMe();
   const { data: chats } = useGetChats();
   const { toast } = useToast();
@@ -93,6 +83,18 @@ export function Sidebar({ mobileSidebarOpen, onMobileClose, onMobileOpen }: Side
   const initial = me?.displayName?.[0]?.toUpperCase() || "U";
   const isPremium = (me as any)?.hasPrime ?? false;
 
+  const NAV_ITEMS = [
+    { href: "/",         icon: MessageCircle, label: t("nav.chats") },
+    { href: "/calls",    icon: Phone,         label: t("nav.calls") },
+    { href: "/feed",     icon: Rss,           label: t("nav.feed") },
+    { href: "/contacts", icon: Users,         label: t("nav.contacts") },
+    { href: "/gifts",    icon: Gift,          label: t("nav.gifts") },
+    { href: "/stories",  icon: History,       label: t("nav.stories") },
+    { href: "/wallet",   icon: Wallet,        label: t("nav.wallet") },
+    { href: "/profile",  icon: UserCircle,    label: t("nav.profile") },
+    { href: "/settings", icon: Settings,      label: t("nav.settings") },
+  ];
+
   const openSupportChat = async () => {
     const uid = localStorage.getItem("pulse-user-id");
     if (!uid) return;
@@ -103,7 +105,7 @@ export function Sidebar({ mobileSidebarOpen, onMobileClose, onMobileOpen }: Side
         const aiRes = await fetch("/api/users/search?q=deepseek_ai", { headers: { "x-user-id": uid } });
         botUsers = aiRes.ok ? await aiRes.json() : [];
       }
-      if (!botUsers.length) { toast({ variant: "destructive", title: "Бот недоступен", description: "Бот поддержки временно недоступен." }); return; }
+      if (!botUsers.length) { toast({ variant: "destructive", title: t("support.unavailable"), description: t("support.unavailableDesc") }); return; }
       const bot = botUsers[0];
       const chatRes = await fetch("/api/chats/direct", {
         method: "POST",
@@ -186,7 +188,7 @@ export function Sidebar({ mobileSidebarOpen, onMobileClose, onMobileOpen }: Side
           )}
         >
           <Crown size={22} className="transition-transform group-hover:scale-110 shrink-0" />
-          <span className="font-medium truncate">Pulse Prime</span>
+          <span className="font-medium truncate">{t("nav.prime")}</span>
         </Link>
 
         {isAdmin && (
@@ -201,7 +203,7 @@ export function Sidebar({ mobileSidebarOpen, onMobileClose, onMobileOpen }: Side
             )}
           >
             <Shield size={22} className="transition-transform group-hover:scale-110 shrink-0" />
-            <span className="font-medium truncate">Админ-панель</span>
+            <span className="font-medium truncate">{t("nav.admin")}</span>
           </Link>
         )}
       </nav>
@@ -250,13 +252,13 @@ export function Sidebar({ mobileSidebarOpen, onMobileClose, onMobileOpen }: Side
               <DropdownMenuItem asChild>
                 <Link href="/profile" onClick={onMobileClose} className="flex items-center w-full cursor-pointer">
                   <UserCircle size={15} className="mr-2 text-primary" />
-                  Мой профиль
+                  {t("menu.myProfile")}
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link href="/settings" onClick={onMobileClose} className="flex items-center w-full cursor-pointer">
                   <Settings size={15} className="mr-2 text-muted-foreground" />
-                  Настройки
+                  {t("menu.settings")}
                 </Link>
               </DropdownMenuItem>
               {isAdmin && (
@@ -265,7 +267,7 @@ export function Sidebar({ mobileSidebarOpen, onMobileClose, onMobileOpen }: Side
                   <DropdownMenuItem asChild>
                     <Link href="/admin" onClick={onMobileClose} className="flex items-center w-full cursor-pointer text-purple-400 focus:text-purple-400">
                       <Shield size={15} className="mr-2" />
-                      Администратор
+                      {t("menu.administrator")}
                     </Link>
                   </DropdownMenuItem>
                 </>
@@ -276,7 +278,7 @@ export function Sidebar({ mobileSidebarOpen, onMobileClose, onMobileOpen }: Side
                 className="text-destructive focus:text-destructive"
               >
                 <LogOut size={15} className="mr-2" />
-                Выйти
+                {t("menu.logout")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -287,7 +289,7 @@ export function Sidebar({ mobileSidebarOpen, onMobileClose, onMobileOpen }: Side
 
   return (
     <>
-      {/* Mobile hamburger button - shown when sidebar is closed */}
+      {/* Mobile hamburger button */}
       <button
         onClick={onMobileOpen}
         className={cn(
