@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, usersTable } from "@workspace/db";
-import { eq, like, or } from "drizzle-orm";
+import { eq, like, or, sql } from "drizzle-orm";
 import { UpdateMeBody } from "@workspace/api-zod";
 
 const router = Router();
@@ -9,7 +9,8 @@ router.get("/users/me", async (req, res) => {
   try {
     const user = await db.query.usersTable.findFirst({ where: eq(usersTable.id, 1) });
     if (!user) return res.status(404).json({ error: "User not found" });
-    res.json(user);
+    const [balRow] = await db.execute(sql`SELECT balance FROM users WHERE id = 1`);
+    res.json({ ...user, balance: Number((balRow as any)?.balance ?? 0) });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });
@@ -20,7 +21,8 @@ router.put("/users/me", async (req, res) => {
   try {
     const body = UpdateMeBody.parse(req.body);
     const [updated] = await db.update(usersTable).set(body).where(eq(usersTable.id, 1)).returning();
-    res.json(updated);
+    const [balRow] = await db.execute(sql`SELECT balance FROM users WHERE id = 1`);
+    res.json({ ...updated, balance: Number((balRow as any)?.balance ?? 0) });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });
@@ -55,9 +57,35 @@ router.get("/users/:userId", async (req, res) => {
   }
 });
 
+router.get("/wallet", async (req, res) => {
+  try {
+    const rows = await db.execute(sql`SELECT balance FROM users WHERE id = 1`);
+    const balance = rows.rows[0] ? Number((rows.rows[0] as any).balance) : 0;
+    const address = `PLS${String(1000000001)}SPARK`;
+    res.json({ balance, address, currency: "SPARK", symbol: "⚡" });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.post("/wallet/earn", async (req, res) => {
+  try {
+    const amount = Number(req.body.amount);
+    if (!amount || amount <= 0) return res.status(400).json({ error: "Invalid amount" });
+    await db.execute(sql`UPDATE users SET balance = balance + ${amount} WHERE id = 1`);
+    const rows = await db.execute(sql`SELECT balance FROM users WHERE id = 1`);
+    const balance = Number((rows.rows[0] as any).balance);
+    res.json({ balance });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 router.get("/stats/me", async (req, res) => {
   try {
-    const { messagesTable, callsTable, giftsTable, chatsTable, chatMembersTable, contactsTable } = await import("@workspace/db");
+    const { messagesTable, callsTable, giftsTable, chatMembersTable, contactsTable } = await import("@workspace/db");
     const { count, sum } = await import("drizzle-orm");
 
     const [msgCount] = await db.select({ count: count() }).from(messagesTable).where(eq(messagesTable.senderId, 1));

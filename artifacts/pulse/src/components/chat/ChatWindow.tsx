@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from "react";
 import { useGetChatById, useGetMessages, getGetMessagesQueryKey, useInitiateCall, useMarkChatAsRead, useUpdateChat, getGetChatsQueryKey } from "@workspace/api-client-react";
-import { Phone, Video, MoreVertical, ArrowLeft, Search, BellOff, Bell, Pin, PinOff, User, Trash2 } from "lucide-react";
+import { Phone, Video, MoreVertical, ArrowLeft, Search, BellOff, Bell, Pin, PinOff, User, Trash2, X } from "lucide-react";
 import { useAppContext } from "@/contexts/AppContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MessageBubble } from "./MessageBubble";
@@ -14,6 +14,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface ChatWindowProps {
   chatId: number;
@@ -28,8 +38,12 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
   const initiateCall = useInitiateCall();
   const markAsRead = useMarkChatAsRead();
   const updateChat = useUpdateChat();
-  
+
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showSearch, setShowSearch] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -45,6 +59,8 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
         }
       });
     }
+    setSearchQuery("");
+    setShowSearch(false);
   }, [chatId]);
 
   const handleStartCall = (type: "audio" | "video") => {
@@ -73,11 +89,27 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
     });
   };
 
+  const handleDeleteChat = async () => {
+    setIsDeleting(true);
+    try {
+      await fetch(`/api/chats/${chatId}`, { method: "DELETE" });
+      queryClient.invalidateQueries({ queryKey: getGetChatsQueryKey() });
+      setSelectedChatId(null);
+    } catch {}
+    setIsDeleting(false);
+    setShowDeleteDialog(false);
+  };
+
   const openProfile = () => {
     if (chat?.type === "direct" && chat.otherUser?.id) {
       setLocation(`/user/${chat.otherUser.id}`);
     }
   };
+
+  const filteredMessages = messages?.slice().reverse().filter(msg => {
+    if (!searchQuery.trim()) return true;
+    return msg.text?.toLowerCase().includes(searchQuery.toLowerCase());
+  });
 
   if (isChatLoading) {
     return <div className="flex-1 flex flex-col items-center justify-center"><Skeleton className="w-32 h-32 rounded-full mb-4" /><Skeleton className="h-6 w-48" /></div>;
@@ -97,7 +129,7 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
           <button className="md:hidden p-2 -ml-2 text-muted-foreground hover:text-foreground shrink-0" onClick={() => setSelectedChatId(null)}>
             <ArrowLeft size={20} />
           </button>
-          
+
           <button
             onClick={openProfile}
             disabled={chat.type !== "direct"}
@@ -110,7 +142,7 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
               displayName[0].toUpperCase()
             )}
           </button>
-          
+
           <button
             onClick={openProfile}
             disabled={chat.type !== "direct"}
@@ -128,7 +160,7 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
             <p className="text-xs text-muted-foreground truncate">
               {chat.type === "direct" && chat.otherUser ? (
                 <span className={chat.otherUser.status === "online" ? "text-green-500" : ""}>
-                  {chat.otherUser.status === "online" ? "online" : chat.otherUser.statusText || chat.otherUser.status}
+                  {chat.otherUser.status === "online" ? "online" : (chat.otherUser as any).statusText || chat.otherUser.status}
                 </span>
               ) : `${chat.members?.length || 0} members`}
             </p>
@@ -156,7 +188,7 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
               </button>
             </>
           )}
-          
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="p-2 hover:bg-secondary rounded-full transition-colors hover:text-primary">
@@ -170,16 +202,16 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
                   View Profile
                 </DropdownMenuItem>
               )}
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => { setShowSearch(v => !v); }}>
                 <Search size={16} className="mr-2 text-muted-foreground" />
                 Search Messages
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleToggleMute}>
                 {chat.isMuted ? (
-                  <><Bell size={16} className="mr-2 text-green-500" />Unmute</>
+                  <><Bell size={16} className="mr-2 text-green-500" />Unmute Notifications</>
                 ) : (
-                  <><BellOff size={16} className="mr-2 text-orange-500" />Mute</>
+                  <><BellOff size={16} className="mr-2 text-orange-500" />Mute Notifications</>
                 )}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleTogglePin}>
@@ -190,17 +222,42 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
                 )}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-destructive focus:text-destructive">
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive"
+                onClick={() => setShowDeleteDialog(true)}
+              >
                 <Trash2 size={16} className="mr-2" />
-                Clear Chat
+                Delete Chat
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </header>
 
+      {/* Search Bar */}
+      {showSearch && (
+        <div className="px-4 py-2 border-b border-border bg-card/60 backdrop-blur-md flex items-center gap-2 shrink-0">
+          <Search size={16} className="text-muted-foreground shrink-0" />
+          <input
+            autoFocus
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            placeholder="Search messages..."
+            className="flex-1 bg-transparent border-none outline-none text-sm placeholder:text-muted-foreground"
+          />
+          {searchQuery && (
+            <button onClick={() => setSearchQuery("")} className="text-muted-foreground hover:text-foreground">
+              <X size={16} />
+            </button>
+          )}
+          <button onClick={() => { setShowSearch(false); setSearchQuery(""); }} className="text-muted-foreground hover:text-foreground">
+            <X size={18} />
+          </button>
+        </div>
+      )}
+
       {/* Messages */}
-      <div 
+      <div
         ref={scrollRef}
         className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin bg-gradient-to-b from-background to-card/50"
       >
@@ -210,12 +267,12 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
             <Skeleton className="w-1/2 h-16 rounded-2xl rounded-tr-sm ml-auto" />
             <Skeleton className="w-3/4 h-24 rounded-2xl rounded-tl-sm" />
           </div>
-        ) : messages?.length === 0 ? (
+        ) : filteredMessages?.length === 0 ? (
           <div className="h-full flex items-center justify-center text-muted-foreground text-sm">
-            No messages yet. Send a message to start the conversation!
+            {searchQuery ? "No messages match your search" : "No messages yet. Send a message to start the conversation!"}
           </div>
         ) : (
-          messages?.slice().reverse().map((message) => (
+          filteredMessages?.map((message) => (
             <MessageBubble key={message.id} message={message} />
           ))
         )}
@@ -225,6 +282,28 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
       <div className="p-4 bg-card/80 backdrop-blur-md border-t border-border z-10 shrink-0">
         <ChatInput chatId={chatId} />
       </div>
+
+      {/* Delete Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Chat</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this chat and all its messages. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteChat}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

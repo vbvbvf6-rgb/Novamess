@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useGetContacts, useSearchUsers, useAddContact, useRemoveContact, getGetContactsQueryKey } from "@workspace/api-client-react";
+import { useGetContacts, useSearchUsers, useAddContact, useRemoveContact, getGetContactsQueryKey, getGetChatsQueryKey } from "@workspace/api-client-react";
 import { Search, UserPlus, UserMinus, MessageSquare } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -11,10 +11,10 @@ export default function Contacts() {
   const [searchQuery, setSearchQuery] = useState("");
   const { data: contacts, isLoading: contactsLoading } = useGetContacts();
   const { data: searchResults, isLoading: searchLoading } = useSearchUsers(
-    { q: searchQuery }, 
+    { q: searchQuery },
     { query: { enabled: searchQuery.length > 2 } }
   );
-  
+
   const addContact = useAddContact();
   const removeContact = useRemoveContact();
   const queryClient = useQueryClient();
@@ -24,29 +24,33 @@ export default function Contacts() {
   const handleAddContact = (userId: number) => {
     addContact.mutate(
       { data: { userId } },
-      {
-        onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: getGetContactsQueryKey() });
-        }
-      }
+      { onSuccess: () => queryClient.invalidateQueries({ queryKey: getGetContactsQueryKey() }) }
     );
   };
 
   const handleRemoveContact = (userId: number) => {
     removeContact.mutate(
       { contactId: userId },
-      {
-        onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: getGetContactsQueryKey() });
-        }
-      }
+      { onSuccess: () => queryClient.invalidateQueries({ queryKey: getGetContactsQueryKey() }) }
     );
   };
 
-  const handleMessage = (userId: number) => {
-    // In a real app, this would find or create a chat with this user
-    // For now, we'll just navigate to home
-    setLocation("/");
+  const handleMessage = async (userId: number) => {
+    try {
+      const res = await fetch("/api/chats/direct", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId }),
+      });
+      if (res.ok) {
+        const chat = await res.json();
+        queryClient.invalidateQueries({ queryKey: getGetChatsQueryKey() });
+        setSelectedChatId(chat.id);
+        setLocation("/");
+      }
+    } catch {
+      setLocation("/");
+    }
   };
 
   const displayUsers = searchQuery.length > 2 ? searchResults : contacts;
@@ -61,8 +65,8 @@ export default function Contacts() {
       <div className="p-4 border-b border-border bg-background z-10 shrink-0">
         <div className="relative max-w-3xl mx-auto w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
-          <Input 
-            placeholder="Search contacts or users..." 
+          <Input
+            placeholder="Search contacts or users..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-9 bg-card border-border focus-visible:ring-primary h-12 rounded-xl"
@@ -97,44 +101,40 @@ export default function Contacts() {
           <div className="space-y-3">
             {displayUsers?.map((user) => {
               const isContact = contacts?.some(c => c.id === user.id) ?? false;
-              
               return (
                 <div key={user.id} className="flex items-center gap-4 p-4 rounded-xl border border-border bg-card/50 hover:bg-card transition-colors group">
                   <button
                     onClick={() => setLocation(`/user/${user.id}`)}
                     className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg overflow-hidden shrink-0 relative hover:opacity-90 transition-opacity"
-                    style={{ backgroundColor: user.avatarColor || '#333' }}
+                    style={{ backgroundColor: user.avatarColor || "#333" }}
                   >
                     {user.avatarUrl ? (
                       <img src={user.avatarUrl} alt={user.displayName} className="w-full h-full object-cover" />
                     ) : (
                       user.displayName[0].toUpperCase()
                     )}
-                    <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-card ${
-                      user.status === 'online' ? 'bg-green-500' : 
-                      user.status === 'away' ? 'bg-yellow-500' : 'bg-gray-500'
-                    }`} />
+                    <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-card ${user.status === "online" ? "bg-green-500" : user.status === "away" ? "bg-yellow-500" : "bg-gray-500"}`} />
                   </button>
-                  
+
                   <button
                     onClick={() => setLocation(`/user/${user.id}`)}
                     className="flex-1 min-w-0 text-left"
                   >
                     <h3 className="font-semibold text-foreground truncate hover:text-primary transition-colors">{user.displayName}</h3>
-                    <p className="text-sm text-muted-foreground truncate">@{user.username} {user.bio ? `• ${user.bio}` : ''}</p>
+                    <p className="text-sm text-muted-foreground truncate">@{user.username} {user.bio ? `• ${user.bio}` : ""}</p>
                   </button>
 
                   <div className="flex items-center gap-2">
-                    <button 
+                    <button
                       onClick={() => handleMessage(user.id)}
                       className="w-10 h-10 rounded-full flex items-center justify-center text-primary hover:bg-primary/10 transition-colors"
                       title="Send message"
                     >
                       <MessageSquare size={18} />
                     </button>
-                    
+
                     {searchQuery.length > 2 && !isContact ? (
-                      <button 
+                      <button
                         onClick={() => handleAddContact(user.id)}
                         disabled={addContact.isPending}
                         className="w-10 h-10 rounded-full flex items-center justify-center text-muted-foreground hover:text-green-500 hover:bg-green-500/10 transition-colors"
@@ -142,8 +142,8 @@ export default function Contacts() {
                       >
                         <UserPlus size={18} />
                       </button>
-                    ) : (
-                      <button 
+                    ) : isContact ? (
+                      <button
                         onClick={() => handleRemoveContact(user.id)}
                         disabled={removeContact.isPending}
                         className="w-10 h-10 rounded-full flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
@@ -151,7 +151,7 @@ export default function Contacts() {
                       >
                         <UserMinus size={18} />
                       </button>
-                    )}
+                    ) : null}
                   </div>
                 </div>
               );

@@ -9,6 +9,7 @@ import {
   useAddContact,
   useRemoveContact,
   getGetContactsQueryKey,
+  getGetChatsQueryKey,
 } from "@workspace/api-client-react";
 import {
   ArrowLeft,
@@ -22,6 +23,7 @@ import {
   CheckCircle2,
   Clock,
   User,
+  BadgeCheck,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -43,9 +45,7 @@ const STATUS_CONFIG: Record<string, { color: string; label: string; icon: React.
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-start gap-4 px-5 py-3.5 hover:bg-white/5 transition-colors rounded-xl">
-      <div className="w-36 shrink-0 text-xs font-semibold text-muted-foreground uppercase tracking-wider pt-0.5">
-        {label}
-      </div>
+      <div className="w-36 shrink-0 text-xs font-semibold text-muted-foreground uppercase tracking-wider pt-0.5">{label}</div>
       <div className="text-sm text-foreground break-all">{value}</div>
     </div>
   );
@@ -67,6 +67,7 @@ export default function UserProfile() {
   const [, setLocation] = useLocation();
   const { setSelectedChatId } = useAppContext();
   const queryClient = useQueryClient();
+  const [isStartingChat, setIsStartingChat] = useState(false);
 
   const { data: user, isLoading } = useGetUserById(userId, { query: { enabled: !!userId } });
   const { data: contacts } = useGetContacts();
@@ -102,16 +103,26 @@ export default function UserProfile() {
     );
   };
 
-  const handleMessage = () => {
-    const directChat = chats?.find(
-      (chat) => chat.type === "direct" && chat.otherUser?.id === userId
-    );
-    if (directChat) {
-      setSelectedChatId(directChat.id);
-      setLocation("/");
-    } else {
+  const handleMessage = async () => {
+    setIsStartingChat(true);
+    try {
+      const res = await fetch("/api/chats/direct", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId }),
+      });
+      if (res.ok) {
+        const chat = await res.json();
+        queryClient.invalidateQueries({ queryKey: getGetChatsQueryKey() });
+        setSelectedChatId(chat.id);
+        setLocation("/");
+      } else {
+        setLocation("/");
+      }
+    } catch {
       setLocation("/");
     }
+    setIsStartingChat(false);
   };
 
   const statusCfg = STATUS_CONFIG[user?.status || "offline"] || STATUS_CONFIG.offline;
@@ -120,7 +131,7 @@ export default function UserProfile() {
     return (
       <div className="flex-1 flex flex-col h-full bg-background overflow-hidden">
         <header className="h-16 border-b border-border flex items-center px-4 gap-3 bg-card/80 backdrop-blur-md shrink-0">
-          <button onClick={() => setLocation("/")} className="p-2 rounded-full hover:bg-secondary text-muted-foreground transition-colors">
+          <button onClick={() => window.history.back()} className="p-2 rounded-full hover:bg-secondary text-muted-foreground transition-colors">
             <ArrowLeft size={20} />
           </button>
           <Skeleton className="h-5 w-32" />
@@ -132,7 +143,6 @@ export default function UserProfile() {
             <Skeleton className="h-4 w-24" />
           </div>
           <Skeleton className="h-48 rounded-3xl" />
-          <Skeleton className="h-32 rounded-3xl" />
         </div>
       </div>
     );
@@ -143,7 +153,7 @@ export default function UserProfile() {
       <div className="flex-1 flex flex-col items-center justify-center gap-4 text-muted-foreground">
         <User size={48} className="opacity-20" />
         <p className="font-medium">User not found</p>
-        <button onClick={() => setLocation("/")} className="text-primary text-sm hover:underline">
+        <button onClick={() => window.history.back()} className="text-primary text-sm hover:underline">
           Go back
         </button>
       </div>
@@ -152,7 +162,6 @@ export default function UserProfile() {
 
   return (
     <div className="flex-1 flex flex-col h-full bg-background overflow-hidden">
-      {/* Header */}
       <header className="h-16 border-b border-border flex items-center px-4 gap-3 bg-card/80 backdrop-blur-md shrink-0 z-10">
         <button
           onClick={() => window.history.back()}
@@ -161,7 +170,15 @@ export default function UserProfile() {
           <ArrowLeft size={20} />
         </button>
         <div className="flex-1 min-w-0">
-          <h1 className="font-bold text-base truncate">{user.displayName}</h1>
+          <div className="flex items-center gap-1.5">
+            <h1 className="font-bold text-base truncate">{user.displayName}</h1>
+            {(user as any).isVerified && (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="shrink-0">
+                <circle cx="12" cy="12" r="12" fill="#00BCD4"/>
+                <path d="M7 12l3.5 3.5L17 8" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            )}
+          </div>
           <p className="text-xs text-muted-foreground">{isMe ? "your profile" : statusCfg.label}</p>
         </div>
         {!isMe && (
@@ -173,10 +190,7 @@ export default function UserProfile() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
               {isContact ? (
-                <DropdownMenuItem
-                  onClick={handleRemoveContact}
-                  className="text-destructive focus:text-destructive"
-                >
+                <DropdownMenuItem onClick={handleRemoveContact} className="text-destructive focus:text-destructive">
                   <UserMinus size={15} className="mr-2" /> Remove contact
                 </DropdownMenuItem>
               ) : (
@@ -192,34 +206,21 @@ export default function UserProfile() {
       <div className="flex-1 overflow-y-auto scrollbar-thin">
         <div className="max-w-2xl mx-auto w-full p-4 md:p-6 space-y-4">
 
-          {/* Hero card */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="rounded-3xl overflow-hidden bg-card border border-border"
           >
-            {/* Gradient banner */}
             <div
               className="h-24 w-full relative"
-              style={{
-                background: `linear-gradient(135deg, ${user.avatarColor || "#3B82F6"}66, ${user.avatarColor || "#3B82F6"}22)`,
-              }}
+              style={{ background: `linear-gradient(135deg, ${user.avatarColor || "#3B82F6"}66, ${user.avatarColor || "#3B82F6"}22)` }}
             >
-              <div
-                className="absolute inset-0 opacity-20"
-                style={{
-                  backgroundImage: `radial-gradient(circle at 20% 80%, ${user.avatarColor}88 0%, transparent 60%), radial-gradient(circle at 80% 20%, ${user.avatarColor}55 0%, transparent 50%)`,
-                }}
-              />
+              <div className="absolute inset-0 opacity-20" style={{ backgroundImage: `radial-gradient(circle at 20% 80%, ${user.avatarColor}88 0%, transparent 60%)` }} />
             </div>
 
-            {/* Avatar */}
             <div className="px-6 pb-6">
               <div className="flex items-end justify-between -mt-14 mb-4">
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  className="relative"
-                >
+                <motion.div whileHover={{ scale: 1.05 }} className="relative">
                   <div
                     className="w-28 h-28 rounded-full flex items-center justify-center text-white text-4xl font-black overflow-hidden border-4 border-card shadow-xl"
                     style={{ backgroundColor: user.avatarColor || "#3B82F6" }}
@@ -231,20 +232,18 @@ export default function UserProfile() {
                     )}
                   </div>
                   {!isMe && (
-                    <div
-                      className={`absolute bottom-1 right-1 w-5 h-5 rounded-full border-[3px] border-card ${statusCfg.color}`}
-                    />
+                    <div className={`absolute bottom-1 right-1 w-5 h-5 rounded-full border-[3px] border-card ${statusCfg.color}`} />
                   )}
                 </motion.div>
 
-                {/* Action buttons */}
                 {!isMe && (
                   <div className="flex items-center gap-2 pb-1">
                     <motion.button
                       whileHover={{ scale: 1.08 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={handleMessage}
-                      className="w-11 h-11 rounded-full bg-primary flex items-center justify-center text-primary-foreground shadow-[0_0_15px_rgba(0,188,212,0.3)] hover:shadow-[0_0_25px_rgba(0,188,212,0.5)] transition-shadow"
+                      disabled={isStartingChat}
+                      className="w-11 h-11 rounded-full bg-primary flex items-center justify-center text-primary-foreground shadow-[0_0_15px_rgba(0,188,212,0.3)] hover:shadow-[0_0_25px_rgba(0,188,212,0.5)] transition-shadow disabled:opacity-60"
                       title="Send message"
                     >
                       <MessageSquare size={18} />
@@ -271,7 +270,6 @@ export default function UserProfile() {
                         whileTap={{ scale: 0.95 }}
                         onClick={handleRemoveContact}
                         className="w-11 h-11 rounded-full bg-destructive/10 flex items-center justify-center text-destructive hover:bg-destructive/20 transition-colors"
-                        title="Remove contact"
                       >
                         <UserMinus size={18} />
                       </motion.button>
@@ -282,7 +280,6 @@ export default function UserProfile() {
                         onClick={handleAddContact}
                         disabled={addContact.isPending}
                         className="w-11 h-11 rounded-full bg-green-500/10 flex items-center justify-center text-green-400 hover:bg-green-500/20 transition-colors"
-                        title="Add to contacts"
                       >
                         <UserPlus size={18} />
                       </motion.button>
@@ -294,26 +291,25 @@ export default function UserProfile() {
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
                   <h2 className="text-2xl font-black">{user.displayName}</h2>
+                  {(user as any).isVerified && (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="12" r="12" fill="#00BCD4"/>
+                      <path d="M7 12l3.5 3.5L17 8" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  )}
                   {isContact && (
-                    <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/30">
-                      Contact
-                    </span>
+                    <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/30">Contact</span>
                   )}
                   {isMe && (
-                    <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-green-500/15 text-green-400 border border-green-500/30">
-                      You
-                    </span>
+                    <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-green-500/15 text-green-400 border border-green-500/30">You</span>
                   )}
                 </div>
                 <p className="text-muted-foreground text-sm mt-0.5">@{user.username}</p>
-                {user.bio && (
-                  <p className="text-sm mt-3 leading-relaxed text-foreground/80">{user.bio}</p>
-                )}
+                {user.bio && <p className="text-sm mt-3 leading-relaxed text-foreground/80">{user.bio}</p>}
               </div>
             </div>
           </motion.div>
 
-          {/* Info section */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -328,7 +324,6 @@ export default function UserProfile() {
             {!isMe && <InfoRow label="Status" value={statusCfg.label} />}
           </motion.div>
 
-          {/* Stats */}
           {!isMe && (commonChats.length > 0 || giftsToUser.length > 0 || giftsFromUser.length > 0) && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -336,36 +331,15 @@ export default function UserProfile() {
               transition={{ delay: 0.1 }}
               className="rounded-3xl bg-card border border-border p-4"
             >
-              <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-3 px-1">
-                With you
-              </h3>
+              <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-3 px-1">With you</h3>
               <div className="flex gap-3">
-                {commonChats.length > 0 && (
-                  <StatCard
-                    value={commonChats.length}
-                    label="Common chats"
-                    icon={<MessageSquare size={18} />}
-                  />
-                )}
-                {giftsToUser.length > 0 && (
-                  <StatCard
-                    value={giftsToUser.length}
-                    label="Gifts sent"
-                    icon={<Gift size={18} />}
-                  />
-                )}
-                {giftsFromUser.length > 0 && (
-                  <StatCard
-                    value={giftsFromUser.length}
-                    label="Gifts received"
-                    icon={<Gift size={18} />}
-                  />
-                )}
+                {commonChats.length > 0 && <StatCard value={commonChats.length} label="Common chats" icon={<MessageSquare size={18} />} />}
+                {giftsToUser.length > 0 && <StatCard value={giftsToUser.length} label="Gifts sent" icon={<Gift size={18} />} />}
+                {giftsFromUser.length > 0 && <StatCard value={giftsFromUser.length} label="Gifts received" icon={<Gift size={18} />} />}
               </div>
             </motion.div>
           )}
 
-          {/* Common chats */}
           {!isMe && commonChats.length > 0 && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -382,10 +356,7 @@ export default function UserProfile() {
                 {commonChats.map((chat) => (
                   <button
                     key={chat.id}
-                    onClick={() => {
-                      setSelectedChatId(chat.id);
-                      setLocation("/");
-                    }}
+                    onClick={() => { setSelectedChatId(chat.id); setLocation("/"); }}
                     className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 transition-colors text-left"
                   >
                     <div
@@ -405,7 +376,6 @@ export default function UserProfile() {
             </motion.div>
           )}
 
-          {/* Gifts exchanged */}
           {!isMe && (giftsToUser.length > 0 || giftsFromUser.length > 0) && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -414,9 +384,7 @@ export default function UserProfile() {
               className="rounded-3xl bg-card border border-border overflow-hidden"
             >
               <div className="px-5 pt-4 pb-2">
-                <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground">
-                  Gifts exchanged
-                </h3>
+                <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground">Gifts exchanged</h3>
               </div>
               <div className="px-4 pb-4 flex flex-wrap gap-2">
                 {[...giftsToUser, ...giftsFromUser].slice(0, 12).map((gift) => (
@@ -432,7 +400,6 @@ export default function UserProfile() {
               </div>
             </motion.div>
           )}
-
         </div>
       </div>
     </div>

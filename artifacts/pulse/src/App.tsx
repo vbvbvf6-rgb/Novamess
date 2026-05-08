@@ -15,6 +15,7 @@ import Profile from "@/pages/Profile";
 import Settings from "@/pages/Settings";
 import UserProfile from "@/pages/UserProfile";
 import Feed from "@/pages/Feed";
+import Wallet from "@/pages/Wallet";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +29,7 @@ function Router() {
         <Route path="/contacts" component={Contacts} />
         <Route path="/gifts" component={Gifts} />
         <Route path="/stories" component={Stories} />
+        <Route path="/wallet" component={Wallet} />
         <Route path="/profile" component={Profile} />
         <Route path="/settings" component={Settings} />
         <Route path="/user/:userId" component={UserProfile} />

@@ -3,11 +3,21 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Settings as SettingsIcon, Bell, Moon, Lock, Shield, Smartphone, Save, Sun, Palette, MessageSquare, Database, Edit3, CheckCircle } from "lucide-react";
+import { Settings as SettingsIcon, Bell, Moon, Lock, Shield, Smartphone, Save, Sun, Palette, MessageSquare, Database, Edit3, CheckCircle, LogOut } from "lucide-react";
 import { useGetMe, useUpdateMe } from "@workspace/api-client-react";
 import { useAppContext } from "@/contexts/AppContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const AVATAR_COLORS = [
   "#3B82F6", "#EC4899", "#10B981", "#F59E0B", "#8B5CF6",
@@ -39,6 +49,7 @@ export default function Settings() {
   const [avatarColor, setAvatarColor] = useState("#3B82F6");
   const [hasChanges, setHasChanges] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -77,6 +88,12 @@ export default function Settings() {
     );
   };
 
+  const handleLogout = () => {
+    localStorage.clear();
+    sessionStorage.clear();
+    window.location.href = "/";
+  };
+
   return (
     <div className="flex-1 flex flex-col h-full bg-background overflow-hidden relative">
       <header className="h-16 border-b border-border flex items-center px-6 justify-between bg-card/80 backdrop-blur-md z-10 shrink-0">
@@ -103,7 +120,6 @@ export default function Settings() {
             <Edit3 size={14} /> My Profile
           </h2>
           <div className="bg-card border border-border rounded-2xl overflow-hidden divide-y divide-border">
-            {/* Avatar Preview + Color Picker */}
             <div className="p-4">
               <div className="flex items-center gap-4 mb-4">
                 <div
@@ -124,9 +140,7 @@ export default function Settings() {
                     <button
                       key={color}
                       onClick={() => setAvatarColor(color)}
-                      className={`w-8 h-8 rounded-full transition-transform hover:scale-110 ${
-                        avatarColor === color ? "ring-2 ring-offset-2 ring-offset-card ring-white scale-110" : ""
-                      }`}
+                      className={`w-8 h-8 rounded-full transition-transform hover:scale-110 ${avatarColor === color ? "ring-2 ring-offset-2 ring-offset-card ring-white scale-110" : ""}`}
                       style={{ backgroundColor: color }}
                     />
                   ))}
@@ -158,7 +172,6 @@ export default function Settings() {
               </div>
             </div>
 
-            {/* Status */}
             <div className="p-4">
               <Label className="text-sm font-medium mb-2 block">Status</Label>
               <Input
@@ -172,11 +185,7 @@ export default function Settings() {
                   <button
                     key={preset.text}
                     onClick={() => setStatusText(`${preset.emoji} ${preset.text}`)}
-                    className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
-                      statusText === `${preset.emoji} ${preset.text}`
-                        ? "bg-primary/10 border-primary text-primary"
-                        : "border-border hover:border-primary/50 hover:bg-secondary"
-                    }`}
+                    className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${statusText === `${preset.emoji} ${preset.text}` ? "bg-primary/10 border-primary text-primary" : "border-border hover:border-primary/50 hover:bg-secondary"}`}
                   >
                     {preset.emoji} {preset.text}
                   </button>
@@ -208,7 +217,7 @@ export default function Settings() {
               </div>
               <Switch checked={isDark} onCheckedChange={toggleTheme} />
             </div>
-            
+
             <div className="p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-green-500/10 text-green-500 rounded-lg">
@@ -217,54 +226,6 @@ export default function Settings() {
                 <div>
                   <Label className="text-base font-medium">Reduce Animations</Label>
                   <p className="text-sm text-muted-foreground">Disable complex visual effects</p>
-                </div>
-              </div>
-              <Switch checked={false} />
-            </div>
-          </div>
-        </section>
-
-        {/* Chats Settings */}
-        <section>
-          <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3 px-2 flex items-center gap-2">
-            <MessageSquare size={14} /> Chats
-          </h2>
-          <div className="bg-card border border-border rounded-2xl overflow-hidden divide-y divide-border">
-            <div className="p-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-500/10 text-blue-500 rounded-lg">
-                  <MessageSquare size={20} />
-                </div>
-                <div>
-                  <h3 className="text-base font-medium">Save to Gallery</h3>
-                  <p className="text-sm text-muted-foreground">Auto-save received photos</p>
-                </div>
-              </div>
-              <Switch checked={false} />
-            </div>
-            <div className="p-4 flex items-center justify-between cursor-pointer hover:bg-secondary transition-colors">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-orange-500/10 text-orange-500 rounded-lg">
-                  <Database size={20} />
-                </div>
-                <div>
-                  <h3 className="text-base font-medium">Storage Usage</h3>
-                  <p className="text-sm text-muted-foreground">Manage cached data and media</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <span>124 MB</span>
-                <span>›</span>
-              </div>
-            </div>
-            <div className="p-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-teal-500/10 text-teal-500 rounded-lg">
-                  <Shield size={20} />
-                </div>
-                <div>
-                  <h3 className="text-base font-medium">Default Mute</h3>
-                  <p className="text-sm text-muted-foreground">Mute new chats by default</p>
                 </div>
               </div>
               <Switch checked={false} />
@@ -288,9 +249,9 @@ export default function Settings() {
                   <p className="text-sm text-muted-foreground">Receive messages when app is closed</p>
                 </div>
               </div>
-              <Switch checked={true} />
+              <Switch defaultChecked />
             </div>
-            
+
             <div className="p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-orange-500/10 text-orange-500 rounded-lg">
@@ -301,7 +262,7 @@ export default function Settings() {
                   <p className="text-sm text-muted-foreground">Play sounds for incoming messages</p>
                 </div>
               </div>
-              <Switch checked={true} />
+              <Switch defaultChecked />
             </div>
           </div>
         </section>
@@ -324,7 +285,7 @@ export default function Settings() {
               </div>
               <span className="text-muted-foreground">›</span>
             </div>
-            
+
             <div className="p-4 flex items-center justify-between cursor-pointer hover:bg-secondary transition-colors">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-red-500/10 text-red-500 rounded-lg">
@@ -340,13 +301,59 @@ export default function Settings() {
           </div>
         </section>
 
-        <div className="flex justify-center pt-6 pb-12">
-          <button className="text-destructive hover:bg-destructive/10 px-6 py-3 rounded-xl font-bold transition-colors">
-            Log Out
+        {/* Storage */}
+        <section>
+          <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3 px-2 flex items-center gap-2">
+            <Database size={14} /> Storage
+          </h2>
+          <div className="bg-card border border-border rounded-2xl overflow-hidden">
+            <div className="p-4 flex items-center justify-between cursor-pointer hover:bg-secondary transition-colors">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-orange-500/10 text-orange-500 rounded-lg">
+                  <Database size={20} />
+                </div>
+                <div>
+                  <h3 className="text-base font-medium">Storage Usage</h3>
+                  <p className="text-sm text-muted-foreground">Manage cached data and media</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span>124 MB</span>
+                <span>›</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div className="flex justify-center pt-2 pb-12">
+          <button
+            onClick={() => setShowLogoutDialog(true)}
+            className="flex items-center gap-2 text-destructive hover:bg-destructive/10 px-6 py-3 rounded-xl font-bold transition-colors"
+          >
+            <LogOut size={18} /> Log Out
           </button>
         </div>
-
       </div>
+
+      <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Log Out</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to log out of Pulse?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleLogout}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Log Out
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

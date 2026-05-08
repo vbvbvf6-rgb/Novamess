@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, chatsTable, chatMembersTable, usersTable, messagesTable, reactionsTable } from "@workspace/db";
-import { eq, and, desc, inArray } from "drizzle-orm";
+import { eq, and, desc, inArray, count, gt, ne } from "drizzle-orm";
 import { CreateChatBody, UpdateChatBody, AddChatMemberBody } from "@workspace/api-zod";
 
 const router = Router();
@@ -32,7 +32,27 @@ async function buildChat(chatId: number, currentUserId: number) {
     lastMessage = { ...lastMessageRow, sender, reactions };
   }
 
-  const unreadCount = 0;
+  let unreadCount = 0;
+  const lastReadAt = myMember?.member.lastReadAt;
+  if (lastReadAt) {
+    const [r] = await db.select({ count: count() })
+      .from(messagesTable)
+      .where(and(
+        eq(messagesTable.chatId, chatId),
+        gt(messagesTable.createdAt, lastReadAt),
+        ne(messagesTable.senderId, currentUserId)
+      ));
+    unreadCount = Number(r?.count ?? 0);
+  } else {
+    const [r] = await db.select({ count: count() })
+      .from(messagesTable)
+      .where(and(
+        eq(messagesTable.chatId, chatId),
+        ne(messagesTable.senderId, currentUserId)
+      ));
+    unreadCount = Number(r?.count ?? 0);
+  }
+
   let otherUser = null;
   if (chat.type === "direct") {
     const other = memberRows.find(m => m.member.userId !== currentUserId);
@@ -62,6 +82,47 @@ router.get("/chats", async (req, res) => {
 
     const chats = await Promise.all(chatIds.map(id => buildChat(id, CURRENT_USER_ID)));
     res.json(chats.filter(Boolean));
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.post("/chats/direct", async (req, res) => {
+  try {
+    const userId = Number(req.body.userId);
+    if (!userId) return res.status(400).json({ error: "userId required" });
+
+    const myMemberships = await db
+      .select({ chatId: chatMembersTable.chatId })
+      .from(chatMembersTable)
+      .where(eq(chatMembersTable.userId, CURRENT_USER_ID));
+
+    const theirMemberships = await db
+      .select({ chatId: chatMembersTable.chatId })
+      .from(chatMembersTable)
+      .where(eq(chatMembersTable.userId, userId));
+
+    const myIds = new Set(myMemberships.map(m => m.chatId));
+
+    for (const { chatId } of theirMemberships) {
+      if (!myIds.has(chatId)) continue;
+      const found = await db.query.chatsTable.findFirst({
+        where: and(eq(chatsTable.id, chatId), eq(chatsTable.type, "direct"))
+      });
+      if (found) {
+        const result = await buildChat(found.id, CURRENT_USER_ID);
+        return res.json(result);
+      }
+    }
+
+    const [chat] = await db.insert(chatsTable).values({ type: "direct" }).returning();
+    await db.insert(chatMembersTable).values([
+      { chatId: chat.id, userId: CURRENT_USER_ID, role: "member" },
+      { chatId: chat.id, userId, role: "member" },
+    ]);
+    const result = await buildChat(chat.id, CURRENT_USER_ID);
+    res.status(201).json(result);
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });
@@ -111,19 +172,17 @@ router.put("/chats/:chatId", async (req, res) => {
     const chatId = Number(req.params.chatId);
     const body = UpdateChatBody.parse(req.body);
 
-    if (body.isMuted !== undefined || body.name !== undefined) {
-      if (body.isMuted !== undefined) {
-        await db.update(chatMembersTable)
-          .set({ isMuted: body.isMuted })
-          .where(and(eq(chatMembersTable.chatId, chatId), eq(chatMembersTable.userId, CURRENT_USER_ID)));
-      }
-      if (body.name !== undefined || body.description !== undefined || body.avatarUrl !== undefined) {
-        const updateData: Record<string, unknown> = {};
-        if (body.name !== undefined) updateData.name = body.name;
-        if (body.description !== undefined) updateData.description = body.description;
-        if (body.avatarUrl !== undefined) updateData.avatarUrl = body.avatarUrl;
-        await db.update(chatsTable).set(updateData).where(eq(chatsTable.id, chatId));
-      }
+    if (body.isMuted !== undefined) {
+      await db.update(chatMembersTable)
+        .set({ isMuted: body.isMuted })
+        .where(and(eq(chatMembersTable.chatId, chatId), eq(chatMembersTable.userId, CURRENT_USER_ID)));
+    }
+    if (body.name !== undefined || body.description !== undefined || body.avatarUrl !== undefined) {
+      const updateData: Record<string, unknown> = {};
+      if (body.name !== undefined) updateData.name = body.name;
+      if (body.description !== undefined) updateData.description = body.description;
+      if (body.avatarUrl !== undefined) updateData.avatarUrl = body.avatarUrl;
+      await db.update(chatsTable).set(updateData).where(eq(chatsTable.id, chatId));
     }
 
     const chat = await buildChat(chatId, CURRENT_USER_ID);
@@ -137,6 +196,7 @@ router.put("/chats/:chatId", async (req, res) => {
 router.delete("/chats/:chatId", async (req, res) => {
   try {
     const chatId = Number(req.params.chatId);
+    await db.delete(messagesTable).where(eq(messagesTable.chatId, chatId));
     await db.delete(chatMembersTable).where(eq(chatMembersTable.chatId, chatId));
     await db.delete(chatsTable).where(eq(chatsTable.id, chatId));
     res.status(204).send();
