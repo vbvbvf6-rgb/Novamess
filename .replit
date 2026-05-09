@@ -49,8 +49,8 @@ outputType = "webview"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "PORT=23821 BASE_PATH=/ pnpm --filter @workspace/pulse run dev"
-waitForPort = 23821
+args = "PORT=5000 BASE_PATH=/ pnpm --filter @workspace/pulse run dev"
+waitForPort = 5000
 
 [[workflows.workflow]]
 name = "artifacts/mockup-sandbox: Component Preview Server"
@@ -72,6 +72,10 @@ expertMode = true
 [postMerge]
 path = "scripts/post-merge.sh"
 timeoutMs = 20000
+
+[[ports]]
+localPort = 5000
+externalPort = 5000
 
 [[ports]]
 localPort = 8000
