@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, boolean, numeric } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, boolean, numeric, date } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -22,6 +22,9 @@ export const usersTable = pgTable("users", {
   hasPrime: boolean("has_prime").notNull().default(false),
   primeExpiresAt: timestamp("prime_expires_at", { withTimezone: true }),
   usernameChangedAt: timestamp("username_changed_at", { withTimezone: true }),
+  birthDate: date("birth_date"),
+  ageVerified: boolean("age_verified").notNull().default(false),
+  idDocumentUrl: text("id_document_url"),
   totpSecret: text("totp_secret"),
   totpEnabled: boolean("totp_enabled").notNull().default(false),
   showOnlineStatus: boolean("show_online_status").notNull().default(true),

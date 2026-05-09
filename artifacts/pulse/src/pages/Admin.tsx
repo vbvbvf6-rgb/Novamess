@@ -208,6 +208,33 @@ export default function Admin() {
   const [ticketReplyText, setTicketReplyText] = useState("");
   const [ticketReplying, setTicketReplying] = useState(false);
 
+  const [verifications, setVerifications] = useState<any[]>([]);
+  const [vLoading, setVLoading] = useState(false);
+  const [showV, setShowV] = useState(false);
+  const [vActionId, setVActionId] = useState<number | null>(null);
+  const [vPreview, setVPreview] = useState<string | null>(null);
+
+  const fetchVerifications = async () => {
+    setVLoading(true);
+    try {
+      const r = await fetch("/api/admin/age-verifications", { headers: getHeader() });
+      if (r.ok) setVerifications(await r.json());
+    } catch {}
+    setVLoading(false);
+  };
+
+  const handleAgeVerify = async (userId: number, approve: boolean) => {
+    setVActionId(userId);
+    try {
+      const r = await fetch(`/api/admin/age-verifications/${userId}/${approve ? "approve" : "reject"}`, { method: "POST", headers: getHeader() });
+      const d = await r.json();
+      if (!r.ok) { showToast(d.error || "Ошибка", "err"); setVActionId(null); return; }
+      showToast(approve ? "✅ Верифицирован" : "❌ Отклонён", "ok");
+      setVerifications(prev => prev.map(v => v.id === userId ? { ...v, age_verified: approve } : v));
+    } catch { showToast("Ошибка", "err"); }
+    setVActionId(null);
+  };
+
   const fetchBugs = async () => {
     setBugsLoading(true);
     try {
@@ -914,6 +941,106 @@ export default function Admin() {
                         <span className={`text-xs font-bold px-2.5 py-1 rounded-xl shrink-0 ${r.status === "approved" ? "bg-green-500/10 text-green-400" : "bg-destructive/10 text-destructive"}`}>
                           {r.status === "approved" ? "Одобрено" : "Отклонено"}
                         </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Age Verification Queue */}
+        <div className="bg-card border border-border rounded-2xl overflow-hidden">
+          <button
+            onClick={() => { setShowV(v => !v); if (!showV && verifications.length === 0) fetchVerifications(); }}
+            className="w-full p-4 flex items-center justify-between hover:bg-secondary/50 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-blue-500/10 flex items-center justify-center">
+                <ShieldCheck size={18} className="text-blue-400" />
+              </div>
+              <div className="text-left">
+                <p className="font-semibold text-sm">Верификация возраста</p>
+                <p className="text-xs text-muted-foreground">
+                  {verifications.filter(v => !v.age_verified).length > 0
+                    ? `${verifications.filter(v => !v.age_verified).length} ожидают проверки`
+                    : "Проверка документов пользователей"}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {verifications.filter(v => !v.age_verified).length > 0 && (
+                <span className="w-5 h-5 rounded-full bg-blue-500 text-white text-[10px] font-black flex items-center justify-center">
+                  {verifications.filter(v => !v.age_verified).length}
+                </span>
+              )}
+              {showV ? <ChevronDown size={16} className="text-muted-foreground" /> : <ChevronRight size={16} className="text-muted-foreground" />}
+            </div>
+          </button>
+          {showV && (
+            <div className="border-t border-border">
+              <div className="p-2 border-b border-border flex justify-end">
+                <button onClick={fetchVerifications} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-secondary transition-colors">
+                  <RefreshCw size={12} className={vLoading ? "animate-spin" : ""} /> Обновить
+                </button>
+              </div>
+              {vLoading ? (
+                <div className="p-6 flex justify-center"><RefreshCw size={20} className="animate-spin text-muted-foreground" /></div>
+              ) : verifications.length === 0 ? (
+                <div className="p-6 text-center text-sm text-muted-foreground">Документов нет</div>
+              ) : (
+                <div className="divide-y divide-border max-h-[600px] overflow-y-auto">
+                  {verifications.map(v => (
+                    <div key={v.id} className="p-4 space-y-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-full shrink-0 flex items-center justify-center text-sm font-bold text-white overflow-hidden" style={{ backgroundColor: v.avatar_color }}>
+                          {v.avatar_url ? <img src={v.avatar_url} className="w-full h-full object-cover" alt="" /> : v.display_name?.[0]?.toUpperCase()}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold">@{v.username} · {v.display_name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {v.birth_date ? `ДР: ${new Date(v.birth_date).toLocaleDateString("ru-RU")}` : ""}{v.age_group ? ` · ${v.age_group}` : ""}
+                          </p>
+                        </div>
+                        <span className={`text-[10px] font-bold px-2 py-1 rounded-full border shrink-0 ${v.age_verified ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30" : "bg-blue-500/10 text-blue-400 border-blue-500/30"}`}>
+                          {v.age_verified ? "✓ Одобрен" : "⏳ Ожидание"}
+                        </span>
+                      </div>
+                      {v.id_document_url && (
+                        <div>
+                          <button
+                            onClick={() => setVPreview(vPreview === v.id_document_url ? null : v.id_document_url)}
+                            className="text-xs text-primary hover:underline flex items-center gap-1"
+                          >
+                            <Image size={12} /> {vPreview === v.id_document_url ? "Скрыть документ" : "Просмотреть документ"}
+                          </button>
+                          {vPreview === v.id_document_url && (
+                            <div className="mt-2 rounded-xl overflow-hidden border border-border">
+                              <img src={v.id_document_url} alt="ID Document" className="w-full max-h-64 object-contain bg-black/10" />
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      {!v.age_verified && (
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleAgeVerify(v.id, true)}
+                            disabled={vActionId === v.id}
+                            className="flex-1 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold hover:bg-emerald-500/20 transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5"
+                          >
+                            <CheckCircle2 size={13} />
+                            {vActionId === v.id ? "..." : "Одобрить · выдать доступ"}
+                          </button>
+                          <button
+                            onClick={() => handleAgeVerify(v.id, false)}
+                            disabled={vActionId === v.id}
+                            className="flex-1 py-2 rounded-xl bg-destructive/10 border border-destructive/30 text-destructive text-xs font-bold hover:bg-destructive/20 transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5"
+                          >
+                            <X size={13} />
+                            {vActionId === v.id ? "..." : "Отклонить"}
+                          </button>
+                        </div>
                       )}
                     </div>
                   ))}

@@ -9,6 +9,8 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { AddAccountDialog } from "@/components/layout/AddAccountDialog";
 import { getSavedAccounts, saveAccount, removeAccount, SavedAccount } from "@/lib/accounts";
 import { ScreenLock } from "@/components/ScreenLock";
+import { motion } from "framer-motion";
+import { Clock, LogOut, ShieldCheck } from "lucide-react";
 
 import Home from "@/pages/Home";
 import Calls from "@/pages/Calls";
@@ -38,7 +40,85 @@ interface MainAppProps {
   onOpenAddAccount: () => void;
 }
 
+function VerificationPending({ onLogout }: { onLogout: () => void }) {
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-blue-500/5 rounded-full blur-3xl" />
+      </div>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-sm relative z-10"
+      >
+        <div className="bg-card border border-border rounded-3xl p-8 shadow-2xl text-center">
+          <motion.div
+            animate={{ rotate: [0, 360] }}
+            transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+            className="w-20 h-20 rounded-3xl bg-primary/10 border border-primary/20 flex items-center justify-center mx-auto mb-6"
+          >
+            <ShieldCheck size={40} className="text-primary" />
+          </motion.div>
+          <h1 className="text-2xl font-black text-foreground mb-2">Аккаунт на проверке</h1>
+          <p className="text-muted-foreground text-sm leading-relaxed mb-6">
+            Ваш документ отправлен на проверку администратору. После подтверждения вы получите полный доступ к Pulse.
+          </p>
+          <div className="bg-primary/5 border border-primary/20 rounded-2xl p-4 mb-6 flex items-center gap-3 text-left">
+            <Clock size={18} className="text-primary shrink-0" />
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Обычно проверка занимает <span className="font-semibold text-foreground">несколько часов</span>. Войдите снова, чтобы проверить статус.
+            </p>
+          </div>
+          <button
+            onClick={onLogout}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-border text-sm font-medium text-muted-foreground hover:bg-secondary transition-colors"
+          >
+            <LogOut size={16} /> Выйти из аккаунта
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
 function MainApp({ onLogout, onSwitchAccount, onRemoveAccount, onOpenAddAccount }: MainAppProps) {
+  const [ageVerified, setAgeVerified] = useState<boolean | null>(null);
+  const [isAdminUser, setIsAdminUser] = useState(false);
+  const [isBotUser, setIsBotUser] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem("pulse-token");
+    const uid = localStorage.getItem("pulse-user-id");
+    const headers: Record<string, string> = {};
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+    else if (uid) headers["x-user-id"] = uid;
+    fetch("/api/users/me", { headers })
+      .then(r => r.json())
+      .then((d: any) => {
+        setAgeVerified(d.ageVerified === true);
+        setIsAdminUser(d.isAdmin === true);
+        setIsBotUser(d.isBot === true);
+      })
+      .catch(() => setAgeVerified(true));
+  }, []);
+
+  if (ageVerified === null) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+      </div>
+    );
+  }
+
+  if (ageVerified === false && !isAdminUser && !isBotUser) {
+    return <VerificationPending onLogout={onLogout} />;
+  }
+
+  return <MainAppInner onLogout={onLogout} onSwitchAccount={onSwitchAccount} onRemoveAccount={onRemoveAccount} onOpenAddAccount={onOpenAddAccount} />;
+}
+
+function MainAppInner({ onLogout, onSwitchAccount, onRemoveAccount, onOpenAddAccount }: MainAppProps) {
   useEffect(() => {
     const checkScheduled = async () => {
       const token = localStorage.getItem("pulse-token");

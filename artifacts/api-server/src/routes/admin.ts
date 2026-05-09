@@ -603,6 +603,44 @@ router.patch("/admin/support/tickets/:ticketId/status", requireAdmin, async (req
   }
 });
 
+router.get("/admin/age-verifications", requireAdmin, async (req, res) => {
+  try {
+    const rows = await db.execute(sql`
+      SELECT id, username, display_name, avatar_color, avatar_url, birth_date, id_document_url, age_verified, age_group, created_at
+      FROM users
+      WHERE id_document_url IS NOT NULL AND is_bot = false
+      ORDER BY CASE WHEN age_verified = false THEN 0 ELSE 1 END, created_at DESC
+      LIMIT 100
+    `);
+    res.json(rows.rows);
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Ошибка сервера" });
+  }
+});
+
+router.post("/admin/age-verifications/:userId/approve", requireAdmin, async (req, res) => {
+  try {
+    const targetId = Number(req.params.userId);
+    await db.execute(sql`UPDATE users SET age_verified = true WHERE id = ${targetId}`);
+    res.json({ success: true });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Ошибка сервера" });
+  }
+});
+
+router.post("/admin/age-verifications/:userId/reject", requireAdmin, async (req, res) => {
+  try {
+    const targetId = Number(req.params.userId);
+    await db.execute(sql`UPDATE users SET age_verified = false, id_document_url = NULL WHERE id = ${targetId}`);
+    res.json({ success: true });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Ошибка сервера" });
+  }
+});
+
 router.get("/admin/check", async (req, res) => {
   try {
     const ok = await isAdminUser(req.currentUserId);

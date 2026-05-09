@@ -34,8 +34,9 @@ router.post("/auth/login", async (req, res) => {
 
     const rows = await db.execute(
       sql`SELECT id, username, display_name, avatar_color, avatar_url, bio, status, status_text,
-                 is_verified, is_bot, created_at, balance, password_hash,
-                 COALESCE(totp_enabled, false) as totp_enabled
+                 is_verified, is_bot, is_admin, created_at, balance, password_hash,
+                 COALESCE(totp_enabled, false) as totp_enabled,
+                 COALESCE(age_verified, false) as age_verified
           FROM users
           WHERE LOWER(username) = LOWER(${String(username).trim()})
              OR LOWER(display_name) = LOWER(${String(username).trim()})
@@ -80,10 +81,12 @@ router.post("/auth/login", async (req, res) => {
     }
 
     const token = signToken(user.id);
+    const ageVerified = user.age_verified === true || user.age_verified === "t" || user.age_verified === 1;
 
     res.json({
       userId: user.id,
       token,
+      ageVerified,
       user: {
         id: user.id,
         username: user.username,
@@ -94,8 +97,11 @@ router.post("/auth/login", async (req, res) => {
         status: user.status,
         statusText: user.status_text,
         isVerified: user.is_verified,
+        isAdmin: user.is_admin === true || user.is_admin === "t" || user.is_admin === 1,
+        isBot: user.is_bot === true || user.is_bot === "t" || user.is_bot === 1,
         balance: Number(user.balance ?? 0),
         createdAt: user.created_at,
+        ageVerified,
       },
     });
   } catch (err) {
@@ -244,9 +250,12 @@ router.post("/auth/2fa/disable", async (req, res) => {
 
 router.post("/auth/register", async (req, res) => {
   try {
-    const { username, displayName, password, ageGroup } = req.body;
+    const { username, displayName, password, ageGroup, birthDate, idDocumentUrl } = req.body;
     if (!username || !displayName || !password) {
       return res.status(400).json({ error: "Заполните все поля" });
+    }
+    if (!idDocumentUrl) {
+      return res.status(400).json({ error: "Загрузите фото документа для подтверждения возраста" });
     }
 
     const rawUsername = String(username).trim();
@@ -277,9 +286,11 @@ router.post("/auth/register", async (req, res) => {
     const color = COLORS[Math.floor(Math.random() * COLORS.length)];
     const passwordHash = await bcrypt.hash(rawPass, SALT_ROUNDS);
 
+    const rawBirthDate = birthDate ? String(birthDate) : null;
+    const rawIdDocUrl = idDocumentUrl ? String(idDocumentUrl) : null;
     const result = await db.execute(
-      sql`INSERT INTO users (username, display_name, avatar_color, status, password_hash, balance, age_group)
-          VALUES (${rawUsername}, ${rawDisplay}, ${color}, 'online', ${passwordHash}, 0, ${ageGroup ? String(ageGroup) : null})
+      sql`INSERT INTO users (username, display_name, avatar_color, status, password_hash, balance, age_group, birth_date, id_document_url, age_verified)
+          VALUES (${rawUsername}, ${rawDisplay}, ${color}, 'online', ${passwordHash}, 0, ${ageGroup ? String(ageGroup) : null}, ${rawBirthDate}, ${rawIdDocUrl}, false)
           RETURNING id, username, display_name, avatar_color, status, created_at, balance`
     );
     const newUser = result.rows[0] as any;
@@ -298,6 +309,7 @@ router.post("/auth/register", async (req, res) => {
     res.status(201).json({
       userId: newUser.id,
       token,
+      ageVerified: false,
       user: {
         id: newUser.id,
         username: newUser.username,
@@ -306,6 +318,7 @@ router.post("/auth/register", async (req, res) => {
         status: newUser.status,
         balance: Number(newUser.balance ?? 0),
         createdAt: newUser.created_at,
+        ageVerified: false,
       },
     });
   } catch (err) {

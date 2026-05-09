@@ -1,8 +1,27 @@
 import React, { useState, useRef } from "react";
 import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { Eye, EyeOff, Zap, ShieldAlert, ShieldCheck, AlertTriangle, ArrowLeft, Calendar } from "lucide-react";
+import { Eye, EyeOff, Zap, ShieldAlert, ShieldCheck, AlertTriangle, ArrowLeft, Calendar, CreditCard, Upload, CheckCircle } from "lucide-react";
 import PulseLogo from "@/components/PulseLogo";
+
+async function compressIdDoc(file: File, maxPx = 1600, quality = 0.85): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const scale = Math.min(1, maxPx / Math.max(img.width, img.height));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL("image/jpeg", quality));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Image load error")); };
+    img.src = url;
+  });
+}
 
 interface RegisterProps {
   onLogin: (userId: number) => void;
@@ -27,7 +46,7 @@ function ageToGroup(age: number): string {
   return "30+";
 }
 
-type Step = "age-gate" | "age-blocked" | "age-warning" | "age-confirmed" | "register";
+type Step = "age-gate" | "age-blocked" | "age-warning" | "age-confirmed" | "id-upload" | "register";
 
 export default function Register({ onLogin }: RegisterProps) {
   const [step, setStep] = useState<Step>("age-gate");
@@ -51,6 +70,12 @@ export default function Register({ onLogin }: RegisterProps) {
 
   const [ageConfirmChecked, setAgeConfirmChecked] = useState(false);
   const [ageConfirmTerms, setAgeConfirmTerms] = useState(false);
+
+  const [idDocUrl, setIdDocUrl] = useState("");
+  const [idDocPreview, setIdDocPreview] = useState("");
+  const [idDocLoading, setIdDocLoading] = useState(false);
+  const [idDocError, setIdDocError] = useState("");
+  const idDocInputRef = useRef<HTMLInputElement>(null);
 
   const handleDobSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -110,6 +135,8 @@ export default function Register({ onLogin }: RegisterProps) {
           displayName: displayName.trim(),
           password,
           ageGroup,
+          birthDate: dobYear && dobMonth && dobDay ? `${dobYear}-${String(dobMonth).padStart(2,"0")}-${String(dobDay).padStart(2,"0")}` : undefined,
+          idDocumentUrl: idDocUrl,
         }),
       });
       const data = await res.json();
@@ -356,7 +383,7 @@ export default function Register({ onLogin }: RegisterProps) {
                 <button
                   id="confirm-age-btn"
                   disabled
-                  onClick={() => setStep("register")}
+                  onClick={() => setStep("id-upload")}
                   className="flex-1 py-3 rounded-xl bg-yellow-500 text-black font-bold text-sm hover:bg-yellow-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   Подтверждаю → Далее
@@ -425,10 +452,123 @@ export default function Register({ onLogin }: RegisterProps) {
                   whileHover={{ scale: ageConfirmChecked && ageConfirmTerms ? 1.02 : 1 }}
                   whileTap={{ scale: ageConfirmChecked && ageConfirmTerms ? 0.98 : 1 }}
                   disabled={!ageConfirmChecked || !ageConfirmTerms}
-                  onClick={() => setStep("register")}
+                  onClick={() => setStep("id-upload")}
                   className="flex-[2] py-3 rounded-xl bg-green-500 text-white font-bold text-sm hover:bg-green-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(34,197,94,0.3)]"
                 >
                   Подтверждаю → Далее
+                </motion.button>
+              </div>
+            </motion.div>
+          )}
+
+          {/* STEP: ID document upload */}
+          {step === "id-upload" && (
+            <motion.div
+              key="id-upload"
+              initial={{ opacity: 0, x: 30 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -30 }}
+              className="bg-card border border-border rounded-3xl p-6 shadow-2xl"
+            >
+              <div className="flex items-center gap-3 mb-5">
+                <div className="w-11 h-11 rounded-2xl bg-blue-500/10 flex items-center justify-center shrink-0">
+                  <CreditCard size={22} className="text-blue-400" />
+                </div>
+                <div>
+                  <h2 className="font-bold text-base text-foreground">Фото документа</h2>
+                  <p className="text-xs text-muted-foreground">Паспорт или удостоверение личности</p>
+                </div>
+              </div>
+
+              <div className="bg-blue-500/5 border border-blue-500/20 rounded-2xl p-4 mb-5 space-y-2 text-sm text-muted-foreground">
+                <p className="leading-relaxed">
+                  Загрузите <span className="font-semibold text-foreground">чёткое фото</span> документа — паспорт (разворот с фото), водительское удостоверение или другой государственный ID.
+                </p>
+                <p className="text-xs leading-relaxed">
+                  Документ будет проверен администратором вручную. До одобрения аккаунт будет в режиме ожидания.
+                </p>
+              </div>
+
+              <input
+                ref={idDocInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  setIdDocError("");
+                  setIdDocLoading(true);
+                  try {
+                    const compressed = await compressIdDoc(file);
+                    setIdDocUrl(compressed);
+                    setIdDocPreview(compressed);
+                  } catch {
+                    setIdDocError("Не удалось загрузить изображение. Попробуйте другой файл.");
+                  }
+                  setIdDocLoading(false);
+                  e.target.value = "";
+                }}
+              />
+
+              {idDocPreview ? (
+                <div className="mb-5">
+                  <div className="relative rounded-2xl overflow-hidden border border-border">
+                    <img src={idDocPreview} alt="Document preview" className="w-full max-h-48 object-contain bg-black/20" />
+                    <div className="absolute top-2 right-2 bg-green-500 rounded-full p-1">
+                      <CheckCircle size={14} className="text-white" />
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => { setIdDocUrl(""); setIdDocPreview(""); }}
+                    className="mt-2 text-xs text-muted-foreground hover:text-foreground transition-colors underline"
+                  >
+                    Загрузить другой документ
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => idDocInputRef.current?.click()}
+                  disabled={idDocLoading}
+                  className="w-full mb-5 py-8 rounded-2xl border-2 border-dashed border-border hover:border-primary/50 transition-colors flex flex-col items-center gap-2 text-muted-foreground hover:text-foreground"
+                >
+                  {idDocLoading ? (
+                    <div className="w-6 h-6 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+                  ) : (
+                    <>
+                      <Upload size={24} />
+                      <span className="text-sm font-medium">Нажмите для выбора фото</span>
+                      <span className="text-xs">JPG, PNG, HEIC</span>
+                    </>
+                  )}
+                </button>
+              )}
+
+              {idDocError && (
+                <motion.div
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-destructive/10 border border-destructive/20 text-destructive rounded-xl px-4 py-2.5 text-sm font-medium mb-4"
+                >
+                  {idDocError}
+                </motion.div>
+              )}
+
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setStep(calculatedAge !== null && calculatedAge >= 18 ? "age-confirmed" : "age-warning")}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-3 rounded-xl border border-border text-sm font-medium text-muted-foreground hover:bg-secondary transition-colors"
+                >
+                  <ArrowLeft size={15} /> Назад
+                </button>
+                <motion.button
+                  whileHover={{ scale: idDocUrl ? 1.02 : 1 }}
+                  whileTap={{ scale: idDocUrl ? 0.98 : 1 }}
+                  disabled={!idDocUrl || idDocLoading}
+                  onClick={() => setStep("register")}
+                  className="flex-[2] py-3 rounded-xl bg-primary text-primary-foreground font-bold text-sm hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(0,188,212,0.3)]"
+                >
+                  Далее →
                 </motion.button>
               </div>
             </motion.div>
