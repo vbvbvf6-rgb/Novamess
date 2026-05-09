@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Zap, Copy, Check, Trophy, Star, MessageSquare, Phone, Gift,
   History, Shield, ChevronRight, ArrowUpRight, ArrowDownLeft,
-  AlertTriangle, CheckCircle2, TrendingUp, X, Send
+  AlertTriangle, CheckCircle2, TrendingUp, X, Send, ShoppingCart, Clock
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useGetMe } from "@workspace/api-client-react";
@@ -112,6 +112,9 @@ export default function Wallet() {
   const [sendAddress, setSendAddress] = useState("");
   const [sendAmount, setSendAmount] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [showBuyModal, setShowBuyModal] = useState(false);
+  const [buyingPackage, setBuyingPackage] = useState<string | null>(null);
+  const [pendingRequest, setPendingRequest] = useState<{ packageLabel: string; amount: number } | null>(null);
 
   const uid = Number(localStorage.getItem("pulse-user-id") || "0");
   const isAdmin = (me as any)?.isAdmin === true;
@@ -223,6 +226,56 @@ export default function Wallet() {
       toast({ title: "Ошибка сети", variant: "destructive" });
     }
     setBonusLoading(false);
+  };
+
+  const fetchPendingRequest = useCallback(async () => {
+    try {
+      const res = await fetch("/api/wallet/topup-request/status", { headers: getUserIdHeader() });
+      if (res.ok) {
+        const data = await res.json();
+        const pending = data.find((r: any) => r.status === "pending");
+        if (pending) setPendingRequest({ packageLabel: pending.package_label, amount: pending.amount });
+        else setPendingRequest(null);
+      }
+    } catch {}
+  }, []);
+
+  useEffect(() => { fetchPendingRequest(); }, []);
+
+  const SPARK_PACKAGES = [
+    { id: "starter",  label: "Стартер",   spark: 100,   price: "59 ₽",   color: "from-slate-500 to-slate-600",  popular: false },
+    { id: "basic",    label: "Базовый",   spark: 500,   price: "249 ₽",  color: "from-blue-500 to-cyan-500",    popular: false },
+    { id: "popular",  label: "Популярный",spark: 1200,  price: "499 ₽",  color: "from-violet-500 to-purple-600",popular: true  },
+    { id: "pro",      label: "Про",       spark: 3000,  price: "999 ₽",  color: "from-amber-500 to-orange-500", popular: false },
+    { id: "mega",     label: "Мега",      spark: 8000,  price: "2 490 ₽",color: "from-rose-500 to-pink-600",    popular: false },
+    { id: "ultimate", label: "Макс",      spark: 25000, price: "5 990 ₽",color: "from-yellow-400 to-amber-500", popular: false },
+  ];
+
+  const handleBuyPackage = async (pkg: typeof SPARK_PACKAGES[number]) => {
+    if (pendingRequest) {
+      toast({ title: "Есть ожидающая заявка", description: "Дождитесь обработки текущей заявки", variant: "destructive" });
+      return;
+    }
+    setBuyingPackage(pkg.id);
+    try {
+      const res = await fetch("/api/wallet/topup-request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...getUserIdHeader() },
+        body: JSON.stringify({ amount: pkg.spark, packageLabel: `${pkg.label} (${pkg.spark} ⚡)`, priceLabel: pkg.price }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setPendingRequest({ packageLabel: `${pkg.label} (${pkg.spark} ⚡)`, amount: pkg.spark });
+        toast({ title: "Заявка отправлена!", description: "Администратор пополнит баланс в ближайшее время" });
+        setShowBuyModal(false);
+      } else {
+        toast({ title: "Ошибка", description: data.error || "Попробуйте позже", variant: "destructive" });
+        if (res.status === 409) fetchPendingRequest();
+      }
+    } catch {
+      toast({ title: "Ошибка сети", variant: "destructive" });
+    }
+    setBuyingPackage(null);
   };
 
   const handleCopyAddress = () => {
@@ -344,27 +397,40 @@ export default function Wallet() {
             </div>
 
             {/* Action buttons */}
-            <div className="flex gap-2 relative z-10">
+            <div className="grid grid-cols-2 gap-2 relative z-10">
               <button
                 onClick={() => setShowReceiveModal(true)}
-                className="flex-1 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 transition text-sm font-semibold flex items-center justify-center gap-1.5"
+                className="py-2.5 rounded-xl bg-white/10 hover:bg-white/20 transition text-sm font-semibold flex items-center justify-center gap-1.5"
               >
                 <ArrowDownLeft size={15} /> Получить
               </button>
               <button
                 onClick={() => setShowSendModal(true)}
-                className="flex-1 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 transition text-sm font-semibold flex items-center justify-center gap-1.5"
+                className="py-2.5 rounded-xl bg-white/10 hover:bg-white/20 transition text-sm font-semibold flex items-center justify-center gap-1.5"
               >
                 <Send size={15} /> Отправить
               </button>
               <button
+                onClick={() => setShowBuyModal(true)}
+                className="py-2.5 rounded-xl hover:opacity-90 transition text-sm font-semibold flex items-center justify-center gap-1.5"
+                style={{ background: "linear-gradient(135deg, #059669, #22d3ee)" }}
+              >
+                <ShoppingCart size={15} /> Купить
+              </button>
+              <button
                 onClick={() => setShowBonusModal(true)}
-                className={`flex-1 py-2.5 rounded-xl hover:opacity-90 transition text-sm font-semibold flex items-center justify-center gap-1.5 ${bonusClaimed ? "opacity-50 cursor-not-allowed" : ""}`}
+                className={`py-2.5 rounded-xl hover:opacity-90 transition text-sm font-semibold flex items-center justify-center gap-1.5 ${bonusClaimed ? "opacity-50 cursor-not-allowed" : ""}`}
                 style={{ background: "linear-gradient(135deg, #22d3ee, #7c3aed)" }}
               >
                 <Zap size={15} fill="white" /> {bonusClaimed ? "Завтра" : "Бонус"}
               </button>
             </div>
+            {pendingRequest && (
+              <div className="relative z-10 mt-2 flex items-center gap-2 bg-amber-500/10 border border-amber-500/25 rounded-xl px-3 py-2 text-xs text-amber-300">
+                <Clock size={12} className="shrink-0" />
+                <span>Заявка на пополнение <b>{pendingRequest.packageLabel}</b> обрабатывается...</span>
+              </div>
+            )}
           </motion.div>
 
           {/* ── Admin link ── */}
@@ -627,6 +693,82 @@ export default function Wallet() {
         )}
       </AnimatePresence>
 
+      {/* Buy Spark Modal */}
+      <AnimatePresence>
+        {showBuyModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+            onClick={() => setShowBuyModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 40 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 40 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-card border border-border rounded-3xl p-5 w-full max-w-sm shadow-2xl"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-lg font-bold text-foreground">Купить Spark ⚡</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">Выберите пакет пополнения</p>
+                </div>
+                <button onClick={() => setShowBuyModal(false)} className="text-muted-foreground hover:text-foreground transition-colors">
+                  <X size={20} />
+                </button>
+              </div>
+
+              {pendingRequest ? (
+                <div className="flex flex-col items-center gap-3 py-6">
+                  <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center">
+                    <Clock size={28} className="text-amber-400" />
+                  </div>
+                  <div className="text-center">
+                    <p className="font-bold text-foreground">Заявка обрабатывается</p>
+                    <p className="text-sm text-muted-foreground mt-1">{pendingRequest.packageLabel}</p>
+                    <p className="text-xs text-muted-foreground mt-2">Администратор зачислит Spark в ближайшее время</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-2.5">
+                  {SPARK_PACKAGES.map((pkg) => (
+                    <motion.button
+                      key={pkg.id}
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                      onClick={() => handleBuyPackage(pkg)}
+                      disabled={buyingPackage !== null}
+                      className="relative rounded-2xl p-3.5 text-left border border-white/5 overflow-hidden disabled:opacity-60 transition-all"
+                      style={{ background: "hsl(222,47%,11%)" }}
+                    >
+                      {pkg.popular && (
+                        <span className="absolute top-2 right-2 text-[9px] font-black uppercase tracking-wider bg-violet-500 text-white px-1.5 py-0.5 rounded-full">
+                          ХИТ
+                        </span>
+                      )}
+                      <div className={`w-8 h-8 rounded-xl bg-gradient-to-br ${pkg.color} flex items-center justify-center mb-2.5`}>
+                        <Zap size={15} className="text-white fill-white" />
+                      </div>
+                      <p className="font-black text-base text-foreground leading-none mb-0.5">{pkg.spark.toLocaleString("ru")}</p>
+                      <p className="text-[10px] text-muted-foreground mb-2">⚡ Spark</p>
+                      <div className={`w-full py-1.5 rounded-lg bg-gradient-to-r ${pkg.color} text-white text-xs font-bold text-center`}>
+                        {buyingPackage === pkg.id ? "..." : pkg.price}
+                      </div>
+                    </motion.button>
+                  ))}
+                </div>
+              )}
+
+              <p className="text-[10px] text-muted-foreground text-center mt-3">
+                После выбора пакета заявка поступает администратору. Spark зачисляется вручную.
+              </p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Daily Bonus Modal */}
       <AnimatePresence>
         {showBonusModal && (
@@ -660,7 +802,7 @@ export default function Wallet() {
                   <span className="text-5xl">⚡</span>
                 </motion.div>
                 <div className="text-center">
-                  <p className="text-3xl font-black text-foreground">+1 000 Spark</p>
+                  <p className="text-3xl font-black text-foreground">+10 Spark</p>
                   <p className="text-sm text-muted-foreground mt-1">Бесплатно каждый день, без покупок</p>
                 </div>
                 {bonusClaimed ? (
