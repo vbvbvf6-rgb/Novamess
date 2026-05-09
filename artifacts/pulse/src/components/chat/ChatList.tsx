@@ -10,6 +10,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { StoriesBar } from "@/components/stories/StoriesBar";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
+import { GlobalSearch } from "./GlobalSearch";
 
 type FolderKey = "all" | "unread" | "groups" | "bots";
 
@@ -93,11 +94,12 @@ function formatTime(dateStr: string): string {
 
 export function ChatList({ onMenuClick }: { onMenuClick?: () => void }) {
   const { selectedChatId, setSelectedChatId, typingByChat } = useAppContext();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const { data: chats, isLoading } = useGetChats();
   const { toast } = useToast();
   const [search, setSearch] = useState("");
   const [folder, setFolder] = useState<FolderKey>("all");
+  const [showGlobalSearch, setShowGlobalSearch] = useState(false);
 
   const openSupportChat = async () => {
     const token = localStorage.getItem("pulse-token");
@@ -140,7 +142,12 @@ export function ChatList({ onMenuClick }: { onMenuClick?: () => void }) {
   });
 
   return (
-    <div className="w-full md:w-80 lg:w-96 flex flex-col h-full bg-card border-r border-border">
+    <div className="w-full md:w-80 lg:w-96 flex flex-col h-full bg-card border-r border-border relative">
+      <AnimatePresence>
+        {showGlobalSearch && (
+          <GlobalSearch onClose={() => setShowGlobalSearch(false)} />
+        )}
+      </AnimatePresence>
       <div className="p-4 border-b border-border">
         <div className="flex items-center gap-2">
           <button
@@ -158,6 +165,13 @@ export function ChatList({ onMenuClick }: { onMenuClick?: () => void }) {
               className="pl-9 bg-background border-none focus-visible:ring-primary"
             />
           </div>
+          <button
+            onClick={() => setShowGlobalSearch(true)}
+            title={lang === "ru" ? "Поиск по сообщениям" : "Search messages"}
+            className="p-2 rounded-xl text-muted-foreground hover:text-primary hover:bg-secondary transition-colors shrink-0"
+          >
+            <Search size={18} />
+          </button>
         </div>
 
         {/* Folder filter tabs */}

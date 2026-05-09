@@ -805,6 +805,12 @@ components:
           type: boolean
         isAdmin:
           type: boolean
+        showOnlineStatus:
+          type: boolean
+        readReceiptsEnabled:
+          type: boolean
+        totpEnabled:
+          type: boolean
         createdAt:
           type: string
       required:
@@ -834,6 +840,10 @@ components:
         status:
           type: string
           enum: [online, offline, away]
+        showOnlineStatus:
+          type: boolean
+        readReceiptsEnabled:
+          type: boolean
 
     AddContactBody:
       type: object

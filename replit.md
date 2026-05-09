@@ -47,6 +47,8 @@ A Telegram-inspired messenger app called Pulse, featuring real-time-style chats,
 - **Stories**: 24-hour stories with full-screen viewer and stories bar
 - **Contacts**: Contact list with search and add/remove
 - **Profile**: User stats dashboard (messages, calls, gifts)
+- **Security**: 2FA (TOTP) via auth routes + Settings UI; screen lock PIN; disappearing messages timer per chat (5s–1mo); message search (per-chat and cross-chat via `/api/messages/search`); privacy settings (read receipts, online status) persisted to DB
+- **Chat folders**: All / Unread / Groups / Bots tabs in ChatList sidebar
 
 ## User preferences
 

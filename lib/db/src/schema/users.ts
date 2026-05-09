@@ -25,6 +25,7 @@ export const usersTable = pgTable("users", {
   totpSecret: text("totp_secret"),
   totpEnabled: boolean("totp_enabled").notNull().default(false),
   showOnlineStatus: boolean("show_online_status").notNull().default(true),
+  readReceiptsEnabled: boolean("read_receipts_enabled").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

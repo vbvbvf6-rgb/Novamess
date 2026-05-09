@@ -396,7 +396,14 @@ export default function Settings() {
 
   // Privacy
   const [lastSeenVisibility, setLastSeenVisibility] = useState(() => ls("pulse-privacy-last-seen", "everyone"));
-  const [readReceipts, setReadReceipts] = useState(() => lsb("pulse-privacy-read-receipts", true));
+  const [readReceipts, setReadReceipts] = useState<boolean>(() => {
+    if ((user as any)?.readReceiptsEnabled !== undefined) return !!(user as any).readReceiptsEnabled;
+    return lsb("pulse-privacy-read-receipts", true);
+  });
+  const [showOnlineStatusToggle, setShowOnlineStatusToggle] = useState<boolean>(() => {
+    if ((user as any)?.showOnlineStatus !== undefined) return !!(user as any).showOnlineStatus;
+    return lsb("pulse-privacy-show-online", true);
+  });
   const [profilePhotoVisible, setProfilePhotoVisible] = useState(() => lsb("pulse-privacy-photo-visible", true));
   const [globalAutoDelete, setGlobalAutoDelete] = useState<number | null>(() => {
     const v = localStorage.getItem("pulse-global-auto-delete");
@@ -514,6 +521,8 @@ export default function Settings() {
       setAvatarUrl((user as any).avatarUrl || "");
       setPhoneNumber((user as any).phoneNumber || "");
       setOnlineStatus((user.status as any) || "online");
+      if ((user as any).readReceiptsEnabled !== undefined) setReadReceipts(!!(user as any).readReceiptsEnabled);
+      if ((user as any).showOnlineStatus !== undefined) setShowOnlineStatusToggle(!!(user as any).showOnlineStatus);
     }
   }, [user]);
 
@@ -1107,7 +1116,33 @@ export default function Settings() {
             right={
               <Switch
                 checked={readReceipts}
-                onCheckedChange={v => { setReadReceipts(v); setLs("pulse-privacy-read-receipts", v); toast({ title: t("common.saved"), description: v ? t("settings.readReceiptsOn") : t("settings.readReceiptsOff") }); }}
+                onCheckedChange={v => {
+                  setReadReceipts(v);
+                  setLs("pulse-privacy-read-receipts", v);
+                  updateMe.mutate({ data: { readReceiptsEnabled: v } as any }, {
+                    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/users/me"] }),
+                  });
+                  toast({ title: t("common.saved"), description: v ? t("settings.readReceiptsOn") : t("settings.readReceiptsOff") });
+                }}
+              />
+            }
+          />
+          <Row
+            icon={<User size={18} />}
+            color="bg-green-500/10 text-green-500"
+            label={t("settings.showOnlineStatus")}
+            desc={t("settings.showOnlineStatusDesc")}
+            right={
+              <Switch
+                checked={showOnlineStatusToggle}
+                onCheckedChange={v => {
+                  setShowOnlineStatusToggle(v);
+                  setLs("pulse-privacy-show-online", v);
+                  updateMe.mutate({ data: { showOnlineStatus: v } as any }, {
+                    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/users/me"] }),
+                  });
+                  toast({ title: t("common.saved"), description: v ? t("settings.showOnlineStatusOn") : t("settings.showOnlineStatusOff") });
+                }}
               />
             }
           />

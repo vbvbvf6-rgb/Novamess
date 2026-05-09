@@ -233,7 +233,7 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
       queryClient.invalidateQueries({ queryKey: [`/api/chats/${chatId}`] });
       setShowAutoDeleteMenu(false);
       if (seconds) {
-        toast({ title: t("autodelete.set"), description: `${formatAutoDeleteLabel(seconds, t)}` });
+        toast({ title: t("autodelete.set"), description: `${formatAutoDeleteLabel(seconds)}` });
       } else {
         toast({ title: t("autodelete.cleared") });
       }

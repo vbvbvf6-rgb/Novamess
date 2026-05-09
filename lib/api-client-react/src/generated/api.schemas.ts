@@ -31,6 +31,9 @@ export interface User {
   isBot: boolean;
   isVerified: boolean;
   isAdmin: boolean;
+  showOnlineStatus?: boolean;
+  readReceiptsEnabled?: boolean;
+  totpEnabled?: boolean;
   createdAt: string;
 }
 
@@ -50,6 +53,8 @@ export interface UpdateUserBody {
   avatarColor?: string;
   statusText?: string;
   status?: UpdateUserBodyStatus;
+  showOnlineStatus?: boolean;
+  readReceiptsEnabled?: boolean;
 }
 
 export interface AddContactBody {

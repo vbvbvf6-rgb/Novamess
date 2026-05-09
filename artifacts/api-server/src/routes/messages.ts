@@ -4,10 +4,7 @@ import { eq, and, lt, desc, sql, lte } from "drizzle-orm";
 import { broadcastToChat } from "../lib/sse";
 import { SendMessageBody, EditMessageBody, AddReactionBody } from "@workspace/api-zod";
 
-const ADMIN_USER_IDS = [4];
-
 async function isAdmin(userId: number): Promise<boolean> {
-  if (ADMIN_USER_IDS.includes(userId)) return true;
   try {
     const rows = await db.execute(sql`SELECT is_admin FROM users WHERE id = ${userId}`);
     return !!(rows.rows[0] as any)?.is_admin;
@@ -49,6 +46,56 @@ async function buildMessage(msg: typeof messagesTable.$inferSelect) {
     giftData: null,
   };
 }
+
+router.get("/messages/search", async (req, res) => {
+  try {
+    const uid = req.currentUserId;
+    const q = String(req.query.q ?? "").trim();
+    const chatId = req.query.chatId ? Number(req.query.chatId) : undefined;
+    const limit = Math.min(Number(req.query.limit ?? 30), 100);
+
+    if (!q || q.length < 2) {
+      return res.status(400).json({ error: "Запрос слишком короткий" });
+    }
+
+    if (chatId) {
+      if (!(await isChatMember(chatId, uid))) {
+        return res.status(403).json({ error: "Нет доступа к этому чату" });
+      }
+      const rows = await db.execute(
+        sql`SELECT m.*, u.id as sender_id_u, u.display_name, u.avatar_color, u.avatar_url, u.is_verified, u.is_bot,
+                   c.name as chat_name, c.type as chat_type
+            FROM messages m
+            JOIN users u ON u.id = m.sender_id
+            JOIN chats c ON c.id = m.chat_id
+            WHERE m.chat_id = ${chatId}
+              AND m.text ILIKE ${'%' + q + '%'}
+            ORDER BY m.created_at DESC
+            LIMIT ${limit}`
+      );
+      return res.json(rows.rows);
+    }
+
+    const rows = await db.execute(
+      sql`SELECT m.*, u.display_name, u.avatar_color, u.avatar_url, u.is_verified, u.is_bot,
+                 c.name as chat_name, c.type as chat_type,
+                 cu.display_name as other_user_name
+          FROM messages m
+          JOIN chat_members cm ON cm.chat_id = m.chat_id AND cm.user_id = ${uid}
+          JOIN users u ON u.id = m.sender_id
+          JOIN chats c ON c.id = m.chat_id
+          LEFT JOIN chat_members cm2 ON cm2.chat_id = m.chat_id AND cm2.user_id != ${uid} AND c.type = 'direct'
+          LEFT JOIN users cu ON cu.id = cm2.user_id
+          WHERE m.text ILIKE ${'%' + q + '%'}
+          ORDER BY m.created_at DESC
+          LIMIT ${limit}`
+    );
+    return res.json(rows.rows);
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
 
 router.get("/messages", async (req, res) => {
   try {
