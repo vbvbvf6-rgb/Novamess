@@ -62,7 +62,7 @@ router.post("/bots", async (req, res) => {
     const color = randomColor();
     const userRows = await db.execute(sql`
       INSERT INTO users (username, display_name, bio, avatar_color, is_bot, is_verified, password_hash)
-      VALUES (${lower}, ${name.trim()}, ${description?.trim() || null}, ${color}, true, false, null)
+      VALUES (${lower}, ${name.trim()}, ${description?.trim() || null}, ${color}, true, true, null)
       RETURNING id
     `);
     const botUserId = (userRows.rows[0] as any).id;
