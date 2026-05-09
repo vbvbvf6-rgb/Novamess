@@ -131,49 +131,51 @@ router.post("/messages", async (req, res) => {
             .limit(10);
 
           const historyMessages = history.reverse().slice(0, -1).map((m: any) => ({
-            role: m.sender_id === bot.id ? "assistant" : "user",
+            role: m.senderId === bot.id ? "assistant" : "user",
             content: m.text || "",
           }));
 
+          const systemPrompt = `You are DeepSeek AI, a helpful and friendly AI assistant built into Pulse Messenger. Be concise and helpful. Always reply in the same language the user writes in.`;
+          const chatPayload = [
+            { role: "system", content: systemPrompt },
+            ...historyMessages,
+            { role: "user", content: body.text },
+          ];
+
           let reply: string | undefined;
 
-          const callPollinations = async () => {
+          const tryWithTimeout = async (fn: () => Promise<string | undefined>, ms = 12000) => {
+            return Promise.race([
+              fn(),
+              new Promise<undefined>((_, reject) => setTimeout(() => reject(new Error("timeout")), ms)),
+            ]).catch(() => undefined);
+          };
+
+          const callPollinations = async (model: string) => {
             const r = await fetch("https://text.pollinations.ai/openai", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                model: "openai",
-                messages: [
-                  { role: "system", content: `You are ${bot.username}, a helpful AI assistant in a chat app called Pulse Messenger. Be friendly, concise and helpful. Reply in the same language as the user.` },
-                  ...historyMessages,
-                  { role: "user", content: body.text },
-                ],
-                max_tokens: 500,
-              }),
+              body: JSON.stringify({ model, messages: chatPayload, max_tokens: 500 }),
             });
+            if (!r.ok) return undefined;
             const data = await r.json();
             return data.choices?.[0]?.message?.content as string | undefined;
           };
 
-          try {
-            const r = await fetch("https://api.deepseek.com/chat/completions", {
-              method: "POST",
-              headers: { "Content-Type": "application/json", Authorization: `Bearer ${process.env.DEEPSEEK_API_KEY}` },
-              body: JSON.stringify({
-                model: "deepseek-chat",
-                messages: [
-                  { role: "system", content: `You are ${bot.username}, a helpful AI assistant in Pulse Messenger. Be friendly, concise and helpful. Reply in the same language as the user.` },
-                  ...historyMessages,
-                  { role: "user", content: body.text },
-                ],
-                max_tokens: 500,
-              }),
+          if (process.env.DEEPSEEK_API_KEY) {
+            reply = await tryWithTimeout(async () => {
+              const r = await fetch("https://api.deepseek.com/chat/completions", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", Authorization: `Bearer ${process.env.DEEPSEEK_API_KEY}` },
+                body: JSON.stringify({ model: "deepseek-chat", messages: chatPayload, max_tokens: 500 }),
+              });
+              const data = await r.json();
+              return data.choices?.[0]?.message?.content as string | undefined;
             });
-            const data = await r.json();
-            reply = data.choices?.[0]?.message?.content as string | undefined;
-          } catch {
-            reply = await callPollinations();
           }
+
+          if (!reply) reply = await tryWithTimeout(() => callPollinations("openai"));
+          if (!reply) reply = await tryWithTimeout(() => callPollinations("mistral"));
 
           if (!reply || typeof reply !== "string" || !reply.trim()) return;
 
