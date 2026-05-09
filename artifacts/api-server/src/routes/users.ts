@@ -123,7 +123,7 @@ router.get("/wallet", async (req, res) => {
     const uid = req.currentUserId;
     const rows = await db.execute(sql`SELECT balance FROM users WHERE id = ${uid}`);
     const balance = rows.rows[0] ? Number((rows.rows[0] as any).balance) : 0;
-    const address = `PLS${String(1000000000 + uid)}SPARK`;
+    const address = `PULSE-${uid.toString().padStart(6, "0")}`;
     res.json({ balance, address, currency: "SPARK", symbol: "⚡" });
   } catch (err) {
     req.log.error(err);

@@ -336,7 +336,7 @@ export default function Wallet() {
             <div className="bg-white/8 rounded-xl px-3 py-2 flex items-center justify-between mb-4 relative z-10 border border-white/10">
               <div>
                 <p className="text-[10px] uppercase tracking-wider text-white/40 mb-0.5">Адрес кошелька</p>
-                <p className="font-mono text-sm font-bold text-white/90">{walletAddress || "PLS···SPARK"}</p>
+                <p className="font-mono text-sm font-bold text-white/90">{walletAddress || "PULSE-000001"}</p>
               </div>
               <button onClick={handleCopyAddress} className="p-1.5 rounded-lg hover:bg-white/10 transition text-white/60 hover:text-white">
                 {addressCopied ? <Check size={15} className="text-green-400" /> : <Copy size={15} />}
