@@ -32,22 +32,31 @@ function ChatAvatar({ chat, displayName }: { chat: Chat; displayName: string }) 
       : (chat as any).avatarUrl;
 
   const letter = displayName[0]?.toUpperCase() || "?";
+  const status = chat.type === "direct" ? (chat.otherUser as any)?.status : null;
+  const statusDotColor =
+    status === "online" ? "bg-green-500" :
+    status === "away" ? "bg-yellow-500" : null;
 
   return (
-    <div
-      className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg overflow-hidden shrink-0"
-      style={{ backgroundColor: avatarColor }}
-    >
-      {avatarUrl ? (
-        <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
-      ) : chat.type === "channel" ? (
-        <Radio size={20} className="text-white" />
-      ) : chat.type === "group" ? (
-        <Users size={20} className="text-white" />
-      ) : (chat.otherUser as any)?.isBot ? (
-        <Bot size={20} className="text-white" />
-      ) : (
-        letter
+    <div className="relative shrink-0">
+      <div
+        className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg overflow-hidden"
+        style={{ backgroundColor: avatarColor }}
+      >
+        {avatarUrl ? (
+          <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
+        ) : chat.type === "channel" ? (
+          <Radio size={20} className="text-white" />
+        ) : chat.type === "group" ? (
+          <Users size={20} className="text-white" />
+        ) : (chat.otherUser as any)?.isBot ? (
+          <Bot size={20} className="text-white" />
+        ) : (
+          letter
+        )}
+      </div>
+      {statusDotColor && (
+        <span className={`absolute bottom-0.5 right-0.5 w-3 h-3 rounded-full border-2 border-card ${statusDotColor}`} />
       )}
     </div>
   );
@@ -208,7 +217,7 @@ export function ChatList({ onMenuClick }: { onMenuClick?: () => void }) {
                 <div className="relative shrink-0">
                   <ChatAvatar chat={chat} displayName={displayName} />
                   {chat.isPinned && (
-                    <div className="absolute -bottom-1 -right-1 bg-background rounded-full p-0.5">
+                    <div className="absolute -top-1 -right-1 bg-background rounded-full p-0.5">
                       <div className="bg-primary p-0.5 rounded-full">
                         <Pin size={10} className="text-white" />
                       </div>

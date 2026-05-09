@@ -12,6 +12,7 @@ import postsRouter from "./posts";
 import adminRouter from "./admin";
 import aiRouter from "./ai";
 import eventsRouter from "./events";
+import walletRouter from "./wallet";
 
 const router: IRouter = Router();
 
@@ -28,5 +29,6 @@ router.use(postsRouter);
 router.use(adminRouter);
 router.use(aiRouter);
 router.use(eventsRouter);
+router.use(walletRouter);
 
 export default router;

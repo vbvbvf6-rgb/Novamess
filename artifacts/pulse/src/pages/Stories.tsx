@@ -6,6 +6,30 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useQueryClient } from "@tanstack/react-query";
 
+async function compressStoryImage(file: File, maxPx = 1280, quality = 0.85): Promise<string> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      let { width, height } = img;
+      if (width > maxPx || height > maxPx) {
+        if (width > height) { height = Math.round((height * maxPx) / width); width = maxPx; }
+        else { width = Math.round((width * maxPx) / height); height = maxPx; }
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) { resolve(url); return; }
+      ctx.drawImage(img, 0, 0, width, height);
+      resolve(canvas.toDataURL("image/jpeg", quality));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(""); };
+    img.src = url;
+  });
+}
+
 const BG_COLORS = [
   "#1a1a2e", "#16213e", "#0f3460",
   "#2d1b69", "#4a0e8f", "#7b2d8b",
@@ -25,19 +49,19 @@ export default function Stories() {
   const [storyText, setStoryText] = useState("");
   const [storyBg, setStoryBg] = useState("#1a1a2e");
   const [storyImageUrl, setStoryImageUrl] = useState("");
+  const [storyImageCaption, setStoryImageCaption] = useState("");
   const [storyType, setStoryType] = useState<"text" | "image">("text");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createError, setCreateError] = useState("");
   const [viewingGroup, setViewingGroup] = useState<any>(null);
   const [viewingIndex, setViewingIndex] = useState(0);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => setStoryImageUrl(ev.target?.result as string);
-    reader.readAsDataURL(file);
     e.target.value = "";
+    const compressed = await compressStoryImage(file);
+    if (compressed) setStoryImageUrl(compressed);
   };
 
   const handleCreateStory = async () => {
@@ -49,7 +73,7 @@ export default function Stories() {
       await createStoryMutation.mutateAsync({
         data: {
           type: storyType,
-          text: storyType === "text" ? storyText.trim() : undefined,
+          text: storyType === "text" ? storyText.trim() : (storyImageCaption.trim() || undefined),
           backgroundColor: storyBg,
           mediaUrl: storyType === "image" ? storyImageUrl.trim() : undefined,
         }
@@ -58,6 +82,7 @@ export default function Stories() {
       setShowCreate(false);
       setStoryText("");
       setStoryImageUrl("");
+      setStoryImageCaption("");
       setStoryBg("#1a1a2e");
       setStoryType("text");
     } catch (e: any) {
@@ -236,6 +261,14 @@ export default function Stories() {
                   <Upload size={16} />
                   {storyImageUrl ? "Сменить фото" : "Выбрать фото с устройства"}
                 </button>
+                <textarea
+                  value={storyImageCaption}
+                  onChange={e => setStoryImageCaption(e.target.value)}
+                  placeholder="Подпись к фото (необязательно)..."
+                  rows={2}
+                  maxLength={200}
+                  className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-primary transition-colors resize-none"
+                />
               </div>
             )}
 

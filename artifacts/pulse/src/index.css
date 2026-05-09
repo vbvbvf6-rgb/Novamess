@@ -126,6 +126,19 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
+  /* Prevent transform-induced subpixel text blur on mobile */
+  html {
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+
+  /* Prevent text blur inside animated containers */
+  [data-framer-component-type],
+  .motion-reduce {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
   /* Prevent iOS input zoom */
   input, textarea, select {
     font-size: max(16px, 1em);

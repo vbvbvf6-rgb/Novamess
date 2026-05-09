@@ -28,6 +28,38 @@ function readFileAsDataUrl(file: File): Promise<string> {
   });
 }
 
+async function compressImage(file: File, maxPx = 1280, quality = 0.82): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      let { width, height } = img;
+      if (width > maxPx || height > maxPx) {
+        if (width > height) {
+          height = Math.round((height * maxPx) / width);
+          width = maxPx;
+        } else {
+          width = Math.round((width * maxPx) / height);
+          height = maxPx;
+        }
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) { resolve(url); return; }
+      ctx.drawImage(img, 0, 0, width, height);
+      resolve(canvas.toDataURL("image/jpeg", quality));
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      readFileAsDataUrl(file).then(resolve).catch(reject);
+    };
+    img.src = url;
+  });
+}
+
 export function ChatInput({ chatId, onMessageSent }: { chatId: number; onMessageSent?: () => void }) {
   const [text, setText] = useState("");
   const [showEmoji, setShowEmoji] = useState(false);
@@ -87,7 +119,7 @@ export function ChatInput({ chatId, onMessageSent }: { chatId: number; onMessage
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
-    const results = await Promise.all(files.map(readFileAsDataUrl));
+    const results = await Promise.all(files.map(f => compressImage(f)));
     setImagePreviews(prev => [...prev, ...results]);
     e.target.value = "";
   };

@@ -21,10 +21,25 @@ export default function Contacts() {
   const { setSelectedChatId } = useAppContext();
   const [, setLocation] = useLocation();
 
-  const handleAddContact = (userId: number) => {
+  const handleAddContact = async (userId: number) => {
     addContact.mutate(
       { data: { userId } },
-      { onSuccess: () => queryClient.invalidateQueries({ queryKey: getGetContactsQueryKey() }) }
+      {
+        onSuccess: async () => {
+          queryClient.invalidateQueries({ queryKey: getGetContactsQueryKey() });
+          const uid = localStorage.getItem("pulse-user-id");
+          try {
+            const res = await fetch("/api/chats/direct", {
+              method: "POST",
+              headers: { "Content-Type": "application/json", ...(uid ? { "x-user-id": uid } : {}) },
+              body: JSON.stringify({ userId }),
+            });
+            if (res.ok) {
+              queryClient.invalidateQueries({ queryKey: getGetChatsQueryKey() });
+            }
+          } catch {}
+        }
+      }
     );
   };
 

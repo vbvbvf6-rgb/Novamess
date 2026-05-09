@@ -107,56 +107,72 @@ router.post("/messages", async (req, res) => {
             ? `Ты — дружелюбный и умный ИИ-помощник в мессенджере Pulse. Отвечай по-русски, кратко и по существу. ${pulseContext} Помогай с любыми вопросами — о мессенджере и не только.`
             : `Ты — помощник службы поддержки мессенджера Pulse. Отвечай дружелюбно и по-русски. ${pulseContext} Помогай пользователям разобраться с функциями приложения.`;
 
-          // Use OpenRouter if key available, fall back to Pollinations
           const openRouterKey = process.env["OPENROUTER_API_KEY"];
           let reply: string | undefined;
 
+          const msgs = [
+            { role: "system", content: systemPrompt },
+            ...historyMessages,
+            { role: "user", content: body.text },
+          ];
+
+          const callPollinations = async (): Promise<string | undefined> => {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 20000);
+            try {
+              const response = await fetch("https://text.pollinations.ai/openai", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                signal: controller.signal,
+                body: JSON.stringify({
+                  model: "openai",
+                  messages: msgs,
+                  max_tokens: 600,
+                  temperature: 0.7,
+                  private: true,
+                }),
+              });
+              if (response.ok) {
+                const data = await response.json() as any;
+                return data.choices?.[0]?.message?.content as string | undefined;
+              }
+            } catch {}
+            finally { clearTimeout(timer); }
+            return undefined;
+          };
+
           if (openRouterKey) {
-            const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${openRouterKey}`,
-                "HTTP-Referer": "https://pulse-messenger.replit.app",
-                "X-Title": "Pulse Messenger"
-              },
-              body: JSON.stringify({
-                model: "google/gemini-flash-1.5",
-                messages: [
-                  { role: "system", content: systemPrompt },
-                  ...historyMessages,
-                  { role: "user", content: body.text },
-                ],
-                max_tokens: 800,
-                temperature: 0.7,
-              }),
-            });
-            if (response.ok) {
-              const data = await response.json() as any;
-              reply = data.choices?.[0]?.message?.content;
-            }
+            try {
+              const controller = new AbortController();
+              const timer = setTimeout(() => controller.abort(), 20000);
+              const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "Authorization": `Bearer ${openRouterKey}`,
+                  "HTTP-Referer": "https://pulse-messenger.replit.app",
+                  "X-Title": "Pulse Messenger",
+                },
+                signal: controller.signal,
+                body: JSON.stringify({
+                  model: "google/gemini-flash-1.5",
+                  messages: msgs,
+                  max_tokens: 800,
+                  temperature: 0.7,
+                }),
+              });
+              clearTimeout(timer);
+              if (response.ok) {
+                const data = await response.json() as any;
+                reply = data.choices?.[0]?.message?.content as string | undefined;
+              }
+            } catch {}
+            if (!reply) reply = await callPollinations();
           } else {
-            const response = await fetch("https://text.pollinations.ai/openai", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                model: "openai",
-                messages: [
-                  { role: "system", content: systemPrompt },
-                  ...historyMessages,
-                  { role: "user", content: body.text },
-                ],
-                max_tokens: 800,
-                temperature: 0.7,
-                private: true,
-              }),
-            });
-            if (response.ok) {
-              const data = await response.json() as any;
-              reply = data.choices?.[0]?.message?.content;
-            }
+            reply = await callPollinations();
           }
-          if (!reply) return;
+
+          if (!reply || typeof reply !== "string" || !reply.trim()) return;
 
           await db.insert(messagesTable).values({
             chatId: body.chatId,

@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Zap, Copy, Check, Trophy, Star, MessageSquare, Phone, Gift,
   History, Shield, ChevronRight, ArrowUpRight, ArrowDownLeft,
-  AlertTriangle, CheckCircle2, TrendingUp, X, Package
+  AlertTriangle, CheckCircle2, TrendingUp, X, Package, Send
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -103,6 +103,10 @@ export default function Wallet() {
   const [showReceiveModal, setShowReceiveModal] = useState(false);
   const [showBuyModal, setShowBuyModal] = useState(false);
   const [buyLoading, setBuyLoading] = useState(false);
+  const [showSendModal, setShowSendModal] = useState(false);
+  const [sendAddress, setSendAddress] = useState("");
+  const [sendAmount, setSendAmount] = useState("");
+  const [isSending, setIsSending] = useState(false);
 
   const uid = Number(localStorage.getItem("pulse-user-id") || "0");
   const isAdmin = [4].includes(uid);
@@ -183,6 +187,43 @@ export default function Wallet() {
     navigator.clipboard.writeText(walletAddress).catch(() => {});
     setAddressCopied(true);
     setTimeout(() => setAddressCopied(false), 2000);
+  };
+
+  const handleSend = async () => {
+    const amount = Number(sendAmount);
+    if (!sendAddress.trim() || isNaN(amount) || amount <= 0) {
+      toast({ title: "Укажите адрес и сумму", variant: "destructive" });
+      return;
+    }
+    if (amount > balance) {
+      toast({ title: "Недостаточно Spark", description: `Ваш баланс: ${balance} ⚡`, variant: "destructive" });
+      return;
+    }
+    setIsSending(true);
+    try {
+      const res = await fetch("/api/wallet/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...getUserIdHeader() },
+        body: JSON.stringify({ address: sendAddress.trim(), amount }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setBalance(data.balance);
+        const newTx: TxEntry = { id: `send-${Date.now()}`, type: "spend", amount, label: `Перевод → ${data.recipient}`, time: new Date() };
+        const updated = [newTx, ...txHistory].slice(0, 50);
+        setTxHistory(updated);
+        localStorage.setItem(txKey, JSON.stringify(updated));
+        toast({ title: "Перевод выполнен!", description: `${amount} ⚡ отправлено ${data.recipient}` });
+        setShowSendModal(false);
+        setSendAddress("");
+        setSendAmount("");
+      } else {
+        toast({ title: "Ошибка перевода", description: data.error || "Попробуйте снова", variant: "destructive" });
+      }
+    } catch {
+      toast({ title: "Ошибка сети", variant: "destructive" });
+    }
+    setIsSending(false);
   };
 
   const timeAgo = (date: Date) => {
@@ -269,11 +310,17 @@ export default function Wallet() {
                 <ArrowDownLeft size={15} /> Получить
               </button>
               <button
+                onClick={() => setShowSendModal(true)}
+                className="flex-1 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 transition text-sm font-semibold flex items-center justify-center gap-1.5"
+              >
+                <Send size={15} /> Отправить
+              </button>
+              <button
                 onClick={() => setShowBuyModal(true)}
                 className="flex-1 py-2.5 rounded-xl hover:opacity-90 transition text-sm font-semibold flex items-center justify-center gap-1.5"
                 style={{ background: "linear-gradient(135deg, #22d3ee, #7c3aed)" }}
               >
-                <Zap size={15} fill="white" /> Купить Spark
+                <Zap size={15} fill="white" /> Купить
               </button>
             </div>
           </motion.div>
@@ -466,6 +513,68 @@ export default function Wallet() {
                   className="w-full py-3 bg-primary rounded-xl text-sm font-semibold text-white"
                 >
                   Скопировать адрес
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Send Modal */}
+      <AnimatePresence>
+        {showSendModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+            onClick={() => setShowSendModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-card border border-border rounded-3xl p-6 w-full max-w-sm shadow-2xl"
+            >
+              <div className="flex items-center justify-between mb-5">
+                <h3 className="text-lg font-bold text-foreground">Отправить Spark</h3>
+                <button onClick={() => setShowSendModal(false)} className="text-muted-foreground hover:text-foreground transition-colors">
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Адрес получателя</label>
+                  <input
+                    type="text"
+                    value={sendAddress}
+                    onChange={e => setSendAddress(e.target.value)}
+                    placeholder="PULSE-000001"
+                    className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-primary transition-colors"
+                    autoCapitalize="characters"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Сумма ⚡</label>
+                  <input
+                    type="number"
+                    value={sendAmount}
+                    onChange={e => setSendAmount(e.target.value)}
+                    placeholder="100"
+                    min={1}
+                    max={balance}
+                    className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-primary transition-colors"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">Доступно: {balance.toLocaleString()} ⚡</p>
+                </div>
+                <button
+                  disabled={isSending || !sendAddress.trim() || !sendAmount}
+                  onClick={handleSend}
+                  className="w-full py-3 rounded-xl font-bold text-white text-sm transition-all disabled:opacity-50"
+                  style={{ background: "linear-gradient(135deg, #7c3aed, #22d3ee)" }}
+                >
+                  {isSending ? "Отправка..." : "Подтвердить перевод"}
                 </button>
               </div>
             </motion.div>

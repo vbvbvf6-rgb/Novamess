@@ -15,6 +15,18 @@ export default function Home() {
     return () => window.removeEventListener("open-chat", handler);
   }, [setSelectedChatId]);
 
+  useEffect(() => {
+    if (!selectedChatId) return;
+    const onPopState = (e: PopStateEvent) => {
+      e.preventDefault();
+      setSelectedChatId(null);
+      window.history.pushState(null, "", window.location.href);
+    };
+    window.history.pushState(null, "", window.location.href);
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, [selectedChatId, setSelectedChatId]);
+
   return (
     <div className="flex w-full h-full">
       <ChatList />
