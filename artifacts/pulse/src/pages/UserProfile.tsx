@@ -65,7 +65,7 @@ export default function UserProfile() {
   const params = useParams<{ userId: string }>();
   const userId = Number(params.userId);
   const [, setLocation] = useLocation();
-  const { setSelectedChatId } = useAppContext();
+  const { setSelectedChatId, startCall } = useAppContext();
   const queryClient = useQueryClient();
   const [isStartingChat, setIsStartingChat] = useState(false);
 
@@ -252,6 +252,7 @@ export default function UserProfile() {
                     <motion.button
                       whileHover={{ scale: 1.08 }}
                       whileTap={{ scale: 0.95 }}
+                      onClick={() => startCall(userId, null, "audio")}
                       className="w-11 h-11 rounded-full bg-secondary flex items-center justify-center text-foreground hover:bg-secondary/80 transition-colors"
                       title="Voice call"
                     >
@@ -260,6 +261,7 @@ export default function UserProfile() {
                     <motion.button
                       whileHover={{ scale: 1.08 }}
                       whileTap={{ scale: 0.95 }}
+                      onClick={() => startCall(userId, null, "video")}
                       className="w-11 h-11 rounded-full bg-secondary flex items-center justify-center text-foreground hover:bg-secondary/80 transition-colors"
                       title="Video call"
                     >

@@ -48,7 +48,7 @@ function formatAutoDeleteLabel(seconds: number | null | undefined, t: (k: any) =
 }
 
 export function ChatWindow({ chatId }: ChatWindowProps) {
-  const { setSelectedChatId, setActiveCall, setTypingForChat } = useAppContext();
+  const { setSelectedChatId, setActiveCall, setTypingForChat, startCall } = useAppContext();
   const { t } = useLanguage();
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
@@ -165,12 +165,13 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
     };
   }, []);
 
-  const handleStartCall = (type: "audio" | "video") => {
+  const handleStartCall = async (type: "audio" | "video") => {
     if (!chat?.otherUser?.id) return;
-    initiateCall.mutate(
-      { data: { calleeId: chat.otherUser.id, chatId, type } },
-      { onSuccess: (call) => { setActiveCall(call); } }
-    );
+    try {
+      await startCall(chat.otherUser.id, chatId, type);
+    } catch {
+      toast({ title: "Не удалось начать звонок", description: "Проверьте доступ к микрофону/камере", variant: "destructive" });
+    }
   };
 
   const handleToggleMute = () => {

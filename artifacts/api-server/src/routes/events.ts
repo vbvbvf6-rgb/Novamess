@@ -1,5 +1,9 @@
 import { Router } from "express";
-import { subscribeToChatEvents, unsubscribeFromChatEvents, setTyping, stopTyping } from "../lib/sse";
+import {
+  subscribeToChatEvents, unsubscribeFromChatEvents,
+  subscribeToUserEvents, unsubscribeFromUserEvents,
+  setTyping, stopTyping,
+} from "../lib/sse";
 import { db } from "@workspace/db";
 import { sql } from "drizzle-orm";
 
@@ -63,6 +67,29 @@ router.post("/chats/:chatId/typing/stop", async (req, res) => {
   } catch {
     res.json({ ok: false });
   }
+});
+
+router.get("/users/me/events", (req, res) => {
+  const uid = req.currentUserId;
+
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  res.setHeader("X-Accel-Buffering", "no");
+  res.flushHeaders();
+
+  res.write(": connected\n\n");
+
+  const keepAlive = setInterval(() => {
+    try { res.write(": ping\n\n"); } catch { clearInterval(keepAlive); }
+  }, 25000);
+
+  subscribeToUserEvents(uid, res);
+
+  req.on("close", () => {
+    clearInterval(keepAlive);
+    unsubscribeFromUserEvents(uid, res);
+  });
 });
 
 export default router;

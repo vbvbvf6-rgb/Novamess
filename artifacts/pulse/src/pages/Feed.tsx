@@ -289,7 +289,7 @@ export default function Feed() {
     const file = e.target.files?.[0];
     if (!file) return;
     e.target.value = "";
-    const img = new Image();
+    const img = new window.Image();
     const objectUrl = URL.createObjectURL(file);
     img.onload = () => {
       URL.revokeObjectURL(objectUrl);

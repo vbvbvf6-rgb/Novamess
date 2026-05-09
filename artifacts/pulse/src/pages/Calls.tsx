@@ -4,10 +4,12 @@ import { Phone, Video, PhoneMissed, PhoneForwarded, PhoneIncoming } from "lucide
 import { formatDistanceToNow, format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAppContext } from "@/contexts/AppContext";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Calls() {
   const { data: calls, isLoading } = useGetCallHistory();
-  const { currentUserId } = useAppContext();
+  const { currentUserId, startCall } = useAppContext();
+  const { toast } = useToast();
 
   return (
     <div className="flex-1 flex flex-col h-full bg-background overflow-hidden relative">
@@ -83,7 +85,19 @@ export default function Calls() {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <button className="w-10 h-10 rounded-full flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors">
+                    <button
+                      onClick={async () => {
+                        const calleeId = isOutgoing ? call.calleeId : call.callerId;
+                        if (!calleeId) return;
+                        try {
+                          await startCall(calleeId, call.chatId ?? null, isVideo ? "video" : "audio");
+                        } catch {
+                          toast({ title: "Не удалось начать звонок", description: "Проверьте доступ к микрофону/камере", variant: "destructive" });
+                        }
+                      }}
+                      className="w-10 h-10 rounded-full flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                      title="Перезвонить"
+                    >
                       {isVideo ? <Video size={20} /> : <Phone size={20} />}
                     </button>
                   </div>
