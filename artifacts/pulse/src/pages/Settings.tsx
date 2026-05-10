@@ -1569,22 +1569,49 @@ export default function Settings() {
 
               {/* Prime Theme Picker */}
               <div className="mb-4">
-                <p className="text-xs font-semibold text-muted-foreground mb-2.5">{lang === "ru" ? "Тема интерфейса" : "Interface Theme"}</p>
-                <div className="flex gap-2.5 flex-wrap">
-                  {PRIME_THEMES.map(theme => (
-                    <button
-                      key={theme.id}
-                      title={theme.name}
-                      onClick={() => {
-                        setPrimeTheme(theme.id);
-                        localStorage.setItem("pulse-prime-theme", theme.id);
-                        applyPrimeTheme(theme.id);
-                        toast({ title: lang === "ru" ? "Тема изменена" : "Theme changed", description: theme.name });
-                      }}
-                      className={`w-9 h-9 rounded-full border-2 transition-all hover:scale-110 ${primeTheme === theme.id ? "border-white scale-110 shadow-lg" : "border-transparent"}`}
-                      style={{ background: `hsl(${theme.primary})` }}
-                    />
-                  ))}
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                  {lang === "ru" ? "Тема интерфейса" : "Interface Theme"}
+                </p>
+                <div className="grid grid-cols-4 gap-2">
+                  {PRIME_THEMES.map(theme => {
+                    const isActive = primeTheme === theme.id;
+                    return (
+                      <button
+                        key={theme.id}
+                        title={theme.name}
+                        onClick={() => {
+                          setPrimeTheme(theme.id);
+                          localStorage.setItem("pulse-prime-theme", theme.id);
+                          applyPrimeTheme(theme.id);
+                          toast({ title: lang === "ru" ? "Тема применена" : "Theme applied", description: `${theme.emoji} ${theme.name}` });
+                        }}
+                        className={`relative flex flex-col items-center gap-1.5 rounded-xl p-2 transition-all border ${
+                          isActive
+                            ? "border-primary bg-primary/10 scale-[1.03] shadow-md shadow-primary/20"
+                            : "border-border/50 bg-card/50 hover:border-primary/40 hover:bg-primary/5"
+                        }`}
+                      >
+                        <div
+                          className="w-8 h-8 rounded-full ring-2 ring-white/10 shadow-md"
+                          style={{ background: `hsl(${theme.vars["--primary"]})` }}
+                        >
+                          <div
+                            className="w-full h-full rounded-full"
+                            style={{
+                              background: `radial-gradient(circle at 30% 30%, hsl(${theme.vars["--card"]}) 40%, ${theme.preview} 100%)`,
+                              opacity: 0.85,
+                            }}
+                          />
+                        </div>
+                        <span className="text-[10px] leading-tight font-medium text-center text-foreground/80 line-clamp-2">
+                          {theme.emoji} {theme.name.split(" ")[0]}
+                        </span>
+                        {isActive && (
+                          <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-primary shadow-sm" />
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 

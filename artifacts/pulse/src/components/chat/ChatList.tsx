@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { GlobalSearch } from "./GlobalSearch";
 import { useQueryClient } from "@tanstack/react-query";
+import { cn } from "@/lib/utils";
 
 type FolderKey = "all" | "unread" | "groups" | "bots";
 
