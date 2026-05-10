@@ -72,6 +72,10 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
   next();
 });
 
+app.get("/api/health", (_req: Request, res: Response) => {
+  res.json({ ok: true, ts: Date.now() });
+});
+
 app.use("/api", router);
 app.use("/bot", botApiRouter);
 

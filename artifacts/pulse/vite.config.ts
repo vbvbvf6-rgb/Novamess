@@ -70,8 +70,17 @@ export default defineConfig({
       "/api": {
         target: "http://localhost:8080",
         changeOrigin: true,
-        timeout: 0,
-        proxyTimeout: 0,
+        timeout: 10000,
+        proxyTimeout: 10000,
+        configure: (proxy) => {
+          proxy.on("error", () => {});
+        },
+      },
+      "/bot": {
+        target: "http://localhost:8080",
+        changeOrigin: true,
+        timeout: 10000,
+        proxyTimeout: 10000,
         configure: (proxy) => {
           proxy.on("error", () => {});
         },
