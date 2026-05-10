@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from "react";
 import { useGetChatById, useGetMessages, getGetMessagesQueryKey, useInitiateCall, useMarkChatAsRead, useUpdateChat, getGetChatsQueryKey, Message } from "@workspace/api-client-react";
 import { useNotifications } from "@/hooks/useNotifications";
-import { Phone, Video, MoreVertical, ArrowLeft, Search, BellOff, Bell, Pin, PinOff, User, Trash2, X, Timer, Flame, ChevronRight, Settings } from "lucide-react";
+import { Phone, Video, MoreVertical, ArrowLeft, Search, BellOff, Bell, Pin, PinOff, User, Trash2, X, Timer, Flame, ChevronRight, Settings, Crown } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChatInfoPanel } from "./ChatInfoPanel";
 import { useAppContext } from "@/contexts/AppContext";
@@ -309,6 +309,7 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
   const displayName = chat.type === "direct" ? (chat.otherUser?.displayName || chat.name || "Chat") : (chat.name || "Group");
   const avatarColor = chat.type === "direct" ? (chat.otherUser?.avatarColor || chat.avatarColor || "#333") : (chat.avatarColor || "#333");
   const isVerified = chat.type === "direct" && (chat.otherUser as any)?.isVerified;
+  const otherUserHasPrime = chat.type === "direct" && (chat.otherUser as any)?.hasPrime;
   const autoDeleteLabel = formatAutoDeleteLabel(autoDeleteTimer);
 
   return (
@@ -324,17 +325,35 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
             <ArrowLeft size={22} />
           </button>
 
-          <button
-            onClick={chat.type === "direct" ? openProfile : () => setShowInfoPanel(v => !v)}
-            className={`w-12 h-12 rounded-[16px] flex items-center justify-center text-white font-black text-xl overflow-hidden shrink-0 cursor-pointer hover:opacity-90 transition-opacity shadow-sm`}
-            style={{ backgroundColor: avatarColor }}
-          >
-            {(chat.type === "direct" ? (chat.otherUser as any)?.avatarUrl : chat.avatarUrl) ? (
-              <img src={(chat.type === "direct" ? (chat.otherUser as any)?.avatarUrl : chat.avatarUrl)} alt={displayName} className="w-full h-full object-cover" />
-            ) : (
-              displayName[0].toUpperCase()
+          <div className="relative shrink-0">
+            {otherUserHasPrime && (
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                className="absolute -inset-[2px] rounded-[18px]"
+                style={{
+                  background: "conic-gradient(from 0deg, #facc15, #fb923c, #f97316, #facc15)",
+                  borderRadius: "18px",
+                }}
+              />
             )}
-          </button>
+            <button
+              onClick={chat.type === "direct" ? openProfile : () => setShowInfoPanel(v => !v)}
+              className={`w-12 h-12 rounded-[16px] flex items-center justify-center text-white font-black text-xl overflow-hidden cursor-pointer hover:opacity-90 transition-opacity shadow-sm relative z-10`}
+              style={{ backgroundColor: avatarColor }}
+            >
+              {(chat.type === "direct" ? (chat.otherUser as any)?.avatarUrl : chat.avatarUrl) ? (
+                <img src={(chat.type === "direct" ? (chat.otherUser as any)?.avatarUrl : chat.avatarUrl)} alt={displayName} className="w-full h-full object-cover" />
+              ) : (
+                displayName[0].toUpperCase()
+              )}
+            </button>
+            {otherUserHasPrime && (
+              <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center z-20 shadow-[0_0_6px_rgba(250,204,21,0.8)]">
+                <Crown size={8} className="text-black" />
+              </div>
+            )}
+          </div>
 
           <button
             onClick={chat.type === "direct" ? openProfile : () => setShowInfoPanel(v => !v)}
@@ -342,6 +361,9 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
           >
             <div className="flex items-center gap-1.5">
               <h2 className="font-bold text-base leading-tight truncate group-hover:text-primary transition-colors">{displayName}</h2>
+              {otherUserHasPrime && (
+                <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 shrink-0">⭐</span>
+              )}
               {isVerified && (
                 <svg className="shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none">
                   <circle cx="12" cy="12" r="12" fill="currentColor" className="text-primary"/>

@@ -1,9 +1,10 @@
 import React from "react";
 import { useGetMyStats, useGetMe } from "@workspace/api-client-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MessageSquare, Phone, Gift, Users, Clock, CalendarDays, Settings, BadgeCheck } from "lucide-react";
+import { MessageSquare, Phone, Gift, Users, Clock, CalendarDays, Settings, BadgeCheck, Crown } from "lucide-react";
 import { format } from "date-fns";
 import { Link } from "wouter";
+import { motion } from "framer-motion";
 
 export default function Profile() {
   const { data: user, isLoading: userLoading } = useGetMe();
@@ -36,31 +37,92 @@ export default function Profile() {
         ) : (
           <div className="space-y-8">
             {/* Header Section */}
-            <div className="flex flex-col items-center text-center p-6 rounded-3xl border border-border bg-card/30 relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-b from-primary/10 to-transparent opacity-50" />
-              
-              <div 
-                className="w-32 h-32 rounded-full flex items-center justify-center text-white font-bold text-5xl mb-4 relative z-10 shadow-2xl border-4 border-background"
-                style={{ backgroundColor: user?.avatarColor || "#333" }}
-              >
-                {user?.avatarUrl ? (
-                  <img src={user.avatarUrl} alt={user.displayName} className="w-full h-full rounded-full object-cover" />
-                ) : (
-                  (user?.displayName || "U")[0].toUpperCase()
+            <div
+              className="flex flex-col items-center text-center p-6 rounded-3xl border border-border bg-card/30 relative overflow-hidden"
+              style={(user as any)?.hasPrime ? { borderColor: "rgba(250,204,21,0.3)" } : undefined}
+            >
+              {(user as any)?.hasPrime ? (
+                <div className="absolute inset-0 bg-gradient-to-b from-yellow-500/15 via-orange-500/5 to-transparent" />
+              ) : (
+                <div className="absolute inset-0 bg-gradient-to-b from-primary/10 to-transparent opacity-50" />
+              )}
+
+              {(user as any)?.hasPrime && (
+                <div className="absolute inset-0 overflow-hidden rounded-3xl">
+                  {[...Array(8)].map((_, i) => (
+                    <motion.div
+                      key={i}
+                      className="absolute rounded-full"
+                      style={{
+                        width: i % 2 === 0 ? 5 : 3,
+                        height: i % 2 === 0 ? 5 : 3,
+                        left: `${8 + i * 11}%`,
+                        top: `${15 + (i % 4) * 18}%`,
+                        background: i % 2 === 0 ? "#facc15" : "#fb923c",
+                      }}
+                      animate={{ y: [0, -12, 0], opacity: [0.3, 0.8, 0.3] }}
+                      transition={{ duration: 2.5 + i * 0.4, repeat: Infinity, delay: i * 0.35 }}
+                    />
+                  ))}
+                </div>
+              )}
+
+              <div className="relative mb-4 z-10">
+                {(user as any)?.hasPrime && (
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                    className="absolute -inset-[3px] rounded-full"
+                    style={{
+                      background: "conic-gradient(from 0deg, #facc15, #fb923c, #f97316, #facc15)",
+                      borderRadius: "50%",
+                    }}
+                  />
                 )}
-                <div className={`absolute bottom-2 right-2 w-6 h-6 rounded-full border-4 border-background ${
-                  user?.status === "online" ? "bg-green-500" : 
-                  user?.status === "away" ? "bg-yellow-500" : "bg-gray-500"
-                }`} />
+                <div
+                  className="w-32 h-32 rounded-full flex items-center justify-center text-white font-bold text-5xl relative shadow-2xl border-4 border-background"
+                  style={{ backgroundColor: user?.avatarColor || "#333" }}
+                >
+                  {user?.avatarUrl ? (
+                    <img src={user.avatarUrl} alt={user.displayName} className="w-full h-full rounded-full object-cover" />
+                  ) : (
+                    (user?.displayName || "U")[0].toUpperCase()
+                  )}
+                  <div className={`absolute bottom-2 right-2 w-6 h-6 rounded-full border-4 border-background ${
+                    user?.status === "online" ? "bg-green-500" :
+                    user?.status === "away" ? "bg-yellow-500" : "bg-gray-500"
+                  }`} />
+                </div>
               </div>
               
-              <div className="flex items-center gap-2 mb-1 relative z-10">
-                <h2 className="text-3xl font-bold text-foreground">{user?.displayName}</h2>
+              <div className="flex items-center gap-2 mb-1 relative z-10 flex-wrap justify-center">
+                <h2
+                  className="text-3xl font-bold text-foreground"
+                  style={(user as any)?.hasPrime ? {
+                    background: "linear-gradient(90deg, #facc15, #fb923c)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                  } : undefined}
+                >
+                  {user?.displayName}
+                </h2>
+                {(user as any)?.hasPrime && (
+                  <motion.div
+                    animate={{ rotate: [0, -8, 8, -8, 0], scale: [1, 1.15, 1] }}
+                    transition={{ duration: 3, repeat: Infinity, repeatDelay: 2 }}
+                    className="w-7 h-7 rounded-lg bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center shadow-[0_0_12px_rgba(250,204,21,0.6)]"
+                  >
+                    <Crown size={14} className="text-black" />
+                  </motion.div>
+                )}
                 {(user as any)?.isVerified && (
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
                     <circle cx="12" cy="12" r="12" fill="hsl(16 100% 50%)"/>
                     <path d="M7 12l3.5 3.5L17 8" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
+                )}
+                {(user as any)?.hasPrime && (
+                  <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-yellow-500/15 text-yellow-400 border border-yellow-500/30">Prime ⭐</span>
                 )}
               </div>
               <p className="text-primary font-medium mb-1 relative z-10">@{user?.username}</p>

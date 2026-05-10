@@ -3,7 +3,7 @@ import { useGetChats, Chat } from "@workspace/api-client-react";
 import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
 import { Search, Pin, VolumeX, Users, Radio, Bot, HeadphonesIcon, Bug, Menu,
-  SquarePen, X, ChevronRight, Check, ArrowLeft } from "lucide-react";
+  SquarePen, X, ChevronRight, Check, ArrowLeft, Crown } from "lucide-react";
 import { useLocation } from "wouter";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -70,10 +70,23 @@ function ChatAvatar({ chat, displayName }: { chat: Chat; displayName: string }) 
     status === "online" ? "bg-green-500" :
     status === "away" ? "bg-yellow-500" : null;
 
+  const hasPrime = chat.type === "direct" && (chat.otherUser as any)?.hasPrime;
+
   return (
     <div className="relative shrink-0">
+      {hasPrime && (
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+          className="absolute -inset-[2px] rounded-[20px]"
+          style={{
+            background: "conic-gradient(from 0deg, #facc15, #fb923c, #f97316, #facc15)",
+            borderRadius: "20px",
+          }}
+        />
+      )}
       <div
-        className="w-14 h-14 rounded-[18px] flex items-center justify-center text-white font-black text-xl overflow-hidden shadow-sm"
+        className="w-14 h-14 rounded-[18px] flex items-center justify-center text-white font-black text-xl overflow-hidden shadow-sm relative z-10"
         style={{ backgroundColor: avatarColor }}
       >
         {avatarUrl ? (
@@ -89,7 +102,12 @@ function ChatAvatar({ chat, displayName }: { chat: Chat; displayName: string }) 
         )}
       </div>
       {statusDotColor && (
-        <span className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-[3px] border-card ${statusDotColor}`} />
+        <span className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-[3px] border-card ${statusDotColor} z-20`} />
+      )}
+      {hasPrime && (
+        <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center z-20 shadow-[0_0_6px_rgba(250,204,21,0.8)]">
+          <Crown size={8} className="text-black" />
+        </div>
       )}
     </div>
   );

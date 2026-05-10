@@ -24,6 +24,7 @@ import {
   Clock,
   User,
   BadgeCheck,
+  Crown,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -214,16 +215,50 @@ export default function UserProfile() {
           >
             <div
               className="h-24 w-full relative"
-              style={{ background: `linear-gradient(135deg, ${user.avatarColor || "#3B82F6"}66, ${user.avatarColor || "#3B82F6"}22)` }}
+              style={{
+                background: (user as any).hasPrime
+                  ? "linear-gradient(135deg, rgba(250,204,21,0.25), rgba(251,146,60,0.15), rgba(249,115,22,0.1))"
+                  : `linear-gradient(135deg, ${user.avatarColor || "#3B82F6"}66, ${user.avatarColor || "#3B82F6"}22)`,
+              }}
             >
               <div className="absolute inset-0 opacity-20" style={{ backgroundImage: `radial-gradient(circle at 20% 80%, ${user.avatarColor}88 0%, transparent 60%)` }} />
+              {(user as any).hasPrime && (
+                <div className="absolute inset-0 overflow-hidden">
+                  {[...Array(6)].map((_, i) => (
+                    <motion.div
+                      key={i}
+                      className="absolute rounded-full"
+                      style={{
+                        width: i % 2 === 0 ? 5 : 3,
+                        height: i % 2 === 0 ? 5 : 3,
+                        left: `${12 + i * 14}%`,
+                        top: `${20 + (i % 3) * 20}%`,
+                        background: i % 2 === 0 ? "#facc15" : "#fb923c",
+                      }}
+                      animate={{ y: [0, -10, 0], opacity: [0.4, 1, 0.4] }}
+                      transition={{ duration: 2 + i * 0.4, repeat: Infinity, delay: i * 0.3 }}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="px-6 pb-6">
               <div className="flex items-end justify-between -mt-14 mb-4">
                 <motion.div whileHover={{ scale: 1.05 }} className="relative">
+                  {(user as any).hasPrime && (
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                      className="absolute -inset-[3px] rounded-full z-0"
+                      style={{
+                        background: "conic-gradient(from 0deg, #facc15, #fb923c, #f97316, #facc15)",
+                        borderRadius: "50%",
+                      }}
+                    />
+                  )}
                   <div
-                    className="w-28 h-28 rounded-full flex items-center justify-center text-white text-4xl font-black overflow-hidden border-4 border-card shadow-xl"
+                    className="w-28 h-28 rounded-full flex items-center justify-center text-white text-4xl font-black overflow-hidden border-4 border-card shadow-xl relative z-10"
                     style={{ backgroundColor: user.avatarColor || "#3B82F6" }}
                   >
                     {user.avatarUrl ? (
@@ -233,7 +268,7 @@ export default function UserProfile() {
                     )}
                   </div>
                   {!isMe && (
-                    <div className={`absolute bottom-1 right-1 w-5 h-5 rounded-full border-[3px] border-card ${statusCfg.color}`} />
+                    <div className={`absolute bottom-1 right-1 w-5 h-5 rounded-full border-[3px] border-card ${statusCfg.color} z-20`} />
                   )}
                 </motion.div>
 
@@ -293,12 +328,33 @@ export default function UserProfile() {
 
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="text-2xl font-black">{user.displayName}</h2>
+                  <h2
+                    className="text-2xl font-black"
+                    style={(user as any).hasPrime ? {
+                      background: "linear-gradient(90deg, #facc15, #fb923c)",
+                      WebkitBackgroundClip: "text",
+                      WebkitTextFillColor: "transparent",
+                    } : undefined}
+                  >
+                    {user.displayName}
+                  </h2>
+                  {(user as any).hasPrime && (
+                    <motion.div
+                      animate={{ rotate: [0, -8, 8, -8, 0], scale: [1, 1.15, 1] }}
+                      transition={{ duration: 3, repeat: Infinity, repeatDelay: 2 }}
+                      className="w-6 h-6 rounded-lg bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center shadow-[0_0_10px_rgba(250,204,21,0.5)]"
+                    >
+                      <Crown size={13} className="text-black" />
+                    </motion.div>
+                  )}
                   {(user as any).isVerified && (
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                       <circle cx="12" cy="12" r="12" fill="hsl(16 100% 50%)"/>
                       <path d="M7 12l3.5 3.5L17 8" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
+                  )}
+                  {(user as any).hasPrime && (
+                    <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-yellow-500/15 text-yellow-400 border border-yellow-500/30">Prime ⭐</span>
                   )}
                   {isContact && (
                     <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/30">Контакт</span>

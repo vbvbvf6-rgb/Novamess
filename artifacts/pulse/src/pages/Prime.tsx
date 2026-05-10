@@ -14,25 +14,25 @@ const PLANS = [
   {
     id: "monthly",
     name: "Месяц",
-    price: 299,
-    spark: 299,
+    price: 499,
+    spark: 499,
     period: "/ месяц",
     badge: null,
   },
   {
     id: "halfyear",
     name: "6 месяцев",
-    price: 199,
-    spark: 1194,
+    price: 329,
+    spark: 1974,
     period: "/ месяц",
-    badge: "Скидка 33%",
+    badge: "Скидка 34%",
     best: true,
   },
   {
     id: "yearly",
     name: "Год",
-    price: 149,
-    spark: 1788,
+    price: 249,
+    spark: 2988,
     period: "/ месяц",
     badge: "Скидка 50%",
   },
@@ -41,10 +41,31 @@ const PLANS = [
 const FEATURES = [
   {
     icon: Crown,
-    text: "Значок Prime ⭐ у вашего имени в чатах и профиле",
+    text: "Анимированное золотое кольцо вокруг аватара в чатах и профиле",
     tag: "Визуально",
     color: "text-yellow-400",
     bg: "bg-yellow-500/10",
+  },
+  {
+    icon: Star,
+    text: "Значок Prime ⭐ и корона у вашего имени везде в приложении",
+    tag: "Визуально",
+    color: "text-yellow-400",
+    bg: "bg-yellow-500/10",
+  },
+  {
+    icon: Flame,
+    text: "Золотой градиентный фон профиля с эффектом свечения",
+    tag: "Визуально",
+    color: "text-orange-400",
+    bg: "bg-orange-500/10",
+  },
+  {
+    icon: Palette,
+    text: "Эксклюзивные темы оформления: Obsidian, Midnight, Forest, Rose",
+    tag: "Работает",
+    color: "text-green-400",
+    bg: "bg-green-500/10",
   },
   {
     icon: TrendingUp,
@@ -82,18 +103,11 @@ const FEATURES = [
     bg: "bg-green-500/10",
   },
   {
-    icon: Palette,
-    text: "Кастомные темы и цвета интерфейса",
+    icon: Image,
+    text: "Загрузка медиафайлов без ограничений размера",
     tag: "Работает",
     color: "text-green-400",
     bg: "bg-green-500/10",
-  },
-  {
-    icon: Image,
-    text: "Загрузка медиафайлов без ограничений размера",
-    tag: "Визуально",
-    color: "text-cyan-400",
-    bg: "bg-cyan-500/10",
   },
   {
     icon: Bell,
@@ -105,9 +119,9 @@ const FEATURES = [
   {
     icon: InfinityIcon,
     text: "Хранение истории сообщений навсегда",
-    tag: "Визуально",
-    color: "text-cyan-400",
-    bg: "bg-cyan-500/10",
+    tag: "Работает",
+    color: "text-green-400",
+    bg: "bg-green-500/10",
   },
   {
     icon: Lock,
@@ -122,6 +136,20 @@ const FEATURES = [
     tag: "Работает",
     color: "text-green-400",
     bg: "bg-green-500/10",
+  },
+  {
+    icon: Shield,
+    text: "VIP-метка в группах и каналах",
+    tag: "Визуально",
+    color: "text-yellow-400",
+    bg: "bg-yellow-500/10",
+  },
+  {
+    icon: MessageCircle,
+    text: "Золотое свечение у имени в чате при отправке сообщений",
+    tag: "Визуально",
+    color: "text-yellow-400",
+    bg: "bg-yellow-500/10",
   },
 ];
 
@@ -410,15 +438,55 @@ export default function Prime() {
           animate={{ opacity: 1, y: 0 }}
           className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-yellow-500/20 via-orange-500/10 to-transparent border border-yellow-500/30 p-6 text-center"
         >
+          {/* Animated background blobs */}
           <div className="absolute top-0 right-0 w-40 h-40 bg-yellow-500/10 rounded-full blur-3xl" />
+          <div className="absolute bottom-0 left-0 w-32 h-32 bg-orange-500/10 rounded-full blur-3xl" />
+
+          {/* Floating sparkle particles */}
+          {[...Array(12)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute rounded-full pointer-events-none"
+              style={{
+                width: i % 3 === 0 ? 6 : i % 3 === 1 ? 4 : 3,
+                height: i % 3 === 0 ? 6 : i % 3 === 1 ? 4 : 3,
+                left: `${8 + (i * 7.5) % 84}%`,
+                top: `${10 + (i * 13) % 80}%`,
+                background: i % 2 === 0 ? "#facc15" : "#fb923c",
+                opacity: 0.6,
+              }}
+              animate={{
+                y: [0, -(8 + (i % 4) * 5), 0],
+                x: [0, (i % 2 === 0 ? 1 : -1) * (3 + (i % 3) * 3), 0],
+                opacity: [0.3, 0.8, 0.3],
+                scale: [0.8, 1.3, 0.8],
+              }}
+              transition={{
+                duration: 2.5 + (i % 5) * 0.7,
+                repeat: Infinity,
+                delay: i * 0.25,
+                ease: "easeInOut",
+              }}
+            />
+          ))}
+
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ type: "spring", stiffness: 200, delay: 0.1 }}
-            className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-yellow-500/20 border border-yellow-500/30 flex items-center justify-center"
+            className="relative w-20 h-20 mx-auto mb-4"
           >
-            <Crown size={40} className="text-yellow-400" />
+            {/* Pulsing ring behind crown */}
+            <motion.div
+              animate={{ scale: [1, 1.18, 1], opacity: [0.4, 0.15, 0.4] }}
+              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+              className="absolute inset-0 rounded-2xl bg-yellow-400/30"
+            />
+            <div className="w-20 h-20 rounded-2xl bg-yellow-500/20 border border-yellow-500/30 flex items-center justify-center relative z-10">
+              <Crown size={40} className="text-yellow-400" />
+            </div>
           </motion.div>
+
           <h2 className="text-2xl font-black text-foreground mb-2">Pulse Prime</h2>
           <p className="text-muted-foreground text-sm max-w-xs mx-auto">
             Раскройте весь потенциал мессенджера с эксклюзивными привилегиями
@@ -426,6 +494,80 @@ export default function Prime() {
           <div className="mt-3 inline-flex items-center gap-2 bg-yellow-500/10 border border-yellow-500/20 rounded-full px-4 py-1.5">
             <Zap size={14} className="text-yellow-400" />
             <span className="text-xs font-semibold text-yellow-400">Оплата Монета ⚡</span>
+          </div>
+        </motion.div>
+
+        {/* Visual Perks Showcase */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.08 }}
+          className="bg-card border border-border rounded-2xl p-4 space-y-3"
+        >
+          <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+            <Star size={14} className="text-yellow-400" />
+            Как выглядит Prime
+          </h3>
+
+          {/* Avatar ring preview */}
+          <div className="flex items-center gap-4 p-3 rounded-xl bg-secondary/30">
+            <div className="relative shrink-0">
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                className="absolute -inset-[3px] rounded-full"
+                style={{
+                  background: "conic-gradient(from 0deg, #facc15, #fb923c, #f97316, #facc15)",
+                  borderRadius: "50%",
+                }}
+              />
+              <div className="relative w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-lg z-10 border-2 border-card">
+                A
+              </div>
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <span className="text-sm font-bold text-foreground">Alex Prime</span>
+                <motion.span
+                  animate={{ scale: [1, 1.2, 1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                  className="text-xs"
+                >⭐</motion.span>
+                <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">PRIME</span>
+              </div>
+              <span className="text-xs text-muted-foreground">Золотое кольцо + значок Prime у имени</span>
+            </div>
+          </div>
+
+          {/* Profile glow preview */}
+          <div className="relative rounded-xl overflow-hidden p-3" style={{ background: "linear-gradient(135deg, rgba(250,204,21,0.12), rgba(251,146,60,0.08))" }}>
+            <div className="absolute inset-0 border border-yellow-500/20 rounded-xl pointer-events-none" />
+            <div className="flex items-center gap-3">
+              <div className="relative shrink-0">
+                <div className="absolute -inset-1 rounded-full blur-md bg-yellow-400/40" />
+                <div className="relative w-10 h-10 rounded-full bg-gradient-to-br from-rose-500 to-pink-600 flex items-center justify-center text-white font-black z-10">M</div>
+              </div>
+              <div>
+                <div className="text-sm font-bold" style={{ background: "linear-gradient(90deg, #facc15, #fb923c)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                  Maria ✦ Prime
+                </div>
+                <div className="text-xs text-muted-foreground">Золотой фон профиля с эффектом свечения</div>
+              </div>
+            </div>
+          </div>
+
+          {/* VIP label preview */}
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-secondary/30">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-500 to-yellow-500 flex items-center justify-center shrink-0">
+              <Crown size={14} className="text-black" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-sm font-bold text-foreground">В группах и каналах</span>
+                <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-gradient-to-r from-yellow-500/20 to-orange-500/20 text-yellow-400 border border-yellow-500/30">VIP</span>
+              </div>
+              <span className="text-xs text-muted-foreground">Специальная VIP-метка рядом с именем</span>
+            </div>
           </div>
         </motion.div>
 

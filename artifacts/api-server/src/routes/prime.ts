@@ -5,9 +5,9 @@ import { sql } from "drizzle-orm";
 const router = Router();
 
 const PLANS: Record<string, { spark: number; months: number }> = {
-  monthly:  { spark: 299,  months: 1 },
-  halfyear: { spark: 1494, months: 6 },
-  yearly:   { spark: 2388, months: 12 },
+  monthly:  { spark: 499,  months: 1 },
+  halfyear: { spark: 1974, months: 6 },
+  yearly:   { spark: 2988, months: 12 },
 };
 
 router.post("/prime/subscribe", async (req, res) => {
