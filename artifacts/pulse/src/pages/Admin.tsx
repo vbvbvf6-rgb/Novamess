@@ -1526,7 +1526,7 @@ export default function Admin() {
                       <p className="font-semibold text-sm truncate">{user.display_name}</p>
                       {user.is_verified && (
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="shrink-0">
-                          <circle cx="12" cy="12" r="12" fill="#00BCD4"/>
+                          <circle cx="12" cy="12" r="12" fill="hsl(16 100% 50%)"/>
                           <path d="M7 12l3.5 3.5L17 8" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
                       )}
@@ -1564,7 +1564,7 @@ export default function Admin() {
                         <p className="font-bold text-foreground">{selectedUser.display_name}</p>
                         {selectedUser.is_verified && (
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                            <circle cx="12" cy="12" r="12" fill="#00BCD4"/>
+                            <circle cx="12" cy="12" r="12" fill="hsl(16 100% 50%)"/>
                             <path d="M7 12l3.5 3.5L17 8" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
                           </svg>
                         )}

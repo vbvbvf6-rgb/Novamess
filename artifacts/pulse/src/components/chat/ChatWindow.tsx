@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState } from "react";
 import { useGetChatById, useGetMessages, getGetMessagesQueryKey, useInitiateCall, useMarkChatAsRead, useUpdateChat, getGetChatsQueryKey, Message } from "@workspace/api-client-react";
 import { useNotifications } from "@/hooks/useNotifications";
 import { Phone, Video, MoreVertical, ArrowLeft, Search, BellOff, Bell, Pin, PinOff, User, Trash2, X, Timer, Flame, ChevronRight, Settings } from "lucide-react";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { ChatInfoPanel } from "./ChatInfoPanel";
 import { useAppContext } from "@/contexts/AppContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -94,18 +94,16 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
   const isBot = chat && chat.type === "direct" && (chat.otherUser as any)?.isBot;
   const autoDeleteTimer = (chat as any)?.autoDeleteTimer as number | null | undefined;
 
-  // Request notification permission once on open
   useEffect(() => {
     if (permission === "default") {
       requestPermission();
     }
   }, []);
 
-  // SSE subscription for real-time messages and typing
   useEffect(() => {
     if (!chatId) return;
     const uid = localStorage.getItem("pulse-user-id") || "1";
-    const es = new EventSource(`/api/chats/${chatId}/events?_uid=${uid}`, );
+    const es = new EventSource(`/api/chats/${chatId}/events?_uid=${uid}`);
     sseRef.current = es;
 
     es.addEventListener("new-message", (e: MessageEvent) => {
@@ -303,10 +301,10 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
   });
 
   if (isChatLoading) {
-    return <div className="flex-1 flex flex-col items-center justify-center"><Skeleton className="w-32 h-32 rounded-full mb-4" /><Skeleton className="h-6 w-48" /></div>;
+    return <div className="flex-1 flex flex-col items-center justify-center bg-card"><Skeleton className="w-24 h-24 rounded-full mb-6" /><Skeleton className="h-8 w-48 rounded-xl" /></div>;
   }
 
-  if (!chat) return <div className="flex-1 flex items-center justify-center">Chat not found</div>;
+  if (!chat) return <div className="flex-1 flex items-center justify-center bg-card">Чат не найден</div>;
 
   const displayName = chat.type === "direct" ? (chat.otherUser?.displayName || chat.name || "Chat") : (chat.name || "Group");
   const avatarColor = chat.type === "direct" ? (chat.otherUser?.avatarColor || chat.avatarColor || "#333") : (chat.avatarColor || "#333");
@@ -314,21 +312,21 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
   const autoDeleteLabel = formatAutoDeleteLabel(autoDeleteTimer);
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-background relative overflow-hidden">
+    <div className="flex-1 flex flex-col h-full bg-background relative overflow-hidden z-30">
       {/* Header */}
-      <header className="h-16 border-b border-border flex items-center px-4 justify-between bg-card z-10 shrink-0">
+      <header className="h-[72px] border-b border-border flex items-center px-4 justify-between bg-card z-20 shrink-0 shadow-[0_4px_24px_rgba(0,0,0,0.04)] relative">
         <div className="flex items-center gap-3 min-w-0">
           <button
-            className="flex items-center justify-center w-9 h-9 -ml-1 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary transition-colors shrink-0 md:bg-transparent md:text-muted-foreground md:hover:text-foreground md:w-auto md:h-auto md:p-2 md:-ml-2 md:rounded-none"
+            className="flex items-center justify-center w-11 h-11 -ml-2 rounded-2xl bg-secondary hover:bg-secondary/80 text-foreground transition-colors shrink-0 md:hidden"
             onClick={() => setSelectedChatId(null)}
             aria-label="Назад к чатам"
           >
-            <ArrowLeft size={20} />
+            <ArrowLeft size={22} />
           </button>
 
           <button
             onClick={chat.type === "direct" ? openProfile : () => setShowInfoPanel(v => !v)}
-            className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold overflow-hidden shrink-0 cursor-pointer hover:opacity-85 transition-opacity`}
+            className={`w-12 h-12 rounded-[16px] flex items-center justify-center text-white font-black text-xl overflow-hidden shrink-0 cursor-pointer hover:opacity-90 transition-opacity shadow-sm`}
             style={{ backgroundColor: avatarColor }}
           >
             {(chat.type === "direct" ? (chat.otherUser as any)?.avatarUrl : chat.avatarUrl) ? (
@@ -340,26 +338,26 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
 
           <button
             onClick={chat.type === "direct" ? openProfile : () => setShowInfoPanel(v => !v)}
-            className={`text-left min-w-0 cursor-pointer hover:opacity-80 transition-opacity`}
+            className={`text-left min-w-0 cursor-pointer group`}
           >
             <div className="flex items-center gap-1.5">
-              <h2 className="font-semibold text-sm leading-tight truncate">{displayName}</h2>
+              <h2 className="font-bold text-base leading-tight truncate group-hover:text-primary transition-colors">{displayName}</h2>
               {isVerified && (
-                <svg className="shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none">
-                  <circle cx="12" cy="12" r="12" fill="#00BCD4"/>
-                  <path d="M7 12l3.5 3.5L17 8" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <svg className="shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="12" fill="currentColor" className="text-primary"/>
+                  <path d="M7 12l3.5 3.5L17 8" stroke="currentColor" className="text-primary-foreground" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               )}
               {autoDeleteTimer ? (
-                <span className="flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-orange-500/15 text-orange-400 border border-orange-500/25 shrink-0">
-                  <Flame size={9} />
+                <span className="flex items-center gap-1 text-[11px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-orange-500 text-white shrink-0 shadow-[0_2px_8px_rgba(249,115,22,0.3)]">
+                  <Flame size={12} fill="currentColor" />
                   {autoDeleteLabel}
                 </span>
               ) : null}
             </div>
-            <p className="text-xs text-muted-foreground truncate">
+            <p className="text-[13px] text-muted-foreground truncate font-medium mt-0.5">
               {chat.type === "direct" && chat.otherUser ? (
-                <span className={chat.otherUser.status === "online" ? "text-green-500" : ""}>
+                <span className={chat.otherUser.status === "online" ? "text-primary" : ""}>
                   {chat.otherUser.status === "online" ? t("chat.online") : (chat.otherUser as any).statusText || t("chat.offline")}
                 </span>
               ) : `${chat.members?.length || 0} ${t("chat.members")}`}
@@ -367,13 +365,13 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
           </button>
         </div>
 
-        <div className="flex items-center gap-1 text-muted-foreground shrink-0">
+        <div className="flex items-center gap-1.5 text-muted-foreground shrink-0">
           {chat.type === "direct" && !(chat.otherUser as any)?.isBot && (
             <>
               <button
                 onClick={() => handleStartCall("audio")}
                 disabled={initiateCall.isPending}
-                className="p-2 hover:bg-secondary rounded-full transition-colors hover:text-primary"
+                className="w-10 h-10 flex items-center justify-center hover:bg-secondary rounded-xl transition-all hover:text-foreground"
                 title="Audio call"
               >
                 <Phone size={20} />
@@ -381,64 +379,64 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
               <button
                 onClick={() => handleStartCall("video")}
                 disabled={initiateCall.isPending}
-                className="p-2 hover:bg-secondary rounded-full transition-colors hover:text-primary"
+                className="w-10 h-10 flex items-center justify-center hover:bg-secondary rounded-xl transition-all hover:text-foreground"
                 title="Video call"
               >
-                <Video size={20} />
+                <Video size={22} />
               </button>
             </>
           )}
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="p-2 hover:bg-secondary rounded-full transition-colors hover:text-primary">
+              <button className="w-10 h-10 flex items-center justify-center hover:bg-secondary rounded-xl transition-all hover:text-foreground">
                 <MoreVertical size={20} />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuContent align="end" className="w-60 rounded-2xl p-2 border-border shadow-2xl">
               {chat.type === "direct" && chat.otherUser?.id && (
-                <DropdownMenuItem onClick={openProfile}>
-                  <User size={16} className="mr-2 text-primary" />
-                  {t("chat.openProfile")}
+                <DropdownMenuItem onClick={openProfile} className="rounded-xl cursor-pointer py-2.5">
+                  <User size={18} className="mr-3 text-primary" />
+                  <span className="font-semibold">{t("chat.openProfile")}</span>
                 </DropdownMenuItem>
               )}
-              <DropdownMenuItem onClick={() => { setShowSearch(v => !v); }}>
-                <Search size={16} className="mr-2 text-muted-foreground" />
-                {t("chat.searchMessages")}
+              <DropdownMenuItem onClick={() => { setShowSearch(v => !v); }} className="rounded-xl cursor-pointer py-2.5">
+                <Search size={18} className="mr-3 text-muted-foreground" />
+                <span className="font-semibold">{t("chat.searchMessages")}</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleToggleMute}>
+              <DropdownMenuItem onClick={handleToggleMute} className="rounded-xl cursor-pointer py-2.5">
                 {chat.isMuted ? (
-                  <><Bell size={16} className="mr-2 text-green-500" />{t("chat.muteOff")}</>
+                  <><Bell size={18} className="mr-3 text-green-500" /><span className="font-semibold">{t("chat.muteOff")}</span></>
                 ) : (
-                  <><BellOff size={16} className="mr-2 text-orange-500" />{t("chat.muteOn")}</>
+                  <><BellOff size={18} className="mr-3 text-orange-500" /><span className="font-semibold">{t("chat.muteOn")}</span></>
                 )}
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleTogglePin}>
+              <DropdownMenuItem onClick={handleTogglePin} className="rounded-xl cursor-pointer py-2.5">
                 {chat.isPinned ? (
-                  <><PinOff size={16} className="mr-2 text-muted-foreground" />{t("chat.unpin")}</>
+                  <><PinOff size={18} className="mr-3 text-muted-foreground" /><span className="font-semibold">{t("chat.unpin")}</span></>
                 ) : (
-                  <><Pin size={16} className="mr-2 text-blue-500" />{t("chat.pin")}</>
+                  <><Pin size={18} className="mr-3 text-indigo-500" /><span className="font-semibold">{t("chat.pin")}</span></>
                 )}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => setShowAutoDeleteMenu(true)}
-                className="flex items-center justify-between"
+                className="flex items-center justify-between rounded-xl cursor-pointer py-2.5"
               >
-                <div className="flex items-center">
-                  <Flame size={16} className={`mr-2 ${autoDeleteTimer ? "text-orange-400" : "text-muted-foreground"}`} />
+                <div className="flex items-center font-semibold">
+                  <Flame size={18} className={`mr-3 ${autoDeleteTimer ? "text-orange-500 fill-orange-500/20" : "text-muted-foreground"}`} />
                   {t("chat.autoDelete")}
                 </div>
-                <span className="text-xs text-muted-foreground ml-2">{autoDeleteLabel}</span>
+                <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider bg-secondary px-2 py-0.5 rounded-md">{autoDeleteLabel}</span>
               </DropdownMenuItem>
               {(chat.type === "group" || chat.type === "channel") && (
                 <>
-                  <DropdownMenuItem onClick={() => setShowInfoPanel(v => !v)}>
-                    <Settings size={16} className="mr-2 text-primary" />
-                    {chat.type === "channel" ? "Настройки канала" : "Настройки группы"}
+                  <DropdownMenuItem onClick={() => setShowInfoPanel(v => !v)} className="rounded-xl cursor-pointer py-2.5">
+                    <Settings size={18} className="mr-3 text-primary" />
+                    <span className="font-semibold">{chat.type === "channel" ? "Настройки канала" : "Настройки группы"}</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    className="text-orange-500 focus:text-orange-500"
+                    className="text-orange-500 focus:text-orange-500 rounded-xl cursor-pointer py-2.5"
                     onClick={async () => {
                       try {
                         await fetch(`/api/chats/${chatId}/leave`, { method: "POST", headers: getCWAuthHeaders() });
@@ -449,18 +447,18 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
                       }
                     }}
                   >
-                    <ArrowLeft size={16} className="mr-2" />
-                    Покинуть чат
+                    <ArrowLeft size={18} className="mr-3" />
+                    <span className="font-semibold">Покинуть чат</span>
                   </DropdownMenuItem>
                 </>
               )}
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                className="text-destructive focus:text-destructive"
+                className="text-destructive focus:text-destructive rounded-xl cursor-pointer py-2.5"
                 onClick={() => setShowDeleteDialog(true)}
               >
-                <Trash2 size={16} className="mr-2" />
-                {t("chat.deleteChat")}
+                <Trash2 size={18} className="mr-3" />
+                <span className="font-semibold">{t("chat.deleteChat")}</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -469,14 +467,14 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
 
       {/* Auto-delete active banner */}
       {autoDeleteTimer ? (
-        <div className="flex items-center justify-between px-4 py-1.5 bg-orange-500/8 border-b border-orange-500/15 text-xs text-orange-400 shrink-0">
-          <div className="flex items-center gap-1.5">
-            <Flame size={12} />
-            <span>{t("autodelete.active")} <strong>{autoDeleteLabel}</strong></span>
+        <div className="flex items-center justify-between px-5 py-2.5 bg-orange-500 text-white shrink-0 shadow-sm relative z-10">
+          <div className="flex items-center gap-2">
+            <Flame size={16} fill="white" />
+            <span className="text-sm font-semibold">{t("autodelete.active")} <strong>{autoDeleteLabel}</strong></span>
           </div>
           <button
             onClick={() => setShowAutoDeleteMenu(true)}
-            className="text-orange-400/70 hover:text-orange-400 transition-colors font-medium"
+            className="text-white/80 hover:text-white transition-colors font-bold text-[13px] uppercase tracking-wider bg-white/10 px-2.5 py-1 rounded-md hover:bg-white/20"
           >
             {t("common.change")}
           </button>
@@ -485,22 +483,24 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
 
       {/* Search Bar */}
       {showSearch && (
-        <div className="px-4 py-2 border-b border-border bg-card/60 backdrop-blur-md flex items-center gap-2 shrink-0">
-          <Search size={16} className="text-muted-foreground shrink-0" />
+        <div className="px-4 py-3 border-b border-border bg-card flex items-center gap-3 shrink-0 shadow-sm relative z-10">
+          <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center shrink-0">
+            <Search size={18} className="text-foreground" />
+          </div>
           <input
             autoFocus
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             placeholder={t("chat.searchPlaceholder")}
-            className="flex-1 bg-transparent border-none outline-none text-sm placeholder:text-muted-foreground"
+            className="flex-1 bg-transparent border-none outline-none text-[15px] font-medium placeholder:text-muted-foreground"
           />
           {searchQuery && (
-            <button onClick={() => setSearchQuery("")} className="text-muted-foreground hover:text-foreground">
-              <X size={16} />
+            <button onClick={() => setSearchQuery("")} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors">
+              <X size={18} />
             </button>
           )}
-          <button onClick={() => { setShowSearch(false); setSearchQuery(""); }} className="text-muted-foreground hover:text-foreground">
-            <X size={18} />
+          <button onClick={() => { setShowSearch(false); setSearchQuery(""); }} className="font-bold text-sm text-primary hover:text-primary/80 transition-colors ml-1">
+            Отмена
           </button>
         </div>
       )}
@@ -508,157 +508,149 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
       {/* Messages */}
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin bg-gradient-to-b from-background to-card/50"
+        className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 scrollbar-none"
       >
         {isMessagesLoading ? (
-          <div className="space-y-4">
-            <Skeleton className="w-2/3 h-16 rounded-2xl rounded-tl-sm" />
-            <Skeleton className="w-1/2 h-16 rounded-2xl rounded-tr-sm ml-auto" />
-            <Skeleton className="w-3/4 h-24 rounded-2xl rounded-tl-sm" />
+          <div className="space-y-6 max-w-2xl mx-auto w-full">
+            <Skeleton className="w-[60%] h-24 rounded-2xl rounded-tl-md" />
+            <Skeleton className="w-[50%] h-16 rounded-2xl rounded-tr-md ml-auto" />
+            <Skeleton className="w-[70%] h-32 rounded-2xl rounded-tl-md" />
           </div>
         ) : filteredMessages?.length === 0 ? (
-          <div className="h-full flex items-center justify-center text-muted-foreground text-sm">
+          <div className="h-full flex items-center justify-center text-muted-foreground text-[15px] font-medium">
             {searchQuery ? t("chat.noSearchResults") : t("chat.noMessages")}
           </div>
         ) : (
-          filteredMessages?.map((message) => (
-            <MessageBubble
-              key={message.id}
-              message={message}
-              onReply={(msg) => { setEditMessage(null); setReplyTo(msg); }}
-              onEdit={(msg) => { setReplyTo(null); setEditMessage(msg); }}
-            />
-          ))
-        )}
-
-        {/* Typing indicators — inside the scroll area, right after messages */}
-        {(botTyping || typingUsers.length > 0) && (
-          <div className="flex flex-col gap-2 pt-1">
-            {botTyping && (
-              <div className="flex items-end gap-2">
-                <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs shrink-0 overflow-hidden"
-                  style={{ backgroundColor: (chat?.otherUser as any)?.avatarColor || "#00BCD4" }}
-                >
-                  {(chat?.otherUser as any)?.avatarUrl ? (
-                    <img src={(chat?.otherUser as any).avatarUrl} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    (chat?.otherUser as any)?.displayName?.[0]?.toUpperCase() || "AI"
-                  )}
-                </div>
-                <div className="flex flex-col gap-0.5">
-                  <div className="bg-card border border-border rounded-2xl rounded-bl-sm px-4 py-3 flex items-center gap-1.5">
-                    <span className="w-2 h-2 bg-primary/70 rounded-full" style={{ animation: "typingBounce 1.2s ease-in-out infinite", animationDelay: "0ms" }} />
-                    <span className="w-2 h-2 bg-primary/70 rounded-full" style={{ animation: "typingBounce 1.2s ease-in-out infinite", animationDelay: "0.2s" }} />
-                    <span className="w-2 h-2 bg-primary/70 rounded-full" style={{ animation: "typingBounce 1.2s ease-in-out infinite", animationDelay: "0.4s" }} />
-                  </div>
-                  <span className="text-[11px] text-muted-foreground/70 pl-1">Печатает...</span>
-                </div>
-              </div>
-            )}
-            {typingUsers.map(u => (
-              <div key={u.userId} className="flex items-end gap-2">
-                <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-xs shrink-0">
-                  {u.displayName[0]?.toUpperCase() || "?"}
-                </div>
-                <div className="flex flex-col gap-0.5">
-                  <div className="bg-card border border-border rounded-2xl rounded-bl-sm px-4 py-3 flex items-center gap-1.5">
-                    <span className="w-2 h-2 bg-primary/70 rounded-full" style={{ animation: "typingBounce 1.2s ease-in-out infinite", animationDelay: "0ms" }} />
-                    <span className="w-2 h-2 bg-primary/70 rounded-full" style={{ animation: "typingBounce 1.2s ease-in-out infinite", animationDelay: "0.2s" }} />
-                    <span className="w-2 h-2 bg-primary/70 rounded-full" style={{ animation: "typingBounce 1.2s ease-in-out infinite", animationDelay: "0.4s" }} />
-                  </div>
-                  <span className="text-[11px] text-muted-foreground/70 pl-1">{u.displayName} печатает...</span>
-                </div>
-              </div>
+          <div className="max-w-3xl mx-auto w-full space-y-6 flex flex-col justify-end min-h-full">
+            {filteredMessages?.map((message) => (
+              <MessageBubble
+                key={message.id}
+                message={message}
+                onReply={(msg) => { setEditMessage(null); setReplyTo(msg); }}
+                onEdit={(msg) => { setReplyTo(null); setEditMessage(msg); }}
+              />
             ))}
           </div>
         )}
+
+        {(botTyping || typingUsers.length > 0) && (
+          <motion.div
+            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="flex items-center gap-3 text-muted-foreground max-w-3xl mx-auto w-full px-2"
+          >
+            <div className="flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-secondary/80 border border-border shadow-sm">
+              <span className="text-[13px] font-bold">
+                {botTyping ? botDisplayName : typingUsers[0].displayName} печатает
+              </span>
+              <span className="flex items-center gap-[3px] ml-1">
+                {[0, 0.15, 0.3].map((delay, i) => (
+                  <span
+                    key={i}
+                    className="w-1.5 h-1.5 rounded-full bg-foreground opacity-50 inline-block"
+                    style={{ animation: `typingBounce 1.2s ease-in-out infinite`, animationDelay: `${delay}s` }}
+                  />
+                ))}
+              </span>
+            </div>
+          </motion.div>
+        )}
       </div>
 
-      {/* Input */}
-      <div className="p-4 bg-card border-t border-border z-10 shrink-0">
-        <ChatInput
-          chatId={chatId}
-          onMessageSent={isBot ? startBotTypingPoll : undefined}
-          replyTo={replyTo}
-          editMessage={editMessage}
-          onCancelReply={() => setReplyTo(null)}
-          onCancelEdit={() => setEditMessage(null)}
-        />
-      </div>
+      <ChatInput
+        chatId={chatId}
+        replyTo={replyTo}
+        editMessage={editMessage}
+        onCancelReply={() => setReplyTo(null)}
+        onCancelEdit={() => setEditMessage(null)}
+        onMessageSent={() => {
+          if (isBot) startBotTypingPoll();
+          setTimeout(() => {
+            if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+          }, 100);
+        }}
+      />
 
-      {/* Auto-delete picker dialog */}
-      <AlertDialog open={showAutoDeleteMenu} onOpenChange={setShowAutoDeleteMenu}>
-        <AlertDialogContent className="max-w-sm">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <Flame size={18} className="text-orange-400" />
-              {t("autodelete.title")}
-            </AlertDialogTitle>
-            <AlertDialogDescription>{t("autodelete.desc")}</AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className="flex flex-col gap-2 py-2">
-            {AUTO_DELETE_OPTIONS.map(opt => {
-              const isActive = opt.value === (autoDeleteTimer ?? null);
-              return (
-                <button
-                  key={String(opt.value)}
-                  onClick={() => handleSetAutoDelete(opt.value)}
-                  disabled={autoDeleteLoading}
-                  className={`flex items-center justify-between px-4 py-3 rounded-xl border text-sm font-medium transition-all ${
-                    isActive
-                      ? "border-orange-400 bg-orange-500/10 text-orange-400"
-                      : "border-border hover:border-primary/40 hover:bg-secondary"
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    {opt.value ? <Flame size={15} className="text-orange-400" /> : <X size={15} className="text-muted-foreground" />}
-                    {opt.label}
-                  </div>
-                  {isActive && (
-                    <div className="w-2 h-2 rounded-full bg-orange-400" />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Group/Channel Info Panel */}
       <AnimatePresence>
-        {showInfoPanel && (chat.type === "group" || chat.type === "channel") && (
+        {showInfoPanel && (
           <ChatInfoPanel
             chatId={chatId}
-            chatType={chat.type as "group" | "channel"}
-            displayName={displayName}
-            avatarUrl={chat.avatarUrl}
-            avatarColor={avatarColor}
             onClose={() => setShowInfoPanel(false)}
+            onDeleteChat={() => setShowDeleteDialog(true)}
+            onSetAutoDelete={() => setShowAutoDeleteMenu(true)}
+            autoDeleteTimer={autoDeleteTimer}
+            onTogglePin={handleTogglePin}
+            isPinned={chat.isPinned}
+            onToggleMute={handleToggleMute}
+            isMuted={chat.isMuted}
           />
         )}
       </AnimatePresence>
 
-      {/* Delete Chat Dialog */}
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
+      <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+        <AlertDialogContent className="max-w-sm rounded-[24px]">
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("chat.deleteChatTitle")}</AlertDialogTitle>
-            <AlertDialogDescription>{t("chat.deleteChatDesc")}</AlertDialogDescription>
+            <div className="w-16 h-16 rounded-2xl bg-destructive/10 border border-destructive/20 flex items-center justify-center mx-auto mb-4">
+              <Trash2 size={32} className="text-destructive" />
+            </div>
+            <AlertDialogTitle className="text-center font-black text-xl">
+              Удалить чат?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-center font-medium text-[15px]">
+              Вы уверены? История сообщений будет удалена безвозвратно.
+            </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+          <AlertDialogFooter className="flex-col sm:flex-col gap-2 mt-6">
             <AlertDialogAction
-              onClick={handleDeleteChat}
-              disabled={isDeleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={handleDeleteConfirm}
+              className="w-full h-14 rounded-xl bg-destructive hover:bg-destructive/90 text-destructive-foreground font-bold text-[15px] shadow-[0_4px_14px_rgba(220,38,38,0.3)]"
             >
-              {isDeleting ? t("chat.deleting") : t("chat.deleteChat")}
+              Удалить навсегда
             </AlertDialogAction>
+            <AlertDialogCancel className="w-full h-14 rounded-xl border-border hover:bg-secondary font-bold text-[15px] sm:mt-0">
+              Отмена
+            </AlertDialogCancel>
           </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={showAutoDeleteMenu} onOpenChange={setShowAutoDeleteMenu}>
+        <AlertDialogContent className="max-w-sm rounded-[24px] p-0 overflow-hidden">
+          <div className="px-6 pt-6 pb-4 bg-card border-b border-border text-center">
+            <div className="w-14 h-14 rounded-2xl bg-orange-500/10 flex items-center justify-center mx-auto mb-3">
+              <Flame size={28} className="text-orange-500" />
+            </div>
+            <h2 className="font-black text-xl mb-1">Автоудаление</h2>
+            <p className="text-sm font-medium text-muted-foreground">
+              Новые сообщения в этом чате будут исчезать через выбранное время после прочтения.
+            </p>
+          </div>
+          <div className="max-h-[300px] overflow-y-auto p-2 scrollbar-none">
+            {AUTO_DELETE_OPTIONS.map(opt => (
+              <button
+                key={opt.value === null ? "null" : opt.value}
+                onClick={() => handleSetAutoDelete(opt.value)}
+                disabled={autoDeleteLoading}
+                className={`w-full flex items-center justify-between p-4 rounded-xl transition-all font-bold ${
+                  autoDeleteTimer === opt.value
+                    ? "bg-primary text-primary-foreground shadow-md"
+                    : "hover:bg-secondary text-foreground"
+                }`}
+              >
+                <span>{opt.label}</span>
+                {autoDeleteTimer === opt.value && <Pin size={18} />}
+              </button>
+            ))}
+          </div>
+          <div className="p-4 bg-secondary/50 border-t border-border">
+            <button
+              onClick={() => setShowAutoDeleteMenu(false)}
+              className="w-full h-12 rounded-xl bg-card border border-border hover:bg-secondary font-bold text-[15px] transition-colors"
+            >
+              Закрыть
+            </button>
+          </div>
         </AlertDialogContent>
       </AlertDialog>
     </div>

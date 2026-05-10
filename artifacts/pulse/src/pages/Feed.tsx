@@ -18,7 +18,7 @@ const getCurrentUserId = () => Number(localStorage.getItem("pulse-user-id") || "
 function VerifiedBadge() {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="shrink-0">
-      <circle cx="12" cy="12" r="12" fill="#00BCD4"/>
+      <circle cx="12" cy="12" r="12" fill="hsl(16 100% 50%)"/>
       <path d="M7 12l3.5 3.5L17 8" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   );
@@ -567,7 +567,7 @@ export default function Feed() {
         </h1>
         <button
           onClick={() => setShowCreatePost(!showCreatePost)}
-          className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors shadow-[0_0_10px_rgba(0,188,212,0.2)]"
+          className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors shadow-[0_0_10px_rgba(255,80,0,0.2)]"
         >
           <Plus size={16} /> Новый пост
         </button>
@@ -582,7 +582,7 @@ export default function Feed() {
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="bg-card border border-primary/30 rounded-2xl overflow-hidden shadow-[0_0_20px_rgba(0,188,212,0.1)]"
+                className="bg-card border border-primary/30 rounded-2xl overflow-hidden shadow-sm"
               >
                 <form onSubmit={handleCreatePost} className="p-4 space-y-3">
                   <div className="flex items-center justify-between mb-1">

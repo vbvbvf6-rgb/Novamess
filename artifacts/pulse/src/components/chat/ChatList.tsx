@@ -3,7 +3,7 @@ import { useGetChats, Chat } from "@workspace/api-client-react";
 import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
 import { Search, Pin, VolumeX, Users, Radio, Bot, HeadphonesIcon, Bug, Menu,
-  SquarePen, Users2, Megaphone, X, ChevronRight, Check, UserPlus, ArrowLeft } from "lucide-react";
+  SquarePen, X, ChevronRight, Check, ArrowLeft } from "lucide-react";
 import { useLocation } from "wouter";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -19,24 +19,24 @@ type FolderKey = "all" | "unread" | "groups" | "bots";
 
 const FOLDERS: { key: FolderKey; label: string }[] = [
   { key: "all",    label: "Все" },
-  { key: "unread", label: "Непрочитанные" },
+  { key: "unread", label: "Новые" },
   { key: "groups", label: "Группы" },
   { key: "bots",   label: "Боты" },
 ];
 
 function VerifiedBadge() {
   return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" className="shrink-0 inline-block" title="Верифицирован">
-      <circle cx="12" cy="12" r="12" fill="#00BCD4"/>
-      <path d="M7 12l3.5 3.5L17 8" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="shrink-0 inline-block">
+      <circle cx="12" cy="12" r="12" fill="currentColor" className="text-primary"/>
+      <path d="M7 12l3.5 3.5L17 8" stroke="currentColor" className="text-primary-foreground" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   );
 }
 
 function PrimeBadge() {
   return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" className="shrink-0 inline-block" title="Prime">
-      <circle cx="12" cy="12" r="12" fill="#F59E0B"/>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="shrink-0 inline-block">
+      <circle cx="12" cy="12" r="12" fill="#f97316"/>
       <path d="M5 15l3-5 4 3 4-3 3 5H5z" fill="white"/>
       <path d="M12 7l1.2 2.5L16 9.8l-1.9 1.9.5 2.8L12 13.2l-2.6 1.3.5-2.8L8 9.8l2.8-.3L12 7z" fill="white"/>
     </svg>
@@ -45,8 +45,8 @@ function PrimeBadge() {
 
 function AdminBadge() {
   return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" className="shrink-0 inline-block" title="Администратор">
-      <circle cx="12" cy="12" r="12" fill="#EF4444"/>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="shrink-0 inline-block">
+      <circle cx="12" cy="12" r="12" fill="#6366f1"/>
       <path d="M12 5.5l4 2v5c0 2.5-1.8 4.7-4 5.3-2.2-.6-4-2.8-4-5.3v-5l4-2z" fill="white"/>
     </svg>
   );
@@ -72,23 +72,23 @@ function ChatAvatar({ chat, displayName }: { chat: Chat; displayName: string }) 
   return (
     <div className="relative shrink-0">
       <div
-        className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg overflow-hidden"
+        className="w-14 h-14 rounded-[18px] flex items-center justify-center text-white font-black text-xl overflow-hidden shadow-sm"
         style={{ backgroundColor: avatarColor }}
       >
         {avatarUrl ? (
           <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
         ) : chat.type === "channel" ? (
-          <Radio size={20} className="text-white" />
+          <Radio size={24} className="text-white opacity-80" />
         ) : chat.type === "group" ? (
-          <Users size={20} className="text-white" />
+          <Users size={24} className="text-white opacity-80" />
         ) : (chat.otherUser as any)?.isBot ? (
-          <Bot size={20} className="text-white" />
+          <Bot size={24} className="text-white opacity-80" />
         ) : (
           letter
         )}
       </div>
       {statusDotColor && (
-        <span className={`absolute bottom-0.5 right-0.5 w-3 h-3 rounded-full border-2 border-card ${statusDotColor}`} />
+        <span className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-[3px] border-card ${statusDotColor}`} />
       )}
     </div>
   );
@@ -226,23 +226,6 @@ export function ChatList({ onMenuClick }: { onMenuClick?: () => void }) {
     setCreating(false);
   };
 
-  const openSupportChat = async () => {
-    const token = localStorage.getItem("pulse-token");
-    const uid = localStorage.getItem("pulse-user-id");
-    const authHeader = token ? { "Authorization": `Bearer ${token}` } : uid ? { "x-user-id": uid } : {};
-    try {
-      const chatRes = await fetch("/api/chats/direct", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", ...authHeader },
-        body: JSON.stringify({ userId: 1 }),
-      });
-      if (chatRes.ok) {
-        const chat = await chatRes.json();
-        setSelectedChatId(chat.id);
-      }
-    } catch {}
-  };
-
   const filtered = chats?.filter((chat: Chat) => {
     if (search) {
       const name =
@@ -267,453 +250,434 @@ export function ChatList({ onMenuClick }: { onMenuClick?: () => void }) {
   });
 
   return (
-    <div className="w-full md:w-80 lg:w-96 flex flex-col h-full bg-card border-r border-border relative">
+    <div className="w-full md:w-[380px] lg:w-[420px] flex flex-col h-[100dvh] bg-background border-r border-border shrink-0 z-20">
       <AnimatePresence>
         {showGlobalSearch && (
           <GlobalSearch onClose={() => setShowGlobalSearch(false)} />
         )}
       </AnimatePresence>
-      <div className="p-4 border-b border-border">
-        <div className="flex items-center gap-2">
+      <div className="px-5 pt-6 pb-4">
+        <div className="flex items-center gap-3">
           <button
             onClick={onMenuClick}
-            className="md:hidden p-2 -ml-1 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors shrink-0"
+            className="md:hidden w-11 h-11 rounded-2xl bg-secondary flex items-center justify-center text-foreground hover:bg-secondary/80 transition-colors shrink-0"
           >
-            <Menu size={20} />
+            <Menu size={22} />
           </button>
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
             <Input
               placeholder={t("chatlist.search")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 bg-background border-none focus-visible:ring-primary"
+              className="pl-11 pr-4 h-12 bg-secondary/50 border-transparent hover:border-border focus-visible:bg-card focus-visible:ring-1 focus-visible:ring-primary rounded-2xl transition-all text-[15px] font-medium placeholder:text-muted-foreground/70"
             />
           </div>
           <button
-            onClick={() => setShowGlobalSearch(true)}
-            title={lang === "ru" ? "Поиск по сообщениям" : "Search messages"}
-            className="p-2 rounded-xl text-muted-foreground hover:text-primary hover:bg-secondary transition-colors shrink-0"
-          >
-            <Search size={18} />
-          </button>
-          <button
             onClick={openCreate}
-            title="Создать группу или канал"
-            className="p-2 rounded-xl text-muted-foreground hover:text-primary hover:bg-secondary transition-colors shrink-0"
+            className="w-12 h-12 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center hover:bg-primary/90 transition-all shadow-[0_4px_14px_rgba(255,85,0,0.3)] shrink-0"
           >
-            <SquarePen size={18} />
+            <SquarePen size={20} />
           </button>
         </div>
 
-        {/* Folder filter tabs */}
-        <div className="flex gap-1.5 mt-3 overflow-x-auto scrollbar-none pb-0.5">
-          {FOLDERS.map(f => (
-            <button
-              key={f.key}
-              onClick={() => setFolder(f.key)}
-              className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap ${
-                folder === f.key
-                  ? "bg-primary text-primary-foreground shadow-[0_0_8px_rgba(0,188,212,0.3)]"
-                  : "bg-background text-muted-foreground hover:text-foreground hover:bg-secondary border border-border"
-              }`}
-            >
-              {f.label}
-              {f.key === "unread" && chats && chats.filter((c: Chat) => (c.unreadCount ?? 0) > 0).length > 0 && (
-                <span className={`ml-1.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full ${folder === f.key ? "bg-primary-foreground/20" : "bg-primary/20 text-primary"}`}>
-                  {chats.filter((c: Chat) => (c.unreadCount ?? 0) > 0).length}
-                </span>
-              )}
-            </button>
-          ))}
+        <div className="flex gap-2 mt-5 overflow-x-auto scrollbar-none pb-1">
+          {FOLDERS.map(f => {
+            const isActive = folder === f.key;
+            const count = f.key === "unread" && chats ? chats.filter((c: Chat) => (c.unreadCount ?? 0) > 0).length : 0;
+            return (
+              <button
+                key={f.key}
+                onClick={() => setFolder(f.key)}
+                className={cn(
+                  "shrink-0 px-4 py-2 rounded-[14px] text-sm font-bold transition-all whitespace-nowrap border flex items-center gap-2",
+                  isActive
+                    ? "bg-foreground text-background border-foreground"
+                    : "bg-card text-muted-foreground border-border hover:border-foreground/30 hover:text-foreground"
+                )}
+              >
+                {f.label}
+                {count > 0 && (
+                  <span className={cn(
+                    "text-[10px] font-black px-1.5 py-0.5 rounded-md leading-none",
+                    isActive ? "bg-background text-foreground" : "bg-primary text-white"
+                  )}>
+                    {count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      <div className="border-b border-border">
+      <div className="px-2">
         <StoriesBar />
       </div>
 
-      <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin">
-        {/* Support + Report Bug shortcuts */}
+      <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-none mt-2 px-2 pb-4">
         {!search && folder === "all" && (
-          <>
+          <div className="space-y-1 mb-2">
             <button
               onClick={() => navigate("/support")}
-              className="w-full flex items-center gap-3 px-4 py-3 transition-colors text-left hover:bg-secondary"
+              className="w-full flex items-center gap-4 px-3 py-3 rounded-2xl transition-all text-left hover:bg-secondary border border-transparent hover:border-border/50"
             >
-              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+              <div className="w-12 h-12 rounded-[16px] bg-primary/10 flex items-center justify-center shrink-0 border border-primary/20">
                 <HeadphonesIcon size={22} className="text-primary" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex justify-between items-baseline mb-0.5">
-                  <h3 className="font-semibold text-sm text-foreground">Поддержка</h3>
-                  <span className="text-xs text-muted-foreground shrink-0">24/7</span>
+                  <h3 className="font-bold text-[15px] text-foreground">Поддержка</h3>
+                  <span className="text-[11px] font-bold text-primary/70 uppercase tracking-wider bg-primary/10 px-1.5 py-0.5 rounded shrink-0">24/7</span>
                 </div>
-                <p className="text-xs text-muted-foreground truncate">Связаться с командой поддержки</p>
+                <p className="text-[13px] text-muted-foreground truncate font-medium">Связаться с командой</p>
               </div>
             </button>
             <button
               onClick={() => navigate("/support?tab=bugs")}
-              className="w-full flex items-center gap-3 px-4 py-3 transition-colors text-left hover:bg-secondary border-b border-border/50"
+              className="w-full flex items-center gap-4 px-3 py-3 rounded-2xl transition-all text-left hover:bg-secondary border border-transparent hover:border-border/50"
             >
-              <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center shrink-0">
-                <Bug size={22} className="text-red-400" />
+              <div className="w-12 h-12 rounded-[16px] bg-red-500/10 flex items-center justify-center shrink-0 border border-red-500/20">
+                <Bug size={22} className="text-red-500" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex justify-between items-baseline mb-0.5">
-                  <h3 className="font-semibold text-sm text-foreground">Сообщить об ошибке</h3>
-                  <span className="text-xs text-muted-foreground shrink-0">Баг</span>
+                  <h3 className="font-bold text-[15px] text-foreground">Сообщить об ошибке</h3>
+                  <span className="text-[11px] font-bold text-red-500/70 uppercase tracking-wider bg-red-500/10 px-1.5 py-0.5 rounded shrink-0">БАГ</span>
                 </div>
-                <p className="text-xs text-muted-foreground truncate">Нашли баг? Помогите нам его исправить</p>
+                <p className="text-[13px] text-muted-foreground truncate font-medium">Нашли баг? Расскажите нам</p>
               </div>
             </button>
-          </>
+          </div>
         )}
 
-        {isLoading ? (
-          <div className="p-4 space-y-4">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="flex items-center gap-3">
-                <Skeleton className="w-12 h-12 rounded-full" />
+        <div className="space-y-1">
+          {isLoading ? (
+            Array(5).fill(0).map((_, i) => (
+              <div key={i} className="flex items-center gap-4 px-3 py-3">
+                <Skeleton className="w-14 h-14 rounded-[18px]" />
                 <div className="flex-1">
-                  <Skeleton className="h-4 w-24 mb-2" />
-                  <Skeleton className="h-3 w-full" />
+                  <Skeleton className="h-4 w-32 mb-2" />
+                  <Skeleton className="h-3 w-48" />
                 </div>
               </div>
-            ))}
-          </div>
-        ) : sorted?.length === 0 ? (
-          <div className="p-8 text-center text-muted-foreground text-sm">
-            {search
-              ? "Чаты не найдены"
-              : folder === "unread"
-              ? "Нет непрочитанных чатов"
-              : folder === "groups"
-              ? "Нет групп и каналов"
-              : folder === "bots"
-              ? "Нет ботов"
-              : "Нет чатов"}
-          </div>
-        ) : (
-          sorted?.map((chat: Chat) => {
-            const isSelected = selectedChatId === chat.id;
-            const lastMessage = chat.lastMessage;
-            const isBot = (chat.otherUser as any)?.isBot;
-            const isVerified = chat.type === "direct" && (chat.otherUser as any)?.isVerified;
-            const hasPrime = chat.type === "direct" && (chat.otherUser as any)?.hasPrime;
-            const isAdmin = chat.type === "direct" && (chat.otherUser as any)?.isAdmin;
+            ))
+          ) : sorted?.length === 0 ? (
+            <div className="p-8 text-center text-muted-foreground text-[15px] font-medium mt-10">
+              {search
+                ? "Чаты не найдены"
+                : folder === "unread"
+                ? "Нет новых сообщений"
+                : folder === "groups"
+                ? "Нет групп и каналов"
+                : folder === "bots"
+                ? "Нет ботов"
+                : "Нет чатов"}
+            </div>
+          ) : (
+            sorted?.map((chat: Chat) => {
+              const isSelected = selectedChatId === chat.id;
+              const lastMessage = chat.lastMessage;
+              const isBot = (chat.otherUser as any)?.isBot;
+              const isVerified = chat.type === "direct" && (chat.otherUser as any)?.isVerified;
+              const hasPrime = chat.type === "direct" && (chat.otherUser as any)?.hasPrime;
+              const isAdmin = chat.type === "direct" && (chat.otherUser as any)?.isAdmin;
 
-            const displayName =
-              chat.type === "direct"
-                ? ((chat.otherUser as any)?.displayName || chat.name || "Неизвестный")
-                : (chat.name || (chat.type === "channel" ? "Канал" : "Группа"));
+              const displayName =
+                chat.type === "direct"
+                  ? ((chat.otherUser as any)?.displayName || chat.name || "Неизвестный")
+                  : (chat.name || (chat.type === "channel" ? "Канал" : "Группа"));
 
-            const lastMsgText = lastMessage
-              ? lastMessage.type === "text"
-                ? lastMessage.text || ""
-                : lastMessage.type === "image"
-                ? "📷 Фото"
-                : lastMessage.type === "gift"
-                ? "🎁 Подарок"
-                : lastMessage.type === "audio"
-                ? "🎤 Голосовое"
-                : lastMessage.type === "call"
-                ? "📞 Звонок"
-                : `[${lastMessage.type}]`
-              : "Нет сообщений";
+              const lastMsgText = lastMessage
+                ? lastMessage.type === "text"
+                  ? lastMessage.text || ""
+                  : lastMessage.type === "image"
+                  ? "📷 Фото"
+                  : lastMessage.type === "gift"
+                  ? "🎁 Подарок"
+                  : lastMessage.type === "audio"
+                  ? "🎤 Голосовое"
+                  : lastMessage.type === "call"
+                  ? "📞 Звонок"
+                  : `[${lastMessage.type}]`
+                : "Нет сообщений";
 
-            return (
-              <button
-                key={chat.id}
-                onClick={() => setSelectedChatId(chat.id)}
-                className={`w-full flex items-center gap-3 px-4 py-3 transition-colors text-left hover:bg-secondary ${
-                  isSelected ? "bg-secondary" : ""
-                }`}
-              >
-                <div className="relative shrink-0">
-                  <ChatAvatar chat={chat} displayName={displayName} />
-                  {chat.isPinned && (
-                    <div className="absolute -top-1 -right-1 bg-background rounded-full p-0.5">
-                      <div className="bg-primary p-0.5 rounded-full">
-                        <Pin size={10} className="text-white" />
-                      </div>
-                    </div>
+              return (
+                <button
+                  key={chat.id}
+                  onClick={() => setSelectedChatId(chat.id)}
+                  className={cn(
+                    "w-full flex items-center gap-4 px-3 py-3 rounded-2xl transition-all text-left group border",
+                    isSelected
+                      ? "bg-secondary border-border shadow-sm"
+                      : "bg-transparent border-transparent hover:bg-secondary/50 hover:border-border/50"
                   )}
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <div className="flex justify-between items-baseline mb-0.5">
-                    <div className="flex items-center gap-1 min-w-0">
-                      <h3 className="font-semibold truncate text-sm text-foreground">{displayName}</h3>
-                      {isVerified && <VerifiedBadge />}
-                      {hasPrime && <PrimeBadge />}
-                      {isAdmin && <AdminBadge />}
-                      {isBot && (
-                        <span className="text-[9px] font-bold text-primary bg-primary/10 px-1 rounded shrink-0">BOT</span>
-                      )}
-                      {chat.type === "channel" && (
-                        <Radio size={11} className="text-muted-foreground shrink-0" />
-                      )}
-                    </div>
-                    {lastMessage && (
-                      <span className="text-xs text-muted-foreground shrink-0 ml-2">
-                        {formatTime(lastMessage.createdAt)}
-                      </span>
+                >
+                  <div className="relative shrink-0">
+                    <ChatAvatar chat={chat} displayName={displayName} />
+                    {chat.isPinned && (
+                      <div className="absolute -top-1.5 -right-1.5 bg-card rounded-full p-[2px]">
+                        <div className="bg-foreground p-1 rounded-full text-background">
+                          <Pin size={10} fill="currentColor" />
+                        </div>
+                      </div>
                     )}
                   </div>
 
-                  <div className="flex justify-between items-center gap-2">
-                    <div className={`text-xs truncate flex-1 min-w-0 ${chat.unreadCount > 0 ? "text-foreground font-medium" : "text-muted-foreground"}`}>
-                      <AnimatePresence mode="wait" initial={false}>
-                        {typingByChat[chat.id]?.length > 0 ? (
-                          <motion.span
-                            key="typing"
-                            initial={{ opacity: 0, y: 4 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -4 }}
-                            transition={{ duration: 0.15 }}
-                            className="flex items-center gap-1.5 text-primary font-medium"
-                          >
-                            <span className="truncate">
-                              {typingByChat[chat.id].length === 1
-                                ? `${typingByChat[chat.id][0]} печатает`
-                                : "печатают"}
-                            </span>
-                            <span className="flex items-center gap-0.5 shrink-0">
-                              {[0, 0.15, 0.3].map((delay, i) => (
-                                <span
-                                  key={i}
-                                  className="w-1 h-1 rounded-full bg-primary inline-block"
-                                  style={{ animation: `typingBounce 1.2s ease-in-out infinite`, animationDelay: `${delay}s` }}
-                                />
-                              ))}
-                            </span>
-                          </motion.span>
-                        ) : (
-                          <motion.span
-                            key="msg"
-                            initial={{ opacity: 0, y: 4 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -4 }}
-                            transition={{ duration: 0.15 }}
-                            className="block truncate"
-                          >
-                            {chat.type !== "direct" && lastMessage?.sender ? (
-                              <span>
-                                <span className="text-primary font-medium">
-                                  {(lastMessage.sender as any)?.displayName?.split(" ")[0]}:
-                                </span>{" "}
-                                {lastMsgText}
-                              </span>
-                            ) : lastMsgText}
-                          </motion.span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-baseline mb-1">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <h3 className="font-bold truncate text-[15px] text-foreground">{displayName}</h3>
+                        {isVerified && <VerifiedBadge />}
+                        {hasPrime && <PrimeBadge />}
+                        {isAdmin && <AdminBadge />}
+                        {isBot && (
+                          <span className="text-[9px] font-black text-primary bg-primary/10 px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0">BOT</span>
                         )}
-                      </AnimatePresence>
-                    </div>
-                    <div className="flex items-center gap-1 shrink-0">
-                      {chat.isMuted && <VolumeX size={12} className="text-muted-foreground" />}
-                      {chat.unreadCount > 0 && (
-                        <div className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center ${chat.isMuted ? "bg-muted text-muted-foreground" : "bg-primary text-white"}`}>
-                          {chat.unreadCount > 99 ? "99+" : chat.unreadCount}
-                        </div>
+                        {chat.type === "channel" && (
+                          <Radio size={12} className="text-muted-foreground shrink-0" />
+                        )}
+                      </div>
+                      {lastMessage && (
+                        <span className={cn(
+                          "text-[11px] font-bold shrink-0 ml-2",
+                          chat.unreadCount > 0 ? "text-foreground" : "text-muted-foreground"
+                        )}>
+                          {formatTime(lastMessage.createdAt)}
+                        </span>
                       )}
                     </div>
+
+                    <div className="flex justify-between items-center gap-3">
+                      <div className={cn(
+                        "text-[13px] truncate flex-1 min-w-0 font-medium",
+                        chat.unreadCount > 0 ? "text-foreground" : "text-muted-foreground"
+                      )}>
+                        <AnimatePresence mode="wait" initial={false}>
+                          {typingByChat[chat.id]?.length > 0 ? (
+                            <motion.span
+                              key="typing"
+                              initial={{ opacity: 0, y: 4 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -4 }}
+                              transition={{ duration: 0.15 }}
+                              className="flex items-center gap-1.5 text-primary font-bold"
+                            >
+                              <span className="truncate">
+                                {typingByChat[chat.id].length === 1
+                                  ? `${typingByChat[chat.id][0]} печатает`
+                                  : "печатают"}
+                              </span>
+                              <span className="flex items-center gap-[3px] shrink-0">
+                                {[0, 0.15, 0.3].map((delay, i) => (
+                                  <span
+                                    key={i}
+                                    className="w-1.5 h-1.5 rounded-full bg-primary inline-block"
+                                    style={{ animation: `typingBounce 1s ease-in-out infinite`, animationDelay: `${delay}s` }}
+                                  />
+                                ))}
+                              </span>
+                            </motion.span>
+                          ) : (
+                            <motion.span
+                              key="msg"
+                              initial={{ opacity: 0, y: 4 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -4 }}
+                              transition={{ duration: 0.15 }}
+                              className="block truncate"
+                            >
+                              {chat.type !== "direct" && lastMessage?.sender ? (
+                                <span>
+                                  <span className="text-foreground font-bold">
+                                    {(lastMessage.sender as any)?.displayName?.split(" ")[0]}:
+                                  </span>{" "}
+                                  <span className="opacity-80">{lastMsgText}</span>
+                                </span>
+                              ) : <span className="opacity-80">{lastMsgText}</span>}
+                            </motion.span>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {chat.isMuted && <VolumeX size={14} className="text-muted-foreground" />}
+                        {chat.unreadCount > 0 && (
+                          <div className={cn(
+                            "text-[11px] font-black px-2 py-0.5 rounded-full min-w-[22px] text-center leading-none",
+                            chat.isMuted ? "bg-secondary text-muted-foreground border border-border" : "bg-primary text-primary-foreground shadow-[0_2px_8px_rgba(255,85,0,0.3)]"
+                          )}>
+                            {chat.unreadCount > 99 ? "99+" : chat.unreadCount}
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </button>
-            );
-          })
-        )}
+                </button>
+              );
+            })
+          )}
+        </div>
       </div>
 
-      {/* ── Create Group / Channel Modal ── */}
       <AnimatePresence>
         {showCreate && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-4"
+            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-end sm:items-center justify-center p-4"
             onClick={e => { if (e.target === e.currentTarget) setShowCreate(false); }}
           >
             <motion.div
-              initial={{ y: 50, opacity: 0, scale: 0.97 }}
-              animate={{ y: 0, opacity: 1, scale: 1 }}
-              exit={{ y: 20, opacity: 0 }}
-              className="bg-card rounded-2xl border border-border w-full max-w-md overflow-hidden"
+              initial={{ y: "100%", opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: "100%", opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="bg-card rounded-[32px] border border-border w-full max-w-md overflow-hidden shadow-2xl"
             >
-              {/* Header */}
-              <div className="flex items-center gap-3 px-4 py-3.5 border-b border-border">
+              <div className="flex items-center gap-3 px-6 py-5 border-b border-border">
                 {createStep !== "choose" && (
-                  <button
-                    onClick={() => setCreateStep(createStep === "members" ? "details" : "choose")}
-                    className="p-1.5 hover:bg-secondary rounded-lg transition-colors -ml-1"
-                  >
-                    <ArrowLeft size={16} className="text-muted-foreground" />
+                  <button onClick={() => setCreateStep(createStep === "members" ? "details" : "choose")} className="p-2 -ml-2 rounded-xl hover:bg-secondary transition-colors">
+                    <ArrowLeft size={20} />
                   </button>
                 )}
-                <h2 className="font-bold text-foreground flex-1">
-                  {createStep === "choose" && "Новый чат"}
-                  {createStep === "details" && (createType === "group" ? "Новая группа" : "Новый канал")}
-                  {createStep === "members" && "Добавить участников"}
+                <h2 className="font-black text-xl text-foreground flex-1">
+                  {createStep === "choose" ? "Создать чат" : createStep === "details" ? (createType === "group" ? "Новая группа" : "Новый канал") : "Выбор участников"}
                 </h2>
-                <button onClick={() => setShowCreate(false)} className="p-1.5 hover:bg-secondary rounded-lg transition-colors">
-                  <X size={16} className="text-muted-foreground" />
+                <button onClick={() => setShowCreate(false)} className="p-2 -mr-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
+                  <X size={20} />
                 </button>
               </div>
 
-              <div className="p-4">
-                {/* Step 1: Choose type */}
+              <div className="p-6 min-h-[300px] flex flex-col">
                 {createStep === "choose" && (
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <button
                       onClick={() => { setCreateType("group"); setCreateStep("details"); }}
-                      className="w-full flex items-center gap-3.5 p-4 bg-secondary/50 hover:bg-secondary rounded-xl transition-colors text-left"
+                      className="w-full flex items-center gap-4 p-4 rounded-2xl bg-secondary/50 hover:bg-secondary border border-border transition-all group"
                     >
-                      <div className="w-11 h-11 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
-                        <Users2 size={20} className="text-primary" />
+                      <div className="w-14 h-14 rounded-[18px] bg-primary/10 text-primary flex items-center justify-center group-hover:scale-105 transition-transform">
+                        <Users size={28} />
                       </div>
-                      <div>
-                        <p className="font-semibold text-foreground">Новая группа</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">Общение для нескольких участников</p>
+                      <div className="flex-1 text-left">
+                        <h3 className="font-bold text-lg mb-1">Создать группу</h3>
+                        <p className="text-sm text-muted-foreground font-medium">Общение для нескольких участников</p>
                       </div>
-                      <ChevronRight size={16} className="text-muted-foreground ml-auto shrink-0" />
+                      <ChevronRight size={20} className="text-muted-foreground" />
                     </button>
                     <button
                       onClick={() => { setCreateType("channel"); setCreateStep("details"); }}
-                      className="w-full flex items-center gap-3.5 p-4 bg-secondary/50 hover:bg-secondary rounded-xl transition-colors text-left"
+                      className="w-full flex items-center gap-4 p-4 rounded-2xl bg-secondary/50 hover:bg-secondary border border-border transition-all group"
                     >
-                      <div className="w-11 h-11 rounded-full bg-violet-500/15 flex items-center justify-center shrink-0">
-                        <Megaphone size={20} className="text-violet-400" />
+                      <div className="w-14 h-14 rounded-[18px] bg-orange-500/10 text-orange-500 flex items-center justify-center group-hover:scale-105 transition-transform">
+                        <Radio size={28} />
                       </div>
-                      <div>
-                        <p className="font-semibold text-foreground">Новый канал</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">Публикация новостей и объявлений</p>
+                      <div className="flex-1 text-left">
+                        <h3 className="font-bold text-lg mb-1">Создать канал</h3>
+                        <p className="text-sm text-muted-foreground font-medium">Трансляция сообщений для аудитории</p>
                       </div>
-                      <ChevronRight size={16} className="text-muted-foreground ml-auto shrink-0" />
+                      <ChevronRight size={20} className="text-muted-foreground" />
                     </button>
                   </div>
                 )}
 
-                {/* Step 2: Details */}
                 {createStep === "details" && (
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className={`w-14 h-14 rounded-full flex items-center justify-center shrink-0 ${createType === "group" ? "bg-primary/15" : "bg-violet-500/15"}`}>
-                        {createType === "group"
-                          ? <Users2 size={24} className="text-primary" />
-                          : <Megaphone size={24} className="text-violet-400" />}
-                      </div>
-                      <div className="flex-1">
-                        <input
-                          autoFocus
-                          value={createName}
-                          onChange={e => setCreateName(e.target.value)}
-                          placeholder={createType === "group" ? "Название группы" : "Название канала"}
-                          maxLength={64}
-                          className="w-full bg-transparent text-foreground font-semibold text-base placeholder:text-muted-foreground focus:outline-none border-b border-border pb-1 focus:border-primary transition-colors"
-                        />
-                        <p className="text-[10px] text-muted-foreground mt-1">{createName.length}/64</p>
-                      </div>
-                    </div>
+                  <div className="space-y-4 flex-1 flex flex-col">
                     <div>
-                      <textarea
-                        value={createDesc}
-                        onChange={e => setCreateDesc(e.target.value)}
-                        placeholder="Описание (необязательно)"
-                        rows={2}
-                        maxLength={255}
-                        className="w-full bg-muted/40 border border-border rounded-xl px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors resize-none"
+                      <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Название</label>
+                      <Input
+                        autoFocus
+                        placeholder={createType === "group" ? "Название группы" : "Название канала"}
+                        value={createName}
+                        onChange={e => setCreateName(e.target.value)}
+                        className="bg-secondary/50 border-transparent focus-visible:bg-card h-14 rounded-xl text-base font-bold"
                       />
                     </div>
-                    <div className="flex gap-2 pt-1">
+                    <div>
+                      <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Описание (необязательно)</label>
+                      <textarea
+                        placeholder="О чем этот чат?"
+                        value={createDesc}
+                        onChange={e => setCreateDesc(e.target.value)}
+                        className="w-full bg-secondary/50 border-transparent focus:bg-card focus:ring-1 focus:ring-primary h-24 rounded-xl px-4 py-3 text-base font-medium resize-none"
+                      />
+                    </div>
+                    <div className="mt-auto pt-4">
                       <button
-                        onClick={() => { if (createType === "group") setCreateStep("members"); else handleCreate(); }}
-                        disabled={!createName.trim() || creating}
-                        className={`flex-1 py-2.5 rounded-xl text-white text-sm font-bold transition-all disabled:opacity-50 ${createType === "group" ? "bg-primary hover:bg-primary/90" : "bg-gradient-to-r from-violet-500 to-indigo-600 hover:opacity-90"}`}
+                        disabled={!createName.trim()}
+                        onClick={() => setCreateStep("members")}
+                        className="w-full py-4 rounded-xl bg-primary text-primary-foreground font-black disabled:opacity-50 hover:bg-primary/90 transition-all text-base shadow-[0_4px_14px_rgba(255,85,0,0.3)] hover:-translate-y-0.5 active:translate-y-0 disabled:shadow-none disabled:-translate-y-0"
                       >
-                        {createType === "group" ? "Далее →" : (creating ? "Создание..." : "Создать канал")}
+                        Далее
                       </button>
                     </div>
                   </div>
                 )}
 
-                {/* Step 3: Add members (groups only) */}
                 {createStep === "members" && (
-                  <div className="space-y-3">
-                    {/* Selected members chips */}
-                    {selectedMembers.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 pb-2">
-                        {selectedMembers.map(m => (
-                          <button
-                            key={m.id}
-                            onClick={() => toggleMember(m)}
-                            className="flex items-center gap-1.5 bg-primary/15 text-primary text-xs font-medium px-2.5 py-1 rounded-full hover:bg-primary/25 transition-colors"
-                          >
-                            {m.displayName}
-                            <X size={11} />
-                          </button>
-                        ))}
+                  <div className="flex-1 flex flex-col -mx-6 -mt-6">
+                    <div className="p-4 border-b border-border bg-card">
+                      <div className="relative">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
+                        <Input
+                          placeholder="Поиск пользователей..."
+                          value={memberSearch}
+                          onChange={e => onMemberSearchChange(e.target.value)}
+                          className="pl-11 h-12 bg-secondary/50 border-transparent rounded-xl focus-visible:bg-background text-base font-medium"
+                          autoFocus
+                        />
                       </div>
-                    )}
-
-                    {/* Search */}
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                      <input
-                        autoFocus
-                        value={memberSearch}
-                        onChange={e => onMemberSearchChange(e.target.value)}
-                        placeholder="Поиск пользователей..."
-                        className="w-full bg-muted/40 border border-border rounded-xl pl-9 pr-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
-                      />
                     </div>
-
-                    {/* Results */}
-                    <div className="max-h-48 overflow-y-auto space-y-0.5">
-                      {memberLoading && (
-                        <div className="py-4 text-center text-xs text-muted-foreground">Поиск...</div>
-                      )}
-                      {!memberLoading && memberSearch && memberResults.length === 0 && (
-                        <div className="py-4 text-center text-xs text-muted-foreground">Пользователи не найдены</div>
-                      )}
-                      {!memberLoading && !memberSearch && (
-                        <div className="py-3 text-center text-xs text-muted-foreground">Введите имя или @никнейм для поиска</div>
-                      )}
-                      {memberResults.map(user => {
-                        const isSelected = selectedMembers.some(m => m.id === user.id);
-                        return (
-                          <button
-                            key={user.id}
-                            onClick={() => toggleMember(user)}
-                            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors text-left ${isSelected ? "bg-primary/10" : "hover:bg-secondary"}`}
-                          >
-                            <div
-                              className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0"
-                              style={{ background: user.avatarColor || "#3B82F6" }}
+                    
+                    <div className="flex-1 overflow-y-auto p-2 max-h-[40vh] min-h-[200px]">
+                      {memberLoading ? (
+                        <div className="p-4 text-center text-muted-foreground text-sm font-medium">Поиск...</div>
+                      ) : memberResults.length === 0 ? (
+                        <div className="p-4 text-center text-muted-foreground text-sm font-medium">
+                          {memberSearch ? "Ничего не найдено" : "Введите имя для поиска"}
+                        </div>
+                      ) : (
+                        memberResults.map(user => {
+                          const isSelected = selectedMembers.some(m => m.id === user.id);
+                          return (
+                            <button
+                              key={user.id}
+                              onClick={() => toggleMember(user)}
+                              className="w-full flex items-center justify-between p-3 hover:bg-secondary rounded-xl transition-colors"
                             >
-                              {user.avatarUrl
-                                ? <img src={user.avatarUrl} className="w-full h-full rounded-full object-cover" alt="" />
-                                : user.displayName[0]?.toUpperCase()}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-foreground truncate">{user.displayName}</p>
-                              <p className="text-xs text-muted-foreground">@{user.username}</p>
-                            </div>
-                            {isSelected && <Check size={15} className="text-primary shrink-0" />}
-                          </button>
-                        );
-                      })}
+                              <div className="flex items-center gap-3">
+                                <div
+                                  className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm overflow-hidden"
+                                  style={{ backgroundColor: user.avatarColor || "#333" }}
+                                >
+                                  {user.avatarUrl ? <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" /> : user.displayName[0].toUpperCase()}
+                                </div>
+                                <div className="text-left">
+                                  <p className="font-bold text-sm text-foreground">{user.displayName}</p>
+                                  <p className="text-xs text-muted-foreground font-medium">@{user.username}</p>
+                                </div>
+                              </div>
+                              <div className={cn(
+                                "w-6 h-6 rounded-full flex items-center justify-center transition-colors border",
+                                isSelected ? "bg-primary border-primary text-white" : "border-border text-transparent"
+                              )}>
+                                <Check size={14} strokeWidth={3} />
+                              </div>
+                            </button>
+                          );
+                        })
+                      )}
                     </div>
 
-                    <button
-                      onClick={handleCreate}
-                      disabled={!createName.trim() || creating}
-                      className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-bold hover:bg-primary/90 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-                    >
-                      <UserPlus size={15} />
-                      {creating ? "Создание..." : `Создать группу${selectedMembers.length > 0 ? ` (${selectedMembers.length + 1})` : ""}`}
-                    </button>
+                    <div className="p-4 border-t border-border bg-card">
+                      <button
+                        onClick={handleCreate}
+                        disabled={creating}
+                        className="w-full py-4 rounded-xl bg-primary text-primary-foreground font-black disabled:opacity-50 hover:bg-primary/90 transition-all text-base shadow-[0_4px_14px_rgba(255,85,0,0.3)] hover:-translate-y-0.5 active:translate-y-0"
+                      >
+                        {creating ? "Создание..." : `Создать ${createType === "group" ? "группу" : "канал"} (${selectedMembers.length})`}
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>

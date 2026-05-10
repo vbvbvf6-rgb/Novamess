@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { Eye, EyeOff, Zap, ShieldCheck, MessageCircle } from "lucide-react";
+import { Eye, EyeOff, ShieldCheck, Zap } from "lucide-react";
 import PulseLogo from "@/components/PulseLogo";
 
 interface LoginProps {
@@ -88,33 +88,35 @@ export default function Login({ onLogin }: LoginProps) {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-blue-500/5 rounded-full blur-3xl" />
+    <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
+      <div className="absolute inset-0 z-0">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 rounded-full blur-[120px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-orange-600/10 rounded-full blur-[120px]" />
       </div>
 
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
         className="w-full max-w-sm relative z-10"
       >
-        <div className="flex flex-col items-center mb-8">
+        <div className="flex flex-col items-center mb-10">
           <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: "spring", stiffness: 300, delay: 0.1 }}
-            className="w-20 h-20 rounded-3xl bg-gradient-to-br from-cyan-500 to-violet-600 flex items-center justify-center shadow-[0_0_40px_rgba(6,182,212,0.5)] mb-4"
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: "spring", stiffness: 200, damping: 20, delay: 0.2 }}
+            className="w-24 h-24 rounded-3xl bg-card border border-border flex items-center justify-center shadow-2xl mb-6 relative"
           >
+            <div className="absolute inset-0 rounded-3xl bg-primary/5 shadow-[inset_0_0_20px_rgba(255,85,0,0.1)]" />
             {step === "2fa" ? (
-              <ShieldCheck className="text-white" size={40} />
+              <ShieldCheck className="text-primary w-10 h-10" />
             ) : (
-              <PulseLogo size={44} />
+              <PulseLogo size={48} />
             )}
           </motion.div>
-          <h1 className="text-3xl font-black text-white">Pulse</h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            {step === "2fa" ? "Двухфакторная аутентификация" : "Войдите в аккаунт"}
+          <h1 className="text-4xl font-black text-foreground tracking-tight mb-2">Pulse</h1>
+          <p className="text-muted-foreground text-sm font-medium">
+            {step === "2fa" ? "Второй фактор" : "С возвращением"}
           </p>
         </div>
 
@@ -125,11 +127,11 @@ export default function Login({ onLogin }: LoginProps) {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 20 }}
-              className="bg-card border border-border rounded-3xl p-6 shadow-2xl"
+              transition={{ duration: 0.3 }}
             >
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-semibold text-foreground mb-1.5">Имя или никнейм</label>
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider pl-1">Имя или никнейм</label>
                   <input
                     type="text"
                     value={username}
@@ -137,15 +139,15 @@ export default function Login({ onLogin }: LoginProps) {
                     placeholder="Ваше имя или @никнейм"
                     autoComplete="username"
                     autoFocus
-                    className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors text-sm"
+                    className="w-full bg-card/50 border border-border rounded-2xl px-5 py-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-base font-medium"
                   />
                 </div>
 
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="block text-sm font-semibold text-foreground">Пароль</label>
-                    <Link href="/forgot-password" className="text-xs text-primary hover:text-primary/80 transition-colors font-medium">
-                      Забыли пароль?
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between pl-1 pr-1">
+                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Пароль</label>
+                    <Link href="/forgot-password" className="text-xs text-primary hover:text-primary/80 transition-colors font-bold">
+                      Забыли?
                     </Link>
                   </div>
                   <div className="relative">
@@ -155,43 +157,41 @@ export default function Login({ onLogin }: LoginProps) {
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••"
                       autoComplete="current-password"
-                      className="w-full bg-background border border-border rounded-xl px-4 py-3 pr-12 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors text-sm"
+                      className="w-full bg-card/50 border border-border rounded-2xl px-5 py-4 pr-12 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-base font-medium"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                     >
-                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                     </button>
                   </div>
                 </div>
 
                 {error && (
                   <motion.div
-                    initial={{ opacity: 0, y: -4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-destructive/10 border border-destructive/20 text-destructive rounded-xl px-4 py-3 text-sm font-medium"
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    className="bg-destructive/10 border border-destructive/20 text-destructive rounded-xl px-4 py-3 text-sm font-semibold"
                   >
                     {error}
                   </motion.div>
                 )}
 
-                <motion.button
+                <button
                   type="submit"
                   disabled={loading}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="w-full bg-primary text-primary-foreground font-bold py-3.5 rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-60 shadow-[0_0_20px_rgba(0,188,212,0.3)] text-base"
+                  className="w-full bg-primary text-primary-foreground font-black py-4 rounded-2xl hover:bg-primary/90 transition-all disabled:opacity-50 hover:shadow-[0_0_30px_rgba(255,85,0,0.3)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-none text-base"
                 >
                   {loading ? "Входим..." : "Войти"}
-                </motion.button>
+                </button>
               </form>
 
-              <div className="mt-5 text-center">
-                <p className="text-sm text-muted-foreground">
+              <div className="mt-8 text-center">
+                <p className="text-sm font-medium text-muted-foreground">
                   Нет аккаунта?{" "}
-                  <Link href="/register" className="text-primary font-semibold hover:underline">
+                  <Link href="/register" className="text-primary hover:text-primary/80 transition-colors">
                     Создать
                   </Link>
                 </p>
@@ -203,20 +203,15 @@ export default function Login({ onLogin }: LoginProps) {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className="bg-card border border-border rounded-3xl p-6 shadow-2xl"
+              transition={{ duration: 0.3 }}
             >
-              <div className="text-center mb-5">
-                <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-xl px-4 py-2 text-sm text-primary font-medium mb-2">
-                  <ShieldCheck size={15} />
-                  Введите код из приложения
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Откройте приложение аутентификации и введите 6-значный код для подтверждения входа.
+              <div className="text-center mb-8">
+                <p className="text-sm font-medium text-muted-foreground">
+                  Откройте приложение аутентификации и введите 6-значный код.
                 </p>
               </div>
-              <form onSubmit={handleTwoFa} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-semibold text-foreground mb-1.5">Код 2FA</label>
+              <form onSubmit={handleTwoFa} className="space-y-6">
+                <div className="space-y-2">
                   <input
                     type="text"
                     inputMode="numeric"
@@ -226,46 +221,39 @@ export default function Login({ onLogin }: LoginProps) {
                     onChange={(e) => setTwoFaCode(e.target.value.replace(/\D/g, ""))}
                     placeholder="000000"
                     autoFocus
-                    className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors text-center text-2xl font-mono tracking-[0.3em]"
+                    className="w-full bg-card/50 border border-border rounded-2xl px-5 py-6 text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-center text-4xl font-mono tracking-[0.5em] font-black shadow-inner"
                   />
                 </div>
 
                 {twoFaError && (
                   <motion.div
-                    initial={{ opacity: 0, y: -4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-destructive/10 border border-destructive/20 text-destructive rounded-xl px-4 py-3 text-sm font-medium"
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    className="bg-destructive/10 border border-destructive/20 text-destructive rounded-xl px-4 py-3 text-sm font-semibold text-center"
                   >
                     {twoFaError}
                   </motion.div>
                 )}
 
-                <motion.button
+                <button
                   type="submit"
                   disabled={twoFaLoading || twoFaCode.length !== 6}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="w-full bg-primary text-primary-foreground font-bold py-3.5 rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-60 shadow-[0_0_20px_rgba(0,188,212,0.3)] text-base"
+                  className="w-full bg-primary text-primary-foreground font-black py-4 rounded-2xl hover:bg-primary/90 transition-all disabled:opacity-50 hover:shadow-[0_0_30px_rgba(255,85,0,0.3)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-none text-base"
                 >
                   {twoFaLoading ? "Проверяем..." : "Подтвердить"}
-                </motion.button>
+                </button>
 
                 <button
                   type="button"
                   onClick={() => { setStep("credentials"); setTwoFaCode(""); setTwoFaError(""); }}
-                  className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors py-2"
+                  className="w-full text-sm font-bold text-muted-foreground hover:text-foreground transition-colors py-2"
                 >
-                  ← Вернуться к входу
+                  ← Назад
                 </button>
               </form>
             </motion.div>
           )}
         </AnimatePresence>
-
-        <div className="mt-6 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
-          <Zap size={12} className="text-primary" />
-          <span>Powered by Pulse</span>
-        </div>
       </motion.div>
     </div>
   );

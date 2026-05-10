@@ -603,7 +603,7 @@ export default function Gifts() {
 
                   <motion.button whileHover={canSend ? { scale: 1.03 } : {}} whileTap={canSend ? { scale: 0.97 } : {}}
                     onClick={handleSendGift} disabled={!canAfford || isSending || !selectedRecipient}
-                    className={`w-full py-3.5 rounded-xl font-black text-base transition-all ${canAfford && selectedRecipient ? "bg-primary text-primary-foreground hover:opacity-90 shadow-[0_0_25px_rgba(0,188,212,0.4)]" : "bg-secondary text-muted-foreground cursor-not-allowed opacity-60"}`}>
+                    className={`w-full py-3.5 rounded-xl font-black text-base transition-all ${canAfford && selectedRecipient ? "bg-primary text-primary-foreground hover:opacity-90 shadow-[0_0_25px_rgba(255,80,0,0.35)]" : "bg-secondary text-muted-foreground cursor-not-allowed opacity-60"}`}>
                     {isSending ? "Отправляем..." : !selectedRecipient ? "Выберите получателя" : !canAfford ? "Недостаточно средств" : "Отправить подарок"}
                   </motion.button>
                 </div>

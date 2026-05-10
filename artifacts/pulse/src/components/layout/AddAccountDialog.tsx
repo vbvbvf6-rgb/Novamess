@@ -133,7 +133,7 @@ export function AddAccountDialog({ open, onClose, onAccountAdded }: AddAccountDi
         </button>
 
         <div className="flex flex-col items-center mb-5">
-          <div className="w-14 h-14 rounded-2xl bg-primary flex items-center justify-center shadow-[0_0_25px_rgba(0,188,212,0.4)] mb-3">
+          <div className="w-14 h-14 rounded-2xl bg-primary flex items-center justify-center shadow-[0_0_25px_rgba(255,80,0,0.3)] mb-3">
             {mode === "login" ? <LogIn className="text-white" size={26} /> : <UserPlus className="text-white" size={26} />}
           </div>
           <h2 className="text-xl font-bold text-foreground">
@@ -201,7 +201,7 @@ export function AddAccountDialog({ open, onClose, onAccountAdded }: AddAccountDi
                   {error}
                 </motion.div>
               )}
-              <button type="submit" disabled={loading} className="w-full bg-primary text-primary-foreground font-bold py-3 rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-60 shadow-[0_0_20px_rgba(0,188,212,0.3)] text-sm">
+              <button type="submit" disabled={loading} className="w-full bg-primary text-primary-foreground font-bold py-3 rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-60 shadow-[0_0_20px_rgba(255,80,0,0.25)] text-sm">
                 {loading ? "Входим..." : "Войти"}
               </button>
             </motion.form>
@@ -266,7 +266,7 @@ export function AddAccountDialog({ open, onClose, onAccountAdded }: AddAccountDi
                   {error}
                 </motion.div>
               )}
-              <button type="submit" disabled={loading} className="w-full bg-primary text-primary-foreground font-bold py-3 rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-60 shadow-[0_0_20px_rgba(0,188,212,0.3)] text-sm">
+              <button type="submit" disabled={loading} className="w-full bg-primary text-primary-foreground font-bold py-3 rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-60 shadow-[0_0_20px_rgba(255,80,0,0.25)] text-sm">
                 {loading ? "Создаём аккаунт..." : "Создать аккаунт"}
               </button>
             </motion.form>

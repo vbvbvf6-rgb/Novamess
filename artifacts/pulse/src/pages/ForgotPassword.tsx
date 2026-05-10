@@ -30,7 +30,7 @@ export default function ForgotPassword() {
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ type: "spring", stiffness: 300, delay: 0.1 }}
-            className="w-20 h-20 rounded-3xl bg-primary flex items-center justify-center shadow-[0_0_40px_rgba(0,188,212,0.5)] mb-4"
+            className="w-20 h-20 rounded-3xl bg-primary flex items-center justify-center shadow-[0_0_40px_rgba(255,80,0,0.4)] mb-4"
           >
             <MessageCircle className="text-white" size={40} />
           </motion.div>
@@ -70,7 +70,7 @@ export default function ForgotPassword() {
                   disabled={!username.trim()}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="w-full bg-primary text-primary-foreground font-bold py-3.5 rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-60 shadow-[0_0_20px_rgba(0,188,212,0.3)] text-base"
+                  className="w-full bg-primary text-primary-foreground font-bold py-3.5 rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-60 shadow-[0_0_20px_rgba(255,80,0,0.3)] text-base"
                 >
                   Восстановить доступ
                 </motion.button>

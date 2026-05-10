@@ -122,7 +122,7 @@ export function ActiveCall() {
               <div className="absolute inset-0 bg-primary/20 rounded-full animate-ping" style={{ animationDuration: "3s" }} />
               <div className="absolute inset-[-20px] bg-primary/10 rounded-full animate-ping" style={{ animationDuration: "3s", animationDelay: "0.5s" }} />
               <div
-                className="w-40 h-40 rounded-full flex items-center justify-center text-white font-bold text-6xl relative z-10 shadow-[0_0_50px_rgba(0,188,212,0.3)] border-4 border-background overflow-hidden"
+                className="w-40 h-40 rounded-full flex items-center justify-center text-white font-bold text-6xl relative z-10 shadow-[0_0_50px_rgba(255,80,0,0.25)] border-4 border-background overflow-hidden"
                 style={{ backgroundColor: otherUser?.avatarColor || "#333" }}
               >
                 {otherUser?.avatarUrl ? (

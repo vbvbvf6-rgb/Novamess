@@ -1062,7 +1062,7 @@ export default function Settings() {
           {/* Page zoom */}
           <div className="p-4 border-t border-border">
             <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 bg-cyan-500/10 text-cyan-500 rounded-xl"><Monitor size={18} /></div>
+              <div className="p-2 bg-primary/10 text-primary rounded-xl"><Monitor size={18} /></div>
               <div>
                 <p className="text-sm font-medium">{lang === "ru" ? "Масштаб страницы" : "Page zoom"}</p>
                 <p className="text-xs text-muted-foreground">{lang === "ru" ? "Изменить размер всего интерфейса" : "Scale the entire interface"}</p>
@@ -1383,7 +1383,7 @@ export default function Settings() {
 
           <Row
             icon={<Monitor size={18} />}
-            color="bg-cyan-500/10 text-cyan-500"
+            color="bg-primary/10 text-primary"
             label={t("settings.activeSessions")}
             desc={`${lang === "ru" ? "Браузер" : "Browser"}: ${navigator.userAgent.includes("Chrome") ? "Chrome" : navigator.userAgent.includes("Firefox") ? "Firefox" : (lang === "ru" ? "Другой" : "Other")}`}
             onClick={handleEndSessions}
@@ -1494,7 +1494,7 @@ export default function Settings() {
         <Section title={t("settings.about")} icon={<Zap size={13} />}>
           <div className="p-4">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-500 to-purple-600 flex items-center justify-center">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-orange-700 flex items-center justify-center">
                 <Zap size={22} className="text-white fill-white" />
               </div>
               <div>
@@ -1526,7 +1526,7 @@ export default function Settings() {
             href="/support"
             className="flex items-center gap-3 px-4 py-3.5 hover:bg-secondary/50 transition-colors border-b border-border"
           >
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shrink-0">
+            <div className="w-8 h-8 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
               <MessageSquare size={14} className="text-white" />
             </div>
             <div className="flex-1">

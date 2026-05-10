@@ -1,16 +1,13 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useSendMessage, useGetMe, getGetMessagesQueryKey, getGetChatsQueryKey, Message } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Paperclip, Mic, Smile, SendHorizontal, X, Square, Trash2, Images, Reply, Pencil, Clock, Crown } from "lucide-react";
+import { Paperclip, Mic, SendHorizontal, X, Square, Trash2, Images, Reply, Pencil, Clock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const EMOJI_CATEGORIES: { label: string; emojis: string[] }[] = [
-  { label: "😀 Смайлы", emojis: ["😀","😂","🤣","😊","😍","🥰","😘","😎","🤩","🥳","😭","😤","😡","🤔","😏","😴","🤤","😷","😱","😨","🤯","😮","🥺","😢","😔","😕","😫","🤗","🤭","🫢","🤫","🤥","😶","😐","😑"] },
-  { label: "👍 Жесты", emojis: ["👍","👎","👋","🤚","✋","🖐","🖖","👌","🤌","✌","🤞","🤟","🤘","🤙","👈","👉","👆","👇","☝","👏","🙌","🤲","🤝","🙏","💪","🦾"] },
-  { label: "❤️ Сердца", emojis: ["❤️","🧡","💛","💚","💙","💜","🖤","🤍","🤎","💔","❤️‍🔥","💕","💞","💓","💗","💖","💘","💝","💫","⭐","🌟","✨","🔥","💎"] },
-  { label: "🐶 Природа", emojis: ["🐶","🐱","🐭","🐹","🐰","🦊","🐻","🐼","🐨","🐯","🦁","🐸","🐵","🐔","🐧","🐦","🦆","🦅","🦉","🦇","🐺","🦄","🦋","🌸","🌹","🌺","🌻","🌴","🌵"] },
-  { label: "🍎 Еда", emojis: ["🍎","🍊","🍋","🍇","🍓","🍒","🍑","🥭","🍍","🥥","🍕","🍔","🌮","🌯","🍜","🍣","🍦","🎂","🍰","🧁","🍫","🍬","🍭","☕","🍵","🥤","🍺","🍷","🥂"] },
-  { label: "⚽ Активность", emojis: ["⚽","🏀","🏈","⚾","🎾","🏐","🏉","🎱","🏓","🏸","🎯","⛳","🎳","🏋️","🤸","⛷️","🏂","🏄","🎮","🕹️","🎲","🎪","🎭","🎨"] },
+  { label: "Смайлы", emojis: ["😀","😂","🤣","😊","😍","🥰","😘","😎","🤩","🥳","😭","😤","😡","🤔","😏","😴","🤤","😷","😱","😨","🤯","😮","🥺","😢","😔","😕","😫","🤗","🤭","🫢","🤫","🤥","😶","😐","😑"] },
+  { label: "Жесты", emojis: ["👍","👎","👋","🤚","✋","🖐","🖖","👌","🤌","✌","🤞","🤟","🤘","🤙","👈","👉","👆","👇","☝","👏","🙌","🤲","🤝","🙏","💪","🦾"] },
+  { label: "Сердца", emojis: ["❤️","🧡","💛","💚","💙","💜","🖤","🤍","🤎","💔","❤️‍🔥","💕","💞","💓","💗","💖","💘","💝","💫","⭐","🌟","✨","🔥","💎"] },
 ];
 
 function formatDuration(seconds: number) {
@@ -62,7 +59,6 @@ export interface ChatInputProps {
 
 export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCancelReply, onCancelEdit }: ChatInputProps) {
   const { data: me } = useGetMe();
-  const hasPrime = (me as any)?.hasPrime ?? false;
 
   const [text, setText] = useState("");
   const [showEmoji, setShowEmoji] = useState(false);
@@ -108,7 +104,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
       setText(editMessage.text || "");
       setTimeout(() => {
         if (textareaRef.current) {
-          textareaRef.current.style.height = "40px";
+          textareaRef.current.style.height = "52px";
           textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 128) + "px";
           textareaRef.current.focus();
         }
@@ -188,10 +184,17 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
       return;
     }
 
-    if (!text.trim() && imagePreviews.length === 0) return;
+    if (!text.trim() && imagePreviews.length === 0 && !audioBlob) return;
     setIsSending(true);
     try {
-      if (imagePreviews.length > 0) {
+      if (audioBlob) {
+        const base64 = await readFileAsDataUrl(audioBlob);
+        await sendMessage.mutateAsync({
+          data: { chatId, type: "audio", mediaUrl: base64, text: `voice:${recordSeconds}`, replyToId: replyTo?.id }
+        });
+        setAudioBlob(null);
+        setRecordSeconds(0);
+      } else if (imagePreviews.length > 0) {
         for (let i = 0; i < imagePreviews.length; i++) {
           await sendMessage.mutateAsync({
             data: {
@@ -208,9 +211,10 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
       } else {
         await sendMessage.mutateAsync({ data: { chatId, text, type: "text", replyToId: replyTo?.id } });
         setText("");
-        if (textareaRef.current) textareaRef.current.style.height = "40px";
+        if (textareaRef.current) textareaRef.current.style.height = "52px";
       }
       localStorage.removeItem(draftKey);
+      setShowEmoji(false);
       onCancelReply?.();
       queryClient.invalidateQueries({ queryKey: getGetMessagesQueryKey({ chatId }) });
       queryClient.invalidateQueries({ queryKey: getGetChatsQueryKey() });
@@ -238,7 +242,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
       setRecordSeconds(0);
       timerRef.current = setInterval(() => setRecordSeconds(s => s + 1), 1000);
     } catch {
-      alert("Нет доступа к микрофону. Разрешите доступ в настройках браузера.");
+      alert("Нет доступа к микрофону.");
     }
   };
 
@@ -258,22 +262,6 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
     chunksRef.current = [];
   };
 
-  const sendVoice = async () => {
-    if (!audioBlob) return;
-    const base64 = await readFileAsDataUrl(audioBlob);
-    sendMessage.mutate(
-      { data: { chatId, type: "audio", mediaUrl: base64, text: `voice:${recordSeconds}` } },
-      {
-        onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: getGetMessagesQueryKey({ chatId }) });
-          queryClient.invalidateQueries({ queryKey: getGetChatsQueryKey() });
-        }
-      }
-    );
-    setAudioBlob(null);
-    setRecordSeconds(0);
-  };
-
   const insertEmoji = (emoji: string) => {
     setText(prev => prev + emoji);
     textareaRef.current?.focus();
@@ -281,12 +269,11 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
 
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setText(e.target.value);
-    e.target.style.height = "40px";
+    e.target.style.height = "52px";
     e.target.style.height = Math.min(e.target.scrollHeight, 128) + "px";
     if (e.target.value.trim()) sendTypingEvent();
     if (!editMessage) localStorage.setItem(draftKey, e.target.value);
   };
-
 
   const handleScheduledSend = async () => {
     if (!text.trim() || !scheduledAt) return;
@@ -297,15 +284,11 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
         headers,
         body: JSON.stringify({ chatId, text: text.trim(), scheduledAt: new Date(scheduledAt).toISOString() }),
       });
-      if (!res.ok) {
-        const data = await res.json();
-        alert(data.error || "Ошибка");
-        return;
-      }
+      if (!res.ok) return alert("Ошибка");
       setText("");
       setScheduledAt("");
       setShowScheduler(false);
-      if (textareaRef.current) textareaRef.current.style.height = "40px";
+      if (textareaRef.current) textareaRef.current.style.height = "52px";
       localStorage.removeItem(draftKey);
     } catch {
       alert("Ошибка соединения");
@@ -316,245 +299,239 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
   const _pad = (n: number) => n.toString().padStart(2, "0");
   const minDatetime = `${_minDate.getFullYear()}-${_pad(_minDate.getMonth()+1)}-${_pad(_minDate.getDate())}T${_pad(_minDate.getHours())}:${_pad(_minDate.getMinutes())}`;
 
-  const hasContent = text.trim().length > 0 || imagePreviews.length > 0;
+  const hasContent = text.trim().length > 0 || imagePreviews.length > 0 || audioBlob;
 
   return (
-    <div className="relative">
-      {/* Scheduler popover */}
-      <AnimatePresence>
-        {showScheduler && (
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 8 }}
-            className="absolute bottom-full mb-2 left-0 right-0 z-50 bg-card border border-border rounded-2xl p-4 shadow-2xl"
-          >
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2 text-sm font-semibold">
-                <Clock size={15} className="text-primary" />
-                Запланировать сообщение
+    <div className="relative px-4 pb-4 md:px-6 md:pb-6 z-30">
+      <div className="max-w-3xl mx-auto w-full relative">
+        <AnimatePresence>
+          {showScheduler && (
+            <motion.div
+              initial={{ opacity: 0, y: 10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 10, scale: 0.95 }}
+              className="absolute bottom-full mb-3 left-0 right-0 z-50 bg-card border border-border rounded-[24px] p-5 shadow-2xl origin-bottom"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2.5 font-bold text-[15px]">
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Clock size={16} className="text-primary" />
+                  </div>
+                  Запланировать
+                </div>
+                <button onClick={() => setShowScheduler(false)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors">
+                  <X size={18} />
+                </button>
               </div>
-              <button onClick={() => setShowScheduler(false)} className="text-muted-foreground hover:text-foreground transition-colors">
+              <input
+                type="datetime-local"
+                value={scheduledAt}
+                min={minDatetime}
+                onChange={e => setScheduledAt(e.target.value)}
+                className="w-full bg-secondary border-transparent rounded-[16px] px-4 py-3.5 text-[15px] font-bold focus:outline-none focus:bg-background focus:ring-2 focus:ring-primary transition-all mb-4"
+              />
+              <button
+                onClick={handleScheduledSend}
+                disabled={!text.trim() || !scheduledAt}
+                className="w-full py-4 bg-primary text-primary-foreground rounded-[16px] text-[15px] font-black disabled:opacity-50 transition-all hover:bg-primary/90 shadow-[0_4px_14px_rgba(255,85,0,0.3)] hover:-translate-y-0.5 active:translate-y-0"
+              >
+                Сохранить
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {showEmoji && (
+            <motion.div
+              initial={{ opacity: 0, y: 10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 10, scale: 0.95 }}
+              className="absolute bottom-full mb-3 left-0 md:w-[320px] z-50 bg-card border border-border rounded-[24px] shadow-2xl overflow-hidden origin-bottom-left"
+            >
+              <div className="flex gap-1 p-2 bg-secondary/50 border-b border-border overflow-x-auto scrollbar-none">
+                {EMOJI_CATEGORIES.map((cat, i) => (
+                  <button key={i} onClick={() => setEmojiCategory(i)}
+                    className={`px-3 py-1.5 rounded-full text-[13px] font-bold whitespace-nowrap transition-all shrink-0 ${emojiCategory === i ? "bg-background text-foreground shadow-sm border border-border" : "text-muted-foreground hover:text-foreground hover:bg-background/50"}`}>
+                    {cat.label}
+                  </button>
+                ))}
+              </div>
+              <div className="p-3 grid grid-cols-7 gap-1 max-h-[220px] overflow-y-auto scrollbar-none">
+                {EMOJI_CATEGORIES[emojiCategory].emojis.map((emoji, i) => (
+                  <button key={i} onClick={() => insertEmoji(emoji)}
+                    className="text-2xl hover:bg-secondary rounded-xl p-1.5 transition-colors text-center hover:scale-110 active:scale-95">
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {replyTo && !editMessage && (
+            <motion.div
+              initial={{ opacity: 0, height: 0, y: 10 }} animate={{ opacity: 1, height: "auto", y: 0 }} exit={{ opacity: 0, height: 0, y: 10 }}
+              className="mb-2 flex items-center gap-3 bg-secondary/80 backdrop-blur-md border border-border rounded-[20px] px-4 py-3"
+            >
+              <div className="w-8 h-8 rounded-full bg-background flex items-center justify-center shrink-0">
+                <Reply size={16} className="text-foreground" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] font-black uppercase tracking-wider text-primary mb-0.5">{replyTo.sender?.displayName || "Пользователь"}</p>
+                <p className="text-[13px] font-medium text-muted-foreground truncate">
+                  {replyTo.type === "image" ? "📷 Фото" : replyTo.type === "audio" ? "🎤 Голосовое" : replyTo.text}
+                </p>
+              </div>
+              <button onClick={onCancelReply} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-background text-muted-foreground hover:text-foreground transition-colors shrink-0">
                 <X size={16} />
               </button>
-            </div>
-            <input
-              type="datetime-local"
-              value={scheduledAt}
-              min={minDatetime}
-              onChange={e => setScheduledAt(e.target.value)}
-              className="w-full bg-background border border-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary transition-colors mb-3"
-            />
-            <button
-              onClick={handleScheduledSend}
-              disabled={!text.trim() || !scheduledAt}
-              className="w-full py-2.5 bg-primary text-white rounded-xl text-sm font-semibold disabled:opacity-50 transition-colors"
-            >
-              Запланировать
-            </button>
-            {!text.trim() && (
-              <p className="text-xs text-muted-foreground mt-2 text-center">Сначала напишите сообщение</p>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Emoji Picker */}
-      {showEmoji && (
-        <div className="absolute bottom-full mb-2 left-0 right-0 z-50 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden">
-          <div className="flex border-b border-border bg-background/80 px-1 overflow-x-auto scrollbar-none">
-            {EMOJI_CATEGORIES.map((cat, i) => (
-              <button key={i} onClick={() => setEmojiCategory(i)}
-                className={`px-3 py-2 text-xs font-medium whitespace-nowrap transition-colors shrink-0 ${emojiCategory === i ? "text-primary border-b-2 border-primary" : "text-muted-foreground hover:text-foreground"}`}>
-                {cat.label}
-              </button>
-            ))}
-          </div>
-          <div className="p-3 grid grid-cols-8 gap-1 max-h-48 overflow-y-auto scrollbar-thin">
-            {EMOJI_CATEGORIES[emojiCategory].emojis.map((emoji, i) => (
-              <button key={i} onClick={() => insertEmoji(emoji)}
-                className="text-xl hover:bg-secondary rounded-lg p-1 transition-colors text-center">
-                {emoji}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Reply strip */}
-      <AnimatePresence>
-        {replyTo && !editMessage && (
-          <motion.div
-            initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 6 }}
-            className="mb-2 flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-xl px-3 py-2"
-          >
-            <Reply size={14} className="text-primary shrink-0" />
-            <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-semibold text-primary">{replyTo.sender?.displayName || "Пользователь"}</p>
-              <p className="text-xs text-muted-foreground truncate">
-                {replyTo.type === "image" ? "📷 Фото" : replyTo.type === "audio" ? "🎤 Голосовое" : replyTo.text}
-              </p>
-            </div>
-            <button onClick={onCancelReply} className="p-1 text-muted-foreground hover:text-foreground transition-colors shrink-0">
-              <X size={14} />
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Edit strip */}
-      <AnimatePresence>
-        {editMessage && (
-          <motion.div
-            initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 6 }}
-            className="mb-2 flex items-center gap-2 bg-amber-500/10 border border-amber-500/20 rounded-xl px-3 py-2"
-          >
-            <Pencil size={14} className="text-amber-400 shrink-0" />
-            <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-semibold text-amber-400">Редактирование</p>
-              <p className="text-xs text-muted-foreground truncate">{editMessage.text}</p>
-            </div>
-            <button onClick={onCancelEdit} className="p-1 text-muted-foreground hover:text-foreground transition-colors shrink-0">
-              <X size={14} />
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Multi-image preview strip */}
-      <AnimatePresence>
-        {imagePreviews.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }}
-            className="mb-2 flex gap-2 flex-wrap"
-          >
-            {imagePreviews.map((src, idx) => (
-              <motion.div key={idx} initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.85 }}
-                className="relative rounded-xl overflow-hidden border border-border shadow-md shrink-0">
-                <img src={src} alt="" className="h-24 w-24 object-cover block" />
-                <button onClick={() => removeImage(idx)} className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-0.5 hover:bg-black/80 transition-colors">
-                  <X size={13} />
-                </button>
-              </motion.div>
-            ))}
-            <button onClick={() => fileInputRef.current?.click()}
-              className="h-24 w-24 rounded-xl border-2 border-dashed border-primary/30 hover:border-primary/60 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors shrink-0">
-              <Images size={22} />
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Voice ready to send preview */}
-      <AnimatePresence>
-        {audioBlob && !isRecording && (
-          <motion.div
-            initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }}
-            className="mb-2 flex items-center gap-3 bg-primary/10 border border-primary/30 rounded-2xl px-4 py-3"
-          >
-            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center"><Mic size={16} className="text-primary" /></div>
-            <div className="flex-1">
-              <p className="text-sm font-medium text-foreground">Голосовое сообщение</p>
-              <p className="text-xs text-muted-foreground">{formatDuration(recordSeconds)}</p>
-            </div>
-            <button onClick={cancelRecording} className="p-1.5 text-muted-foreground hover:text-destructive transition-colors"><Trash2 size={16} /></button>
-            <button onClick={sendVoice} disabled={sendMessage.isPending}
-              className="p-2 bg-primary text-primary-foreground rounded-full hover:bg-primary/90 transition-colors shadow-[0_0_10px_rgba(0,188,212,0.3)]">
-              <SendHorizontal size={18} />
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Recording UI */}
-      <AnimatePresence>
-        {isRecording && (
-          <motion.div
-            initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }}
-            className="flex items-center gap-3 bg-red-500/10 border border-red-500/30 rounded-2xl px-4 py-3 mb-2"
-          >
-            <motion.div animate={{ scale: [1, 1.3, 1] }} transition={{ duration: 0.8, repeat: Infinity }} className="w-3 h-3 rounded-full bg-red-500" />
-            <span className="text-sm font-medium text-red-400">Запись...</span>
-            <span className="text-sm font-mono text-red-300 flex-1">{formatDuration(recordSeconds)}</span>
-            <button onClick={cancelRecording} className="p-1.5 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"><Trash2 size={16} /></button>
-            <button onClick={stopRecording} className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors shadow-[0_0_10px_rgba(239,68,68,0.4)]"><Square size={16} fill="white" /></button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Main input bar */}
-      {!isRecording && !audioBlob && (
-        <form onSubmit={handleSend} className={`flex items-end gap-2 bg-secondary rounded-2xl px-3 py-2 border transition-colors focus-within:border-primary/50 ${editMessage ? "border-amber-500/30" : "border-border"}`}>
-          <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleFileChange} className="hidden" />
-
-          {!editMessage && (
-            <button type="button" onClick={() => fileInputRef.current?.click()}
-              className={`p-1.5 transition-colors shrink-0 ${imagePreviews.length > 0 ? "text-primary" : "text-muted-foreground hover:text-primary"}`}>
-              <Paperclip size={20} />
-            </button>
+            </motion.div>
           )}
+        </AnimatePresence>
 
-          <textarea
-            ref={textareaRef}
-            value={text}
-            onChange={handleTextareaChange}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
-              if (e.key === "Escape") { onCancelReply?.(); onCancelEdit?.(); }
-            }}
-            placeholder={editMessage ? "Редактировать..." : imagePreviews.length > 0 ? "Добавить подпись..." : "Сообщение..."}
-            className="flex-1 bg-transparent border-none resize-none max-h-32 min-h-[40px] py-2 px-1 focus:outline-none text-sm placeholder:text-muted-foreground leading-normal"
-            rows={1}
-            style={{ height: "40px" }}
-          />
+        <AnimatePresence>
+          {editMessage && (
+            <motion.div
+              initial={{ opacity: 0, height: 0, y: 10 }} animate={{ opacity: 1, height: "auto", y: 0 }} exit={{ opacity: 0, height: 0, y: 10 }}
+              className="mb-2 flex items-center gap-3 bg-orange-500/10 backdrop-blur-md border border-orange-500/20 rounded-[20px] px-4 py-3"
+            >
+              <div className="w-8 h-8 rounded-full bg-orange-500/20 flex items-center justify-center shrink-0">
+                <Pencil size={16} className="text-orange-500" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] font-black uppercase tracking-wider text-orange-500 mb-0.5">Редактирование</p>
+                <p className="text-[13px] font-medium text-foreground truncate">{editMessage.text}</p>
+              </div>
+              <button onClick={onCancelEdit} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-background/50 text-muted-foreground hover:text-foreground transition-colors shrink-0">
+                <X size={16} />
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-          <div className="flex items-center gap-1 shrink-0">
-            {!editMessage && (
-              <button
-                type="button"
-                onClick={() => {
-                  if (!hasPrime) {
-                    window.location.href = "/prime";
-                    return;
-                  }
-                  setShowScheduler(!showScheduler);
-                }}
-                title={hasPrime ? "Запланировать сообщение" : "Только для Pulse Prime — нажмите, чтобы узнать больше"}
-                className={`p-1.5 transition-colors rounded-full relative ${showScheduler ? "text-primary bg-primary/10" : hasPrime ? "text-muted-foreground hover:text-foreground" : "text-muted-foreground/40"}`}
+        <AnimatePresence>
+          {imagePreviews.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
+              className="mb-3 flex gap-2.5 flex-wrap"
+            >
+              {imagePreviews.map((src, idx) => (
+                <motion.div key={idx} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
+                  className="relative rounded-2xl overflow-hidden border border-border shadow-sm shrink-0 group">
+                  <img src={src} alt="" className="h-28 w-28 object-cover block" />
+                  <button onClick={() => removeImage(idx)} className="absolute top-1.5 right-1.5 w-7 h-7 bg-black/50 backdrop-blur-md text-white rounded-full flex items-center justify-center hover:bg-black/80 transition-colors opacity-0 group-hover:opacity-100">
+                    <X size={14} />
+                  </button>
+                </motion.div>
+              ))}
+              <button onClick={() => fileInputRef.current?.click()}
+                className="h-28 w-28 rounded-2xl border-2 border-dashed border-border hover:border-primary hover:bg-primary/5 flex items-center justify-center text-muted-foreground hover:text-primary transition-all shrink-0">
+                <Images size={28} />
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <div className={`p-1.5 bg-card border rounded-[28px] transition-all flex items-end gap-1.5 shadow-sm focus-within:shadow-md focus-within:border-primary/50 ${editMessage ? "border-orange-500/50 bg-orange-500/5" : "border-border"}`}>
+          
+          <AnimatePresence mode="wait">
+            {isRecording ? (
+              <motion.div
+                key="recording"
+                initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
+                className="flex-1 flex items-center gap-3 px-4 h-12"
               >
-                <Clock size={18} />
-                {!hasPrime && <Crown size={9} className="absolute -top-0.5 -right-0.5 text-amber-400" />}
-              </button>
-            )}
-            <button type="button" onClick={() => setShowEmoji(!showEmoji)}
-              className={`p-1.5 transition-colors rounded-full ${showEmoji ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground"}`}>
-              <Smile size={20} />
-            </button>
-
-            {hasContent ? (
-              <button type="submit" disabled={isSending}
-                className={`p-2 text-primary-foreground rounded-full transition-colors disabled:opacity-50 ${editMessage ? "bg-amber-500 hover:bg-amber-600 shadow-[0_0_10px_rgba(245,158,11,0.3)]" : "bg-primary hover:bg-primary/90 shadow-[0_0_10px_rgba(0,188,212,0.3)]"}`}>
-                {isSending ? (
-                  <motion.div animate={{ rotate: 360 }} transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
-                    className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full" />
-                ) : editMessage ? (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-                ) : (
-                  <SendHorizontal size={18} />
-                )}
-              </button>
+                <motion.div animate={{ scale: [1, 1.4, 1], opacity: [0.5, 1, 0.5] }} transition={{ duration: 1.2, repeat: Infinity }} className="w-3 h-3 rounded-full bg-red-500 shrink-0" />
+                <span className="text-[15px] font-bold text-red-500">Запись...</span>
+                <span className="text-[15px] font-black font-mono text-red-400 ml-auto tracking-wider">{formatDuration(recordSeconds)}</span>
+                <button onClick={cancelRecording} className="w-10 h-10 flex items-center justify-center rounded-full text-muted-foreground hover:bg-red-500/10 hover:text-red-500 transition-colors shrink-0 ml-2"><Trash2 size={18} /></button>
+                <button onClick={stopRecording} className="w-10 h-10 flex items-center justify-center bg-red-500 text-white rounded-full hover:bg-red-600 transition-all shadow-[0_4px_14px_rgba(239,68,68,0.4)] shrink-0"><Square size={16} fill="white" /></button>
+              </motion.div>
+            ) : audioBlob ? (
+              <motion.div
+                key="audio-preview"
+                initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
+                className="flex-1 flex items-center gap-3 px-2 h-12"
+              >
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0"><Mic size={18} className="text-primary" /></div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-bold text-foreground">Голосовое</p>
+                  <p className="text-[11px] font-black text-primary/70">{formatDuration(recordSeconds)}</p>
+                </div>
+                <button onClick={cancelRecording} className="w-10 h-10 flex items-center justify-center rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors shrink-0"><Trash2 size={18} /></button>
+              </motion.div>
             ) : (
-              !editMessage && (
-                <button type="button" onClick={startRecording} className="p-1.5 text-muted-foreground hover:text-primary transition-colors">
+              <motion.form
+                key="input"
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                onSubmit={handleSend}
+                className="flex-1 flex items-end gap-1"
+              >
+                <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleFileChange} className="hidden" />
+                
+                {!editMessage && (
+                  <button type="button" onClick={() => setShowEmoji(v => !v)}
+                    className="w-12 h-12 flex items-center justify-center rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors shrink-0 mb-[2px]">
+                    <span className="text-xl leading-none">😀</span>
+                  </button>
+                )}
+
+                <textarea
+                  ref={textareaRef}
+                  value={text}
+                  onChange={handleTextareaChange}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
+                    if (e.key === "Escape") { onCancelReply?.(); onCancelEdit?.(); setShowEmoji(false); }
+                  }}
+                  placeholder={editMessage ? "Редактировать..." : imagePreviews.length > 0 ? "Подпись..." : "Написать сообщение..."}
+                  className="flex-1 bg-transparent border-none resize-none max-h-32 min-h-[52px] py-4 px-2 focus:outline-none text-[15px] font-medium placeholder:text-muted-foreground/60 leading-normal scrollbar-none"
+                  rows={1}
+                  style={{ height: "52px" }}
+                  onFocus={() => setShowEmoji(false)}
+                />
+
+                {!editMessage && !text.trim() && imagePreviews.length === 0 && (
+                  <button type="button" onClick={() => fileInputRef.current?.click()}
+                    className="w-12 h-12 flex items-center justify-center rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors shrink-0 mb-[2px]">
+                    <Paperclip size={20} />
+                  </button>
+                )}
+
+                {hasContent && !editMessage && (
+                  <button type="button" onClick={() => setShowScheduler(v => !v)}
+                    className="w-12 h-12 flex items-center justify-center rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors shrink-0 mb-[2px]">
+                    <Clock size={20} />
+                  </button>
+                )}
+              </motion.form>
+            )}
+          </AnimatePresence>
+
+          {(!isRecording) && (
+            <div className="shrink-0 mb-[2px]">
+              {hasContent ? (
+                <button
+                  onClick={() => handleSend()}
+                  disabled={isSending}
+                  className="w-12 h-12 flex items-center justify-center bg-primary text-primary-foreground rounded-[20px] hover:bg-primary/90 transition-all disabled:opacity-50 shadow-[0_4px_14px_rgba(255,85,0,0.3)] hover:scale-105 active:scale-95"
+                >
+                  <SendHorizontal size={20} className={isSending ? "animate-pulse" : "translate-x-[-1px]"} />
+                </button>
+              ) : !editMessage && !audioBlob ? (
+                <button
+                  onClick={startRecording}
+                  className="w-12 h-12 flex items-center justify-center bg-secondary text-foreground rounded-[20px] hover:bg-secondary/80 transition-all hover:scale-105 active:scale-95"
+                >
                   <Mic size={20} />
                 </button>
-              )
-            )}
-          </div>
-        </form>
-      )}
-
-      {showEmoji && <div className="fixed inset-0 z-40" onClick={() => setShowEmoji(false)} />}
+              ) : null}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

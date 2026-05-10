@@ -82,7 +82,7 @@ export function ScreenLock({ children }: ScreenLockProps) {
             transition={{ duration: 0.4 }}
             className="flex flex-col items-center gap-3"
           >
-            <div className="w-16 h-16 rounded-2xl bg-primary/20 border border-primary/30 flex items-center justify-center shadow-[0_0_30px_rgba(0,188,212,0.2)]">
+            <div className="w-16 h-16 rounded-2xl bg-primary/20 border border-primary/30 flex items-center justify-center shadow-[0_0_30px_rgba(255,80,0,0.15)]">
               <Lock size={32} className="text-primary" />
             </div>
             <div className="text-center">
@@ -97,7 +97,7 @@ export function ScreenLock({ children }: ScreenLockProps) {
                 key={i}
                 className={`w-4 h-4 rounded-full border-2 transition-all duration-200 ${
                   i < pin.length
-                    ? "bg-primary border-primary shadow-[0_0_8px_rgba(0,188,212,0.6)]"
+                    ? "bg-primary border-primary shadow-[0_0_8px_rgba(255,80,0,0.5)]"
                     : "border-white/30"
                 }`}
               />

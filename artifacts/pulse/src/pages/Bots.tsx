@@ -898,7 +898,7 @@ export default function Bots() {
                 onClick={() => setActiveTab("sdk")}
                 className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${activeTab === "sdk" ? "bg-violet-500 text-white shadow-[0_0_15px_rgba(139,92,246,0.4)]" : "text-muted-foreground hover:text-foreground hover:bg-white/5"}`}
               >
-                Python SDK
+                Внешний SDK
               </button>
             </div>
           </div>
@@ -1089,15 +1089,32 @@ export default function Bots() {
             </motion.div>
           )}
 
-          {/* ── PYTHON SDK TAB ── */}
+          {/* ── EXTERNAL SDK TAB ── */}
           {activeTab === "sdk" && (
             <motion.div key="sdk" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-6">
+
+              {/* Inline code banner */}
+              <div className="flex items-start gap-3 p-4 bg-emerald-500/10 border border-emerald-500/25 rounded-2xl">
+                <div className="w-9 h-9 rounded-xl bg-emerald-500/15 flex items-center justify-center shrink-0 mt-0.5">
+                  <Code2 size={16} className="text-emerald-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-foreground text-sm">Встроенный код проще</p>
+                  <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">Большинству ботов хватает встроенного редактора кода — Python запускается прямо на сервере, никаких зависимостей устанавливать не нужно.</p>
+                  <button
+                    onClick={() => setActiveTab("bots")}
+                    className="inline-flex items-center gap-1.5 mt-2 text-xs font-semibold text-emerald-400 hover:text-emerald-300 transition-colors"
+                  >
+                    Перейти к встроенному коду <ArrowRight size={11} />
+                  </button>
+                </div>
+              </div>
 
               {/* Step-by-step guide */}
               <div className="bg-gradient-to-br from-violet-500/10 to-indigo-500/5 border border-violet-500/20 rounded-2xl p-6">
                 <div className="flex items-center gap-2 mb-5">
                   <Zap size={16} className="text-violet-400" />
-                  <h2 className="font-bold text-foreground text-base">Быстрый старт — 3 шага</h2>
+                  <h2 className="font-bold text-foreground text-base">Внешний Python SDK — для продвинутых сценариев</h2>
                 </div>
                 <div className="grid grid-cols-3 gap-4">
                   {STEPS.map((step, i) => (
@@ -1125,7 +1142,7 @@ export default function Bots() {
                 <div className="mt-4 pt-4 border-t border-violet-500/20 flex items-center justify-between gap-4">
                   <div>
                     <p className="font-semibold text-foreground text-sm">pulse_bot.py</p>
-                    <p className="text-xs text-muted-foreground">Python SDK · Нужен только requests (pip install requests)</p>
+                    <p className="text-xs text-muted-foreground">Для ботов с внешним сервером · pip install requests</p>
                   </div>
                   <button
                     onClick={downloadSdk}

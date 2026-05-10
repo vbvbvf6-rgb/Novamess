@@ -175,7 +175,7 @@ export default function UserProfile() {
             <h1 className="font-bold text-base truncate">{user.displayName}</h1>
             {(user as any).isVerified && (
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="shrink-0">
-                <circle cx="12" cy="12" r="12" fill="#00BCD4"/>
+                <circle cx="12" cy="12" r="12" fill="hsl(16 100% 50%)"/>
                 <path d="M7 12l3.5 3.5L17 8" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             )}
@@ -244,7 +244,7 @@ export default function UserProfile() {
                       whileTap={{ scale: 0.95 }}
                       onClick={handleMessage}
                       disabled={isStartingChat}
-                      className="w-11 h-11 rounded-full bg-primary flex items-center justify-center text-primary-foreground shadow-[0_0_15px_rgba(0,188,212,0.3)] hover:shadow-[0_0_25px_rgba(0,188,212,0.5)] transition-shadow disabled:opacity-60"
+                      className="w-11 h-11 rounded-full bg-primary flex items-center justify-center text-primary-foreground shadow-[0_0_15px_rgba(255,80,0,0.3)] hover:shadow-[0_0_25px_rgba(255,80,0,0.5)] transition-shadow disabled:opacity-60"
                       title="Send message"
                     >
                       <MessageSquare size={18} />
@@ -296,7 +296,7 @@ export default function UserProfile() {
                   <h2 className="text-2xl font-black">{user.displayName}</h2>
                   {(user as any).isVerified && (
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                      <circle cx="12" cy="12" r="12" fill="#00BCD4"/>
+                      <circle cx="12" cy="12" r="12" fill="hsl(16 100% 50%)"/>
                       <path d="M7 12l3.5 3.5L17 8" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   )}

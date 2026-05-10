@@ -58,7 +58,7 @@ export default function Profile() {
                 <h2 className="text-3xl font-bold text-foreground">{user?.displayName}</h2>
                 {(user as any)?.isVerified && (
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                    <circle cx="12" cy="12" r="12" fill="#00BCD4"/>
+                    <circle cx="12" cy="12" r="12" fill="hsl(16 100% 50%)"/>
                     <path d="M7 12l3.5 3.5L17 8" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 )}
@@ -118,10 +118,10 @@ export default function Profile() {
                     color="bg-pink-500/10 border-pink-500/20" 
                   />
                   <StatCard 
-                    icon={<Users className="text-cyan-500" />} 
+                    icon={<Users className="text-primary" />} 
                     label="Contacts" 
                     value={stats?.contactsCount?.toLocaleString() || "0"} 
-                    color="bg-cyan-500/10 border-cyan-500/20" 
+                    color="bg-primary/10 border-primary/20" 
                   />
                 </div>
               )}
