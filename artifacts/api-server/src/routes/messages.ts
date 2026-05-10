@@ -184,7 +184,7 @@ router.post("/messages", async (req, res) => {
       } catch {}
     });
 
-    if (body.type === "text" && body.text) {
+    if ((body.type === "text" && body.text) || (body.type === "image" && body.mediaUrl)) {
       setImmediate(async () => {
         try {
           const members = await db.execute(
@@ -193,9 +193,12 @@ router.post("/messages", async (req, res) => {
           const bot = (members.rows as any[]).find(m => m.is_bot);
           if (!bot) return;
 
-          // Route to user-created bot via update queue
+          // User-created bots only handle text messages
+          const isImageMessage = body.type === "image" && !!body.mediaUrl;
+
+          // Route to user-created bot via update queue (text only)
           const tokenRow = await db.execute(sql`SELECT id, inline_code FROM bot_tokens WHERE bot_user_id = ${bot.id}`);
-          if ((tokenRow.rows as any[]).length > 0) {
+          if ((tokenRow.rows as any[]).length > 0 && !isImageMessage) {
             const { inline_code } = tokenRow.rows[0] as any;
             const countRow = await db.execute(sql`SELECT COALESCE(MAX(update_id),0) as mx FROM bot_updates WHERE bot_user_id = ${bot.id}`);
             const nextId = Number((countRow.rows[0] as any)?.mx ?? 0) + 1;
@@ -289,11 +292,25 @@ ${inline_code}
           }));
 
           const systemPrompt = `You are DeepSeek AI, a helpful and friendly AI assistant built into Pulse Messenger. Be concise and helpful. Always reply in the same language the user writes in.`;
+
+          // Build user message content — vision format for images, plain text otherwise
+          const userContent: any = isImageMessage
+            ? [
+                { type: "image_url", image_url: { url: body.mediaUrl } },
+                { type: "text", text: body.text || "Что изображено на этом фото?" },
+              ]
+            : (body.text || "");
+
           const chatPayload = [
             { role: "system", content: systemPrompt },
             ...historyMessages,
-            { role: "user", content: body.text },
+            { role: "user", content: userContent },
           ];
+
+          // Use a vision-capable model for images; DeepSeek Chat for plain text
+          const aiModel = isImageMessage
+            ? "google/gemini-flash-1.5"
+            : "deepseek/deepseek-chat-v3-0324:free";
 
           let reply: string | undefined;
 
@@ -328,15 +345,16 @@ ${inline_code}
                   "HTTP-Referer": "https://pulse-messenger.replit.app",
                   "X-Title": "Pulse Messenger",
                 },
-                body: JSON.stringify({ model: "deepseek/deepseek-chat-v3-0324:free", messages: chatPayload, max_tokens: 500 }),
+                body: JSON.stringify({ model: aiModel, messages: chatPayload, max_tokens: 500 }),
               });
               const data = await r.json() as any;
               return data.choices?.[0]?.message?.content as string | undefined;
             });
           }
 
-          if (!reply) reply = await tryWithTimeout(() => callPollinations("openai"), 18000);
-          if (!reply) reply = await tryWithTimeout(() => callPollinations("mistral"), 18000);
+          // Pollinations fallback only for text messages (no vision support)
+          if (!reply && !isImageMessage) reply = await tryWithTimeout(() => callPollinations("openai"), 18000);
+          if (!reply && !isImageMessage) reply = await tryWithTimeout(() => callPollinations("mistral"), 18000);
 
           if (!reply || typeof reply !== "string" || !reply.trim()) return;
 
