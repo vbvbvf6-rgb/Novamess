@@ -1322,7 +1322,6 @@ export default function Settings() {
                     setPageZoom(zoom);
                     localStorage.setItem("pulse-page-zoom", zoom);
                     (document.documentElement as any).style.zoom = `${zoom}%`;
-                    toast({ title: t("common.saved"), description: `${lang === "ru" ? "Масштаб" : "Zoom"}: ${zoom}%` });
                   }}
                   className={`py-2 rounded-xl border text-xs font-medium transition-all flex flex-col items-center gap-0.5 ${pageZoom === zoom ? "border-primary bg-primary/8 text-primary" : "border-border hover:border-primary/30"}`}
                 >
