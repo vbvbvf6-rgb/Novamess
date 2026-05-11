@@ -12,6 +12,7 @@ import {
   getGetChatsQueryKey,
 } from "@workspace/api-client-react";
 import { GiftShowcase } from "@/components/GiftShowcase";
+import { GiftLeaderboard } from "@/components/GiftLeaderboard";
 import {
   ArrowLeft,
   MessageSquare,
@@ -460,6 +461,8 @@ export default function UserProfile() {
               </div>
             </motion.div>
           )}
+
+          <GiftLeaderboard userId={userId} />
 
           <GiftShowcase userId={userId} />
         </div>

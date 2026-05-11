@@ -50,6 +50,40 @@ router.get("/gifts/received", async (req, res) => {
   }
 });
 
+router.get("/gifts/top-senders/:userId", async (req, res) => {
+  try {
+    const targetId = Number(req.params.userId);
+    if (!targetId || isNaN(targetId)) return res.status(400).json({ error: "Неверный userId" });
+
+    const rows = await db.execute(sql`
+      SELECT
+        g.sender_id                           AS "senderId",
+        u.username                            AS "username",
+        u.display_name                        AS "displayName",
+        u.avatar_color                        AS "avatarColor",
+        u.has_prime                           AS "hasPrime",
+        u.prime_tier                          AS "primeTier",
+        COUNT(g.id)::int                      AS "giftCount",
+        COALESCE(SUM(gi.stars), 0)::int       AS "totalStars",
+        COALESCE(SUM(gi.price), 0)::int       AS "totalValue",
+        MAX(g.created_at)                     AS "lastGiftAt"
+      FROM gifts g
+      JOIN users u ON u.id = g.sender_id
+      JOIN gift_items gi ON gi.id = g.gift_item_id
+      WHERE g.receiver_id = ${targetId}
+        AND g.is_anonymous = false
+      GROUP BY g.sender_id, u.username, u.display_name, u.avatar_color, u.has_prime, u.prime_tier
+      ORDER BY "giftCount" DESC, "totalStars" DESC
+      LIMIT 10
+    `);
+
+    res.json(rows.rows);
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 router.post("/gifts/send", async (req, res) => {
   try {
     const uid = req.currentUserId;
