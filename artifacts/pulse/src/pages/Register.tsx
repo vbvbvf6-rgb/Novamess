@@ -30,7 +30,7 @@ function ageToGroup(age: number): string {
 type Step = "age-gate" | "age-blocked" | "age-warning" | "age-confirmed" | "register";
 
 export default function Register({ onLogin }: RegisterProps) {
-  const [step, setStep] = useState<Step>("age-gate");
+  const [step, setStep] = useState<Step>("register");
   const [dobDay, setDobDay] = useState("");
   const [dobMonth, setDobMonth] = useState("");
   const [dobYear, setDobYear] = useState("");

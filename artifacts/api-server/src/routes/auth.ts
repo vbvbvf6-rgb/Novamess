@@ -286,7 +286,7 @@ router.post("/auth/register", async (req, res) => {
     const rawBirthDate = birthDate ? String(birthDate) : null;
     const result = await db.execute(
       sql`INSERT INTO users (username, display_name, avatar_color, status, password_hash, balance, age_group, birth_date, age_verified)
-          VALUES (${rawUsername}, ${rawDisplay}, ${color}, 'online', ${passwordHash}, 0, ${ageGroup ? String(ageGroup) : null}, ${rawBirthDate}, false)
+          VALUES (${rawUsername}, ${rawDisplay}, ${color}, 'online', ${passwordHash}, 0, ${ageGroup ? String(ageGroup) : null}, ${rawBirthDate}, true)
           RETURNING id, username, display_name, avatar_color, status, created_at, balance`
     );
     const newUser = result.rows[0] as any;

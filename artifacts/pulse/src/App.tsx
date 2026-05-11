@@ -84,38 +84,6 @@ function VerificationPending({ onLogout }: { onLogout: () => void }) {
 }
 
 function MainApp({ onLogout, onSwitchAccount, onRemoveAccount, onOpenAddAccount }: MainAppProps) {
-  const [ageVerified, setAgeVerified] = useState<boolean | null>(null);
-  const [isAdminUser, setIsAdminUser] = useState(false);
-  const [isBotUser, setIsBotUser] = useState(false);
-
-  useEffect(() => {
-    const token = localStorage.getItem("pulse-token");
-    const uid = localStorage.getItem("pulse-user-id");
-    const headers: Record<string, string> = {};
-    if (token) headers["Authorization"] = `Bearer ${token}`;
-    else if (uid) headers["x-user-id"] = uid;
-    fetch("/api/users/me", { headers })
-      .then(r => r.json())
-      .then((d: any) => {
-        setAgeVerified(d.ageVerified === true);
-        setIsAdminUser(d.isAdmin === true);
-        setIsBotUser(d.isBot === true);
-      })
-      .catch(() => setAgeVerified(true));
-  }, []);
-
-  if (ageVerified === null) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-      </div>
-    );
-  }
-
-  if (ageVerified === false && !isAdminUser && !isBotUser) {
-    return <VerificationPending onLogout={onLogout} />;
-  }
-
   return <MainAppInner onLogout={onLogout} onSwitchAccount={onSwitchAccount} onRemoveAccount={onRemoveAccount} onOpenAddAccount={onOpenAddAccount} />;
 }
 

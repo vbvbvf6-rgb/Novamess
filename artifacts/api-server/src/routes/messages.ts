@@ -117,9 +117,14 @@ router.get("/messages", async (req, res) => {
     const chat = await db.query.chatsTable.findFirst({ where: eq(chatsTable.id, chatId) });
     if (chat?.autoDeleteTimer) {
       const cutoff = new Date(Date.now() - chat.autoDeleteTimer * 1000);
-      await db.delete(messagesTable).where(
+      const deleted = await db.delete(messagesTable).where(
         and(eq(messagesTable.chatId, chatId), lte(messagesTable.createdAt, cutoff))
-      );
+      ).returning({ id: messagesTable.id });
+      if (deleted.length > 0) {
+        for (const { id } of deleted) {
+          broadcastToChat(chatId, "message-deleted", { messageId: id, chatId });
+        }
+      }
     }
 
     let query = db.select().from(messagesTable).where(eq(messagesTable.chatId, chatId));

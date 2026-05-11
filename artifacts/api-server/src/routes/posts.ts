@@ -188,7 +188,7 @@ router.post("/posts", async (req, res) => {
   try {
     const uid = req.currentUserId;
     const { text, imageUrl } = req.body;
-    if (!text) return res.status(400).json({ error: "text required" });
+    if (!text && !imageUrl) return res.status(400).json({ error: "text or image required" });
 
     const [post] = await db.insert(postsTable).values({ userId: uid, text, imageUrl }).returning();
     const built = await buildPost(post.id, uid);
