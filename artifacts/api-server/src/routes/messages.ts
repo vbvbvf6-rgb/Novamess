@@ -529,9 +529,8 @@ router.delete("/messages/:messageId", async (req, res) => {
       return res.status(403).json({ error: "Нельзя удалить чужое сообщение" });
     }
 
-    await db.delete(reactionsTable).where(eq(reactionsTable.messageId, messageId));
-    await db.delete(messagesTable).where(eq(messagesTable.id, messageId));
-    broadcastToChat(existing.chatId, "new-message", { messageId, chatId: existing.chatId, deleted: true });
+    await db.execute(sql`UPDATE messages SET is_deleted = true, text = NULL, media_url = NULL WHERE id = ${messageId}`);
+    broadcastToChat(existing.chatId, "new-message", { messageId, chatId: existing.chatId });
     res.status(204).send();
   } catch (err) {
     req.log.error(err);

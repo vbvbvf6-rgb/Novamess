@@ -259,12 +259,16 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin 
     setMenuPos(null);
   };
 
+  const isDeleted = !!(message as any).isDeleted;
+
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
+    if (isDeleted) return;
     openMenu(e.clientX, e.clientY);
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
+    if (isDeleted) return;
     const touch = e.touches[0];
     longPressRef.current = setTimeout(() => {
       openMenu(touch.clientX, touch.clientY);
@@ -587,18 +591,22 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin 
                     {replyTo.sender?.displayName || "Пользователь"}
                   </p>
                   <p className={cn("truncate font-medium opacity-80", isMine ? "text-white" : "text-foreground")}>
-                    {replyTo.type === "image" ? "📷 Фото" : replyTo.type === "audio" ? "🎤 Голосовое" : replyTo.text || "Сообщение"}
+                    {(replyTo as any).isDeleted ? "🗑 Сообщение удалено" : replyTo.type === "image" ? "📷 Фото" : replyTo.type === "audio" ? "🎤 Голосовое" : replyTo.text || "Сообщение"}
                   </p>
                 </div>
               )}
 
-              {renderContent()}
+              {(message as any).isDeleted ? (
+                <p className={cn("text-[14px] font-medium italic opacity-60 select-none", isMine ? "text-white" : "text-foreground")}>
+                  🗑 Сообщение удалено
+                </p>
+              ) : renderContent()}
 
               <div className={cn(
                 "flex items-center justify-end gap-1.5 mt-2.5 text-[11px] font-bold",
                 isMine ? "text-primary-foreground/70" : "text-muted-foreground/70"
               )}>
-                {(message as any).isEdited && (
+                {!(message as any).isDeleted && (message as any).isEdited && (
                   <span className="uppercase tracking-wider">ред.</span>
                 )}
                 <span>{formatTime(message.createdAt)}</span>

@@ -13,6 +13,7 @@ export const messagesTable = pgTable("messages", {
   mediaUrl: text("media_url"),
   replyToId: integer("reply_to_id"),
   isEdited: boolean("is_edited").notNull().default(false),
+  isDeleted: boolean("is_deleted").notNull().default(false),
   isRead: boolean("is_read").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
