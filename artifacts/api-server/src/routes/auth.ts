@@ -337,7 +337,7 @@ router.post("/auth/register", async (req, res) => {
 
     const result = await db.execute(
       sql`INSERT INTO users (username, display_name, avatar_color, status, password_hash, balance, age_group, birth_date, age_verified, email, email_verified, email_verification_code, email_verification_expires_at)
-          VALUES (${rawUsername}, ${rawDisplay}, ${color}, 'online', ${passwordHash}, 0, ${ageGroup ? String(ageGroup) : null}, ${rawBirthDate}, true, ${rawEmail}, ${rawEmail ? false : null}, ${verificationCode}, ${verificationExpiry ? verificationExpiry.toISOString() : null})
+          VALUES (${rawUsername}, ${rawDisplay}, ${color}, 'online', ${passwordHash}, 0, ${ageGroup ? String(ageGroup) : null}, ${rawBirthDate}, true, ${rawEmail}, ${rawEmail ? false : false}, ${verificationCode}, ${verificationExpiry ? verificationExpiry.toISOString() : null})
           RETURNING id, username, display_name, avatar_color, status, created_at, balance`
     );
     const newUser = result.rows[0] as any;
