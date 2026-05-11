@@ -63,6 +63,11 @@ async function compressImage(file: File, maxPx = 1280, quality = 0.82): Promise<
   });
 }
 
+const BOT_COMMANDS = [
+  { command: "/start", description: "Запустить бота" },
+  { command: "/help", description: "Получить справку" },
+];
+
 export interface ChatInputProps {
   chatId: number;
   onMessageSent?: () => void;
@@ -70,9 +75,10 @@ export interface ChatInputProps {
   editMessage?: Message | null;
   onCancelReply?: () => void;
   onCancelEdit?: () => void;
+  isBot?: boolean;
 }
 
-export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCancelReply, onCancelEdit }: ChatInputProps) {
+export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCancelReply, onCancelEdit, isBot }: ChatInputProps) {
   const { data: me } = useGetMe();
 
   const [text, setText] = useState("");
@@ -338,6 +344,11 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
     }
   };
 
+  const showCommandMenu = isBot && !editMessage && text.startsWith("/") && text.length > 0;
+  const filteredCommands = BOT_COMMANDS.filter(c =>
+    c.command.startsWith(text.split(" ")[0].toLowerCase())
+  );
+
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setText(e.target.value);
     e.target.style.height = "52px";
@@ -408,6 +419,31 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
               >
                 Сохранить
               </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {showCommandMenu && filteredCommands.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 8, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 8, scale: 0.97 }}
+              className="absolute bottom-full mb-2 left-0 right-0 z-50 bg-card border border-border rounded-[20px] shadow-2xl overflow-hidden"
+            >
+              <div className="px-4 py-2 border-b border-border">
+                <span className="text-[11px] font-black text-muted-foreground uppercase tracking-wider">Команды бота</span>
+              </div>
+              {filteredCommands.map((cmd) => (
+                <button
+                  key={cmd.command}
+                  onMouseDown={(e) => { e.preventDefault(); setText(cmd.command + " "); textareaRef.current?.focus(); }}
+                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-secondary transition-colors text-left"
+                >
+                  <span className="text-[15px] font-black text-primary">{cmd.command}</span>
+                  <span className="text-[13px] text-muted-foreground">{cmd.description}</span>
+                </button>
+              ))}
             </motion.div>
           )}
         </AnimatePresence>

@@ -309,6 +309,36 @@ ${inline_code}
                 }).catch(async (e: Error) => {
                   await db.execute(sql`UPDATE bot_webhooks SET last_error = ${e.message}, last_error_at = NOW() WHERE bot_user_id = ${bot.id}`);
                 });
+              return;
+            }
+
+            // ── Default responses (no code, no webhook) ──────────────────
+            const botInfoRow = await db.execute(sql`SELECT display_name, bio FROM users WHERE id = ${bot.id}`);
+            const botInfo = botInfoRow.rows[0] as any;
+            const botName = botInfo?.display_name || "Бот";
+            const botBio = botInfo?.bio;
+            const txt = (body.text || "").trim();
+            let defaultReply: string | null = null;
+
+            if (txt === "/start" || txt.startsWith("/start ")) {
+              defaultReply = `👋 Привет! Я ${botName}.\n\n${botBio ? botBio + "\n\n" : ""}Разработчик ещё не настроил мои команды через встроенный редактор кода.\n\n📋 Доступные команды:\n/start — запустить бота\n/help — справка`;
+            } else if (txt === "/help") {
+              defaultReply = `📋 Справка по боту ${botName}\n\n${botBio ? botBio + "\n\n" : ""}/start — запустить бота\n/help — это сообщение\n\nЧтобы настроить бота, перейди в раздел «Боты» и добавь код обработчика.`;
+            } else if (txt.startsWith("/")) {
+              defaultReply = `❓ Неизвестная команда «${txt.split(" ")[0]}».\n\nПопробуй /help для списка команд.`;
+            } else {
+              defaultReply = `🤖 Я ${botName}. Разработчик ещё не настроил мои ответы.\n\nОтправь /start чтобы начать или /help для справки.`;
+            }
+
+            if (defaultReply) {
+              await new Promise(r => setTimeout(r, 400 + Math.random() * 400));
+              const [botMsg] = await db.insert(messagesTable).values({
+                chatId: body.chatId,
+                senderId: bot.id,
+                text: defaultReply,
+                type: "text",
+              }).returning();
+              broadcastToChat(body.chatId, "new-message", { messageId: botMsg.id, chatId: body.chatId });
             }
             return;
           }

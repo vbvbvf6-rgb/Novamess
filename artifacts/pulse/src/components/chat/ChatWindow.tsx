@@ -858,6 +858,57 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
             <Skeleton className="w-[50%] h-16 rounded-2xl rounded-tr-md ml-auto" />
             <Skeleton className="w-[70%] h-32 rounded-2xl rounded-tl-md" />
           </div>
+        ) : isBot && !searchQuery && (!messages || messages.length === 0) ? (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="h-full flex flex-col items-center justify-center gap-5 text-center px-8 max-w-sm mx-auto"
+          >
+            <div
+              className="w-24 h-24 rounded-[28px] flex items-center justify-center text-white font-black text-4xl shadow-2xl overflow-hidden"
+              style={{ backgroundColor: avatarColor }}
+            >
+              {(chat.otherUser as any)?.avatarUrl ? (
+                <img src={(chat.otherUser as any).avatarUrl} alt={displayName} className="w-full h-full object-cover" />
+              ) : displayName[0].toUpperCase()}
+            </div>
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-center gap-2">
+                <h2 className="text-xl font-black text-foreground">{displayName}</h2>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="12" fill="currentColor" className="text-primary"/>
+                  <path d="M7 12l3.5 3.5L17 8" stroke="currentColor" className="text-primary-foreground" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              <p className="text-sm text-muted-foreground font-medium">@{(chat.otherUser as any)?.username}</p>
+              {(chat.otherUser as any)?.bio && (
+                <p className="text-sm text-muted-foreground/80 mt-2 leading-relaxed">{(chat.otherUser as any).bio}</p>
+              )}
+            </div>
+            <p className="text-[13px] text-muted-foreground leading-relaxed bg-secondary/60 rounded-2xl px-5 py-3.5">
+              Это бот — автоматическая программа в Pulse.<br />Нажми кнопку ниже, чтобы начать.
+            </p>
+            <motion.button
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.96 }}
+              onClick={async () => {
+                const token = sessionStorage.getItem("pulse-token");
+                const headers: Record<string, string> = { "Content-Type": "application/json" };
+                if (token) headers["Authorization"] = `Bearer ${token}`;
+                await fetch("/api/messages", {
+                  method: "POST",
+                  headers,
+                  body: JSON.stringify({ chatId, text: "/start", type: "text" }),
+                });
+                queryClient.invalidateQueries({ queryKey: getGetMessagesQueryKey({ chatId }) });
+                queryClient.invalidateQueries({ queryKey: getGetChatsQueryKey() });
+                startBotTypingPoll();
+              }}
+              className="w-full max-w-[220px] py-4 bg-primary text-primary-foreground rounded-2xl text-[15px] font-black shadow-[0_4px_20px_rgba(255,85,0,0.35)] hover:bg-primary/90 transition-all"
+            >
+              СТАРТ
+            </motion.button>
+          </motion.div>
         ) : filteredMessages?.length === 0 ? (
           <div className="h-full flex items-center justify-center text-muted-foreground text-[15px] font-medium">
             {searchQuery ? t("chat.noSearchResults") : t("chat.noMessages")}
@@ -956,6 +1007,7 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
         editMessage={editMessage}
         onCancelReply={() => setReplyTo(null)}
         onCancelEdit={() => setEditMessage(null)}
+        isBot={!!isBot}
         onMessageSent={() => {
           setSmartReplies([]);
           if (isBot) startBotTypingPoll();
