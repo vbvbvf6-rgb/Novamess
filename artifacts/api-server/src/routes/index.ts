@@ -17,6 +17,8 @@ import botsRouter from "./bots";
 import supportRouter from "./support";
 import primeRouter from "./prime";
 import pushRouter from "./push";
+import pollsRouter from "./polls";
+import translateRouter from "./translate";
 
 const router: IRouter = Router();
 
@@ -38,5 +40,7 @@ router.use(botsRouter);
 router.use(supportRouter);
 router.use(primeRouter);
 router.use(pushRouter);
+router.use(pollsRouter);
+router.use(translateRouter);
 
 export default router;

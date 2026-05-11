@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, chatsTable, chatMembersTable, usersTable, messagesTable, reactionsTable } from "@workspace/db";
-import { eq, and, desc, inArray, count, gt, ne } from "drizzle-orm";
+import { eq, and, desc, inArray, count, gt, ne, sql } from "drizzle-orm";
 import { CreateChatBody, UpdateChatBody, AddChatMemberBody } from "@workspace/api-zod";
 
 const router = Router();
@@ -8,6 +8,17 @@ const router = Router();
 async function buildChat(chatId: number, currentUserId: number) {
   const chat = await db.query.chatsTable.findFirst({ where: eq(chatsTable.id, chatId) });
   if (!chat) return null;
+
+  let pinnedMessage: any = null;
+  if ((chat as any).pinnedMessageId) {
+    try {
+      const pm = await db.query.messagesTable.findFirst({ where: eq(messagesTable.id, (chat as any).pinnedMessageId) });
+      if (pm) {
+        const pmSender = await db.query.usersTable.findFirst({ where: eq(usersTable.id, pm.senderId) });
+        pinnedMessage = { ...pm, sender: pmSender };
+      }
+    } catch {}
+  }
 
   const memberRows = await db
     .select({ member: chatMembersTable, user: usersTable })
@@ -66,6 +77,7 @@ async function buildChat(chatId: number, currentUserId: number) {
     lastMessage,
     members: memberRows.map(m => ({ ...m.member, user: m.user })),
     otherUser,
+    pinnedMessage,
   };
 }
 
@@ -276,6 +288,25 @@ router.patch("/chats/:chatId/auto-delete", async (req, res) => {
     const { timer } = req.body; // null or seconds (number)
     const timerVal = timer === null || timer === 0 ? null : Number(timer);
     await db.update(chatsTable).set({ autoDeleteTimer: timerVal }).where(eq(chatsTable.id, chatId));
+    const uid = req.currentUserId;
+    const chat = await buildChat(chatId, uid);
+    res.json(chat);
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.put("/chats/:chatId/pin-message", async (req, res) => {
+  try {
+    const chatId = Number(req.params.chatId);
+    const { messageId } = req.body;
+    const mid = messageId ? Number(messageId) : null;
+    await db.execute(
+      mid
+        ? sql`UPDATE chats SET pinned_message_id = ${mid} WHERE id = ${chatId}`
+        : sql`UPDATE chats SET pinned_message_id = NULL WHERE id = ${chatId}`
+    );
     const uid = req.currentUserId;
     const chat = await buildChat(chatId, uid);
     res.json(chat);

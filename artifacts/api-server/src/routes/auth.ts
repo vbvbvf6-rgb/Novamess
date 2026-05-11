@@ -248,9 +248,40 @@ router.post("/auth/2fa/disable", async (req, res) => {
   }
 });
 
+router.post("/auth/verify-email", async (req, res) => {
+  try {
+    const { userId, code } = req.body;
+    if (!userId || !code) return res.status(400).json({ error: "userId и code обязательны" });
+
+    const rows = await db.execute(
+      sql`SELECT id, email_verification_code, email_verification_expires_at FROM users WHERE id = ${Number(userId)} LIMIT 1`
+    );
+    const user = rows.rows[0] as any;
+    if (!user) return res.status(404).json({ error: "Пользователь не найден" });
+
+    if (!user.email_verification_code) {
+      return res.status(400).json({ error: "Код подтверждения не установлен" });
+    }
+    if (new Date(user.email_verification_expires_at) < new Date()) {
+      return res.status(400).json({ error: "Код истёк. Запросите новый." });
+    }
+    if (String(user.email_verification_code) !== String(code).trim()) {
+      return res.status(401).json({ error: "Неверный код" });
+    }
+
+    await db.execute(
+      sql`UPDATE users SET email_verified = true, email_verification_code = NULL, email_verification_expires_at = NULL WHERE id = ${Number(userId)}`
+    );
+    res.json({ success: true, message: "Email подтверждён" });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Ошибка сервера" });
+  }
+});
+
 router.post("/auth/register", async (req, res) => {
   try {
-    const { username, displayName, password, ageGroup, birthDate } = req.body;
+    const { username, displayName, password, ageGroup, birthDate, email } = req.body;
     if (!username || !displayName || !password) {
       return res.status(400).json({ error: "Заполните все поля" });
     }
@@ -279,14 +310,34 @@ router.post("/auth/register", async (req, res) => {
       return res.status(409).json({ error: "Этот никнейм уже занят" });
     }
 
+    const rawEmail = email ? String(email).trim().toLowerCase() : null;
+    if (rawEmail) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(rawEmail)) {
+        return res.status(400).json({ error: "Неверный формат email" });
+      }
+      const emailExists = await db.execute(sql`SELECT id FROM users WHERE email = ${rawEmail} LIMIT 1`);
+      if ((emailExists.rows as any[]).length > 0) {
+        return res.status(409).json({ error: "Этот email уже используется" });
+      }
+    }
+
     const COLORS = ["#3B82F6","#EC4899","#10B981","#F59E0B","#8B5CF6","#06B6D4","#EF4444","#F97316"];
     const color = COLORS[Math.floor(Math.random() * COLORS.length)];
     const passwordHash = await bcrypt.hash(rawPass, SALT_ROUNDS);
 
     const rawBirthDate = birthDate ? String(birthDate) : null;
+
+    let verificationCode: string | null = null;
+    let verificationExpiry: Date | null = null;
+    if (rawEmail) {
+      verificationCode = String(Math.floor(100000 + Math.random() * 900000));
+      verificationExpiry = new Date(Date.now() + 30 * 60 * 1000);
+    }
+
     const result = await db.execute(
-      sql`INSERT INTO users (username, display_name, avatar_color, status, password_hash, balance, age_group, birth_date, age_verified)
-          VALUES (${rawUsername}, ${rawDisplay}, ${color}, 'online', ${passwordHash}, 0, ${ageGroup ? String(ageGroup) : null}, ${rawBirthDate}, true)
+      sql`INSERT INTO users (username, display_name, avatar_color, status, password_hash, balance, age_group, birth_date, age_verified, email, email_verified, email_verification_code, email_verification_expires_at)
+          VALUES (${rawUsername}, ${rawDisplay}, ${color}, 'online', ${passwordHash}, 0, ${ageGroup ? String(ageGroup) : null}, ${rawBirthDate}, true, ${rawEmail}, ${rawEmail ? false : null}, ${verificationCode}, ${verificationExpiry ? verificationExpiry.toISOString() : null})
           RETURNING id, username, display_name, avatar_color, status, created_at, balance`
     );
     const newUser = result.rows[0] as any;
@@ -306,6 +357,8 @@ router.post("/auth/register", async (req, res) => {
       userId: newUser.id,
       token,
       ageVerified: false,
+      requiresEmailVerification: !!rawEmail,
+      emailVerificationCode: verificationCode,
       user: {
         id: newUser.id,
         username: newUser.username,
@@ -315,6 +368,8 @@ router.post("/auth/register", async (req, res) => {
         balance: Number(newUser.balance ?? 0),
         createdAt: newUser.created_at,
         ageVerified: false,
+        email: rawEmail,
+        emailVerified: false,
       },
     });
   } catch (err) {

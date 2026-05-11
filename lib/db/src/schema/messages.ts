@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, timestamp, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, boolean, jsonb, unique } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { chatsTable } from "./chats";
@@ -35,6 +35,26 @@ export const scheduledMessagesTable = pgTable("scheduled_messages", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+export const pollsTable = pgTable("polls", {
+  id: serial("id").primaryKey(),
+  messageId: integer("message_id").notNull().references(() => messagesTable.id),
+  chatId: integer("chat_id").notNull(),
+  createdBy: integer("created_by").notNull().references(() => usersTable.id),
+  question: text("question").notNull(),
+  options: jsonb("options").notNull().$type<string[]>(),
+  allowMultiple: boolean("allow_multiple").notNull().default(false),
+  endsAt: timestamp("ends_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const pollVotesTable = pgTable("poll_votes", {
+  id: serial("id").primaryKey(),
+  pollId: integer("poll_id").notNull().references(() => pollsTable.id),
+  userId: integer("user_id").notNull().references(() => usersTable.id),
+  optionIndex: integer("option_index").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [unique().on(t.pollId, t.userId, t.optionIndex)]);
+
 export const insertMessageSchema = createInsertSchema(messagesTable).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertReactionSchema = createInsertSchema(reactionsTable).omit({ id: true, createdAt: true });
 export type InsertMessage = z.infer<typeof insertMessageSchema>;
@@ -42,3 +62,5 @@ export type Message = typeof messagesTable.$inferSelect;
 export type InsertReaction = z.infer<typeof insertReactionSchema>;
 export type Reaction = typeof reactionsTable.$inferSelect;
 export type ScheduledMessage = typeof scheduledMessagesTable.$inferSelect;
+export type Poll = typeof pollsTable.$inferSelect;
+export type PollVote = typeof pollVotesTable.$inferSelect;

@@ -11,6 +11,7 @@ export const chatsTable = pgTable("chats", {
   avatarUrl: text("avatar_url"),
   avatarColor: text("avatar_color").notNull().default("#3B82F6"),
   autoDeleteTimer: integer("auto_delete_timer"),
+  pinnedMessageId: integer("pinned_message_id"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

@@ -3,9 +3,9 @@ import { Message } from "@workspace/api-client-react";
 import { format } from "date-fns";
 import { useAppContext } from "@/contexts/AppContext";
 import { useQueryClient } from "@tanstack/react-query";
-import { getGetMessagesQueryKey } from "@workspace/api-client-react";
+import { getGetMessagesQueryKey, getGetChatsQueryKey } from "@workspace/api-client-react";
 import { cn } from "@/lib/utils";
-import { Check, CheckCheck, X, Info, Play, Pause, Mic, Reply, Pencil, Trash2, Copy, SmilePlus } from "lucide-react";
+import { Check, CheckCheck, X, Info, Play, Pause, Mic, Reply, Pencil, Trash2, Copy, SmilePlus, Languages, Pin, PinOff, BarChart2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   AlertDialog,
@@ -25,12 +25,21 @@ function VoicePlayer({ src, durationSec, isMine }: { src: string; durationSec: n
   const [playing, setPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [currentSec, setCurrentSec] = useState(0);
+  const [speed, setSpeed] = useState(1);
+  const SPEEDS = [0.5, 1, 1.5, 2];
 
   const toggle = () => {
     const a = audioRef.current;
     if (!a) return;
     if (playing) { a.pause(); } else { a.play(); }
     setPlaying(!playing);
+  };
+
+  const cycleSpeed = () => {
+    const a = audioRef.current;
+    const next = SPEEDS[(SPEEDS.indexOf(speed) + 1) % SPEEDS.length];
+    setSpeed(next);
+    if (a) a.playbackRate = next;
   };
 
   useEffect(() => {
@@ -87,12 +96,126 @@ function VoicePlayer({ src, durationSec, isMine }: { src: string; durationSec: n
             />
           ))}
         </div>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2">
           <span className={cn("text-[11px] font-black font-mono tracking-wider", isMine ? "text-white/80" : "text-muted-foreground")}>
             {fmt(displayDur)}
           </span>
+          <button
+            onClick={cycleSpeed}
+            className={cn(
+              "text-[10px] font-black px-1.5 py-0.5 rounded-md border transition-all hover:scale-105 active:scale-95",
+              isMine
+                ? "border-white/30 text-white/80 hover:border-white/60 bg-white/10"
+                : "border-muted-foreground/30 text-muted-foreground hover:border-primary/50 hover:text-primary bg-secondary/50"
+            )}
+          >
+            {speed}×
+          </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+function PollDisplay({ pollData, messageId, chatId, currentUserId, isMine }: {
+  pollData: any;
+  messageId: number;
+  chatId: number;
+  currentUserId: number;
+  isMine: boolean;
+}) {
+  const queryClient = useQueryClient();
+  const [localData, setLocalData] = useState(pollData);
+  const [voting, setVoting] = useState(false);
+
+  useEffect(() => { setLocalData(pollData); }, [pollData]);
+
+  const getAuthHeaders = () => {
+    const token = sessionStorage.getItem("pulse-token");
+    return { "Content-Type": "application/json", ...(token ? { "Authorization": `Bearer ${token}` } : {}) };
+  };
+
+  const handleVote = async (optionIndex: number) => {
+    if (voting) return;
+    setVoting(true);
+    try {
+      const res = await fetch(`/api/polls/${localData.id}/vote`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ optionIndex }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        const opts: string[] = typeof updated.options === "string" ? JSON.parse(updated.options) : (updated.options || []);
+        setLocalData({ ...updated, options: opts });
+        queryClient.invalidateQueries({ queryKey: getGetMessagesQueryKey({ chatId }) });
+      }
+    } catch {} finally {
+      setVoting(false);
+    }
+  };
+
+  const options: string[] = localData?.options || [];
+  const votes: any[] = localData?.votes || [];
+  const totalVotes = votes.length;
+  const myVotes: number[] = (votes.filter((v: any) => v.user_id === currentUserId)).map((v: any) => v.option_index);
+
+  const votesPerOption = options.map((_: string, i: number) => votes.filter((v: any) => v.option_index === i).length);
+  const maxVotes = Math.max(...votesPerOption, 1);
+
+  return (
+    <div className="min-w-[220px] max-w-[280px]">
+      <div className="flex items-center gap-2 mb-3">
+        <BarChart2 size={16} className={isMine ? "text-white/70" : "text-primary"} />
+        <span className={cn("text-[11px] font-black uppercase tracking-wider", isMine ? "text-white/70" : "text-primary")}>Опрос</span>
+      </div>
+      <p className={cn("text-[15px] font-bold mb-3 leading-snug", isMine ? "text-white" : "text-foreground")}>
+        {localData?.question}
+      </p>
+      <div className="space-y-2">
+        {options.map((option: string, i: number) => {
+          const voteCount = votesPerOption[i];
+          const pct = totalVotes > 0 ? Math.round((voteCount / totalVotes) * 100) : 0;
+          const isMyVote = myVotes.includes(i);
+          return (
+            <button
+              key={i}
+              onClick={() => handleVote(i)}
+              disabled={voting}
+              className={cn(
+                "w-full text-left rounded-xl overflow-hidden transition-all relative",
+                isMyVote
+                  ? isMine ? "ring-2 ring-white/50" : "ring-2 ring-primary"
+                  : "hover:scale-[1.01] active:scale-[0.99]"
+              )}
+            >
+              <div
+                className={cn(
+                  "absolute inset-0 transition-all duration-500",
+                  isMyVote
+                    ? isMine ? "bg-white/20" : "bg-primary/20"
+                    : isMine ? "bg-white/10" : "bg-secondary"
+                )}
+                style={{ width: `${pct}%`, minWidth: pct > 0 ? "8px" : "0" }}
+              />
+              <div className={cn(
+                "relative px-3 py-2 flex items-center justify-between",
+                isMine ? "bg-white/5" : "bg-secondary/50"
+              )}>
+                <span className={cn("text-[13px] font-semibold truncate pr-2", isMine ? "text-white" : "text-foreground")}>
+                  {option}
+                </span>
+                <span className={cn("text-[12px] font-black shrink-0", isMine ? "text-white/70" : "text-muted-foreground")}>
+                  {pct}%
+                </span>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+      <p className={cn("text-[11px] mt-2.5", isMine ? "text-white/50" : "text-muted-foreground/60")}>
+        {totalVotes} {totalVotes === 1 ? "голос" : totalVotes >= 2 && totalVotes <= 4 ? "голоса" : "голосов"}
+      </p>
     </div>
   );
 }
@@ -102,9 +225,10 @@ export interface MessageBubbleProps {
   onReply?: (msg: Message) => void;
   onEdit?: (msg: Message) => void;
   ownBubbleStyle?: React.CSSProperties;
+  onPin?: (msg: Message) => void;
 }
 
-export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle }: MessageBubbleProps) {
+export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin }: MessageBubbleProps) {
   const { currentUserId } = useAppContext();
   const queryClient = useQueryClient();
   const isMine = message.senderId === currentUserId;
@@ -113,6 +237,9 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle }: Mess
   const [showMenu, setShowMenu] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [translating, setTranslating] = useState(false);
+  const [translation, setTranslation] = useState<string | null>(null);
+  const [showTranslation, setShowTranslation] = useState(false);
   const longPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const bubbleRef = useRef<HTMLDivElement>(null);
 
@@ -202,6 +329,35 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle }: Mess
     setActionLoading(null);
   };
 
+  const handleTranslate = async () => {
+    closeMenu();
+    if (!message.text) return;
+    if (translation) {
+      setShowTranslation(v => !v);
+      return;
+    }
+    setTranslating(true);
+    try {
+      const res = await fetch("/api/ai/translate", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ text: message.text, targetLang: "ru" }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setTranslation(data.translated);
+        setShowTranslation(true);
+      }
+    } catch {} finally {
+      setTranslating(false);
+    }
+  };
+
+  const handlePin = () => {
+    closeMenu();
+    onPin?.(message);
+  };
+
   const formatTime = (dateStr: string) => format(new Date(dateStr), "HH:mm");
 
   const reactions = ((message as any).reactions || []) as { emoji: string; userId: number; user?: any }[];
@@ -214,6 +370,7 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle }: Mess
   }, {} as Record<string, { count: number; users: string[]; mine: boolean }>);
 
   const replyTo = (message as any).replyTo as (Message & { sender?: any }) | null;
+  const pollData = (message as any).pollData;
 
   if (message.type === "gift") {
     const emoji = (message as any).giftData?.giftItem?.emoji || "🎁";
@@ -305,8 +462,35 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle }: Mess
 
   const renderContent = () => {
     switch (message.type) {
+      case "poll":
+        return <PollDisplay pollData={pollData} messageId={message.id} chatId={message.chatId} currentUserId={currentUserId} isMine={isMine} />;
       case "text":
-        return <p className="text-[15px] whitespace-pre-wrap break-words leading-snug font-medium">{message.text}</p>;
+        return (
+          <div>
+            <p className="text-[15px] whitespace-pre-wrap break-words leading-snug font-medium">{message.text}</p>
+            <AnimatePresence>
+              {showTranslation && translation && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0, y: -5 }}
+                  animate={{ opacity: 1, height: "auto", y: 0 }}
+                  exit={{ opacity: 0, height: 0, y: -5 }}
+                  className={cn(
+                    "mt-2 pt-2 border-t text-[14px] font-medium leading-snug italic",
+                    isMine ? "border-white/20 text-white/80" : "border-border text-muted-foreground"
+                  )}
+                >
+                  <span className={cn("text-[10px] font-black uppercase tracking-wider not-italic block mb-1", isMine ? "text-white/50" : "text-primary/60")}>
+                    Перевод (RU)
+                  </span>
+                  {translation}
+                </motion.div>
+              )}
+            </AnimatePresence>
+            {translating && (
+              <p className={cn("text-[12px] mt-1 animate-pulse", isMine ? "text-white/60" : "text-muted-foreground")}>Переводим...</p>
+            )}
+          </div>
+        );
       case "image":
         return (
           <div className="rounded-xl overflow-hidden -mx-1 -mt-1 mb-1">
@@ -442,7 +626,7 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle }: Mess
             className="fixed z-[999] select-none"
             style={{
               left: Math.min(menuPos.x, window.innerWidth - 240),
-              top: Math.min(menuPos.y, window.innerHeight - 320),
+              top: Math.min(menuPos.y, window.innerHeight - 360),
             }}
             onMouseDown={e => e.stopPropagation()}
           >
@@ -472,6 +656,25 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle }: Mess
                   >
                     <Reply size={18} className="text-primary" />
                     Ответить
+                  </button>
+                )}
+                {message.text && message.type === "text" && (
+                  <button
+                    onClick={handleTranslate}
+                    disabled={translating}
+                    className="w-full flex items-center gap-3 px-3 py-3 text-[15px] font-bold text-foreground hover:bg-secondary rounded-xl transition-colors text-left"
+                  >
+                    <Languages size={18} className="text-blue-400" />
+                    {translating ? "Переводим..." : translation ? (showTranslation ? "Скрыть перевод" : "Показать перевод") : "Перевести"}
+                  </button>
+                )}
+                {onPin && (
+                  <button
+                    onClick={handlePin}
+                    className="w-full flex items-center gap-3 px-3 py-3 text-[15px] font-bold text-foreground hover:bg-secondary rounded-xl transition-colors text-left"
+                  >
+                    <Pin size={18} className="text-yellow-500" />
+                    Закрепить
                   </button>
                 )}
                 {message.text && (
@@ -524,11 +727,11 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle }: Mess
           <AlertDialogFooter className="flex-col sm:flex-col gap-2 mt-6">
             <AlertDialogAction
               onClick={handleDeleteConfirm}
-              className="w-full h-14 rounded-xl bg-destructive hover:bg-destructive/90 text-destructive-foreground font-bold text-[15px] shadow-[0_4px_14px_rgba(220,38,38,0.3)]"
+              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground font-black rounded-2xl py-3"
             >
               Удалить
             </AlertDialogAction>
-            <AlertDialogCancel className="w-full h-14 rounded-xl border-border hover:bg-secondary font-bold text-[15px] sm:mt-0">
+            <AlertDialogCancel className="font-bold rounded-2xl py-3 border-border">
               Отмена
             </AlertDialogCancel>
           </AlertDialogFooter>

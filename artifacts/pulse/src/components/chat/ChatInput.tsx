@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useSendMessage, useGetMe, getGetMessagesQueryKey, getGetChatsQueryKey, Message } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Paperclip, Mic, SendHorizontal, X, Square, Trash2, Images, Reply, Pencil, Clock } from "lucide-react";
+import { Paperclip, Mic, SendHorizontal, X, Square, Trash2, Images, Reply, Pencil, Clock, BarChart2, Plus, Minus } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const EMOJI_CATEGORIES: { label: string; emojis: string[] }[] = [
@@ -71,6 +71,13 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
   const [isRecording, setIsRecording] = useState(false);
   const [recordSeconds, setRecordSeconds] = useState(0);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+
+  const [showPollCreator, setShowPollCreator] = useState(false);
+  const [pollQuestion, setPollQuestion] = useState("");
+  const [pollOptions, setPollOptions] = useState(["", ""]);
+  const [pollAllowMultiple, setPollAllowMultiple] = useState(false);
+  const [pollSending, setPollSending] = useState(false);
+  const [pollError, setPollError] = useState("");
 
   const queryClient = useQueryClient();
   const sendMessage = useSendMessage();
@@ -147,6 +154,41 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
       stopTypingTimeoutRef.current = null;
       if (typingTimeoutRef.current) { clearTimeout(typingTimeoutRef.current); typingTimeoutRef.current = null; }
     }, 3000);
+  };
+
+  const handleSendPoll = async () => {
+    const q = pollQuestion.trim();
+    const opts = pollOptions.map(o => o.trim()).filter(o => o.length > 0);
+    if (!q) { setPollError("Введите вопрос"); return; }
+    if (opts.length < 2) { setPollError("Нужно минимум 2 варианта ответа"); return; }
+    setPollSending(true);
+    setPollError("");
+    try {
+      const token = sessionStorage.getItem("pulse-token");
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const res = await fetch("/api/polls", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ chatId, question: q, options: opts, allowMultiple: pollAllowMultiple }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        setPollError(data.error || "Ошибка создания опроса");
+        return;
+      }
+      setShowPollCreator(false);
+      setPollQuestion("");
+      setPollOptions(["", ""]);
+      setPollAllowMultiple(false);
+      queryClient.invalidateQueries({ queryKey: getGetMessagesQueryKey({ chatId }) });
+      queryClient.invalidateQueries({ queryKey: getGetChatsQueryKey() });
+      onMessageSent?.();
+    } catch {
+      setPollError("Ошибка подключения");
+    } finally {
+      setPollSending(false);
+    }
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -410,6 +452,91 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
         </AnimatePresence>
 
         <AnimatePresence>
+          {showPollCreator && (
+            <motion.div
+              initial={{ opacity: 0, height: 0, y: -10 }}
+              animate={{ opacity: 1, height: "auto", y: 0 }}
+              exit={{ opacity: 0, height: 0, y: -10 }}
+              className="mb-3 bg-card border border-primary/20 rounded-[20px] overflow-hidden"
+            >
+              <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <BarChart2 size={18} className="text-primary" />
+                  <span className="text-[13px] font-black text-foreground uppercase tracking-wider">Новый опрос</span>
+                </div>
+                <button onClick={() => setShowPollCreator(false)} className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors">
+                  <X size={16} />
+                </button>
+              </div>
+              <div className="p-4 space-y-3">
+                <div>
+                  <label className="text-[11px] font-black text-muted-foreground uppercase tracking-wider mb-1.5 block">Вопрос</label>
+                  <input
+                    type="text"
+                    value={pollQuestion}
+                    onChange={(e) => setPollQuestion(e.target.value)}
+                    placeholder="О чём спросить?"
+                    maxLength={300}
+                    autoFocus
+                    className="w-full bg-secondary/50 border border-border rounded-xl px-3 py-2.5 text-[14px] font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-black text-muted-foreground uppercase tracking-wider mb-1.5 block">Варианты ответа</label>
+                  <div className="space-y-2">
+                    {pollOptions.map((opt, i) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          value={opt}
+                          onChange={(e) => setPollOptions(prev => prev.map((o, j) => j === i ? e.target.value : o))}
+                          placeholder={`Вариант ${i + 1}`}
+                          maxLength={100}
+                          className="flex-1 bg-secondary/50 border border-border rounded-xl px-3 py-2 text-[13px] font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+                        />
+                        {pollOptions.length > 2 && (
+                          <button onClick={() => setPollOptions(prev => prev.filter((_, j) => j !== i))}
+                            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors shrink-0">
+                            <Minus size={14} />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    {pollOptions.length < 10 && (
+                      <button
+                        onClick={() => setPollOptions(prev => [...prev, ""])}
+                        className="flex items-center gap-1.5 text-[12px] font-bold text-primary hover:text-primary/80 transition-colors py-1 px-1"
+                      >
+                        <Plus size={14} /> Добавить вариант
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <label className="flex items-center gap-2.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={pollAllowMultiple}
+                    onChange={(e) => setPollAllowMultiple(e.target.checked)}
+                    className="w-4 h-4 rounded accent-primary"
+                  />
+                  <span className="text-[13px] font-medium text-muted-foreground">Несколько ответов</span>
+                </label>
+                {pollError && (
+                  <p className="text-[12px] font-bold text-destructive">{pollError}</p>
+                )}
+                <button
+                  onClick={handleSendPoll}
+                  disabled={pollSending || !pollQuestion.trim()}
+                  className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground font-black text-[13px] hover:bg-primary/90 disabled:opacity-50 transition-all hover:shadow-[0_0_20px_rgba(255,85,0,0.3)]"
+                >
+                  {pollSending ? "Создаём..." : "Создать опрос"}
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
           {imagePreviews.length > 0 && (
             <motion.div
               initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
@@ -492,10 +619,16 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
                 />
 
                 {!editMessage && !text.trim() && imagePreviews.length === 0 && (
-                  <button type="button" onClick={() => fileInputRef.current?.click()}
-                    className="w-12 h-12 flex items-center justify-center rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors shrink-0 mb-[2px]">
-                    <Paperclip size={20} />
-                  </button>
+                  <>
+                    <button type="button" onClick={() => fileInputRef.current?.click()}
+                      className="w-12 h-12 flex items-center justify-center rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors shrink-0 mb-[2px]">
+                      <Paperclip size={20} />
+                    </button>
+                    <button type="button" onClick={() => { setShowPollCreator(v => !v); setPollError(""); }}
+                      className={`w-12 h-12 flex items-center justify-center rounded-full transition-colors shrink-0 mb-[2px] ${showPollCreator ? "bg-primary/15 text-primary" : "text-muted-foreground hover:bg-secondary hover:text-foreground"}`}>
+                      <BarChart2 size={20} />
+                    </button>
+                  </>
                 )}
 
                 {hasContent && !editMessage && (

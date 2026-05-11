@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from "react";
 import { useGetChatById, useGetMessages, getGetMessagesQueryKey, useInitiateCall, useMarkChatAsRead, useUpdateChat, getGetChatsQueryKey, Message, useGetMe } from "@workspace/api-client-react";
 import { useNotifications } from "@/hooks/useNotifications";
-import { Phone, Video, MoreVertical, ArrowLeft, Search, BellOff, Bell, Pin, PinOff, User, Trash2, X, Timer, Flame, ChevronRight, Settings, Crown, Palette, Check, Sparkles, Lock } from "lucide-react";
+import { Phone, Video, MoreVertical, ArrowLeft, Search, BellOff, Bell, Pin, PinOff, User, Trash2, X, Timer, Flame, ChevronRight, Settings, Crown, Palette, Check, Sparkles, Lock, MessageSquare } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChatInfoPanel } from "./ChatInfoPanel";
 import { useAppContext } from "@/contexts/AppContext";
@@ -283,7 +283,7 @@ function formatAutoDeleteLabel(seconds: number | null | undefined): string {
 }
 
 export function ChatWindow({ chatId }: ChatWindowProps) {
-  const { setSelectedChatId, setActiveCall, setTypingForChat, startCall } = useAppContext();
+  const { setSelectedChatId, setActiveCall, setTypingForChat, startCall, currentUserId } = useAppContext();
   const { permission, requestPermission, notify } = useNotifications();
   const { t } = useLanguage();
   const [, setLocation] = useLocation();
@@ -307,6 +307,11 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
   const [replyTo, setReplyTo] = useState<Message | null>(null);
   const [editMessage, setEditMessage] = useState<Message | null>(null);
   const [showInfoPanel, setShowInfoPanel] = useState(false);
+  const [smartReplies, setSmartReplies] = useState<string[]>([]);
+  const [smartRepliesFor, setSmartRepliesFor] = useState<number | null>(null);
+  const [smartReplyPending, setSmartReplyPending] = useState(false);
+  const [pinnedMsgDismissed, setPinnedMsgDismissed] = useState<number | null>(null);
+  const [replyChipText, setReplyChipText] = useState<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastMessageCountRef = useRef<number>(0);
   const sseRef = useRef<EventSource | null>(null);
@@ -402,6 +407,60 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
   }, [chatId]);
 
   const botDisplayName = (chat?.otherUser as any)?.displayName || "Bot";
+
+  useEffect(() => {
+    if (!messages || messages.length === 0) return;
+    const last = messages[messages.length - 1];
+    if (!last || last.senderId === currentUserId) {
+      setSmartReplies([]);
+      setSmartRepliesFor(null);
+      return;
+    }
+    if (last.id === smartRepliesFor) return;
+    if (last.type !== "text" || !last.text) {
+      setSmartReplies([]);
+      setSmartRepliesFor(null);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      setSmartReplyPending(true);
+      try {
+        const token = sessionStorage.getItem("pulse-token");
+        const headers: Record<string, string> = { "Content-Type": "application/json" };
+        if (token) headers["Authorization"] = `Bearer ${token}`;
+        const res = await fetch("/api/ai/smart-replies", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ lastMessage: last.text, chatContext: last.text }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setSmartReplies(data.suggestions || []);
+          setSmartRepliesFor(last.id);
+        }
+      } catch {}
+      setSmartReplyPending(false);
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [messages?.length, currentUserId]);
+
+  const handlePinMessage = async (msg: Message) => {
+    try {
+      const token = sessionStorage.getItem("pulse-token");
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const pinnedMsg = (chat as any)?.pinnedMessage;
+      const isAlreadyPinned = pinnedMsg?.id === msg.id;
+      await fetch(`/api/chats/${chatId}/pin-message`, {
+        method: "PUT",
+        headers,
+        body: JSON.stringify({ messageId: isAlreadyPinned ? null : msg.id }),
+      });
+      setPinnedMsgDismissed(null);
+      queryClient.invalidateQueries({ queryKey: getGetChatsQueryKey() });
+      queryClient.invalidateQueries({ queryKey: [`/api/chats/${chatId}`] });
+    } catch {}
+  };
 
   const startBotTypingPoll = () => {
     lastMessageCountRef.current = messages?.length ?? 0;
@@ -711,6 +770,43 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
         </div>
       </header>
 
+      {/* Pinned message banner */}
+      {(() => {
+        const pinnedMsg = (chat as any)?.pinnedMessage;
+        if (!pinnedMsg || pinnedMsgDismissed === pinnedMsg.id) return null;
+        const txt = pinnedMsg.type === "image" ? "📷 Фото" : pinnedMsg.type === "audio" ? "🎤 Голосовое" : pinnedMsg.type === "poll" ? "📊 Опрос" : pinnedMsg.text || "Сообщение";
+        return (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center gap-3 px-4 py-2.5 bg-card border-b border-primary/20 shrink-0 shadow-sm relative z-10 cursor-pointer hover:bg-secondary/50 transition-colors"
+            onClick={() => {}}
+          >
+            <div className="w-1 h-8 rounded-full bg-primary shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-[11px] font-black uppercase tracking-wider text-primary mb-0.5">Закреплено</p>
+              <p className="text-[13px] font-medium text-foreground truncate">{txt}</p>
+            </div>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handlePinMessage(pinnedMsg);
+              }}
+              title="Открепить"
+              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors shrink-0"
+            >
+              <PinOff size={16} />
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); setPinnedMsgDismissed(pinnedMsg.id); }}
+              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors shrink-0"
+            >
+              <X size={16} />
+            </button>
+          </motion.div>
+        );
+      })()}
+
       {/* Auto-delete active banner */}
       {autoDeleteTimer ? (
         <div className="flex items-center justify-between px-5 py-2.5 bg-orange-500 text-white shrink-0 shadow-sm relative z-10">
@@ -774,6 +870,7 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
                 message={message}
                 onReply={(msg) => { setEditMessage(null); setReplyTo(msg); }}
                 onEdit={(msg) => { setReplyTo(null); setEditMessage(msg); }}
+                onPin={handlePinMessage}
               />
             ))}
           </div>
@@ -804,6 +901,55 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
         )}
       </div>
 
+      {/* Smart reply chips */}
+      <AnimatePresence>
+        {smartReplies.length > 0 && !replyTo && !editMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            className="flex items-center gap-2 px-4 py-2 overflow-x-auto scrollbar-none shrink-0"
+          >
+            <MessageSquare size={14} className="text-primary shrink-0" />
+            {smartReplyPending ? (
+              <div className="flex gap-1.5">
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="h-8 w-20 rounded-full bg-secondary animate-pulse" />
+                ))}
+              </div>
+            ) : (
+              smartReplies.map((reply, i) => (
+                <motion.button
+                  key={i}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: i * 0.05 }}
+                  onClick={async () => {
+                    setSmartReplies([]);
+                    const token = sessionStorage.getItem("pulse-token");
+                    const headers: Record<string, string> = { "Content-Type": "application/json" };
+                    if (token) headers["Authorization"] = `Bearer ${token}`;
+                    await fetch(`/api/messages`, {
+                      method: "POST",
+                      headers,
+                      body: JSON.stringify({ chatId, text: reply, type: "text" }),
+                    });
+                    queryClient.invalidateQueries({ queryKey: getGetMessagesQueryKey({ chatId }) });
+                    queryClient.invalidateQueries({ queryKey: getGetChatsQueryKey() });
+                    setTimeout(() => {
+                      if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+                    }, 100);
+                  }}
+                  className="px-3.5 py-1.5 rounded-full border border-primary/30 bg-primary/5 text-primary text-[13px] font-bold whitespace-nowrap hover:bg-primary/15 hover:border-primary/60 transition-all hover:scale-105 active:scale-95 shrink-0"
+                >
+                  {reply}
+                </motion.button>
+              ))
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <ChatInput
         chatId={chatId}
         replyTo={replyTo}
@@ -811,6 +957,7 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
         onCancelReply={() => setReplyTo(null)}
         onCancelEdit={() => setEditMessage(null)}
         onMessageSent={() => {
+          setSmartReplies([]);
           if (isBot) startBotTypingPoll();
           setTimeout(() => {
             if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;

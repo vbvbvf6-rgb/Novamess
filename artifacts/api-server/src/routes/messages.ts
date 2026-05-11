@@ -40,12 +40,29 @@ async function buildMessage(msg: typeof messagesTable.$inferSelect) {
     }
   }
 
+  let pollData: any = null;
+  if (msg.type === "poll") {
+    try {
+      const pollRows = await db.execute(sql`SELECT * FROM polls WHERE message_id = ${msg.id} LIMIT 1`);
+      const poll = pollRows.rows[0] as any;
+      if (poll) {
+        const voteRows = await db.execute(sql`
+          SELECT pv.*, u.display_name, u.avatar_color FROM poll_votes pv
+          JOIN users u ON u.id = pv.user_id WHERE pv.poll_id = ${poll.id}
+        `);
+        const opts: string[] = typeof poll.options === "string" ? JSON.parse(poll.options) : (poll.options || []);
+        pollData = { ...poll, options: opts, votes: voteRows.rows };
+      }
+    } catch {}
+  }
+
   return {
     ...msg,
     sender,
     reactions: reactions.map(r => ({ ...r.reaction, user: r.user })),
     replyTo,
     giftData: null,
+    pollData,
   };
 }
 

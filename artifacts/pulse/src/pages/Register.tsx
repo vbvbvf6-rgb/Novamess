@@ -1,7 +1,7 @@
 import React, { useState, useRef } from "react";
 import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Calendar, ShieldAlert, ShieldCheck, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Calendar, ShieldAlert, ShieldCheck, AlertTriangle, Mail, KeyRound, Eye, EyeOff } from "lucide-react";
 import PulseLogo from "@/components/PulseLogo";
 
 interface RegisterProps {
@@ -27,7 +27,7 @@ function ageToGroup(age: number): string {
   return "30+";
 }
 
-type Step = "age-gate" | "age-blocked" | "age-warning" | "age-confirmed" | "register";
+type Step = "age-gate" | "age-blocked" | "age-warning" | "age-confirmed" | "register" | "verify-email";
 
 export default function Register({ onLogin }: RegisterProps) {
   const [step, setStep] = useState<Step>("register");
@@ -40,10 +40,20 @@ export default function Register({ onLogin }: RegisterProps) {
 
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const [verifyUserId, setVerifyUserId] = useState<number | null>(null);
+  const [verifyCode, setVerifyCode] = useState("");
+  const [devCode, setDevCode] = useState<string | null>(null);
+  const [verifyError, setVerifyError] = useState("");
+  const [verifyLoading, setVerifyLoading] = useState(false);
+  const [pendingToken, setPendingToken] = useState<string | null>(null);
+  const [pendingUser, setPendingUser] = useState<any>(null);
 
   const monthRef = useRef<HTMLInputElement>(null);
   const yearRef = useRef<HTMLInputElement>(null);
@@ -98,6 +108,10 @@ export default function Register({ onLogin }: RegisterProps) {
       setError("Никнейм может содержать только буквы, цифры и _");
       return;
     }
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError("Неверный формат email");
+      return;
+    }
     setLoading(true);
     setError("");
     try {
@@ -109,6 +123,7 @@ export default function Register({ onLogin }: RegisterProps) {
           displayName: displayName.trim(),
           password,
           ageGroup,
+          email: email.trim() || undefined,
           birthDate: dobYear && dobMonth && dobDay ? `${dobYear}-${String(dobMonth).padStart(2,"0")}-${String(dobDay).padStart(2,"0")}` : undefined,
         }),
       });
@@ -117,6 +132,16 @@ export default function Register({ onLogin }: RegisterProps) {
         setError(data.error || "Ошибка регистрации");
         return;
       }
+
+      if (data.requiresEmailVerification) {
+        setVerifyUserId(data.userId);
+        setDevCode(data.emailVerificationCode);
+        setPendingToken(data.token);
+        setPendingUser(data.user);
+        setStep("verify-email");
+        return;
+      }
+
       if (data.token) sessionStorage.setItem("pulse-token", data.token);
       sessionStorage.setItem("pulse-user-id", String(data.userId));
       sessionStorage.setItem("pulse-user", JSON.stringify(data.user));
@@ -125,6 +150,47 @@ export default function Register({ onLogin }: RegisterProps) {
       setError("Ошибка подключения к серверу");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleVerifyEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!verifyCode.trim()) {
+      setVerifyError("Введите код");
+      return;
+    }
+    setVerifyLoading(true);
+    setVerifyError("");
+    try {
+      const res = await fetch("/api/auth/verify-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: verifyUserId, code: verifyCode.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setVerifyError(data.error || "Неверный код");
+        return;
+      }
+      if (pendingToken) sessionStorage.setItem("pulse-token", pendingToken);
+      if (verifyUserId) {
+        sessionStorage.setItem("pulse-user-id", String(verifyUserId));
+        sessionStorage.setItem("pulse-user", JSON.stringify({ ...pendingUser, emailVerified: true }));
+        onLogin(verifyUserId);
+      }
+    } catch {
+      setVerifyError("Ошибка подключения");
+    } finally {
+      setVerifyLoading(false);
+    }
+  };
+
+  const handleSkipVerify = () => {
+    if (pendingToken) sessionStorage.setItem("pulse-token", pendingToken);
+    if (verifyUserId) {
+      sessionStorage.setItem("pulse-user-id", String(verifyUserId));
+      sessionStorage.setItem("pulse-user", JSON.stringify(pendingUser));
+      onLogin(verifyUserId);
     }
   };
 
@@ -152,7 +218,9 @@ export default function Register({ onLogin }: RegisterProps) {
             <PulseLogo size={48} />
           </motion.div>
           <h1 className="text-4xl font-black text-foreground tracking-tight mb-2">Pulse</h1>
-          <p className="text-muted-foreground text-sm font-medium">Новый аккаунт</p>
+          <p className="text-muted-foreground text-sm font-medium">
+            {step === "verify-email" ? "Подтверждение email" : "Новый аккаунт"}
+          </p>
         </div>
 
         <AnimatePresence mode="wait">
@@ -425,15 +493,43 @@ export default function Register({ onLogin }: RegisterProps) {
                 </div>
 
                 <div className="space-y-1.5">
+                  <div className="flex items-center gap-2 pl-1">
+                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Email</label>
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-primary/10 text-primary border border-primary/20">необязательно</span>
+                  </div>
+                  <div className="relative">
+                    <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="your@email.com"
+                      autoComplete="email"
+                      className="w-full bg-card/50 border border-border rounded-2xl pl-11 pr-5 py-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-base font-medium"
+                    />
+                  </div>
+                  <p className="text-[11px] text-muted-foreground/70 pl-1">Для восстановления доступа и безопасности</p>
+                </div>
+
+                <div className="space-y-1.5">
                   <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider pl-1">Пароль</label>
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Минимум 6 символов"
-                    autoComplete="new-password"
-                    className="w-full bg-card/50 border border-border rounded-2xl px-5 py-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-base font-medium"
-                  />
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Минимум 6 символов"
+                      autoComplete="new-password"
+                      className="w-full bg-card/50 border border-border rounded-2xl px-5 py-4 pr-14 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-base font-medium"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(v => !v)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
                 </div>
 
                 <div className="space-y-1.5">
@@ -466,6 +562,92 @@ export default function Register({ onLogin }: RegisterProps) {
                   {loading ? "Создаем..." : "Создать аккаунт"}
                 </button>
               </form>
+
+              <div className="mt-6 text-center">
+                <p className="text-sm font-medium text-muted-foreground">
+                  Уже есть аккаунт?{" "}
+                  <Link href="/login" className="text-primary hover:text-primary/80 transition-colors">
+                    Войти
+                  </Link>
+                </p>
+              </div>
+            </motion.div>
+          )}
+
+          {step === "verify-email" && (
+            <motion.div
+              key="verify-email"
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="w-full"
+            >
+              <div className="bg-card border border-primary/20 rounded-3xl p-8 shadow-2xl">
+                <div className="flex flex-col items-center mb-6">
+                  <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-4">
+                    <Mail size={32} className="text-primary" />
+                  </div>
+                  <h2 className="font-black text-xl text-foreground text-center">Проверьте почту</h2>
+                  <p className="text-sm text-muted-foreground text-center mt-1">
+                    Код отправлен на <span className="text-foreground font-bold">{email}</span>
+                  </p>
+                </div>
+
+                {devCode && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-primary/5 border border-primary/20 rounded-2xl px-4 py-3 mb-5 text-center"
+                  >
+                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">Ваш код (тестовый режим)</p>
+                    <p className="text-3xl font-black text-primary tracking-[0.3em]">{devCode}</p>
+                  </motion.div>
+                )}
+
+                <form onSubmit={handleVerifyEmail} className="space-y-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider pl-1">Код подтверждения</label>
+                    <div className="relative">
+                      <KeyRound size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={6}
+                        value={verifyCode}
+                        onChange={(e) => setVerifyCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                        placeholder="000000"
+                        autoFocus
+                        className="w-full bg-card/50 border border-border rounded-2xl pl-11 pr-5 py-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-xl text-center font-black tracking-widest"
+                      />
+                    </div>
+                  </div>
+
+                  {verifyError && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      className="bg-destructive/10 border border-destructive/20 text-destructive rounded-xl px-4 py-3 text-sm font-semibold text-center"
+                    >
+                      {verifyError}
+                    </motion.div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={verifyLoading || verifyCode.length !== 6}
+                    className="w-full bg-primary text-primary-foreground font-black py-4 rounded-2xl hover:bg-primary/90 transition-all disabled:opacity-50 hover:shadow-[0_0_30px_rgba(255,85,0,0.3)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-none text-base"
+                  >
+                    {verifyLoading ? "Проверяем..." : "Подтвердить"}
+                  </button>
+                </form>
+
+                <button
+                  onClick={handleSkipVerify}
+                  className="w-full mt-3 py-3 text-sm font-bold text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Пропустить — войти без подтверждения
+                </button>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
