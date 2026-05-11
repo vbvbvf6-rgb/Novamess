@@ -760,11 +760,7 @@ export default function Settings() {
     return v ? Number(v) : null;
   });
 
-  // Apply page zoom on mount
-  useEffect(() => {
-    const saved = localStorage.getItem("pulse-page-zoom") || "100";
-    (document.documentElement as any).style.zoom = `${saved}%`;
-  }, []);
+  // Zoom is now applied via transform in App.tsx — nothing to apply here on mount
 
   // Prime theme
   const [primeTheme, setPrimeTheme] = useState(() => localStorage.getItem("pulse-prime-theme") || "cyan");
@@ -1753,7 +1749,7 @@ export default function Settings() {
                     <span className="text-sm font-bold text-primary min-w-[3rem] text-right">{pageZoom}%</span>
                   </div>
                   <input type="range" min={75} max={150} step={5} value={pageZoom}
-                    onChange={e => { const v=e.target.value; setPageZoom(v); setLs("pulse-page-zoom", v); (document.documentElement as any).style.zoom=`${v}%`; }}
+                    onChange={e => { const v=e.target.value; setPageZoom(v); setLs("pulse-page-zoom", v); window.dispatchEvent(new CustomEvent("pulse:zoom-change", { detail: Number(v) })); }}
                     className="w-full accent-primary"/>
                   <div className="flex justify-between text-xs text-muted-foreground mt-1">
                     <span>75%</span><span>100%</span><span>150%</span>

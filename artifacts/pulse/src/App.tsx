@@ -225,6 +225,20 @@ function AuthPages({ onLogin }: { onLogin: (userId: number) => void }) {
 }
 
 function App() {
+  const [zoom, setZoom] = useState<number>(() => {
+    const saved = localStorage.getItem("pulse-page-zoom");
+    return saved ? Number(saved) : 100;
+  });
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const val = (e as CustomEvent<number>).detail;
+      setZoom(val);
+    };
+    window.addEventListener("pulse:zoom-change", handler);
+    return () => window.removeEventListener("pulse:zoom-change", handler);
+  }, []);
+
   const [userId, setUserId] = useState<number | null>(() => {
     const stored = sessionStorage.getItem("pulse-user-id");
     if (!stored) return null;
@@ -349,7 +363,16 @@ function App() {
     persistAndSwitch(id);
   };
 
+  const scale = zoom / 100;
+
   return (
+    <div style={{
+      transform: `scale(${scale})`,
+      transformOrigin: "top left",
+      width: `${100 / scale}%`,
+      height: `${100 / scale}vh`,
+      overflow: "hidden",
+    }}>
     <LanguageProvider>
       <QueryClientProvider client={queryClient}>
         <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
@@ -373,6 +396,7 @@ function App() {
         </WouterRouter>
       </QueryClientProvider>
     </LanguageProvider>
+    </div>
   );
 }
 
