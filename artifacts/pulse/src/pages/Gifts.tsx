@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useGetGiftCatalog, useGetSentGifts, useGetReceivedGifts, useGetMe, GiftItem, Gift } from "@workspace/api-client-react";
 import { Zap, ArrowUpRight, ArrowDownLeft, Gift as GiftIcon, Search, AlertTriangle, X, UserRound, MessageSquare, EyeOff, Crown, Lock, Star } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -281,18 +282,193 @@ function GiftVisual({ name, emoji, animationType, size = 56, rarity = "common" }
   );
 }
 
+const PREVIEW_PARTICLES: Record<string, string[]> = {
+  hearts:    ["❤️","💕","💖","🌸","💗"],
+  fireworks: ["✨","💥","🌟","🎆","⭐"],
+  stars:     ["⭐","🌟","✨","💫","🌠"],
+  sparkle:   ["✨","💫","⚡","🔆","🌟"],
+  confetti:  ["🎊","🎉","🌟","💛","🎈"],
+  balloons:  ["🎈","🎀","✨","🥳","🎉"],
+  diamonds:  ["💎","✨","💙","🔷","🌟"],
+  lightning: ["⚡","💥","🌩️","✨","⚡"],
+  flame:     ["🔥","✨","💫","🌟","🔥"],
+  magic:     ["✨","🪄","💫","⭐","🌟"],
+  galaxy:    ["🌌","⭐","💫","🌟","✨"],
+  supernova: ["💥","✨","⭐","🌟","💥"],
+  vortex:    ["🌀","💫","✨","⭐","🌀"],
+  bounce:    ["✨","💫","⭐","🎉","🌟"],
+};
+
+function GiftHoverPreview({ item, anchorRef, visible }: {
+  item: GiftItem;
+  anchorRef: React.RefObject<HTMLButtonElement | null>;
+  visible: boolean;
+}) {
+  const [pos, setPos] = useState<{ x: number; y: number; side: "right" | "left" }>({ x: 0, y: 0, side: "right" });
+  const PREVIEW_W = 188;
+
+  useEffect(() => {
+    if (!visible || !anchorRef.current) return;
+    const r = anchorRef.current.getBoundingClientRect();
+    const gap = 10;
+    const rightSpace = window.innerWidth - r.right;
+    const side: "right" | "left" = rightSpace >= PREVIEW_W + gap ? "right" : "left";
+    const x = side === "right" ? r.right + gap : r.left - PREVIEW_W - gap;
+    const y = Math.max(8, Math.min(r.top + r.height / 2 - 148, window.innerHeight - 310));
+    setPos({ x, y, side });
+  }, [visible, anchorRef]);
+
+  const cfg = RARITY_CONFIG[item.rarity] || RARITY_CONFIG.common;
+  const orb = RARITY_ORBS[item.rarity] || RARITY_ORBS.common;
+  const particles = PREVIEW_PARTICLES[item.animationType] || PREVIEW_PARTICLES.sparkle;
+  const NUM_P = 10;
+
+  return createPortal(
+    <AnimatePresence>
+      {visible && (
+        <motion.div
+          key="gift-preview"
+          initial={{ opacity: 0, scale: 0.82, x: pos.side === "right" ? -14 : 14 }}
+          animate={{ opacity: 1, scale: 1, x: 0 }}
+          exit={{ opacity: 0, scale: 0.82, x: pos.side === "right" ? -14 : 14 }}
+          transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+          style={{ position: "fixed", left: pos.x, top: pos.y, width: PREVIEW_W, zIndex: 9999, pointerEvents: "none" }}
+          className={`rounded-2xl border ${cfg.border} overflow-hidden`}
+        >
+          {/* Layered background */}
+          <div className={`absolute inset-0 bg-gradient-to-br ${cfg.cardBg}`} />
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-2xl" />
+          <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.07), transparent 65%)" }} />
+
+          <div className="relative z-10 flex flex-col items-center px-3 pt-4 pb-3 gap-2">
+            {/* Icon + particles arena */}
+            <div className="relative flex items-center justify-center" style={{ width: 112, height: 112 }}>
+              {/* Glow backdrop */}
+              <div
+                className="absolute inset-0 rounded-full"
+                style={{ background: orb.outer, filter: "blur(22px)", opacity: 0.55, transform: "scale(1.15)" }}
+              />
+              {/* Orbiting particles */}
+              {Array.from({ length: NUM_P }).map((_, i) => {
+                const angle = (i / NUM_P) * Math.PI * 2;
+                const r1 = 42, r2 = 50;
+                return (
+                  <motion.span
+                    key={i}
+                    className="absolute text-xs select-none"
+                    style={{ top: "50%", left: "50%", marginTop: -10, marginLeft: -10, transformOrigin: "center" }}
+                    animate={{
+                      x: [0, Math.cos(angle) * r1, Math.cos(angle + 0.4) * r2, 0],
+                      y: [0, Math.sin(angle) * r1, Math.sin(angle + 0.4) * r2, 0],
+                      opacity: [0, 1, 0.85, 0],
+                      scale: [0.3, 1.1, 0.8, 0],
+                    }}
+                    transition={{
+                      duration: 2.4,
+                      repeat: Infinity,
+                      delay: (i / NUM_P) * 2.4,
+                      ease: "easeInOut",
+                    }}
+                  >
+                    {particles[i % particles.length]}
+                  </motion.span>
+                );
+              })}
+              {/* Burst particles — faster outward pops */}
+              {Array.from({ length: 6 }).map((_, i) => {
+                const angle = (i / 6) * Math.PI * 2 + 0.3;
+                return (
+                  <motion.span
+                    key={`b${i}`}
+                    className="absolute text-[10px] select-none"
+                    style={{ top: "50%", left: "50%", marginTop: -8, marginLeft: -8 }}
+                    animate={{
+                      x: [0, Math.cos(angle) * 58],
+                      y: [0, Math.sin(angle) * 58],
+                      opacity: [0.9, 0],
+                      scale: [1.2, 0.3],
+                    }}
+                    transition={{
+                      duration: 1.1,
+                      repeat: Infinity,
+                      delay: i * 0.18 + 0.6,
+                      ease: "easeOut",
+                      repeatDelay: 1.4,
+                    }}
+                  >
+                    ✨
+                  </motion.span>
+                );
+              })}
+              {/* Main icon — larger */}
+              <div className="relative z-10 flex items-center justify-center" style={{ width: 80, height: 80 }}>
+                <GiftVisual name={item.name} emoji={item.emoji} animationType={item.animationType} size={80} rarity={item.rarity} />
+              </div>
+            </div>
+
+            {/* Rarity badge */}
+            <div className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full border ${cfg.badge}`}>
+              {cfg.label}
+            </div>
+
+            {/* Name */}
+            <p className={`text-[13px] font-black text-center leading-tight ${cfg.textColor}`}>{item.name}</p>
+
+            {/* Description */}
+            {(item as any).description && (
+              <p className="text-[10px] text-white/45 text-center leading-relaxed px-1">
+                {(item as any).description}
+              </p>
+            )}
+
+            {/* Price row */}
+            <div className="flex items-center gap-1.5 bg-white/8 border border-white/10 px-3 py-1 rounded-full mt-0.5">
+              <Zap size={11} className="text-yellow-400" />
+              <span className="text-[12px] font-black text-yellow-400">{item.stars.toLocaleString()}</span>
+              <span className="text-[10px] text-white/40">⭐</span>
+            </div>
+
+            {/* Tap hint */}
+            <p className="text-[9px] text-white/25 mt-0.5">Нажмите, чтобы отправить</p>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>,
+    document.body
+  );
+}
+
 function GiftCard({ item, onClick, hasPrime }: { item: GiftItem; onClick: () => void; hasPrime: boolean }) {
   const cfg = RARITY_CONFIG[item.rarity] || RARITY_CONFIG.common;
   const isPrimeOnly = !!(item as any).primeOnly;
   const isLocked = isPrimeOnly && !hasPrime;
   const [hovered, setHovered] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const cardRef = useRef<HTMLButtonElement>(null);
+  const previewTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleHoverStart = () => {
+    setHovered(true);
+    previewTimer.current = setTimeout(() => setShowPreview(true), 380);
+  };
+
+  const handleHoverEnd = () => {
+    setHovered(false);
+    setShowPreview(false);
+    if (previewTimer.current) { clearTimeout(previewTimer.current); previewTimer.current = null; }
+  };
+
+  useEffect(() => () => { if (previewTimer.current) clearTimeout(previewTimer.current); }, []);
 
   return (
+    <>
+    <GiftHoverPreview item={item} anchorRef={cardRef} visible={showPreview} />
     <motion.button
+      ref={cardRef}
       whileHover={{ y: -8, scale: 1.04, rotateX: 4 }}
       whileTap={{ scale: 0.95 }}
-      onHoverStart={() => setHovered(true)}
-      onHoverEnd={() => setHovered(false)}
+      onHoverStart={handleHoverStart}
+      onHoverEnd={handleHoverEnd}
       onClick={onClick}
       style={{ perspective: 800, aspectRatio: "3/4" }}
       className={`relative flex flex-col items-center rounded-[20px] cursor-pointer border overflow-hidden transition-shadow ${cfg.border} ${cfg.glow}`}
@@ -358,6 +534,7 @@ function GiftCard({ item, onClick, hasPrime }: { item: GiftItem; onClick: () => 
         </div>
       )}
     </motion.button>
+    </>
   );
 }
 
