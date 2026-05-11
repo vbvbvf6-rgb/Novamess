@@ -283,7 +283,7 @@ ${inline_code}
               const replyText = pyResult.out || (pyResult.err ? `🐛 Ошибка в коде бота:\n\`\`\`\n${pyResult.err}\n\`\`\`` : null);
 
               if (replyText) {
-                await new Promise(r => setTimeout(r, 300 + Math.random() * 500));
+                await new Promise(r => setTimeout(r, 100 + Math.random() * 200));
                 const [botMsg] = await db.insert(messagesTable).values({
                   chatId: body.chatId,
                   senderId: bot.id,
@@ -414,13 +414,20 @@ ${inline_code}
             });
           }
 
-          // Pollinations fallback only for text messages (no vision support)
-          if (!reply && !isImageMessage) reply = await tryWithTimeout(() => callPollinations("openai"), 18000);
-          if (!reply && !isImageMessage) reply = await tryWithTimeout(() => callPollinations("mistral"), 18000);
+          // Pollinations fallback — run both models in parallel, take the first valid reply
+          if (!reply && !isImageMessage) {
+            const settled = await Promise.allSettled([
+              tryWithTimeout(() => callPollinations("openai"), 7000),
+              tryWithTimeout(() => callPollinations("mistral"), 7000),
+            ]);
+            for (const r of settled) {
+              if (r.status === "fulfilled" && r.value) { reply = r.value; break; }
+            }
+          }
 
           if (!reply || typeof reply !== "string" || !reply.trim()) return;
 
-          await new Promise(r => setTimeout(r, 800 + Math.random() * 1200));
+          await new Promise(r => setTimeout(r, 200 + Math.random() * 300));
           const [botMsg] = await db.insert(messagesTable).values({
             chatId: body.chatId,
             senderId: bot.id,
