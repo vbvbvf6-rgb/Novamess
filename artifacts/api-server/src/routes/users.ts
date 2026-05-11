@@ -276,4 +276,44 @@ router.get("/stats/me", async (req, res) => {
   }
 });
 
+// Gift Showcase: top rarest unique gifts received by a user (public)
+router.get("/users/:userId/gift-showcase", async (req, res) => {
+  try {
+    const targetId = Number(req.params.userId);
+    if (!targetId) return res.status(400).json({ error: "Invalid userId" });
+
+    const rows = await db.execute(sql`
+      SELECT
+        gi.id,
+        gi.name,
+        gi.emoji,
+        gi.rarity,
+        gi.animation_type,
+        gi.stars,
+        COUNT(g.id)::int AS count
+      FROM gifts g
+      JOIN gift_items gi ON gi.id = g.gift_item_id
+      WHERE g.receiver_id = ${targetId}
+        AND g.is_anonymous = false
+      GROUP BY gi.id, gi.name, gi.emoji, gi.rarity, gi.animation_type, gi.stars
+      ORDER BY
+        CASE gi.rarity
+          WHEN 'cosmic'    THEN 1
+          WHEN 'legendary' THEN 2
+          WHEN 'epic'      THEN 3
+          WHEN 'rare'      THEN 4
+          ELSE 5
+        END ASC,
+        gi.stars DESC,
+        count DESC
+      LIMIT 8
+    `);
+
+    res.json(rows.rows);
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 export default router;

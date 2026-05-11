@@ -683,6 +683,134 @@ router.post("/admin/age-verifications/:userId/reject", requireAdmin, async (req,
   }
 });
 
+// ── Chat Management ───────────────────────────────────────────────────────────
+
+router.get("/admin/chats", requireAdmin, async (req, res) => {
+  try {
+    const rows = await db.execute(sql`
+      SELECT c.id, c.type, c.name, c.avatar_color, c.avatar_url, c.created_at,
+             COUNT(cm.user_id)::int AS member_count,
+             (SELECT COUNT(*)::int FROM messages m WHERE m.chat_id = c.id) AS message_count
+      FROM chats c
+      LEFT JOIN chat_members cm ON cm.chat_id = c.id
+      WHERE c.type IN ('group', 'channel')
+      GROUP BY c.id
+      ORDER BY c.created_at DESC
+      LIMIT 200
+    `);
+    res.json(rows.rows);
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Ошибка сервера" });
+  }
+});
+
+router.delete("/admin/chats/:chatId", requireAdmin, async (req, res) => {
+  try {
+    const chatId = Number(req.params.chatId);
+    if (!chatId) return res.status(400).json({ error: "Неверный chatId" });
+    await db.execute(sql`DELETE FROM reactions WHERE message_id IN (SELECT id FROM messages WHERE chat_id = ${chatId})`);
+    await db.execute(sql`DELETE FROM messages WHERE chat_id = ${chatId}`);
+    await db.execute(sql`DELETE FROM chat_members WHERE chat_id = ${chatId}`);
+    await db.execute(sql`DELETE FROM chats WHERE id = ${chatId}`);
+    res.json({ success: true });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Ошибка сервера" });
+  }
+});
+
+// ── Gift Catalog Management ───────────────────────────────────────────────────
+
+router.get("/admin/gift-catalog", requireAdmin, async (req, res) => {
+  try {
+    const rows = await db.execute(sql`
+      SELECT gi.id, gi.name, gi.emoji, gi.rarity, gi.animation_type, gi.stars, gi.price, gi.prime_only,
+             COUNT(g.id)::int AS times_sent
+      FROM gift_items gi
+      LEFT JOIN gifts g ON g.gift_item_id = gi.id
+      GROUP BY gi.id
+      ORDER BY
+        CASE gi.rarity WHEN 'cosmic' THEN 1 WHEN 'legendary' THEN 2 WHEN 'epic' THEN 3 WHEN 'rare' THEN 4 ELSE 5 END,
+        gi.stars DESC
+    `);
+    res.json(rows.rows);
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Ошибка сервера" });
+  }
+});
+
+router.patch("/admin/gift-items/:id", requireAdmin, async (req, res) => {
+  try {
+    const itemId = Number(req.params.id);
+    const { price, rarity, stars, primeOnly } = req.body;
+    const validRarities = ['common', 'rare', 'epic', 'legendary', 'cosmic'];
+    if (rarity && !validRarities.includes(rarity)) return res.status(400).json({ error: "Неверный rarity" });
+    if (price !== undefined) await db.execute(sql`UPDATE gift_items SET price = ${Number(price)} WHERE id = ${itemId}`);
+    if (rarity) await db.execute(sql`UPDATE gift_items SET rarity = ${rarity} WHERE id = ${itemId}`);
+    if (stars !== undefined) await db.execute(sql`UPDATE gift_items SET stars = ${Number(stars)} WHERE id = ${itemId}`);
+    if (primeOnly !== undefined) await db.execute(sql`UPDATE gift_items SET prime_only = ${!!primeOnly} WHERE id = ${itemId}`);
+    const updated = await db.execute(sql`SELECT id, name, emoji, rarity, stars, price, prime_only FROM gift_items WHERE id = ${itemId}`);
+    res.json({ success: true, item: updated.rows[0] });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Ошибка сервера" });
+  }
+});
+
+// ── Broadcast Push Notification ───────────────────────────────────────────────
+
+router.post("/admin/broadcast-push", requireAdmin, async (req, res) => {
+  try {
+    const { title, body, url } = req.body;
+    if (!title?.trim() || !body?.trim()) return res.status(400).json({ error: "Укажите title и body" });
+
+    const subs = await db.execute(sql`SELECT DISTINCT user_id FROM push_subscriptions`);
+    const userIds = (subs.rows as any[]).map(r => r.user_id);
+
+    let sent = 0;
+    const { sendPushToUser } = await import("./push.js");
+    for (const uid of userIds) {
+      await sendPushToUser(uid, { title: title.trim(), body: body.trim(), url: url || "/" });
+      sent++;
+    }
+
+    res.json({ success: true, sent, message: `Push отправлен ${sent} подписчикам` });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Ошибка сервера" });
+  }
+});
+
+// ── Detailed Stats ────────────────────────────────────────────────────────────
+
+router.get("/admin/stats/detailed", requireAdmin, async (req, res) => {
+  try {
+    const [newToday, newThisWeek, msgsToday, msgsThisWeek, giftsToday, topGifts, banned] = await Promise.all([
+      db.execute(sql`SELECT COUNT(*)::int AS cnt FROM users WHERE created_at >= NOW() - INTERVAL '1 day' AND is_bot = false`),
+      db.execute(sql`SELECT COUNT(*)::int AS cnt FROM users WHERE created_at >= NOW() - INTERVAL '7 days' AND is_bot = false`),
+      db.execute(sql`SELECT COUNT(*)::int AS cnt FROM messages WHERE created_at >= NOW() - INTERVAL '1 day'`),
+      db.execute(sql`SELECT COUNT(*)::int AS cnt FROM messages WHERE created_at >= NOW() - INTERVAL '7 days'`),
+      db.execute(sql`SELECT COUNT(*)::int AS cnt FROM gifts WHERE created_at >= NOW() - INTERVAL '1 day'`),
+      db.execute(sql`SELECT gi.name, gi.emoji, gi.rarity, COUNT(g.id)::int AS cnt FROM gifts g JOIN gift_items gi ON gi.id = g.gift_item_id GROUP BY gi.id, gi.name, gi.emoji, gi.rarity ORDER BY cnt DESC LIMIT 5`),
+      db.execute(sql`SELECT COUNT(*)::int AS cnt FROM users WHERE is_banned = true`).catch(() => ({ rows: [{ cnt: 0 }] })),
+    ]);
+    res.json({
+      newUsersToday: Number((newToday.rows[0] as any).cnt),
+      newUsersThisWeek: Number((newThisWeek.rows[0] as any).cnt),
+      messagesToday: Number((msgsToday.rows[0] as any).cnt),
+      messagesThisWeek: Number((msgsThisWeek.rows[0] as any).cnt),
+      giftsToday: Number((giftsToday.rows[0] as any).cnt),
+      topGifts: topGifts.rows,
+      bannedUsers: Number((banned.rows[0] as any).cnt || 0),
+    });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Ошибка сервера" });
+  }
+});
+
 router.get("/admin/check", async (req, res) => {
   try {
     const ok = await isAdminUser(req.currentUserId);

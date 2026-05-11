@@ -1,5 +1,6 @@
 import React from "react";
 import { useGetMyStats, useGetMe } from "@workspace/api-client-react";
+import { GiftShowcase } from "@/components/GiftShowcase";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MessageSquare, Phone, Gift, Users, Clock, CalendarDays, Settings, BadgeCheck, Crown } from "lucide-react";
 import { format } from "date-fns";
@@ -139,6 +140,9 @@ export default function Profile() {
                 <CalendarDays size={14} /> Joined {user?.createdAt ? format(new Date(user.createdAt), "MMMM yyyy") : "Unknown"}
               </div>
             </div>
+
+            {/* Gift Showcase */}
+            {user && <GiftShowcase userId={(user as any).id} />}
 
             {/* Stats Section */}
             <div>

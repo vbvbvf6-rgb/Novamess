@@ -251,6 +251,129 @@ export default function Admin() {
   const [ticketReplyText, setTicketReplyText] = useState("");
   const [ticketReplying, setTicketReplying] = useState(false);
 
+  // Chat Management
+  interface AdminChat {
+    id: number; type: string; name: string; avatar_color: string; avatar_url: string | null;
+    created_at: string; member_count: number; message_count: number;
+  }
+  const [adminChats, setAdminChats] = useState<AdminChat[]>([]);
+  const [adminChatsLoading, setAdminChatsLoading] = useState(false);
+  const [showAdminChats, setShowAdminChats] = useState(false);
+  const [deletingChatId, setDeletingChatId] = useState<number | null>(null);
+  const [chatSearchQ, setChatSearchQ] = useState("");
+
+  const fetchAdminChats = async () => {
+    setAdminChatsLoading(true);
+    try {
+      const res = await fetch("/api/admin/chats", { headers: getHeader() });
+      if (res.ok) setAdminChats(await res.json());
+    } catch {}
+    setAdminChatsLoading(false);
+  };
+
+  const handleDeleteChat = async (chatId: number) => {
+    setDeletingChatId(chatId);
+    try {
+      const res = await fetch(`/api/admin/chats/${chatId}`, { method: "DELETE", headers: getHeader() });
+      if (res.ok) {
+        setAdminChats(prev => prev.filter(c => c.id !== chatId));
+        showToast("🗑️ Чат удалён", "ok");
+      } else { showToast("Ошибка удаления", "err"); }
+    } catch { showToast("Ошибка соединения", "err"); }
+    setDeletingChatId(null);
+  };
+
+  // Gift Catalog Management
+  interface CatalogGift {
+    id: number; name: string; emoji: string; rarity: string; animation_type: string;
+    stars: number; price: number; prime_only: boolean; times_sent: number;
+  }
+  const [giftCatalog, setGiftCatalog] = useState<CatalogGift[]>([]);
+  const [giftCatalogLoading, setGiftCatalogLoading] = useState(false);
+  const [showGiftCatalog, setShowGiftCatalog] = useState(false);
+  const [editingCatalogGiftId, setEditingCatalogGiftId] = useState<number | null>(null);
+  const [catalogEdit, setCatalogEdit] = useState<Record<number, Partial<CatalogGift>>>({});
+  const [catalogSavingId, setCatalogSavingId] = useState<number | null>(null);
+
+  const fetchGiftCatalog = async () => {
+    setGiftCatalogLoading(true);
+    try {
+      const res = await fetch("/api/admin/gift-catalog", { headers: getHeader() });
+      if (res.ok) setGiftCatalog(await res.json());
+    } catch {}
+    setGiftCatalogLoading(false);
+  };
+
+  const handleSaveCatalogGift = async (giftId: number) => {
+    const edits = catalogEdit[giftId];
+    if (!edits) return;
+    setCatalogSavingId(giftId);
+    try {
+      const res = await fetch(`/api/admin/gift-items/${giftId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", ...getHeader() },
+        body: JSON.stringify({
+          price: edits.price !== undefined ? Number(edits.price) : undefined,
+          rarity: edits.rarity,
+          stars: edits.stars !== undefined ? Number(edits.stars) : undefined,
+          primeOnly: edits.prime_only,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) { showToast(data.error || "Ошибка", "err"); setCatalogSavingId(null); return; }
+      showToast("✅ Подарок обновлён", "ok");
+      setGiftCatalog(prev => prev.map(g => g.id === giftId ? { ...g, ...edits } : g));
+      setEditingCatalogGiftId(null);
+      setCatalogEdit(prev => { const n = { ...prev }; delete n[giftId]; return n; });
+    } catch { showToast("Ошибка соединения", "err"); }
+    setCatalogSavingId(null);
+  };
+
+  // Broadcast Push
+  const [showBroadcastPush, setShowBroadcastPush] = useState(false);
+  const [pushTitle, setPushTitle] = useState("");
+  const [pushBody, setPushBody] = useState("");
+  const [pushUrl, setPushUrl] = useState("");
+  const [pushLoading, setPushLoading] = useState(false);
+
+  const handleBroadcastPush = async () => {
+    if (!pushTitle.trim() || !pushBody.trim()) return showToast("Заполните заголовок и текст", "err");
+    setPushLoading(true);
+    try {
+      const res = await fetch("/api/admin/broadcast-push", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...getHeader() },
+        body: JSON.stringify({ title: pushTitle.trim(), body: pushBody.trim(), url: pushUrl.trim() || "/" }),
+      });
+      const data = await res.json();
+      if (!res.ok) { showToast(data.error || "Ошибка", "err"); setPushLoading(false); return; }
+      showToast(`📲 Push отправлен ${data.sent} подписчикам`, "ok");
+      setPushTitle(""); setPushBody(""); setPushUrl("");
+      setShowBroadcastPush(false);
+    } catch { showToast("Ошибка соединения", "err"); }
+    setPushLoading(false);
+  };
+
+  // Detailed Stats
+  interface DetailedStats {
+    newUsersToday: number; newUsersThisWeek: number;
+    messagesToday: number; messagesThisWeek: number; giftsToday: number;
+    topGifts: { name: string; emoji: string; rarity: string; cnt: number }[];
+    bannedUsers: number;
+  }
+  const [detailedStats, setDetailedStats] = useState<DetailedStats | null>(null);
+  const [detailedStatsLoading, setDetailedStatsLoading] = useState(false);
+  const [showDetailedStats, setShowDetailedStats] = useState(false);
+
+  const fetchDetailedStats = async () => {
+    setDetailedStatsLoading(true);
+    try {
+      const res = await fetch("/api/admin/stats/detailed", { headers: getHeader() });
+      if (res.ok) setDetailedStats(await res.json());
+    } catch {}
+    setDetailedStatsLoading(false);
+  };
+
   const fetchGiftItems = async () => {
     setGiftItemsLoading(true);
     try {
@@ -1356,6 +1479,338 @@ export default function Admin() {
               </div>
             )}
           </div>
+        </div>
+
+        {/* Detailed Stats */}
+        <div className="bg-card border border-border rounded-2xl overflow-hidden">
+          <button
+            onClick={() => { setShowDetailedStats(v => !v); if (!showDetailedStats && !detailedStats) fetchDetailedStats(); }}
+            className="w-full p-4 flex items-center justify-between hover:bg-secondary/50 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-indigo-500/10 flex items-center justify-center">
+                <BarChart3 size={18} className="text-indigo-400" />
+              </div>
+              <div className="text-left">
+                <p className="font-semibold text-sm">Подробная аналитика</p>
+                <p className="text-xs text-muted-foreground">Динамика за сегодня и неделю</p>
+              </div>
+            </div>
+            {showDetailedStats ? <ChevronDown size={16} className="text-muted-foreground" /> : <ChevronRight size={16} className="text-muted-foreground" />}
+          </button>
+          {showDetailedStats && (
+            <div className="border-t border-border p-4">
+              {detailedStatsLoading ? (
+                <div className="flex justify-center py-6"><RefreshCw size={20} className="animate-spin text-muted-foreground" /></div>
+              ) : detailedStats ? (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 text-center">
+                      <p className="text-xs text-muted-foreground mb-1">Новых сегодня</p>
+                      <p className="text-2xl font-black text-emerald-400">{detailedStats.newUsersToday}</p>
+                      <p className="text-[10px] text-muted-foreground">за неделю: {detailedStats.newUsersThisWeek}</p>
+                    </div>
+                    <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 text-center">
+                      <p className="text-xs text-muted-foreground mb-1">Сообщений сегодня</p>
+                      <p className="text-2xl font-black text-blue-400">{detailedStats.messagesToday}</p>
+                      <p className="text-[10px] text-muted-foreground">за неделю: {detailedStats.messagesThisWeek}</p>
+                    </div>
+                    <div className="bg-pink-500/10 border border-pink-500/20 rounded-xl p-3 text-center">
+                      <p className="text-xs text-muted-foreground mb-1">Подарков сегодня</p>
+                      <p className="text-2xl font-black text-pink-400">{detailedStats.giftsToday}</p>
+                      <p className="text-[10px] text-muted-foreground">заблокировано: {detailedStats.bannedUsers}</p>
+                    </div>
+                  </div>
+                  {detailedStats.topGifts.length > 0 && (
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Топ подарков по отправкам</p>
+                      <div className="space-y-1.5">
+                        {detailedStats.topGifts.map((g, i) => (
+                          <div key={i} className="flex items-center gap-2.5 text-sm">
+                            <span className="text-muted-foreground w-4 text-center font-black">{i + 1}</span>
+                            <span className="text-lg">{g.emoji}</span>
+                            <span className="flex-1 font-medium text-foreground">{g.name}</span>
+                            <span className={`text-[10px] font-black uppercase px-1.5 py-0.5 rounded ${
+                              g.rarity === "cosmic" ? "bg-violet-500/20 text-violet-300" :
+                              g.rarity === "legendary" ? "bg-amber-500/20 text-amber-300" :
+                              g.rarity === "epic" ? "bg-purple-500/20 text-purple-300" :
+                              g.rarity === "rare" ? "bg-blue-500/20 text-blue-300" : "bg-secondary text-muted-foreground"
+                            }`}>{g.rarity}</span>
+                            <span className="text-primary font-bold">{g.cnt}×</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <button onClick={fetchDetailedStats} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-secondary transition-colors">
+                    <RefreshCw size={12} className={detailedStatsLoading ? "animate-spin" : ""} /> Обновить
+                  </button>
+                </div>
+              ) : (
+                <p className="text-center text-muted-foreground text-sm py-6">Не удалось загрузить</p>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Broadcast Push + Chat Management */}
+        <div className="grid md:grid-cols-2 gap-4">
+          {/* Broadcast Push Notification */}
+          <div className="bg-card border border-border rounded-2xl overflow-hidden">
+            <button
+              onClick={() => setShowBroadcastPush(v => !v)}
+              className="w-full p-4 flex items-center justify-between hover:bg-secondary/50 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-sky-500/10 flex items-center justify-center">
+                  <SendIcon size={18} className="text-sky-400" />
+                </div>
+                <div className="text-left">
+                  <p className="font-semibold text-sm">Broadcast Push</p>
+                  <p className="text-xs text-muted-foreground">Push-уведомление всем подписчикам</p>
+                </div>
+              </div>
+              {showBroadcastPush ? <ChevronDown size={16} className="text-muted-foreground" /> : <ChevronRight size={16} className="text-muted-foreground" />}
+            </button>
+            {showBroadcastPush && (
+              <div className="px-4 pb-4 space-y-2.5 border-t border-border pt-3">
+                <input
+                  value={pushTitle}
+                  onChange={e => setPushTitle(e.target.value)}
+                  placeholder="Заголовок уведомления"
+                  className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-sky-500 transition-colors"
+                />
+                <textarea
+                  value={pushBody}
+                  onChange={e => setPushBody(e.target.value)}
+                  placeholder="Текст уведомления"
+                  rows={2}
+                  className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-sky-500 transition-colors resize-none"
+                />
+                <input
+                  value={pushUrl}
+                  onChange={e => setPushUrl(e.target.value)}
+                  placeholder="URL (необязательно, например /chats)"
+                  className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-sky-500 transition-colors"
+                />
+                <button
+                  onClick={handleBroadcastPush}
+                  disabled={pushLoading || !pushTitle.trim() || !pushBody.trim()}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-sky-500 text-white font-bold text-sm hover:bg-sky-600 transition-colors disabled:opacity-50"
+                >
+                  <SendIcon size={14} />
+                  {pushLoading ? "Отправляем..." : "Отправить push всем"}
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Chat Management */}
+          <div className="bg-card border border-border rounded-2xl overflow-hidden">
+            <button
+              onClick={() => { setShowAdminChats(v => !v); if (!showAdminChats && adminChats.length === 0) fetchAdminChats(); }}
+              className="w-full p-4 flex items-center justify-between hover:bg-secondary/50 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-teal-500/10 flex items-center justify-center">
+                  <MessageSquare size={18} className="text-teal-400" />
+                </div>
+                <div className="text-left">
+                  <p className="font-semibold text-sm">Управление чатами</p>
+                  <p className="text-xs text-muted-foreground">Просмотр и удаление групп/каналов</p>
+                </div>
+              </div>
+              {showAdminChats ? <ChevronDown size={16} className="text-muted-foreground" /> : <ChevronRight size={16} className="text-muted-foreground" />}
+            </button>
+            {showAdminChats && (
+              <div className="border-t border-border">
+                <div className="p-2 border-b border-border flex items-center gap-2">
+                  <input
+                    value={chatSearchQ}
+                    onChange={e => setChatSearchQ(e.target.value)}
+                    placeholder="Поиск чата..."
+                    className="flex-1 text-xs bg-background border border-border rounded-lg px-2.5 py-1.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-teal-500 transition-colors"
+                  />
+                  <button onClick={fetchAdminChats} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-secondary transition-colors shrink-0">
+                    <RefreshCw size={12} className={adminChatsLoading ? "animate-spin" : ""} />
+                  </button>
+                </div>
+                {adminChatsLoading ? (
+                  <div className="p-6 flex justify-center"><RefreshCw size={20} className="animate-spin text-muted-foreground" /></div>
+                ) : adminChats.length === 0 ? (
+                  <div className="p-6 text-center text-sm text-muted-foreground">Нет групп или каналов</div>
+                ) : (
+                  <div className="divide-y divide-border max-h-80 overflow-y-auto">
+                    {adminChats
+                      .filter(c => !chatSearchQ || c.name?.toLowerCase().includes(chatSearchQ.toLowerCase()))
+                      .map(chat => (
+                        <div key={chat.id} className="p-3 flex items-center gap-3 group hover:bg-secondary/30 transition-colors">
+                          <div
+                            className="w-9 h-9 rounded-full shrink-0 flex items-center justify-center text-white text-sm font-bold overflow-hidden"
+                            style={{ backgroundColor: chat.avatar_color }}
+                          >
+                            {chat.avatar_url ? <img src={chat.avatar_url} className="w-full h-full object-cover" alt="" /> : (chat.name || "?")[0].toUpperCase()}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold truncate">{chat.name || "Без названия"}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {chat.type === "channel" ? "Канал" : "Группа"} · {chat.member_count} участн. · {chat.message_count} сообщ.
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => handleDeleteChat(chat.id)}
+                            disabled={deletingChatId === chat.id}
+                            className="shrink-0 p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors opacity-0 group-hover:opacity-100 disabled:opacity-50"
+                            title="Удалить чат"
+                          >
+                            {deletingChatId === chat.id ? <RefreshCw size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                          </button>
+                        </div>
+                      ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Gift Catalog Editor */}
+        <div className="bg-card border border-border rounded-2xl overflow-hidden">
+          <button
+            onClick={() => { setShowGiftCatalog(v => !v); if (!showGiftCatalog && giftCatalog.length === 0) fetchGiftCatalog(); }}
+            className="w-full p-4 flex items-center justify-between hover:bg-secondary/50 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-pink-500/10 flex items-center justify-center">
+                <Gift size={18} className="text-pink-400" />
+              </div>
+              <div className="text-left">
+                <p className="font-semibold text-sm">Каталог подарков</p>
+                <p className="text-xs text-muted-foreground">Редактирование цен, редкости и звёзд</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {giftCatalog.length > 0 && <span className="text-xs text-muted-foreground">{giftCatalog.length} подарков</span>}
+              {showGiftCatalog ? <ChevronDown size={16} className="text-muted-foreground" /> : <ChevronRight size={16} className="text-muted-foreground" />}
+            </div>
+          </button>
+          {showGiftCatalog && (
+            <div className="border-t border-border">
+              <div className="p-2 border-b border-border flex justify-end">
+                <button onClick={fetchGiftCatalog} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-secondary transition-colors">
+                  <RefreshCw size={12} className={giftCatalogLoading ? "animate-spin" : ""} /> Обновить
+                </button>
+              </div>
+              {giftCatalogLoading ? (
+                <div className="p-6 flex justify-center"><RefreshCw size={20} className="animate-spin text-muted-foreground" /></div>
+              ) : giftCatalog.length === 0 ? (
+                <div className="p-6 text-center text-sm text-muted-foreground">Каталог пуст</div>
+              ) : (
+                <div className="divide-y divide-border max-h-[480px] overflow-y-auto">
+                  {giftCatalog.map(gift => {
+                    const isEditing = editingCatalogGiftId === gift.id;
+                    const edits = catalogEdit[gift.id] || {};
+                    const currentRarity = edits.rarity ?? gift.rarity;
+                    return (
+                      <div key={gift.id} className={`p-3 transition-colors ${isEditing ? "bg-secondary/20" : "hover:bg-secondary/10"}`}>
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 shrink-0 flex items-center justify-center">
+                            <AdminGiftThumb name={gift.name} emoji={gift.emoji} size={38} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className="text-sm font-semibold truncate">{gift.name}</p>
+                              <span className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded ${
+                                currentRarity === "cosmic" ? "bg-violet-500/20 text-violet-300" :
+                                currentRarity === "legendary" ? "bg-amber-500/20 text-amber-300" :
+                                currentRarity === "epic" ? "bg-purple-500/20 text-purple-300" :
+                                currentRarity === "rare" ? "bg-blue-500/20 text-blue-300" : "bg-secondary text-muted-foreground"
+                              }`}>{currentRarity}</span>
+                              {gift.prime_only && <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300">PRIME</span>}
+                            </div>
+                            <p className="text-xs text-muted-foreground">⭐ {edits.stars ?? gift.stars} · {(edits.price ?? gift.price).toLocaleString()} ⚡ · отправлено: {gift.times_sent}×</p>
+                          </div>
+                          <button
+                            onClick={() => {
+                              if (isEditing) { setEditingCatalogGiftId(null); setCatalogEdit(prev => { const n = { ...prev }; delete n[gift.id]; return n; }); }
+                              else setEditingCatalogGiftId(gift.id);
+                            }}
+                            className="shrink-0 p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                          >
+                            {isEditing ? <X size={14} /> : <Edit3 size={14} />}
+                          </button>
+                        </div>
+                        {isEditing && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            className="mt-3 space-y-2 pl-13"
+                          >
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <label className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">Цена (⚡)</label>
+                                <input
+                                  type="number"
+                                  value={edits.price ?? gift.price}
+                                  onChange={e => setCatalogEdit(prev => ({ ...prev, [gift.id]: { ...prev[gift.id], price: Number(e.target.value) } }))}
+                                  className="mt-1 w-full bg-background border border-border rounded-lg px-2.5 py-1.5 text-sm text-foreground focus:outline-none focus:border-primary transition-colors"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">Звёзды</label>
+                                <input
+                                  type="number"
+                                  min={1}
+                                  max={200}
+                                  value={edits.stars ?? gift.stars}
+                                  onChange={e => setCatalogEdit(prev => ({ ...prev, [gift.id]: { ...prev[gift.id], stars: Number(e.target.value) } }))}
+                                  className="mt-1 w-full bg-background border border-border rounded-lg px-2.5 py-1.5 text-sm text-foreground focus:outline-none focus:border-primary transition-colors"
+                                />
+                              </div>
+                            </div>
+                            <div>
+                              <label className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">Редкость</label>
+                              <div className="mt-1 flex flex-wrap gap-1.5">
+                                {(["common","rare","epic","legendary","cosmic"] as const).map(r => (
+                                  <button
+                                    key={r}
+                                    onClick={() => setCatalogEdit(prev => ({ ...prev, [gift.id]: { ...prev[gift.id], rarity: r } }))}
+                                    className={`px-2 py-1 rounded-lg text-[10px] font-black uppercase transition-all ${
+                                      currentRarity === r
+                                        ? r === "cosmic" ? "bg-violet-500 text-white" : r === "legendary" ? "bg-amber-500 text-black" : r === "epic" ? "bg-purple-500 text-white" : r === "rare" ? "bg-blue-500 text-white" : "bg-secondary text-foreground"
+                                        : "bg-secondary/60 text-muted-foreground hover:bg-secondary"
+                                    }`}
+                                  >
+                                    {r}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => setCatalogEdit(prev => ({ ...prev, [gift.id]: { ...prev[gift.id], prime_only: !(edits.prime_only ?? gift.prime_only) } }))}
+                                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all ${(edits.prime_only ?? gift.prime_only) ? "bg-amber-500/20 border border-amber-500/50 text-amber-300" : "bg-secondary text-muted-foreground hover:bg-secondary/80"}`}
+                              >
+                                <Crown size={12} /> Prime Only
+                              </button>
+                            </div>
+                            <button
+                              onClick={() => handleSaveCatalogGift(gift.id)}
+                              disabled={catalogSavingId === gift.id || Object.keys(edits).length === 0}
+                              className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-primary text-primary-foreground font-bold text-sm hover:bg-primary/90 transition-colors disabled:opacity-50"
+                            >
+                              <Save size={14} />
+                              {catalogSavingId === gift.id ? "Сохраняем..." : "Сохранить изменения"}
+                            </button>
+                          </motion.div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Posts Moderation + Leaderboard */}
