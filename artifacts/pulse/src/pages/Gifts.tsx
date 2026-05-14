@@ -103,45 +103,55 @@ function GiftImage({ src, name, emoji, size, glowColor, rarity = "common", orbSt
   const [failed, setFailed] = useState(false);
   const isHighRarity = ["epic", "legendary", "cosmic"].includes(rarity);
   const isTopRarity = ["legendary", "cosmic"].includes(rarity);
-  const orbSize = Math.round(size * 1.35);
-
-  if (failed) {
-    return (
-      <div style={{ width: orbSize, height: orbSize, borderRadius: Math.round(orbSize * 0.22), background: orbStyle.inner, boxShadow: orbStyle.glow, display: "flex", alignItems: "center", justifyContent: "center", fontSize: size * 0.56, lineHeight: 1, position: "relative", overflow: "hidden" }}>
-        <div className="absolute inset-0 rounded-full opacity-60" style={{ background: orbStyle.outer, filter: "blur(8px)", transform: "scale(1.15)" }} />
-        <span className="relative z-10 select-none" style={{ fontFamily: '"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif', filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.6))" }}>{emoji}</span>
-      </div>
-    );
-  }
+  const orbSize = Math.round(size * 1.38);
+  const imgSize = Math.round(size * 0.68);
 
   return (
-    <div style={{ position: "relative", width: size, height: size, display: "flex", alignItems: "center", justifyContent: "center" }}>
+    <div style={{ position: "relative", width: orbSize, height: orbSize, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      {/* Outer glow bloom */}
       {isHighRarity && (
         <motion.div
-          style={{ position: "absolute", width: size * 0.9, height: size * 0.9, borderRadius: "50%", background: glowColor, filter: `blur(${Math.round(size * 0.28)}px)`, zIndex: 0 }}
-          animate={{ opacity: [0.25, 0.7, 0.25], scale: [0.85, 1.15, 0.85] }}
-          transition={{ duration: isTopRarity ? 1.7 : 2.3, repeat: Infinity, ease: "easeInOut" }}
+          style={{ position: "absolute", inset: -Math.round(size * 0.18), borderRadius: "50%", background: glowColor, filter: `blur(${Math.round(size * 0.32)}px)`, zIndex: 0 }}
+          animate={{ opacity: [0.2, 0.55, 0.2], scale: [0.9, 1.12, 0.9] }}
+          transition={{ duration: isTopRarity ? 1.6 : 2.2, repeat: Infinity, ease: "easeInOut" }}
         />
       )}
-      <img
-        src={src}
-        alt={name}
-        onError={() => setFailed(true)}
-        style={{
-          position: "relative", zIndex: 1, width: size, height: size, objectFit: "contain",
-          filter: isTopRarity
-            ? `drop-shadow(0 0 ${Math.round(size * 0.22)}px ${glowColor}) drop-shadow(0 0 ${Math.round(size * 0.1)}px ${glowColor})`
-            : isHighRarity
-            ? `drop-shadow(0 0 ${Math.round(size * 0.16)}px ${glowColor})`
-            : `drop-shadow(0 2px ${Math.round(size * 0.1)}px rgba(0,0,0,0.5))`,
-        }}
-        draggable={false}
-      />
+      {/* Orb sphere — always visible */}
+      <div style={{ position: "relative", width: orbSize, height: orbSize, borderRadius: "50%", background: orbStyle.inner, boxShadow: orbStyle.glow, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", zIndex: 1 }}>
+        {/* Specular highlight */}
+        <div style={{ position: "absolute", top: "9%", left: "13%", width: "36%", height: "26%", borderRadius: "50%", background: "radial-gradient(ellipse, rgba(255,255,255,0.55), transparent 70%)", pointerEvents: "none", zIndex: 3 }} />
+        {/* Inner pulse */}
+        <motion.div
+          style={{ position: "absolute", inset: 0, borderRadius: "50%", background: orbStyle.outer }}
+          animate={{ opacity: [0.15, 0.4, 0.15] }}
+          transition={{ duration: isTopRarity ? 1.4 : 2, repeat: Infinity, ease: "easeInOut" }}
+        />
+        {/* Emoji/image centred on the orb */}
+        {failed ? (
+          <span style={{ fontSize: imgSize * 0.85, lineHeight: 1, position: "relative", zIndex: 2, fontFamily: '"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif', filter: `drop-shadow(0 2px 8px rgba(0,0,0,0.55))` }}>{emoji}</span>
+        ) : (
+          <img
+            src={src}
+            alt={name}
+            onError={() => setFailed(true)}
+            style={{
+              position: "relative", zIndex: 2, width: imgSize, height: imgSize, objectFit: "contain",
+              filter: isTopRarity
+                ? `drop-shadow(0 0 ${Math.round(size * 0.2)}px ${glowColor}) drop-shadow(0 0 ${Math.round(size * 0.08)}px rgba(255,255,255,0.35))`
+                : isHighRarity
+                ? `drop-shadow(0 0 ${Math.round(size * 0.14)}px ${glowColor})`
+                : `drop-shadow(0 2px ${Math.round(size * 0.1)}px rgba(0,0,0,0.45))`,
+            }}
+            draggable={false}
+          />
+        )}
+      </div>
+      {/* Animated ring for high rarity */}
       {isHighRarity && (
         <motion.div
-          style={{ position: "absolute", inset: -2, borderRadius: Math.round(size * 0.22) + 2, border: `${isTopRarity ? 2 : 1.5}px solid ${glowColor}`, zIndex: 2, pointerEvents: "none" }}
-          animate={{ opacity: [0.25, 0.9, 0.25], scale: [0.96, 1.04, 0.96] }}
-          transition={{ duration: isTopRarity ? 1.4 : 2, repeat: Infinity, ease: "easeInOut" }}
+          style={{ position: "absolute", inset: -3, borderRadius: "50%", border: `${isTopRarity ? 2.5 : 1.5}px solid ${glowColor}`, zIndex: 4, pointerEvents: "none" }}
+          animate={{ opacity: [0.15, 0.85, 0.15], scale: [0.95, 1.05, 0.95] }}
+          transition={{ duration: isTopRarity ? 1.3 : 1.8, repeat: Infinity, ease: "easeInOut" }}
         />
       )}
     </div>
@@ -210,13 +220,15 @@ function GiftVisual({ name, emoji, animationType, size = 56, rarity = "common" }
   const orb = RARITY_ORBS[rarity] || RARITY_ORBS.common;
   const glowColor = RARITY_GLOW_COLORS[rarity] || RARITY_GLOW_COLORS.common;
   const isHighRarity = ["epic", "legendary", "cosmic"].includes(rarity);
-  const wrapSize = size + (isHighRarity ? Math.round(size * 0.5) : 0);
+  const orbSize = Math.round(size * 1.38);
+  const particlePad = isHighRarity ? Math.round(size * 0.55) : Math.round(size * 0.15);
+  const wrapSize = orbSize + particlePad * 2;
 
   return (
     <div style={{ position: "relative", width: wrapSize, height: wrapSize, display: "flex", alignItems: "center", justifyContent: "center" }}>
       {isHighRarity && <FloatingParticles animationType={animationType} size={size} rarity={rarity} />}
       <motion.div
-        style={{ position: "relative", zIndex: 1, width: size, height: size, display: "flex", alignItems: "center", justifyContent: "center" }}
+        style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}
         {...(anim as any)}
       >
         <GiftImage src={imgSrc} name={name} emoji={emoji} size={size} glowColor={glowColor} rarity={rarity} orbStyle={orb} />
@@ -464,13 +476,25 @@ function GiftCard({ item, onClick, hasPrime }: { item: GiftItem; onClick: () => 
         }}
       />
 
-      {/* Bottom name + price */}
+      {/* Bottom name + price + popularity */}
       <div className="relative z-10 w-full px-2 pb-2.5 pt-1 text-center">
         <p className={`text-[11px] font-bold leading-tight truncate ${cfg.textColor}`}>{item.name}</p>
-        <div className="flex items-center justify-center gap-0.5 mt-0.5">
-          <span className="text-[9px] text-white/35 font-medium mr-0.5">Цена</span>
-          <span className="text-[10px]">⚡</span>
-          <span className="text-[10px] text-yellow-400 font-black">{(item as any).price ?? item.stars}</span>
+        <div className="flex items-center justify-between mt-1 px-0.5">
+          <div className="flex flex-col items-center gap-0">
+            <span className="text-[7px] text-white/35 font-semibold uppercase tracking-wide">Цена</span>
+            <div className="flex items-center gap-0.5">
+              <span className="text-[9px]">⚡</span>
+              <span className="text-[9px] text-yellow-400 font-black">{((item as any).price ?? item.stars).toLocaleString()}</span>
+            </div>
+          </div>
+          <div className="w-px h-5 bg-white/10" />
+          <div className="flex flex-col items-center gap-0">
+            <span className="text-[7px] text-white/35 font-semibold uppercase tracking-wide">Популяр.</span>
+            <div className="flex items-center gap-0.5">
+              <span className="text-[9px]">🔥</span>
+              <span className="text-[9px] text-orange-300 font-black">{Math.min((item as any).timesGiven ?? 0, 10000).toLocaleString()}</span>
+            </div>
+          </div>
         </div>
       </div>
 

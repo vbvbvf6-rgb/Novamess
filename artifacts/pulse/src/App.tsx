@@ -347,8 +347,6 @@ function App() {
   };
 
   const handleLogout = () => {
-    const currentId = userId;
-    if (currentId) removeAccount(currentId);
     sessionStorage.removeItem("pulse-user-id");
     sessionStorage.removeItem("pulse-user");
     sessionStorage.removeItem("pulse-token");
