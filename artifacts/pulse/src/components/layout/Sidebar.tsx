@@ -17,11 +17,9 @@ import {
   Sparkles,
   Crown,
   X,
-  Menu,
   UserPlus,
   Check,
   Trash2,
-  Bot,
   Trophy,
 } from "lucide-react";
 import {
@@ -107,7 +105,7 @@ function AccountRow({
 interface SidebarProps {
   mobileSidebarOpen: boolean;
   onMobileClose: () => void;
-  onMobileOpen: () => void;
+  onMobileOpen?: () => void;
 }
 
 export function Sidebar({ mobileSidebarOpen, onMobileClose, onMobileOpen }: SidebarProps) {
@@ -127,17 +125,16 @@ export function Sidebar({ mobileSidebarOpen, onMobileClose, onMobileOpen }: Side
   const isPremium = (me as any)?.hasPrime ?? false;
 
   const NAV_ITEMS: Array<{ href: string; icon: any; label: string; soon?: boolean }> = [
-    { href: "/",         icon: MessageCircle, label: t("nav.chats") },
-    { href: "/calls",    icon: Phone,         label: t("nav.calls") },
-    { href: "/feed",     icon: Rss,           label: t("nav.feed") },
-    { href: "/contacts", icon: Users,         label: t("nav.contacts") },
-    { href: "/gifts",    icon: Gift,          label: t("nav.gifts"),          soon: true },
-    { href: "/stories",  icon: History,       label: t("nav.stories") },
-    { href: "/wallet",   icon: Wallet,        label: t("nav.wallet"),         soon: true },
-    { href: "/bots",         icon: Bot,           label: t("nav.bots") },
+    { href: "/",             icon: MessageCircle, label: t("nav.chats") },
+    { href: "/calls",        icon: Phone,         label: t("nav.calls") },
+    { href: "/feed",         icon: Rss,           label: t("nav.feed") },
+    { href: "/contacts",     icon: Users,         label: t("nav.contacts") },
+    { href: "/gifts",        icon: Gift,          label: t("nav.gifts"),       soon: true },
+    { href: "/stories",      icon: History,       label: t("nav.stories") },
+    { href: "/wallet",       icon: Wallet,        label: t("nav.wallet") },
     { href: "/leaderboard",  icon: Trophy,        label: t("nav.leaderboard"), soon: true },
     { href: "/profile",      icon: UserCircle,    label: t("nav.profile") },
-    { href: "/settings", icon: Settings,      label: t("nav.settings") },
+    { href: "/settings",     icon: Settings,      label: t("nav.settings") },
   ];
 
   const AccountsSection = (
@@ -321,186 +318,5 @@ export function Sidebar({ mobileSidebarOpen, onMobileClose, onMobileOpen }: Side
     </div>
   );
 
-  const MobileSidebarContent = (
-    <div className="flex flex-col h-full bg-card border-r border-border">
-      <div className="flex items-center justify-between px-5 mb-6 pt-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-[14px] bg-gradient-to-br from-primary to-violet-700 flex items-center justify-center shadow-[0_0_20px_rgba(139,92,246,0.35)] shrink-0">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M13 2L4.5 13.5H11L10 22L19.5 10.5H13L13 2Z" fill="white" />
-            </svg>
-          </div>
-          <span className="font-black text-xl tracking-tight">Pulse</span>
-        </div>
-        <button
-          onClick={onMobileClose}
-          className="p-2 rounded-xl text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
-        >
-          <X size={20} />
-        </button>
-      </div>
-
-      <nav className="flex-1 w-full flex flex-col gap-1.5 px-3 overflow-y-auto">
-        {NAV_ITEMS.map((item) => {
-          const isActive = location === item.href || (item.href !== "/" && location.startsWith(item.href));
-          const showBadge = item.href === "/" && totalUnread > 0;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={onMobileClose}
-              className={cn(
-                "flex items-center gap-3 p-3.5 rounded-xl transition-all duration-200 group relative",
-                isActive
-                  ? "bg-primary text-primary-foreground shadow-[0_4px_14px_rgba(139,92,246,0.3)]"
-                  : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-              )}
-            >
-              <div className="relative shrink-0">
-                <item.icon
-                  size={20}
-                  className={cn(
-                    "transition-transform duration-300",
-                    isActive ? "text-white scale-110" : ""
-                  )}
-                />
-                {showBadge && (
-                  <div className={cn(
-                    "absolute -top-2 -right-2 text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center shadow-sm",
-                    isActive ? "bg-white text-primary" : "bg-primary text-white"
-                  )}>
-                    {totalUnread > 99 ? "99+" : totalUnread}
-                  </div>
-                )}
-              </div>
-              <span className="font-semibold truncate text-[15px] flex-1">{item.label}</span>
-              {item.soon && (
-                <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/25 shrink-0">Soon</span>
-              )}
-            </Link>
-          );
-        })}
-
-        <Link
-          href="/prime"
-          onClick={onMobileClose}
-          className={cn(
-            "flex items-center gap-3 p-3.5 rounded-xl transition-all duration-200 group relative border mt-2",
-            location.startsWith("/prime")
-              ? "bg-gradient-to-r from-violet-600 to-indigo-500 text-white border-transparent shadow-[0_4px_14px_rgba(139,92,246,0.4)]"
-              : "border-violet-500/20 text-violet-400 hover:bg-violet-500/10 hover:border-violet-500/30"
-          )}
-        >
-          <Crown size={20} className="shrink-0" />
-          <span className="font-semibold truncate text-[15px]">{t("nav.prime")}</span>
-        </Link>
-
-        {isAdmin && (
-          <Link
-            href="/admin"
-            onClick={onMobileClose}
-            className={cn(
-              "flex items-center gap-3 p-3.5 rounded-xl transition-all duration-200 group relative border mt-2",
-              location.startsWith("/admin")
-                ? "bg-gradient-to-r from-indigo-500 to-purple-600 text-white border-transparent shadow-[0_4px_14px_rgba(99,102,241,0.4)]"
-                : "border-indigo-500/20 text-indigo-400 hover:bg-indigo-500/10 hover:border-indigo-500/30"
-            )}
-          >
-            <Shield size={20} className="shrink-0" />
-            <span className="font-semibold truncate text-[15px]">{t("nav.admin")}</span>
-          </Link>
-        )}
-      </nav>
-
-      <div className="w-full px-3 py-4 mt-auto border-t border-border bg-card">
-        {savedAccounts.length > 0 && (
-          <div className="mb-3 space-y-1">
-            {savedAccounts.map(acc => (
-              <AccountRow
-                key={acc.userId}
-                account={acc}
-                isActive={acc.userId === currentUserId}
-                onSwitch={() => { switchAccount(acc.userId); onMobileClose(); }}
-                onRemove={() => removeAccount(acc.userId)}
-              />
-            ))}
-          </div>
-        )}
-
-        {canAddAccount && (
-          <button
-            onClick={() => { openAddAccount(); onMobileClose(); }}
-            className="w-full flex items-center gap-2 px-4 py-3 rounded-xl text-primary hover:bg-primary/10 transition-all font-semibold text-[15px] mb-3 border border-primary/20 border-dashed"
-          >
-            <UserPlus size={18} />
-            Добавить аккаунт
-          </button>
-        )}
-
-        <div className="flex items-center gap-3 p-3 rounded-xl bg-secondary/50 border border-border/50">
-          <div className="relative shrink-0">
-            <div
-              className={cn(
-                "w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm overflow-hidden",
-                isPremium && "ring-2 ring-violet-500 ring-offset-2 ring-offset-card"
-              )}
-              style={{ backgroundColor: me?.avatarColor || "#3B82F6" }}
-            >
-              {me?.avatarUrl ? (
-                <img src={me.avatarUrl} alt="" className="w-full h-full object-cover" />
-              ) : initial}
-            </div>
-          </div>
-
-          <div className="flex flex-1 min-w-0 flex-col">
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <p className="text-sm font-bold truncate text-foreground leading-tight">{me?.displayName || "..."}</p>
-              {(me as any)?.isVerified && <VerifiedBadge />}
-            </div>
-            <p className="text-xs text-muted-foreground truncate font-medium">@{me?.username || "..."}</p>
-          </div>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors shrink-0">
-                <MoreHorizontal size={20} />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent side="top" align="end" className="w-56 rounded-2xl p-2 shadow-2xl border-border">
-              <DropdownMenuItem asChild className="rounded-xl cursor-pointer">
-                <Link href="/profile" onClick={onMobileClose} className="flex items-center w-full">
-                  <UserCircle size={16} className="mr-2.5 text-primary" />
-                  <span className="font-semibold">{t("menu.myProfile")}</span>
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild className="rounded-xl cursor-pointer">
-                <Link href="/settings" onClick={onMobileClose} className="flex items-center w-full">
-                  <Settings size={16} className="mr-2.5 text-muted-foreground" />
-                  <span className="font-semibold">{t("menu.settings")}</span>
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={logout} className="rounded-xl text-destructive focus:text-destructive cursor-pointer">
-                <LogOut size={16} className="mr-2.5" />
-                <span className="font-semibold">{t("menu.logout")}</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
-    </div>
-  );
-
-  return (
-    <>
-      {DesktopSidebar}
-
-      <div className={cn(
-        "md:hidden fixed inset-y-0 left-0 w-80 z-40 transition-transform duration-300 ease-out shadow-2xl",
-        mobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
-      )}>
-        {MobileSidebarContent}
-      </div>
-    </>
-  );
+  return <>{DesktopSidebar}</>;
 }
