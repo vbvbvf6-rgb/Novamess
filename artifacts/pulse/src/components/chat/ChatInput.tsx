@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, memo } from "react";
 import { emojiToTwemojiUrl } from "@/lib/twemoji";
 import { useSendMessage, useGetMe, getGetMessagesQueryKey, getGetChatsQueryKey, Message } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Paperclip, Mic, SendHorizontal, X, Square, Trash2, Images, Reply, Pencil, Clock, BarChart2, Plus, Minus, SmilePlus, Wand2 } from "lucide-react";
+import { Paperclip, Mic, SendHorizontal, X, Square, Trash2, Images, Reply, Pencil, Clock, BarChart2, Plus, Minus, SmilePlus, Wand2, CalendarClock, Hourglass } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const STICKERS = [
@@ -118,6 +118,9 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
   const [isSending, setIsSending] = useState(false);
   const [scheduledAt, setScheduledAt] = useState<string>("");
   const [showScheduler, setShowScheduler] = useState(false);
+  const [scheduledMessages, setScheduledMessages] = useState<any[]>([]);
+  const [showScheduledList, setShowScheduledList] = useState(false);
+  const [loadingScheduled, setLoadingScheduled] = useState(false);
 
   const [isRecording, setIsRecording] = useState(false);
   const [recordSeconds, setRecordSeconds] = useState(0);
@@ -135,6 +138,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
   const [showEffectPicker, setShowEffectPicker] = useState(false);
 
   const isPrimePlus = !!(me as any)?.hasPrime && (me as any)?.primeTier === "prime_plus";
+  const isPrime = !!(me as any)?.hasPrime;
 
   const queryClient = useQueryClient();
   const sendMessage = useSendMessage();
@@ -198,6 +202,49 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
   const getAuthHeaders = (): Record<string, string> => {
     const token = sessionStorage.getItem("pulse-token");
     return token ? { "Authorization": `Bearer ${token}` } : {};
+  };
+
+  const fetchScheduledMessages = async () => {
+    if (!isPrime) return;
+    setLoadingScheduled(true);
+    try {
+      const res = await fetch(`/api/messages/scheduled?chatId=${chatId}`, { headers: getAuthHeaders() });
+      if (res.ok) setScheduledMessages(await res.json());
+    } catch {}
+    setLoadingScheduled(false);
+  };
+
+  const handleCancelScheduled = async (id: number) => {
+    try {
+      await fetch(`/api/messages/scheduled/${id}`, { method: "DELETE", headers: getAuthHeaders() });
+      setScheduledMessages(prev => prev.filter(m => m.id !== id));
+    } catch {}
+  };
+
+  const applyTimePreset = (offsetMs: number) => {
+    const d = new Date(Date.now() + offsetMs);
+    const pad = (n: number) => n.toString().padStart(2, "0");
+    setScheduledAt(`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`);
+  };
+
+  const applyAbsolutePreset = (hour: number, offsetDays = 1) => {
+    const d = new Date();
+    d.setDate(d.getDate() + offsetDays);
+    d.setHours(hour, 0, 0, 0);
+    const pad = (n: number) => n.toString().padStart(2, "0");
+    setScheduledAt(`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`);
+  };
+
+  const formatScheduledAt = (iso: string) => {
+    const d = new Date(iso);
+    const now = new Date();
+    const tomorrow = new Date(now); tomorrow.setDate(now.getDate() + 1);
+    const isToday = d.toDateString() === now.toDateString();
+    const isTomorrow = d.toDateString() === tomorrow.toDateString();
+    const timeStr = d.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+    if (isToday) return `Сегодня в ${timeStr}`;
+    if (isTomorrow) return `Завтра в ${timeStr}`;
+    return d.toLocaleDateString("ru-RU", { day: "numeric", month: "short" }) + ` в ${timeStr}`;
   };
 
   const sendTypingEvent = () => {
@@ -428,10 +475,16 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
         headers,
         body: JSON.stringify({ chatId, text: text.trim(), scheduledAt: new Date(scheduledAt).toISOString() }),
       });
-      if (!res.ok) return alert("Ошибка");
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        alert(err.error || "Ошибка планирования");
+        return;
+      }
+      const newMsg = await res.json();
+      setScheduledMessages(prev => [...prev, newMsg].sort((a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime()));
       setText("");
       setScheduledAt("");
-      setShowScheduler(false);
+      setShowScheduledList(true);
       if (textareaRef.current) textareaRef.current.style.height = "64px";
       localStorage.removeItem(draftKey);
     } catch {
@@ -451,36 +504,140 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
         <AnimatePresence>
           {showScheduler && (
             <motion.div
-              initial={{ opacity: 0, y: 10, scale: 0.95 }}
+              initial={{ opacity: 0, y: 12, scale: 0.96 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 10, scale: 0.95 }}
-              className="absolute bottom-full mb-3 left-0 right-0 z-50 bg-card border border-border rounded-[24px] p-5 shadow-2xl origin-bottom"
+              exit={{ opacity: 0, y: 12, scale: 0.96 }}
+              className="absolute bottom-full mb-3 left-0 right-0 z-50 bg-card border border-border rounded-[24px] shadow-2xl origin-bottom overflow-hidden"
             >
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2.5 font-bold text-[15px]">
+              {/* Header */}
+              <div className="flex items-center justify-between px-5 pt-5 pb-4">
+                <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Clock size={16} className="text-primary" />
+                    <CalendarClock size={16} className="text-primary" />
                   </div>
-                  Запланировать
+                  <span className="font-bold text-[15px]">Запланировать</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-gradient-to-r from-violet-500/20 to-indigo-500/20 text-violet-400 border border-violet-500/20">
+                    Prime
+                  </span>
                 </div>
-                <button onClick={() => setShowScheduler(false)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors">
+                <button onClick={() => { setShowScheduler(false); setShowScheduledList(false); }} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors">
                   <X size={18} />
                 </button>
               </div>
-              <input
-                type="datetime-local"
-                value={scheduledAt}
-                min={minDatetime}
-                onChange={e => setScheduledAt(e.target.value)}
-                className="w-full bg-secondary border-transparent rounded-[16px] px-4 py-3.5 text-[15px] font-bold focus:outline-none focus:bg-background focus:ring-2 focus:ring-primary transition-all mb-4"
-              />
-              <button
-                onClick={handleScheduledSend}
-                disabled={!text.trim() || !scheduledAt}
-                className="w-full py-4 bg-primary text-primary-foreground rounded-[16px] text-[15px] font-black disabled:opacity-50 transition-all hover:bg-primary/90 shadow-[0_4px_14px_rgba(139,92,246,0.3)] hover:-translate-y-0.5 active:translate-y-0"
-              >
-                Сохранить
-              </button>
+
+              {/* Tabs */}
+              <div className="flex gap-1 px-5 mb-4">
+                <button
+                  onClick={() => setShowScheduledList(false)}
+                  className={`flex-1 py-2 rounded-[12px] text-[13px] font-black transition-all ${!showScheduledList ? "bg-primary text-primary-foreground shadow-[0_2px_8px_rgba(139,92,246,0.3)]" : "bg-secondary text-muted-foreground hover:text-foreground"}`}
+                >
+                  Выбрать время
+                </button>
+                <button
+                  onClick={() => { setShowScheduledList(true); fetchScheduledMessages(); }}
+                  className={`flex-1 py-2 rounded-[12px] text-[13px] font-black transition-all flex items-center justify-center gap-1.5 ${showScheduledList ? "bg-primary text-primary-foreground shadow-[0_2px_8px_rgba(139,92,246,0.3)]" : "bg-secondary text-muted-foreground hover:text-foreground"}`}
+                >
+                  Запланировано
+                  {scheduledMessages.length > 0 && (
+                    <span className={`text-[11px] font-black w-5 h-5 rounded-full flex items-center justify-center ${showScheduledList ? "bg-white/20" : "bg-primary text-primary-foreground"}`}>
+                      {scheduledMessages.length}
+                    </span>
+                  )}
+                </button>
+              </div>
+
+              {!showScheduledList ? (
+                <div className="px-5 pb-5">
+                  {/* Quick presets */}
+                  <div className="grid grid-cols-3 gap-2 mb-4">
+                    {[
+                      { label: "30 мин", action: () => applyTimePreset(30 * 60_000) },
+                      { label: "1 час",  action: () => applyTimePreset(60 * 60_000) },
+                      { label: "3 часа", action: () => applyTimePreset(3 * 60 * 60_000) },
+                      { label: "Завтра 8:00",  action: () => applyAbsolutePreset(8) },
+                      { label: "Завтра 12:00", action: () => applyAbsolutePreset(12) },
+                      { label: "Завтра 18:00", action: () => applyAbsolutePreset(18) },
+                    ].map(p => (
+                      <button
+                        key={p.label}
+                        onClick={p.action}
+                        className="py-2 px-3 rounded-[12px] bg-secondary hover:bg-primary/10 hover:text-primary text-[12px] font-bold transition-all border border-transparent hover:border-primary/20"
+                      >
+                        {p.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Manual picker */}
+                  <input
+                    type="datetime-local"
+                    value={scheduledAt}
+                    min={minDatetime}
+                    onChange={e => setScheduledAt(e.target.value)}
+                    className="w-full bg-secondary border border-border rounded-[14px] px-4 py-3 text-[14px] font-bold focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all mb-3"
+                  />
+
+                  {scheduledAt && (
+                    <p className="text-[12px] text-primary font-bold mb-3 flex items-center gap-1.5">
+                      <Hourglass size={12} />
+                      Отправка: {formatScheduledAt(scheduledAt)}
+                    </p>
+                  )}
+
+                  <button
+                    onClick={handleScheduledSend}
+                    disabled={!text.trim() || !scheduledAt}
+                    className="w-full py-3.5 bg-primary text-primary-foreground rounded-[14px] text-[14px] font-black disabled:opacity-40 transition-all hover:bg-primary/90 shadow-[0_4px_14px_rgba(139,92,246,0.3)] hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2"
+                  >
+                    <CalendarClock size={16} />
+                    {scheduledAt ? `Запланировать на ${formatScheduledAt(scheduledAt)}` : "Выберите время"}
+                  </button>
+                </div>
+              ) : (
+                <div className="px-5 pb-5">
+                  {loadingScheduled ? (
+                    <div className="flex items-center justify-center py-8 text-muted-foreground">
+                      <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}>
+                        <Clock size={20} />
+                      </motion.div>
+                    </div>
+                  ) : scheduledMessages.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-8 text-center gap-2">
+                      <CalendarClock size={32} className="text-muted-foreground/40" />
+                      <p className="text-[13px] font-bold text-muted-foreground">Нет запланированных сообщений</p>
+                      <p className="text-[11px] text-muted-foreground/60">Перейдите на вкладку «Выбрать время»</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2 max-h-[200px] overflow-y-auto scrollbar-none">
+                      {scheduledMessages.map(msg => (
+                        <motion.div
+                          key={msg.id}
+                          layout
+                          initial={{ opacity: 0, x: -8 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: 8 }}
+                          className="flex items-start gap-3 bg-secondary rounded-[14px] p-3"
+                        >
+                          <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                            <Clock size={13} className="text-primary" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[13px] font-medium text-foreground truncate">{msg.text}</p>
+                            <p className="text-[11px] font-bold text-primary/70 mt-0.5">{formatScheduledAt(msg.scheduled_at)}</p>
+                          </div>
+                          <button
+                            onClick={() => handleCancelScheduled(msg.id)}
+                            className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-destructive/15 hover:text-destructive text-muted-foreground transition-colors shrink-0"
+                            title="Отменить"
+                          >
+                            <X size={14} />
+                          </button>
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
@@ -890,11 +1047,26 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
                   </>
                 )}
 
-                {hasContent && !editMessage && (
-                  <button type="button" onClick={() => setShowScheduler(v => !v)}
-                    className="w-12 h-12 flex items-center justify-center rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors shrink-0 mb-[2px]">
-                    <Clock size={20} />
-                  </button>
+                {hasContent && !editMessage && isPrime && (
+                  <div className="relative shrink-0 mb-[2px]">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next = !showScheduler;
+                        setShowScheduler(next);
+                        if (next) { setShowScheduledList(false); fetchScheduledMessages(); }
+                      }}
+                      className={`w-12 h-12 flex items-center justify-center rounded-full transition-colors ${showScheduler ? "bg-primary/15 text-primary" : "text-muted-foreground hover:bg-secondary hover:text-foreground"}`}
+                      title="Запланировать отправку (Prime)"
+                    >
+                      <CalendarClock size={20} />
+                    </button>
+                    {scheduledMessages.length > 0 && (
+                      <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 bg-primary text-primary-foreground text-[10px] font-black rounded-full flex items-center justify-center leading-none pointer-events-none">
+                        {scheduledMessages.length}
+                      </span>
+                    )}
+                  </div>
                 )}
               </motion.form>
             )}
