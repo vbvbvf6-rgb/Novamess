@@ -1,13 +1,15 @@
 import { useState, useEffect } from "react";
 import { useParams, useLocation } from "wouter";
 import { motion } from "framer-motion";
-import { QrCode, CheckCircle2, XCircle, Loader2, ShieldCheck } from "lucide-react";
+import { QrCode, CheckCircle2, XCircle, Loader2, ShieldCheck, User } from "lucide-react";
 import { useAppContext } from "@/contexts/AppContext";
+import { useGetMe } from "@workspace/api-client-react";
 
 export default function QrConfirm() {
   const { tokenId } = useParams<{ tokenId: string }>();
   const [, navigate] = useLocation();
   const { currentUserId } = useAppContext();
+  const { data: me } = useGetMe();
 
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error" | "expired">("idle");
   const [errorMsg, setErrorMsg] = useState("");
@@ -108,7 +110,7 @@ export default function QrConfirm() {
               </div>
               <h2 className="text-2xl font-black text-foreground">QR истёк</h2>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Этот QR-код больше недействителен. Попросите создать новый QR-код на другом устройстве.
+                Этот QR-код больше недействителен. Попросите создать новый на другом устройстве.
               </p>
               <button
                 onClick={() => navigate("/")}
@@ -162,20 +164,45 @@ export default function QrConfirm() {
               <div>
                 <h2 className="text-2xl font-black text-foreground mb-1">Подтвердить вход</h2>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  Новое устройство хочет войти в ваш аккаунт. Нажмите кнопку ниже чтобы подтвердить.
+                  Новое устройство запрашивает доступ к вашему аккаунту Pulse.
                 </p>
               </div>
 
+              {me && (
+                <div
+                  className="flex items-center gap-3 rounded-2xl p-3.5 text-left"
+                  style={{
+                    background: "hsl(var(--secondary) / 0.5)",
+                    border: "1px solid hsl(var(--border) / 0.8)",
+                  }}
+                >
+                  <div
+                    className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0 overflow-hidden"
+                    style={{ backgroundColor: (me as any).avatarColor || "#3B82F6" }}
+                  >
+                    {(me as any).avatarUrl ? (
+                      <img src={(me as any).avatarUrl} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      (me.displayName?.[0] || <User size={16} />)
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0 text-left">
+                    <p className="text-sm font-bold text-foreground truncate">{me.displayName}</p>
+                    <p className="text-xs text-muted-foreground truncate">@{me.username}</p>
+                  </div>
+                </div>
+              )}
+
               <div
-                className="flex items-center gap-3 rounded-2xl p-3.5 text-left"
+                className="flex items-start gap-3 rounded-2xl p-3.5 text-left"
                 style={{
                   background: "hsl(var(--primary) / 0.06)",
                   border: "1px solid hsl(var(--primary) / 0.15)",
                 }}
               >
-                <ShieldCheck size={18} className="text-primary shrink-0" />
+                <ShieldCheck size={18} className="text-primary shrink-0 mt-0.5" />
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  Если вы не пытаетесь войти с нового устройства — <span className="font-semibold text-foreground">проигнорируйте</span> этот запрос.
+                  Нажмите «Разрешить», если вы сами сейчас входите через QR на другом устройстве. Иначе — <span className="font-semibold text-foreground">проигнорируйте</span>.
                 </p>
               </div>
 
@@ -196,7 +223,7 @@ export default function QrConfirm() {
                     Подтверждаем...
                   </>
                 ) : (
-                  "Подтвердить вход"
+                  "Разрешить вход"
                 )}
               </motion.button>
 

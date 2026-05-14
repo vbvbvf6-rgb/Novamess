@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
+import { Switch, Route, Router as WouterRouter, useLocation, useParams } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -202,11 +202,31 @@ function MainAppInner({ onLogout, onSwitchAccount, onRemoveAccount, onOpenAddAcc
   );
 }
 
+function QrLoginGate() {
+  const { tokenId } = useParams<{ tokenId: string }>();
+  const [, navigate] = useLocation();
+
+  useEffect(() => {
+    if (tokenId) {
+      sessionStorage.setItem("pulse-pending-qr", tokenId);
+    }
+    navigate("/");
+  }, []);
+
+  return null;
+}
+
 function AuthPages({ onLogin }: { onLogin: (userId: number) => void }) {
   const [, navigate] = useLocation();
 
   const handleLogin = (userId: number) => {
-    navigate("/");
+    const pendingQr = sessionStorage.getItem("pulse-pending-qr");
+    if (pendingQr) {
+      sessionStorage.removeItem("pulse-pending-qr");
+      navigate(`/qr/${pendingQr}`);
+    } else {
+      navigate("/");
+    }
     onLogin(userId);
   };
 
@@ -214,6 +234,7 @@ function AuthPages({ onLogin }: { onLogin: (userId: number) => void }) {
     <Switch>
       <Route path="/register" component={() => <Register onLogin={handleLogin} />} />
       <Route path="/forgot-password" component={ForgotPassword} />
+      <Route path="/qr/:tokenId" component={QrLoginGate} />
       <Route component={() => <Login onLogin={handleLogin} />} />
     </Switch>
   );

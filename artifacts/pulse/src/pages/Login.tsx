@@ -324,7 +324,7 @@ export default function Login({ onLogin }: LoginProps) {
                   </motion.button>
                 </form>
 
-                <div className="mt-4 pt-4 border-t border-border">
+                <div className="hidden md:block mt-4 pt-4 border-t border-border">
                   <motion.button
                     type="button"
                     onClick={startQrLogin}
