@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, messagesTable, reactionsTable, usersTable, chatMembersTable, chatsTable } from "@workspace/db";
-import { eq, and, lt, desc, sql, lte, gt } from "drizzle-orm";
+import { eq, and, lt, desc, sql, lte, gt, ne } from "drizzle-orm";
 import { spawn } from "node:child_process";
 import { broadcastToChat, broadcastToUser } from "../lib/sse";
 import { sendPushToUser } from "./push";
@@ -199,7 +199,27 @@ router.get("/messages", async (req, res) => {
     }
 
     const msgs = await query.orderBy(desc(messagesTable.createdAt)).limit(limit);
-    const built = await Promise.all(msgs.reverse().map(m => buildMessage(m, isPrimePlus)));
+
+    // Compute isRead dynamically: a message sent by the current user is "read"
+    // if at least one OTHER chat member has lastReadAt >= message.createdAt
+    const otherMembers = await db.select({ lastReadAt: chatMembersTable.lastReadAt })
+      .from(chatMembersTable)
+      .where(and(eq(chatMembersTable.chatId, chatId), ne(chatMembersTable.userId, uid)));
+    const maxOtherLastRead = otherMembers.reduce((max, m) => {
+      const t = m.lastReadAt ? new Date(m.lastReadAt).getTime() : 0;
+      return t > max ? t : max;
+    }, 0);
+
+    const built = await Promise.all(msgs.reverse().map(async m => {
+      const msg = await buildMessage(m, isPrimePlus);
+      if (m.senderId === uid) {
+        msg.isRead = maxOtherLastRead >= new Date(m.createdAt).getTime();
+      } else {
+        // Messages from others are always "seen" by the viewer
+        msg.isRead = true;
+      }
+      return msg;
+    }));
     res.json(built);
   } catch (err) {
     req.log.error(err);

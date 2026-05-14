@@ -366,6 +366,11 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
       });
     });
 
+    es.addEventListener("messages-read", () => {
+      // Someone read messages in this chat — re-fetch so sender's ✓ → ✓✓
+      queryClient.invalidateQueries({ queryKey: getGetMessagesQueryKey({ chatId }) });
+    });
+
     es.addEventListener("typing", (e: MessageEvent) => {
       try {
         const currentUid = Number(sessionStorage.getItem("pulse-user-id") || "1");

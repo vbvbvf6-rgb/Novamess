@@ -2,6 +2,7 @@ import { Router } from "express";
 import { db, chatsTable, chatMembersTable, usersTable, messagesTable, reactionsTable, pinnedMessagesTable } from "@workspace/db";
 import { eq, and, desc, inArray, count, gt, ne, sql } from "drizzle-orm";
 import { CreateChatBody, UpdateChatBody, AddChatMemberBody } from "@workspace/api-zod";
+import { broadcastToChat } from "../lib/sse";
 
 const router = Router();
 
@@ -366,9 +367,12 @@ router.post("/chats/:chatId/read", async (req, res) => {
   try {
     const uid = req.currentUserId;
     const chatId = Number(req.params.chatId);
+    const now = new Date();
     await db.update(chatMembersTable)
-      .set({ lastReadAt: new Date() })
+      .set({ lastReadAt: now })
       .where(and(eq(chatMembersTable.chatId, chatId), eq(chatMembersTable.userId, uid)));
+    // Broadcast to all chat members so senders see their checkmarks flip to ✓✓
+    broadcastToChat(chatId, "messages-read", { chatId, readerId: uid, readAt: now.toISOString() });
     res.status(204).send();
   } catch (err) {
     req.log.error(err);
