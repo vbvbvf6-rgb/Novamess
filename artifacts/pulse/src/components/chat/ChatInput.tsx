@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, memo } from "react";
 import { emojiToTwemojiUrl } from "@/lib/twemoji";
 import { useSendMessage, useGetMe, getGetMessagesQueryKey, getGetChatsQueryKey, Message } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Paperclip, Mic, SendHorizontal, X, Square, Trash2, Images, Reply, Pencil, Clock, BarChart2, Plus, Minus, SmilePlus, Wand2, CalendarClock, Hourglass } from "lucide-react";
+import { Paperclip, Mic, SendHorizontal, X, Square, Trash2, Images, Reply, Pencil, Clock, BarChart2, Plus, Minus, Wand2, CalendarClock, Hourglass, Sticker } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const STICKERS = [
@@ -112,6 +112,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
   const { data: me } = useGetMe();
 
   const [text, setText] = useState("");
+  const STICKERS_TAB = -1;
   const [showEmoji, setShowEmoji] = useState(false);
   const [emojiCategory, setEmojiCategory] = useState(0);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
@@ -132,7 +133,6 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
   const [pollAllowMultiple, setPollAllowMultiple] = useState(false);
   const [pollSending, setPollSending] = useState(false);
   const [pollError, setPollError] = useState("");
-  const [showStickerPanel, setShowStickerPanel] = useState(false);
   const [stickerTab, setStickerTab] = useState<"regular" | "prime">("regular");
   const [selectedEffect, setSelectedEffect] = useState<string | null>(null);
   const [showEffectPicker, setShowEffectPicker] = useState(false);
@@ -439,7 +439,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
   };
 
   const sendSticker = async (sticker: { url: string }) => {
-    setShowStickerPanel(false);
+    setShowEmoji(false);
     setIsSending(true);
     try {
       await sendMessage.mutateAsync({
@@ -668,66 +668,6 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
         </AnimatePresence>
 
         <AnimatePresence>
-          {showStickerPanel && (
-            <motion.div
-              initial={{ opacity: 0, y: 10, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 10, scale: 0.95 }}
-              className="absolute bottom-full mb-3 left-0 w-[280px] z-50 bg-card border border-border rounded-[24px] shadow-2xl overflow-hidden origin-bottom-left"
-            >
-              <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => setStickerTab("regular")}
-                    className={`text-[11px] font-black px-2.5 py-1 rounded-lg transition-all ${stickerTab === "regular" ? "bg-primary/15 text-primary" : "text-muted-foreground hover:text-foreground"}`}
-                  >
-                    Стикеры
-                  </button>
-                  {isPrimePlus && (
-                    <button
-                      onClick={() => setStickerTab("prime")}
-                      className={`text-[11px] font-black px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 ${stickerTab === "prime" ? "bg-purple-500/20 text-purple-400" : "text-muted-foreground hover:text-purple-400"}`}
-                    >
-                      <span className="text-[10px]">👑</span> Prime+
-                    </button>
-                  )}
-                </div>
-                <button onClick={() => setShowStickerPanel(false)} className="w-6 h-6 flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
-                  <X size={14} />
-                </button>
-              </div>
-              {stickerTab === "regular" ? (
-                <div className="p-3 grid grid-cols-4 gap-2 max-h-[220px] overflow-y-auto scrollbar-none">
-                  {STICKERS.map((s) => (
-                    <button
-                      key={s.id}
-                      onClick={() => sendSticker(s)}
-                      title={s.label}
-                      className="aspect-square rounded-xl hover:bg-secondary transition-all hover:scale-110 active:scale-95 p-1 flex items-center justify-center"
-                    >
-                      <img src={s.url} alt={s.label} className="w-full h-full object-contain" />
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <div className="p-3 grid grid-cols-4 gap-2 max-h-[220px] overflow-y-auto scrollbar-none">
-                  {PRIME_STICKERS.map((s) => (
-                    <button
-                      key={s.id}
-                      onClick={() => sendSticker(s)}
-                      title={s.label}
-                      className="aspect-square rounded-xl hover:bg-purple-500/10 transition-all hover:scale-110 active:scale-95 p-1 flex items-center justify-center ring-1 ring-purple-500/20"
-                    >
-                      <img src={s.url} alt={s.label} className="w-full h-full object-contain rounded-xl" />
-                    </button>
-                  ))}
-                </div>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <AnimatePresence>
           {showEmoji && (
             <motion.div
               initial={{ opacity: 0, y: 10, scale: 0.95 }}
@@ -735,13 +675,14 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
               exit={{ opacity: 0, y: 10, scale: 0.95 }}
               className="absolute bottom-full mb-3 left-0 w-[340px] z-50 bg-card border border-border rounded-[24px] shadow-2xl overflow-hidden origin-bottom-left"
             >
+              {/* Category/Sticker tab bar */}
               <div className="flex items-center gap-0.5 px-2 py-2 bg-secondary/50 border-b border-border overflow-x-auto scrollbar-none">
                 {EMOJI_CATEGORIES.map((cat, i) => (
                   <button
                     key={i}
                     onClick={() => setEmojiCategory(i)}
                     title={cat.label}
-                    className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-all relative ${emojiCategory === i ? "bg-background shadow-sm border border-border scale-110" : "hover:bg-background/50"}`}
+                    className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-all ${emojiCategory === i ? "bg-background shadow-sm border border-border scale-110" : "hover:bg-background/50"}`}
                   >
                     <img
                       src={emojiToTwemojiUrl(cat.icon)}
@@ -753,25 +694,67 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
                     />
                   </button>
                 ))}
+                {/* Sticker tab */}
+                <button
+                  onClick={() => setEmojiCategory(STICKERS_TAB)}
+                  title="Стикеры"
+                  className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-all ml-0.5 ${emojiCategory === STICKERS_TAB ? "bg-background shadow-sm border border-border scale-110 text-primary" : "hover:bg-background/50 text-muted-foreground"}`}
+                >
+                  <Sticker size={18} />
+                </button>
                 <span className="ml-auto text-[10px] font-black uppercase tracking-widest text-muted-foreground/50 shrink-0 pr-1">
-                  {EMOJI_CATEGORIES[emojiCategory].label}
+                  {emojiCategory === STICKERS_TAB ? "Стикеры" : EMOJI_CATEGORIES[emojiCategory].label}
                 </span>
               </div>
-              <div className="p-3 grid grid-cols-8 gap-0.5 max-h-[240px] overflow-y-auto scrollbar-none">
-                {EMOJI_CATEGORIES[emojiCategory].emojis.map((emoji, i) => (
-                  <button key={i} onClick={() => insertEmoji(emoji)}
-                    className="hover:bg-secondary rounded-xl p-1.5 transition-colors flex items-center justify-center hover:scale-110 active:scale-95">
-                    <img
-                      src={emojiToTwemojiUrl(emoji)}
-                      alt={emoji}
-                      width={24}
-                      height={24}
-                      draggable={false}
-                      onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; e.currentTarget.insertAdjacentText("afterend", emoji); }}
-                    />
-                  </button>
-                ))}
-              </div>
+
+              {emojiCategory === STICKERS_TAB ? (
+                /* Sticker panel */
+                <div>
+                  {isPrimePlus && (
+                    <div className="flex gap-1 px-3 pt-2">
+                      <button
+                        onClick={() => setStickerTab("regular")}
+                        className={`flex-1 py-1.5 rounded-[10px] text-[12px] font-black transition-all ${stickerTab === "regular" ? "bg-primary/15 text-primary" : "text-muted-foreground hover:text-foreground"}`}
+                      >
+                        Стикеры
+                      </button>
+                      <button
+                        onClick={() => setStickerTab("prime")}
+                        className={`flex-1 py-1.5 rounded-[10px] text-[12px] font-black transition-all flex items-center justify-center gap-1 ${stickerTab === "prime" ? "bg-purple-500/20 text-purple-400" : "text-muted-foreground hover:text-purple-400"}`}
+                      >
+                        <span className="text-[11px]">👑</span> Prime+
+                      </button>
+                    </div>
+                  )}
+                  <div className="p-3 grid grid-cols-4 gap-2 max-h-[240px] overflow-y-auto scrollbar-none">
+                    {(stickerTab === "prime" && isPrimePlus ? PRIME_STICKERS : STICKERS).map(s => (
+                      <button
+                        key={s.id}
+                        onClick={() => sendSticker(s)}
+                        title={s.label}
+                        className={`aspect-square rounded-xl transition-all hover:scale-110 active:scale-95 p-1 flex items-center justify-center ${stickerTab === "prime" ? "hover:bg-purple-500/10 ring-1 ring-purple-500/20" : "hover:bg-secondary"}`}
+                      >
+                        <img src={s.url} alt={s.label} className="w-full h-full object-contain" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                /* Emoji grid — rendered as native <span> for correct flag & all emoji support */
+                <div className="p-3 grid grid-cols-8 gap-0.5 max-h-[240px] overflow-y-auto scrollbar-none">
+                  {EMOJI_CATEGORIES[emojiCategory].emojis.map((emoji, i) => (
+                    <button key={i} onClick={() => insertEmoji(emoji)}
+                      className="hover:bg-secondary rounded-xl p-1.5 transition-colors flex items-center justify-center hover:scale-110 active:scale-95">
+                      <span
+                        style={{ fontFamily: '"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji","Twemoji Mozilla",sans-serif', fontSize: '20px', lineHeight: 1, userSelect: 'none' }}
+                        aria-label={emoji}
+                      >
+                        {emoji}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
@@ -965,13 +948,9 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
                 
                 {!editMessage && (
                   <>
-                    <button type="button" onClick={() => { setShowEmoji(v => !v); setShowStickerPanel(false); }}
-                      className="w-12 h-12 flex items-center justify-center rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors shrink-0 mb-[2px]">
+                    <button type="button" onClick={() => { setShowEmoji(v => !v); }}
+                      className={`w-12 h-12 flex items-center justify-center rounded-full transition-colors shrink-0 mb-[2px] ${showEmoji ? "bg-primary/15 text-primary" : "text-muted-foreground hover:bg-secondary hover:text-foreground"}`}>
                       <span className="text-xl leading-none">😀</span>
-                    </button>
-                    <button type="button" onClick={() => { setShowStickerPanel(v => !v); setShowEmoji(false); }}
-                      className={`w-12 h-12 flex items-center justify-center rounded-full transition-colors shrink-0 mb-[2px] ${showStickerPanel ? "bg-primary/15 text-primary" : "text-muted-foreground hover:bg-secondary hover:text-foreground"}`}>
-                      <SmilePlus size={20} />
                     </button>
                     {isPrimePlus && (
                       <div className="relative">
@@ -1031,7 +1010,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
                   className="flex-1 bg-transparent border-none resize-none max-h-40 min-h-[64px] py-5 px-2 focus:outline-none text-[15px] font-medium placeholder:text-muted-foreground/60 leading-normal scrollbar-none"
                   rows={1}
                   style={{ height: "64px" }}
-                  onFocus={() => { setShowEmoji(false); setShowStickerPanel(false); }}
+                  onFocus={() => { setShowEmoji(false); }}
                 />
 
                 {!editMessage && !text.trim() && imagePreviews.length === 0 && (
