@@ -3,7 +3,7 @@ import { useGetChats, Chat } from "@workspace/api-client-react";
 import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
 import { Search, Pin, VolumeX, Users, Radio, Bot, HeadphonesIcon, Bug,
-  SquarePen, X, ChevronRight, Check, ArrowLeft, Crown, Bookmark } from "lucide-react";
+  SquarePen, X, ChevronRight, Check, ArrowLeft, Crown, Bookmark, Menu } from "lucide-react";
 import { useLocation } from "wouter";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -342,6 +342,12 @@ export function ChatList() {
       </AnimatePresence>
       <div className="px-4 pb-3" style={{ paddingTop: "max(16px, env(safe-area-inset-top, 16px))" }}>
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => window.dispatchEvent(new Event("pulse:open-sidebar"))}
+            className="md:hidden w-12 h-12 rounded-2xl bg-secondary/60 border border-border/50 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-all shrink-0"
+          >
+            <Menu size={20} />
+          </button>
           <div className="relative flex-1">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
             <Input

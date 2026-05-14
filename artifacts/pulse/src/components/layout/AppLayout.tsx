@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Sidebar } from "./Sidebar";
 import { BottomNav } from "./BottomNav";
 import { useAppContext } from "@/contexts/AppContext";
@@ -8,6 +8,12 @@ import { IncomingCall } from "@/components/calls/IncomingCall";
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const { activeCall } = useAppContext();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    const handler = () => setMobileSidebarOpen(true);
+    window.addEventListener("pulse:open-sidebar", handler);
+    return () => window.removeEventListener("pulse:open-sidebar", handler);
+  }, []);
 
   return (
     <div className="flex h-[100dvh] w-full overflow-hidden bg-background text-foreground">
@@ -28,7 +34,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           onClick={() => setMobileSidebarOpen(false)}
         />
       )}
-      <BottomNav onMoreClick={() => setMobileSidebarOpen(true)} />
+      <BottomNav />
     </div>
   );
 }
