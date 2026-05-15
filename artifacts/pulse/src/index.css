@@ -244,3 +244,13 @@
 .nav-active-glow {
   box-shadow: 0 0 20px hsl(var(--primary) / 0.22);
 }
+
+/* Wallet hero card — dark gradient in dark mode, white card in light mode */
+.wallet-hero {
+  background: linear-gradient(135deg, #1a1a3e 0%, #0d2545 50%, #1a1a3e 100%);
+}
+html.light .wallet-hero {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}

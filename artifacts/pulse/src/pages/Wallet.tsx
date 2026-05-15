@@ -342,26 +342,25 @@ export default function Wallet() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="relative overflow-hidden rounded-2xl p-5 text-white"
-            style={{ background: "linear-gradient(135deg, #1a1a3e 0%, #0d2545 50%, #1a1a3e 100%)" }}
+            className="wallet-hero relative overflow-hidden rounded-2xl p-5 text-foreground"
           >
             <div className="absolute top-0 right-0 w-36 h-36 rounded-full opacity-20 pointer-events-none"
               style={{ background: "radial-gradient(circle, #7c3aed, transparent)", transform: "translate(35%, -35%)" }} />
             <div className="absolute bottom-0 left-0 w-28 h-28 rounded-full opacity-20 pointer-events-none"
               style={{ background: "radial-gradient(circle, #0891b2, transparent)", transform: "translate(-35%, 35%)" }} />
 
-            <p className="text-xs text-white/50 uppercase tracking-widest mb-1 relative z-10">Баланс Монета</p>
+            <p className="text-xs text-foreground/50 uppercase tracking-widest mb-1 relative z-10">Баланс Монета</p>
             <div className="flex items-end gap-2 mb-4 relative z-10">
               <span className="text-5xl font-black tracking-tight">{Number(balance).toLocaleString("ru")}</span>
               <Zap size={32} className="text-yellow-400 mb-1 fill-yellow-400" />
             </div>
 
             <div className="mb-4 relative z-10">
-              <div className="flex justify-between text-xs text-white/50 mb-1.5">
+              <div className="flex justify-between text-xs text-foreground/50 mb-1.5">
                 <span>Прогресс дня</span>
                 <span>{doneCount}/{effectiveTasks.length} задач</span>
               </div>
-              <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+              <div className="h-1.5 bg-foreground/10 rounded-full overflow-hidden">
                 <motion.div
                   className="h-full rounded-full"
                   style={{ background: "linear-gradient(90deg, #22d3ee, #a78bfa)" }}
@@ -372,27 +371,27 @@ export default function Wallet() {
               </div>
             </div>
 
-            <div className="bg-white/8 rounded-xl px-3 py-2 flex items-center justify-between mb-4 relative z-10 border border-white/10">
+            <div className="bg-foreground/[0.06] rounded-xl px-3 py-2 flex items-center justify-between mb-4 relative z-10 border border-foreground/10">
               <div>
-                <p className="text-[10px] uppercase tracking-wider text-white/40 mb-0.5">Адрес кошелька</p>
-                <p className="font-mono text-sm font-bold text-white/90">{walletAddress || "PULSE-000001"}</p>
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">Адрес кошелька</p>
+                <p className="font-mono text-sm font-bold text-foreground/90">{walletAddress || "PULSE-000001"}</p>
               </div>
-              <button onClick={handleCopyAddress} className="p-1.5 rounded-lg hover:bg-white/10 transition text-white/60 hover:text-white">
+              <button onClick={handleCopyAddress} className="p-1.5 rounded-lg hover:bg-foreground/10 transition text-foreground/50 hover:text-foreground">
                 {addressCopied ? <Check size={15} className="text-green-400" /> : <Copy size={15} />}
               </button>
             </div>
 
             <div className="grid grid-cols-2 gap-2 relative z-10">
-              <button onClick={() => setShowReceiveModal(true)} className="py-2.5 rounded-xl bg-white/10 hover:bg-white/20 transition text-sm font-semibold flex items-center justify-center gap-1.5">
+              <button onClick={() => setShowReceiveModal(true)} className="py-2.5 rounded-xl bg-foreground/8 hover:bg-foreground/15 transition text-sm font-semibold flex items-center justify-center gap-1.5">
                 <ArrowDownLeft size={15} /> Получить
               </button>
-              <button onClick={() => setShowSendModal(true)} className="py-2.5 rounded-xl bg-white/10 hover:bg-white/20 transition text-sm font-semibold flex items-center justify-center gap-1.5">
+              <button onClick={() => setShowSendModal(true)} className="py-2.5 rounded-xl bg-foreground/8 hover:bg-foreground/15 transition text-sm font-semibold flex items-center justify-center gap-1.5">
                 <Send size={15} /> Отправить
               </button>
-              <button onClick={() => setShowBuyModal(true)} className="py-2.5 rounded-xl hover:opacity-90 transition text-sm font-semibold flex items-center justify-center gap-1.5" style={{ background: "linear-gradient(135deg, #059669, #22d3ee)" }}>
+              <button onClick={() => setShowBuyModal(true)} className="py-2.5 rounded-xl hover:opacity-90 transition text-sm font-semibold text-white flex items-center justify-center gap-1.5" style={{ background: "linear-gradient(135deg, #059669, #22d3ee)" }}>
                 <ShoppingCart size={15} /> Купить
               </button>
-              <button onClick={() => setShowBonusModal(true)} className={`py-2.5 rounded-xl hover:opacity-90 transition text-sm font-semibold flex items-center justify-center gap-1.5 ${bonusClaimed ? "opacity-50 cursor-not-allowed" : ""}`} style={{ background: "linear-gradient(135deg, #22d3ee, #7c3aed)" }}>
+              <button onClick={() => setShowBonusModal(true)} className={`py-2.5 rounded-xl hover:opacity-90 transition text-sm font-semibold text-white flex items-center justify-center gap-1.5 ${bonusClaimed ? "opacity-50 cursor-not-allowed" : ""}`} style={{ background: "linear-gradient(135deg, #22d3ee, #7c3aed)" }}>
                 <Zap size={15} fill="white" /> {bonusClaimed ? "Завтра" : "Бонус"}
               </button>
             </div>
