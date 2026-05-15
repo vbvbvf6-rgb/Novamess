@@ -447,8 +447,6 @@ export function ChatList() {
                 ? "Нет новых сообщений"
                 : folder === "groups"
                 ? "Нет групп и каналов"
-                : folder === "bots"
-                ? "Нет ботов"
                 : "Нет чатов"}
             </div>
           ) : (

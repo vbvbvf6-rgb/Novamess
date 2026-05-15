@@ -1229,9 +1229,6 @@ export default function Settings() {
             <NavItem id="faq"      icon={<HelpCircle size={16}/>} color="bg-teal-500"   label="Pulse FAQ"                                    active={displaySection} onClick={setActiveSection}/>
             <NavItem id="features" icon={<Layers size={16}/>}     color="bg-cyan-600"   label={lang==="ru"?"Возможности Pulse":"Pulse Features"} active={displaySection} onClick={setActiveSection}/>
             <NavItem id="support"  icon={<Shield size={16}/>}     color="bg-green-600"  label={lang==="ru"?"Поддержка":"Support"}             active={displaySection} onClick={setActiveSection}/>
-            <NavItem id="dev"      icon={<Bot size={16}/>}         color="bg-gradient-to-br from-violet-500 to-indigo-600"
-              label={lang==="ru"?"Разработчику":"Developer"} href="/bots"
-              active={displaySection} onClick={setActiveSection}/>
           </NavGroup>
 
           {/* Logout */}
@@ -1762,7 +1759,7 @@ export default function Settings() {
                   { key:"all",    label:lang==="ru"?"Все чаты":"All Chats",          emoji:"💬", desc:lang==="ru"?"Все ваши диалоги":"All your conversations" },
                   { key:"unread", label:lang==="ru"?"Непрочитанные":"Unread",        emoji:"🔵", desc:lang==="ru"?"Чаты с новыми сообщениями":"Chats with new messages" },
                   { key:"groups", label:lang==="ru"?"Группы и каналы":"Groups & Channels", emoji:"👥", desc:lang==="ru"?"Групповые чаты и каналы":"Group chats and channels" },
-                  { key:"bots",   label:lang==="ru"?"Боты":"Bots",                   emoji:"🤖", desc:lang==="ru"?"Чаты с ботами":"Bot conversations" },
+
                 ].map((folder, idx, arr) => (
                   <div key={folder.key} className={`p-4 flex items-center gap-4 ${idx < arr.length-1 ? "border-b border-border" : ""}`}>
                     <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-xl shrink-0">{folder.emoji}</div>
@@ -2019,7 +2016,7 @@ export default function Settings() {
                 { emoji:"🎁", title:lang==="ru"?"Подарки":"Gifts", desc:lang==="ru"?"Анимированные подарки: обычный, редкий, эпический, легендарный":"Animated gifts with rarities: common, rare, epic, legendary" },
                 { emoji:"📖", title:lang==="ru"?"Истории":"Stories", desc:lang==="ru"?"24-часовые истории с полноэкранным просмотром":"24-hour stories with full-screen viewer" },
                 { emoji:"👥", title:lang==="ru"?"Контакты":"Contacts", desc:lang==="ru"?"Список контактов с поиском и управлением":"Contact list with search and management" },
-                { emoji:"🤖", title:lang==="ru"?"Боты":"Bots", desc:lang==="ru"?"Создавайте ботов с командами и ответами":"Create bots with commands and responses" },
+
                 { emoji:"🔒", title:lang==="ru"?"Безопасность":"Security", desc:lang==="ru"?"2FA, PIN-блокировка, исчезающие сообщения, приватность":"2FA, PIN lock, disappearing messages, privacy controls" },
                 { emoji:"⭐", title:"Pulse Prime", desc:lang==="ru"?"Эксклюзивные темы, скрытый статус и другие привилегии":"Exclusive themes, hidden online status, and other perks" },
                 { emoji:"🎨", title:lang==="ru"?"Стикеры":"Stickers", desc:lang==="ru"?"Уникальные SVG-стикеры для выражения эмоций":"Unique SVG stickers to express emotions" },

@@ -26,7 +26,7 @@ import Feed from "@/pages/Feed";
 import Wallet from "@/pages/Wallet";
 import Admin from "@/pages/Admin";
 import Prime from "@/pages/Prime";
-import Bots from "@/pages/Bots";
+
 import Leaderboard from "@/pages/Leaderboard";
 import Support from "@/pages/Support";
 import Login from "@/pages/Login";
@@ -185,7 +185,7 @@ function MainAppInner({ onLogout, onSwitchAccount, onRemoveAccount, onOpenAddAcc
               <Route path="/wallet" component={Wallet} />
               <Route path="/admin" component={Admin} />
               <Route path="/prime" component={Prime} />
-              <Route path="/bots" component={Bots} />
+
               <Route path="/leaderboard" component={Leaderboard} />
               <Route path="/support" component={Support} />
               <Route path="/profile" component={Profile} />
