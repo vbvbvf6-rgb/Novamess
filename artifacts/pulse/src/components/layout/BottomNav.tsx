@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { useGetChats } from "@workspace/api-client-react";
 import { useAppContext } from "@/contexts/AppContext";
 
-export function BottomNav() {
+export function BottomNav({ onOpenPalette }: { onOpenPalette?: () => void }) {
   const [location] = useLocation();
   const { data: chats } = useGetChats();
   const { selectedChatId } = useAppContext();

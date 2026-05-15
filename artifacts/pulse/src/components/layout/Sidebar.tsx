@@ -21,6 +21,9 @@ import {
   Check,
   Trash2,
   Trophy,
+  Sun,
+  Moon,
+  Search,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -106,11 +109,12 @@ interface SidebarProps {
   mobileSidebarOpen: boolean;
   onMobileClose: () => void;
   onMobileOpen?: () => void;
+  onOpenPalette?: () => void;
 }
 
-export function Sidebar({ mobileSidebarOpen, onMobileClose, onMobileOpen }: SidebarProps) {
+export function Sidebar({ mobileSidebarOpen, onMobileClose, onMobileOpen, onOpenPalette }: SidebarProps) {
   const [location, navigate] = useLocation();
-  const { logout, currentUserId, savedAccounts, switchAccount, removeAccount, openAddAccount, canAddAccount } = useAppContext();
+  const { logout, currentUserId, savedAccounts, switchAccount, removeAccount, openAddAccount, canAddAccount, isDark, toggleTheme } = useAppContext();
   const { t } = useLanguage();
   const { data: me } = useGetMe();
   const { data: chats } = useGetChats();
@@ -170,13 +174,27 @@ export function Sidebar({ mobileSidebarOpen, onMobileClose, onMobileOpen }: Side
 
   const DesktopSidebar = (
     <div className="hidden md:flex flex-col h-[100dvh] w-[240px] bg-card border-r border-border py-4 shrink-0 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
-      <div className="flex items-center gap-3 px-5 mb-6">
-        <div className="w-10 h-10 rounded-[14px] bg-gradient-to-br from-primary to-violet-700 flex items-center justify-center shadow-[0_0_20px_rgba(139,92,246,0.35)] shrink-0">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+      <div className="flex items-center gap-2 px-4 mb-5">
+        <div className="w-9 h-9 rounded-[12px] bg-gradient-to-br from-primary to-violet-700 flex items-center justify-center shadow-[0_0_20px_rgba(139,92,246,0.35)] shrink-0">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
             <path d="M13 2L4.5 13.5H11L10 22L19.5 10.5H13L13 2Z" fill="white" />
           </svg>
         </div>
-        <span className="font-black text-xl tracking-tight bg-clip-text text-transparent bg-gradient-to-br from-foreground to-muted-foreground">Pulse</span>
+        <span className="font-black text-xl tracking-tight bg-clip-text text-transparent bg-gradient-to-br from-foreground to-muted-foreground flex-1">Pulse</span>
+        <button
+          onClick={onOpenPalette}
+          title="Поиск (Ctrl+K)"
+          className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-all"
+        >
+          <Search size={15} />
+        </button>
+        <button
+          onClick={toggleTheme}
+          title={isDark ? "Светлая тема" : "Тёмная тема"}
+          className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-all"
+        >
+          {isDark ? <Sun size={15} /> : <Moon size={15} />}
+        </button>
       </div>
 
       <nav className="flex-1 flex flex-col gap-1 w-full px-3 overflow-y-auto scrollbar-none">

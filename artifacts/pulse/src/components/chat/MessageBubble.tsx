@@ -746,12 +746,42 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
         const visibleText = typingOut && displayedWords !== Infinity
           ? words.slice(0, displayedWords).join(" ")
           : (message.text ?? "");
+
+        function renderMarkdown(text: string): React.ReactNode[] {
+          const segments: { text: string; bold?: boolean; italic?: boolean; code?: boolean; strike?: boolean; url?: string }[] = [];
+          const combined = /(\*\*[^*]+\*\*|(?<!\*)\*(?!\*)[^*]+(?<!\*)\*(?!\*)|`[^`]+`|~~[^~]+~~|https?:\/\/[^\s<>"']+)/g;
+          let last = 0;
+          let m: RegExpExecArray | null;
+          combined.lastIndex = 0;
+          while ((m = combined.exec(text)) !== null) {
+            if (m.index > last) segments.push({ text: text.slice(last, m.index) });
+            const chunk = m[0];
+            if (chunk.startsWith("**"))       segments.push({ text: chunk.slice(2, -2), bold: true });
+            else if (chunk.startsWith("~~"))  segments.push({ text: chunk.slice(2, -2), strike: true });
+            else if (chunk.startsWith("`"))   segments.push({ text: chunk.slice(1, -1), code: true });
+            else if (chunk.startsWith("*"))   segments.push({ text: chunk.slice(1, -1), italic: true });
+            else                              segments.push({ text: chunk, url: chunk });
+            last = m.index + chunk.length;
+          }
+          if (last < text.length) segments.push({ text: text.slice(last) });
+
+          return segments.map((seg, i) => {
+            if (seg.code) return <code key={i} className={cn("px-1 py-0.5 rounded text-[13px] font-mono", isMine ? "bg-white/20 text-white" : "bg-secondary text-foreground")}>{seg.text}</code>;
+            if (seg.url) return <a key={i} href={seg.url} target="_blank" rel="noopener noreferrer" className={cn("underline underline-offset-2", isMine ? "text-white/90" : "text-primary")} onClick={e => e.stopPropagation()}>{seg.text}</a>;
+            if (seg.bold && seg.italic) return <strong key={i}><em>{seg.text}</em></strong>;
+            if (seg.bold)   return <strong key={i}>{seg.text}</strong>;
+            if (seg.italic) return <em key={i}>{seg.text}</em>;
+            if (seg.strike) return <del key={i} className="opacity-60">{seg.text}</del>;
+            return <React.Fragment key={i}>{seg.text}</React.Fragment>;
+          });
+        }
+
         return (
           <div>
             <p className="text-[15px] whitespace-pre-wrap break-words [overflow-wrap:anywhere] leading-snug font-medium">
               {searchHighlight
                 ? <HighlightText text={visibleText} query={searchHighlight} isMine={isMine} />
-                : visibleText}
+                : renderMarkdown(visibleText)}
               {isAnimating && (
                 <span className="inline-block w-[2px] h-[14px] ml-[2px] mb-[-2px] align-middle rounded-sm animate-pulse" style={{ background: isMine ? "rgba(255,255,255,0.7)" : "currentColor", opacity: 0.7 }} />
               )}
