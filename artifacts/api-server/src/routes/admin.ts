@@ -2,6 +2,7 @@ import { Router } from "express";
 import { db, usersTable, messagesTable, chatsTable, chatMembersTable, giftsTable, callsTable } from "@workspace/db";
 import { eq, sql, ne } from "drizzle-orm";
 import { createHash } from "node:crypto";
+import { moderateContent } from "../lib/moderation";
 
 const router = Router();
 
@@ -834,6 +835,121 @@ router.get("/admin/check", async (req, res) => {
     res.status(500).json({ error: "Ошибка сервера" });
   }
 });
+
+// ── Weekly AI Auto-Review Scan ────────────────────────────────────────────────
+
+router.get("/admin/moderation/scan-status", requireAdmin, async (req, res) => {
+  try {
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS moderation_scan_runs (
+        id SERIAL PRIMARY KEY,
+        started_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+        finished_at TIMESTAMP WITH TIME ZONE,
+        posts_scanned INTEGER NOT NULL DEFAULT 0,
+        posts_flagged INTEGER NOT NULL DEFAULT 0,
+        triggered_by TEXT NOT NULL DEFAULT 'scheduler',
+        status TEXT NOT NULL DEFAULT 'running'
+      )
+    `);
+    await db.execute(sql`ALTER TABLE posts ADD COLUMN IF NOT EXISTS moderation_scanned_at TIMESTAMP WITH TIME ZONE`);
+
+    const [runRows, unreviewedRows, totalFlaggedRows] = await Promise.all([
+      db.execute(sql`SELECT * FROM moderation_scan_runs ORDER BY started_at DESC LIMIT 10`),
+      db.execute(sql`SELECT COUNT(*) as cnt FROM posts WHERE moderation_scanned_at IS NULL AND moderation_status IS NULL`),
+      db.execute(sql`SELECT COUNT(*) as cnt FROM posts WHERE moderation_status = 'rejected'`),
+    ]);
+
+    res.json({
+      runs: runRows.rows,
+      unreviewedCount: Number((unreviewedRows.rows[0] as any)?.cnt || 0),
+      totalFlaggedCount: Number((totalFlaggedRows.rows[0] as any)?.cnt || 0),
+    });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Ошибка сервера" });
+  }
+});
+
+let scanInProgress = false;
+
+router.post("/admin/moderation/trigger-scan", requireAdmin, async (req, res) => {
+  if (scanInProgress) {
+    return res.status(409).json({ error: "Сканирование уже выполняется" });
+  }
+  try {
+    const [runResult] = (await db.execute(sql`
+      INSERT INTO moderation_scan_runs (triggered_by, status)
+      VALUES ('admin', 'running')
+      RETURNING id
+    `)).rows as any[];
+    const runId = runResult.id;
+
+    res.json({ success: true, runId, message: "Сканирование запущено в фоне" });
+
+    setImmediate(() => runWeeklyScan(runId, "admin"));
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Ошибка сервера" });
+  }
+});
+
+export async function runWeeklyScan(runId: number, triggeredBy: string = "scheduler"): Promise<void> {
+  if (scanInProgress) return;
+  scanInProgress = true;
+  let scanned = 0;
+  let flagged = 0;
+  try {
+    await db.execute(sql`ALTER TABLE posts ADD COLUMN IF NOT EXISTS moderation_scanned_at TIMESTAMP WITH TIME ZONE`);
+
+    const unreviewed = await db.execute(sql`
+      SELECT id, text FROM posts
+      WHERE moderation_scanned_at IS NULL AND moderation_status IS NULL AND text IS NOT NULL AND LENGTH(TRIM(text)) >= 5
+      ORDER BY id ASC
+      LIMIT 500
+    `);
+
+    for (const row of unreviewed.rows as any[]) {
+      try {
+        const result = await moderateContent(row.text);
+        scanned++;
+
+        if (result.flagged && result.confidence >= 40) {
+          flagged++;
+          await db.execute(sql`
+            UPDATE posts SET
+              moderation_status = 'rejected',
+              moderation_reason = ${result.reason || 'Контент нарушает правила сообщества'},
+              moderation_confidence = ${result.confidence},
+              moderation_categories = ${JSON.stringify(result.categories)},
+              moderation_scanned_at = NOW()
+            WHERE id = ${row.id}
+          `);
+        } else {
+          await db.execute(sql`
+            UPDATE posts SET moderation_scanned_at = NOW() WHERE id = ${row.id}
+          `);
+        }
+        await new Promise(r => setTimeout(r, 300));
+      } catch {}
+    }
+
+    await db.execute(sql`
+      UPDATE moderation_scan_runs
+      SET finished_at = NOW(), posts_scanned = ${scanned}, posts_flagged = ${flagged}, status = 'completed'
+      WHERE id = ${runId}
+    `);
+  } catch (err) {
+    try {
+      await db.execute(sql`
+        UPDATE moderation_scan_runs
+        SET finished_at = NOW(), posts_scanned = ${scanned}, posts_flagged = ${flagged}, status = 'failed'
+        WHERE id = ${runId}
+      `);
+    } catch {}
+  } finally {
+    scanInProgress = false;
+  }
+}
 
 router.get("/admin/stats", requireAdmin, async (req, res) => {
   try {
