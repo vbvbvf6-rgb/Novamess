@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useGetPosts, useGetMe, useLikePost, useCreatePostComment, useGetPostComments, Post } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Heart, MessageCircle, Send, Image, X, Plus, Trash2, MoreVertical, ZoomIn, ShieldAlert, AlertCircle, CheckCircle2, Clock, ChevronDown, ChevronUp, Flame, TrendingUp, Star, Camera, Hash } from "lucide-react";
+import { Heart, MessageCircle, Send, Image, X, Plus, Trash2, MoreVertical, ZoomIn, ShieldAlert, AlertCircle, CheckCircle2, Clock, ChevronDown, ChevronUp, TrendingUp, Hash } from "lucide-react";
 import { formatDistanceToNow as fDTN } from "date-fns";
 import { ru } from "date-fns/locale";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -605,14 +605,6 @@ function PostCard({ post, onAppealSubmitted, onTopicClick }: { post: Post & { ap
   );
 }
 
-type FeedMode = "all" | "popular" | "hot" | "media";
-
-const FEED_MODES: { id: FeedMode; label: string; icon: React.ReactNode; description: string }[] = [
-  { id: "all",     label: "Все",        icon: <Star size={14} />,       description: "Все публикации" },
-  { id: "popular", label: "Популярное", icon: <TrendingUp size={14} />, description: "Больше всего лайков" },
-  { id: "hot",     label: "Горячее",    icon: <Flame size={14} />,      description: "Активные за 48 ч" },
-  { id: "media",   label: "С фото",     icon: <Camera size={14} />,     description: "Только с фотографиями" },
-];
 
 const TOPICS = [
   { id: "games",   emoji: "🎮", label: "Игры",          color: "from-violet-500/20 to-indigo-500/20 border-violet-500/40 text-violet-300" },
@@ -726,46 +718,12 @@ function TrendingTopicsWidget({ posts, onTopicClick, selectedTopic }: {
   );
 }
 
-function applyFeedMode(posts: any[], mode: FeedMode): any[] {
-  if (!Array.isArray(posts)) return [];
-  const visible = posts.filter((p: any) => !(p as any)._optimistic || true);
-
-  switch (mode) {
-    case "popular":
-      return [...visible].sort((a, b) => {
-        const scoreA = (a.likesCount ?? 0) + (a.commentsCount ?? 0) * 1.5;
-        const scoreB = (b.likesCount ?? 0) + (b.commentsCount ?? 0) * 1.5;
-        return scoreB - scoreA;
-      });
-
-    case "hot": {
-      const cutoff = Date.now() - 48 * 60 * 60 * 1000;
-      const recent = visible.filter((p: any) => new Date(p.createdAt).getTime() >= cutoff);
-      const older  = visible.filter((p: any) => new Date(p.createdAt).getTime() < cutoff);
-      const scored = [...recent].sort((a, b) => {
-        const scoreA = (a.likesCount ?? 0) * 2 + (a.commentsCount ?? 0) * 3;
-        const scoreB = (b.likesCount ?? 0) * 2 + (b.commentsCount ?? 0) * 3;
-        return scoreB - scoreA;
-      });
-      return [...scored, ...older];
-    }
-
-    case "media":
-      return visible.filter((p: any) => !!p.imageUrl);
-
-    case "all":
-    default:
-      return visible;
-  }
-}
-
 export default function Feed() {
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [newPostText, setNewPostText] = useState("");
   const [newPostImage, setNewPostImage] = useState<string | null>(null);
   const [newPostTopic, setNewPostTopic] = useState<TopicId | null>(null);
   const [imageLoading, setImageLoading] = useState(false);
-  const [feedMode, setFeedMode] = useState<FeedMode>("all");
   const [selectedTopic, setSelectedTopic] = useState<TopicId | null>(null);
   const { data: posts, isLoading, refetch } = useGetPosts({ query: { refetchInterval: 20000 } } as any);
   const { data: me } = useGetMe();
@@ -871,9 +829,8 @@ export default function Feed() {
     }
   };
 
-  const filteredPosts = applyFeedMode(posts as any[] ?? [], feedMode)
+  const filteredPosts = (Array.isArray(posts) ? posts : [])
     .filter((p: any) => !selectedTopic || p.topic === selectedTopic);
-  const activeMode = FEED_MODES.find(m => m.id === feedMode)!;
   const activeTopic = selectedTopic ? TOPICS.find(t => t.id === selectedTopic) : null;
 
   return (
@@ -889,27 +846,6 @@ export default function Feed() {
           >
             <Plus size={16} /> Новый пост
           </button>
-        </div>
-
-        {/* Feed mode tabs */}
-        <div className="px-4 pt-1 pb-2 flex gap-1.5 overflow-x-auto scrollbar-none">
-          {FEED_MODES.map((mode) => {
-            const isActive = feedMode === mode.id;
-            return (
-              <button
-                key={mode.id}
-                onClick={() => setFeedMode(mode.id)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all shrink-0 ${
-                  isActive
-                    ? "bg-primary text-primary-foreground shadow-[0_0_8px_rgba(255,80,0,0.3)]"
-                    : "bg-secondary/60 text-muted-foreground hover:bg-secondary hover:text-foreground"
-                }`}
-              >
-                {mode.icon}
-                {mode.label}
-              </button>
-            );
-          })}
         </div>
 
         {/* TikTok-style topic filter chips */}
@@ -940,35 +876,13 @@ export default function Feed() {
         </div>
 
         {/* Active hint bar */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={`${feedMode}-${selectedTopic ?? "all"}`}
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
-            className="px-5 pb-2 flex items-center gap-1.5 text-[11px] text-muted-foreground"
-          >
-            {activeTopic ? (
-              <>
-                <span>{activeTopic.emoji}</span>
-                <span className="font-semibold text-foreground/70">{activeTopic.label}</span>
-                <span>·</span>
-                <span>{activeMode.description.toLowerCase()}</span>
-              </>
-            ) : (
-              <>
-                <span className="text-primary/70">{activeMode.icon}</span>
-                <span>{activeMode.description}</span>
-              </>
-            )}
-            {(feedMode !== "all" || selectedTopic) && (
-              <span className="ml-auto text-primary/60 font-medium">
-                {filteredPosts.length} публ.
-              </span>
-            )}
-          </motion.div>
-        </AnimatePresence>
+        {activeTopic && (
+          <div className="px-5 pb-2 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            <span>{activeTopic.emoji}</span>
+            <span className="font-semibold text-foreground/70">{activeTopic.label}</span>
+            <span className="ml-auto text-primary/60 font-medium">{filteredPosts.length} публ.</span>
+          </div>
+        )}
       </header>
 
       <div className="flex-1 overflow-y-auto scrollbar-thin pb-24 md:pb-0">
@@ -1082,25 +996,20 @@ export default function Feed() {
             </div>
           ) : filteredPosts.length === 0 ? (
             <motion.div
-              key={`${feedMode}-${selectedTopic ?? "all"}`}
+              key={selectedTopic ?? "all"}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               className="text-center py-16 text-muted-foreground"
             >
               <div className="text-5xl mb-4">
-                {activeTopic ? activeTopic.emoji : feedMode === "media" ? "🖼️" : feedMode === "hot" ? "🔥" : feedMode === "popular" ? "⭐" : "📡"}
+                {activeTopic ? activeTopic.emoji : "📡"}
               </div>
               <h3 className="text-base font-semibold mb-1">
-                {activeTopic
-                  ? `Нет постов по теме «${activeTopic.label}»`
-                  : feedMode === "media" ? "Нет публикаций с фото"
-                  : feedMode === "hot" ? "Нет активных постов за 48 ч"
-                  : feedMode === "popular" ? "Пока нет популярных постов"
-                  : "Нет постов"}
+                {activeTopic ? `Нет постов по теме «${activeTopic.label}»` : "Нет постов"}
               </h3>
               <p className="text-sm">
-                {(selectedTopic || feedMode !== "all")
-                  ? <button onClick={() => { setSelectedTopic(null); setFeedMode("all"); }} className="text-primary hover:underline">Показать все публикации</button>
+                {selectedTopic
+                  ? <button onClick={() => setSelectedTopic(null)} className="text-primary hover:underline">Показать все публикации</button>
                   : "Будь первым кто поделится чем-нибудь!"
                 }
               </p>
@@ -1108,7 +1017,7 @@ export default function Feed() {
           ) : (
             <AnimatePresence mode="wait">
               <motion.div
-                key={`${feedMode}-${selectedTopic ?? "all"}`}
+                key={selectedTopic ?? "all"}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.2 }}
