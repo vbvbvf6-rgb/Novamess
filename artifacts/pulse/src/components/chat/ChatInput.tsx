@@ -373,6 +373,13 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
         setImagePreviews([]);
         setText("");
       } else {
+        const textToSend = text.trim();
+        const capturedReplyTo = replyTo;
+
+        // Clear input immediately for instant feel
+        setText("");
+        if (textareaRef.current) textareaRef.current.style.height = "44px";
+
         if (selectedEffect) {
           const token = sessionStorage.getItem("pulse-token");
           const hdrs: Record<string, string> = { "Content-Type": "application/json" };
@@ -380,16 +387,55 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
           const res = await fetch("/api/messages", {
             method: "POST",
             headers: hdrs,
-            body: JSON.stringify({ chatId, text, type: "text", replyToId: replyTo?.id, effect: selectedEffect }),
+            body: JSON.stringify({ chatId, text: textToSend, type: "text", replyToId: capturedReplyTo?.id, effect: selectedEffect }),
           });
           if (res.ok) { const m = await res.json(); if (m?.id) p2p?.send(m); }
           setSelectedEffect(null);
         } else {
-          const sent = await sendMessage.mutateAsync({ data: { chatId, text, type: "text", replyToId: replyTo?.id } });
-          if (sent) p2p?.send(sent as Message);
+          // Optimistic: add message to cache immediately so user sees it at once
+          const tempId = -Date.now();
+          queryClient.setQueryData(getGetMessagesQueryKey({ chatId }), (old: any) => {
+            const optimistic: any = {
+              id: tempId,
+              chatId,
+              senderId: me?.id ?? 0,
+              text: textToSend,
+              type: "text",
+              mediaUrl: null,
+              replyToId: capturedReplyTo?.id ?? null,
+              replyTo: capturedReplyTo ?? null,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+              isDeleted: false,
+              isRead: false,
+              isEdited: false,
+              effect: null,
+              giftData: null,
+              pollData: null,
+              reactions: [],
+              sender: me ?? null,
+              deletedContentVisible: false,
+            };
+            return old ? [...old, optimistic] : [optimistic];
+          });
+          try {
+            const sent = await sendMessage.mutateAsync({ data: { chatId, text: textToSend, type: "text", replyToId: capturedReplyTo?.id } });
+            if (sent) {
+              // Swap optimistic message with the real one from server
+              queryClient.setQueryData(getGetMessagesQueryKey({ chatId }), (old: any) =>
+                Array.isArray(old) ? old.filter((m: any) => m.id !== tempId).concat([sent]) : [sent]
+              );
+              p2p?.send(sent as Message);
+            }
+          } catch (err) {
+            // Rollback: remove optimistic message and restore text
+            setText(textToSend);
+            queryClient.setQueryData(getGetMessagesQueryKey({ chatId }), (old: any) =>
+              Array.isArray(old) ? old.filter((m: any) => m.id !== tempId) : []
+            );
+            throw err;
+          }
         }
-        setText("");
-        if (textareaRef.current) textareaRef.current.style.height = "44px";
       }
       localStorage.removeItem(draftKey);
       setShowEmoji(false);

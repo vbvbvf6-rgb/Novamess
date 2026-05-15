@@ -257,7 +257,20 @@ router.post("/messages", async (req, res) => {
       replyToId: body.replyToId,
       effect: allowedEffect,
     }).returning();
-    const built = await buildMessage(msg, false);
+
+    // Fast build: run queries in parallel, skip reactions (always empty for brand-new messages)
+    const [sender, replyToMsg] = await Promise.all([
+      db.query.usersTable.findFirst({ where: eq(usersTable.id, uid) }),
+      body.replyToId
+        ? db.query.messagesTable.findFirst({ where: eq(messagesTable.id, body.replyToId) })
+        : Promise.resolve(null),
+    ]);
+    let replyTo: any = null;
+    if (replyToMsg) {
+      const replySender = await db.query.usersTable.findFirst({ where: eq(usersTable.id, replyToMsg.senderId) });
+      replyTo = { ...replyToMsg, sender: replySender, reactions: [], replyTo: null, giftData: null };
+    }
+    const built: any = { ...msg, sender, reactions: [], replyTo, giftData: null, pollData: null };
     res.status(201).json(built);
 
     broadcastToChat(body.chatId, "new-message", { messageId: msg.id, chatId: body.chatId });
