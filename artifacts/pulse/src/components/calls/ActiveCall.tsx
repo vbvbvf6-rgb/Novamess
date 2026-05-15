@@ -244,16 +244,27 @@ export function ActiveCall() {
     }
   }, [localStream]);
 
+  // Remote audio — always use the dedicated <audio> element so it works for both
+  // audio and video calls, and so the speaker toggle is reliable.
   useEffect(() => {
-    if (remoteVideoRef.current && remoteStream) {
-      remoteVideoRef.current.srcObject = remoteStream;
-      remoteVideoRef.current.play().catch(() => {});
-    }
-    if (remoteAudioRef.current && remoteStream) {
-      remoteAudioRef.current.srcObject = remoteStream;
-      remoteAudioRef.current.play().catch(() => {});
-    }
+    const audio = remoteAudioRef.current;
+    if (!audio || !remoteStream) return;
+    audio.srcObject = remoteStream;
+    audio.play().catch(() => {});
   }, [remoteStream]);
+
+  // Remote video (video tracks only — audio is handled by the audio element above)
+  useEffect(() => {
+    const video = remoteVideoRef.current;
+    if (!video || !remoteStream) return;
+    video.srcObject = remoteStream;
+    video.play().catch(() => {});
+  }, [remoteStream]);
+
+  // Speaker toggle — actually mute/unmute the audio element
+  useEffect(() => {
+    if (remoteAudioRef.current) remoteAudioRef.current.muted = isSpeakerOff;
+  }, [isSpeakerOff]);
 
   const handleToggleMute = () => {
     if (localStream) localStream.getAudioTracks().forEach((t) => { t.enabled = isMuted; });
@@ -364,6 +375,7 @@ export function ActiveCall() {
                     ref={remoteVideoRef}
                     autoPlay
                     playsInline
+                    muted
                     className="w-full h-full object-cover"
                   />
                 ) : (
@@ -565,8 +577,8 @@ export function ActiveCall() {
             </div>
           </div>
 
-          {/* Hidden remote audio for audio calls */}
-          {!isVideo && <audio ref={remoteAudioRef} autoPlay style={{ display: "none" }} />}
+          {/* Remote audio — always present for both audio and video calls */}
+          <audio ref={remoteAudioRef} autoPlay playsInline style={{ display: "none" }} />
         </motion.div>
       </AnimatePresence>
 

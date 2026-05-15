@@ -268,8 +268,11 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
     });
 
     // Another user just joined our room — we (as the existing member) send them an offer
+    // IMPORTANT: skip if we already have a peer for this user (e.g. we already sent them an offer
+    // as part of startCall — creating a second peer overwrites the first and breaks signaling).
     sock.on("peer-joined", async ({ userId: newUserId }: { userId: number; callId: number }) => {
       if (newUserId === currentUserIdRef.current) return;
+      if (peersRef.current.has(newUserId)) return; // already negotiating — don't duplicate
       const pc = createPeer(newUserId, roomId);
       peersRef.current.set(newUserId, pc);
       if (localStreamRef.current) {
