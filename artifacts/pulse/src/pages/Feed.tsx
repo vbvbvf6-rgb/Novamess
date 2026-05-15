@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useGetPosts, useGetMe, useCreatePost, useLikePost, useCreatePostComment, useGetPostComments, Post } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Heart, MessageCircle, Send, Image, X, Plus, Trash2, MoreVertical, ZoomIn, ShieldAlert, AlertCircle, CheckCircle2, Clock, ChevronDown, ChevronUp } from "lucide-react";
+import { Heart, MessageCircle, Send, Image, X, Plus, Trash2, MoreVertical, ZoomIn, ShieldAlert, AlertCircle, CheckCircle2, Clock, ChevronDown, ChevronUp, Flame, TrendingUp, Star, Camera } from "lucide-react";
 import { formatDistanceToNow as fDTN } from "date-fns";
 import { ru } from "date-fns/locale";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -592,11 +592,54 @@ function PostCard({ post, onAppealSubmitted }: { post: Post & { appeal?: any; mo
   );
 }
 
+type FeedMode = "all" | "popular" | "hot" | "media";
+
+const FEED_MODES: { id: FeedMode; label: string; icon: React.ReactNode; description: string }[] = [
+  { id: "all",     label: "Все",        icon: <Star size={14} />,       description: "Все публикации" },
+  { id: "popular", label: "Популярное", icon: <TrendingUp size={14} />, description: "Больше всего лайков" },
+  { id: "hot",     label: "Горячее",    icon: <Flame size={14} />,      description: "Активные за 48 ч" },
+  { id: "media",   label: "С фото",     icon: <Camera size={14} />,     description: "Только с фотографиями" },
+];
+
+function applyFeedMode(posts: any[], mode: FeedMode): any[] {
+  if (!Array.isArray(posts)) return [];
+  const visible = posts.filter((p: any) => !(p as any)._optimistic || true);
+
+  switch (mode) {
+    case "popular":
+      return [...visible].sort((a, b) => {
+        const scoreA = (a.likesCount ?? 0) + (a.commentsCount ?? 0) * 1.5;
+        const scoreB = (b.likesCount ?? 0) + (b.commentsCount ?? 0) * 1.5;
+        return scoreB - scoreA;
+      });
+
+    case "hot": {
+      const cutoff = Date.now() - 48 * 60 * 60 * 1000;
+      const recent = visible.filter((p: any) => new Date(p.createdAt).getTime() >= cutoff);
+      const older  = visible.filter((p: any) => new Date(p.createdAt).getTime() < cutoff);
+      const scored = [...recent].sort((a, b) => {
+        const scoreA = (a.likesCount ?? 0) * 2 + (a.commentsCount ?? 0) * 3;
+        const scoreB = (b.likesCount ?? 0) * 2 + (b.commentsCount ?? 0) * 3;
+        return scoreB - scoreA;
+      });
+      return [...scored, ...older];
+    }
+
+    case "media":
+      return visible.filter((p: any) => !!p.imageUrl);
+
+    case "all":
+    default:
+      return visible;
+  }
+}
+
 export default function Feed() {
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [newPostText, setNewPostText] = useState("");
   const [newPostImage, setNewPostImage] = useState<string | null>(null);
   const [imageLoading, setImageLoading] = useState(false);
+  const [feedMode, setFeedMode] = useState<FeedMode>("all");
   const { data: posts, isLoading, refetch } = useGetPosts({ query: { refetchInterval: 20000 } } as any);
   const { data: me } = useGetMe();
   const createPost = useCreatePost();
@@ -693,18 +736,64 @@ export default function Feed() {
     }
   };
 
+  const filteredPosts = applyFeedMode(posts as any[] ?? [], feedMode);
+  const activeMode = FEED_MODES.find(m => m.id === feedMode)!;
+
   return (
     <div className="flex-1 flex flex-col h-full bg-background overflow-hidden">
-      <header className="h-16 border-b border-border flex items-center px-6 justify-between bg-card/80 backdrop-blur-md z-10 shrink-0">
-        <h1 className="text-xl font-bold flex items-center gap-2">
-          <span className="text-primary">📡</span> Лента
-        </h1>
-        <button
-          onClick={() => setShowCreatePost(!showCreatePost)}
-          className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors shadow-[0_0_10px_rgba(255,80,0,0.2)]"
-        >
-          <Plus size={16} /> Новый пост
-        </button>
+      <header className="border-b border-border bg-card/80 backdrop-blur-md z-10 shrink-0">
+        <div className="h-16 flex items-center px-6 justify-between">
+          <h1 className="text-xl font-bold flex items-center gap-2">
+            <span className="text-primary">📡</span> Лента
+          </h1>
+          <button
+            onClick={() => setShowCreatePost(!showCreatePost)}
+            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors shadow-[0_0_10px_rgba(255,80,0,0.2)]"
+          >
+            <Plus size={16} /> Новый пост
+          </button>
+        </div>
+
+        {/* Recommendation tabs */}
+        <div className="px-4 pb-3 flex gap-1.5 overflow-x-auto scrollbar-none">
+          {FEED_MODES.map((mode) => {
+            const isActive = feedMode === mode.id;
+            return (
+              <button
+                key={mode.id}
+                onClick={() => setFeedMode(mode.id)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all shrink-0 ${
+                  isActive
+                    ? "bg-primary text-primary-foreground shadow-[0_0_8px_rgba(255,80,0,0.3)]"
+                    : "bg-secondary/60 text-muted-foreground hover:bg-secondary hover:text-foreground"
+                }`}
+              >
+                {mode.icon}
+                {mode.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Active mode hint */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={feedMode}
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="px-5 pb-2 flex items-center gap-1.5 text-[11px] text-muted-foreground"
+          >
+            <span className="text-primary/70">{activeMode.icon}</span>
+            <span>{activeMode.description}</span>
+            {feedMode !== "all" && (
+              <span className="ml-auto text-primary/60 font-medium">
+                {filteredPosts.length} публ.
+              </span>
+            )}
+          </motion.div>
+        </AnimatePresence>
       </header>
 
       <div className="flex-1 overflow-y-auto scrollbar-thin pb-24 md:pb-0">
@@ -795,20 +884,47 @@ export default function Feed() {
                 </div>
               ))}
             </div>
-          ) : posts?.length === 0 ? (
-            <div className="text-center py-16 text-muted-foreground">
-              <div className="text-6xl mb-4">📡</div>
-              <h3 className="text-lg font-semibold mb-2">Нет постов</h3>
-              <p className="text-sm">Будь первым кто поделится чем-нибудь!</p>
-            </div>
+          ) : filteredPosts.length === 0 ? (
+            <motion.div
+              key={feedMode}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-center py-16 text-muted-foreground"
+            >
+              <div className="text-5xl mb-4">
+                {feedMode === "media" ? "🖼️" : feedMode === "hot" ? "🔥" : feedMode === "popular" ? "⭐" : "📡"}
+              </div>
+              <h3 className="text-base font-semibold mb-1">
+                {feedMode === "media" ? "Нет публикаций с фото" :
+                 feedMode === "hot" ? "Нет активных постов за 48 ч" :
+                 feedMode === "popular" ? "Пока нет популярных постов" :
+                 "Нет постов"}
+              </h3>
+              <p className="text-sm">
+                {feedMode !== "all"
+                  ? <button onClick={() => setFeedMode("all")} className="text-primary hover:underline">Посмотреть все публикации</button>
+                  : "Будь первым кто поделится чем-нибудь!"
+                }
+              </p>
+            </motion.div>
           ) : (
-            posts?.map((post: any) => (
-              <PostCard
-                key={post.id}
-                post={post}
-                onAppealSubmitted={() => refetch()}
-              />
-            ))
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={feedMode}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-4"
+              >
+                {filteredPosts.map((post: any) => (
+                  <PostCard
+                    key={post.id}
+                    post={post}
+                    onAppealSubmitted={() => refetch()}
+                  />
+                ))}
+              </motion.div>
+            </AnimatePresence>
           )}
         </div>
       </div>
