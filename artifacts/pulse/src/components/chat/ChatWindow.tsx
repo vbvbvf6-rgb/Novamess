@@ -3,7 +3,7 @@ import { useGetChatById, useGetMessages, getGetMessagesQueryKey, useMarkChatAsRe
 import { useP2PChannel } from "@/hooks/useP2PChannel";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useLastSeen } from "@/hooks/useLastSeen";
-import { Phone, Video, MoreVertical, ArrowLeft, Search, BellOff, Bell, Pin, PinOff, User, Trash2, X, Timer, Flame, ChevronRight, ChevronDown, ChevronUp, Settings, Crown, Palette, Check, Sparkles, Lock, MessageSquare, Users, Megaphone } from "lucide-react";
+import { Phone, Video, MoreVertical, ArrowLeft, Menu, Search, BellOff, Bell, Pin, PinOff, User, Trash2, X, Timer, Flame, ChevronRight, ChevronDown, ChevronUp, Settings, Crown, Palette, Check, Sparkles, Lock, MessageSquare, Users, Megaphone } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChatInfoPanel } from "./ChatInfoPanel";
 import { useAppContext } from "@/contexts/AppContext";
@@ -871,6 +871,15 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
               </button>
             </>
           )}
+
+          <button
+            className="w-10 h-10 flex items-center justify-center hover:bg-secondary rounded-xl transition-all hover:text-foreground md:hidden"
+            onClick={() => window.dispatchEvent(new Event("pulse:open-sidebar"))}
+            aria-label="Открыть меню"
+            title="Открыть меню"
+          >
+            <Menu size={20} />
+          </button>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

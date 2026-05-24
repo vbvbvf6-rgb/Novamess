@@ -33,6 +33,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("pulse:call-error", handler);
   }, [toast]);
 
+  useEffect(() => {
+    const handler = () => setMobileSidebarOpen(true);
+    window.addEventListener("pulse:open-sidebar", handler);
+    return () => window.removeEventListener("pulse:open-sidebar", handler);
+  }, []);
+
   return (
     <div className="flex h-[100dvh] w-full overflow-hidden bg-background text-foreground">
       <Sidebar

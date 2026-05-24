@@ -144,13 +144,13 @@ export default function Home() {
           {/* Dim the chat list behind while dragging */}
           {dragX > 0 && (
             <div
-              className="absolute inset-0 z-[9] md:hidden pointer-events-none"
+              className="absolute inset-0 z-[29] md:hidden pointer-events-none"
               style={{ background: `rgba(0,0,0,${0.25 * (1 - dragX / screenW)})` }}
             />
           )}
 
           <div
-            className="absolute inset-0 z-10 md:hidden bg-background"
+            className="absolute inset-0 z-30 md:hidden bg-background"
             style={{
               transform: `translateX(${overlayX}px)`,
               transition: isAnimating ? "transform 0.22s cubic-bezier(0.32,0,0.67,0)" : "none",
