@@ -413,6 +413,8 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
     return true;
   });
 
+  const [showChannelReactionPicker, setShowChannelReactionPicker] = useState(false);
+  const channelReactionPickerRef = useRef<HTMLDivElement>(null);
   const [lightbox, setLightbox] = useState<{ urls: string[]; idx: number } | null>(null);
   const [displayedWords, setDisplayedWords] = useState<number>(typingOut ? 0 : Infinity);
   const typingDoneRef = useRef(false);
@@ -483,6 +485,17 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
     document.addEventListener("keydown", (e) => { if (e.key === "Escape") close(); });
     return () => { document.removeEventListener("mousedown", close); };
   }, [showMenu]);
+
+  useEffect(() => {
+    if (!showChannelReactionPicker) return;
+    const close = (e: MouseEvent) => {
+      if (channelReactionPickerRef.current && !channelReactionPickerRef.current.contains(e.target as Node)) {
+        setShowChannelReactionPicker(false);
+      }
+    };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [showChannelReactionPicker]);
 
   const handleReact = async (emoji: string) => {
     closeMenu();
@@ -1053,16 +1066,58 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
               </div>
             )}
 
-            {/* Channel comments button */}
-            {isChannel && !(message as any).replyToId && onComment && (
-              <div className={cn("mt-1.5", isMine ? "flex justify-end" : "flex justify-start")}>
-                <button
-                  onClick={() => onComment(message)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary/60 border border-border hover:border-primary/30 hover:bg-primary/10 text-muted-foreground hover:text-primary transition-all text-[12px] font-bold group"
-                >
-                  <MessageSquare size={12} className="group-hover:scale-110 transition-transform" />
-                  Комментарии
-                </button>
+            {/* Channel reactions + comments row */}
+            {isChannel && !(message as any).replyToId && (
+              <div className={cn("mt-1.5 relative", isMine ? "flex justify-end" : "flex justify-start")}>
+                <div className="flex items-center gap-1.5">
+                  {/* React button */}
+                  <div className="relative" ref={channelReactionPickerRef}>
+                    <button
+                      onClick={() => setShowChannelReactionPicker(v => !v)}
+                      className={cn(
+                        "flex items-center gap-1 px-2.5 py-1.5 rounded-full border transition-all text-[12px] font-bold group",
+                        showChannelReactionPicker
+                          ? "bg-primary/15 border-primary/40 text-primary"
+                          : "bg-secondary/60 border-border hover:border-primary/30 hover:bg-primary/10 text-muted-foreground hover:text-primary"
+                      )}
+                    >
+                      <SmilePlus size={12} className="group-hover:scale-110 transition-transform" />
+                    </button>
+                    {/* Inline reaction picker */}
+                    {showChannelReactionPicker && (
+                      <div
+                        className="absolute bottom-full mb-2 left-0 z-50 flex items-center gap-0.5 bg-card border border-border rounded-2xl shadow-xl px-1.5 py-1"
+                        onMouseDown={e => e.stopPropagation()}
+                      >
+                        {QUICK_REACTIONS.map(emoji => {
+                          const reacted = groupedReactions[emoji]?.mine;
+                          return (
+                            <button
+                              key={emoji}
+                              onClick={() => { handleReact(emoji); setShowChannelReactionPicker(false); }}
+                              className={cn(
+                                "w-9 h-9 flex items-center justify-center rounded-xl text-xl transition-all hover:scale-110 active:scale-95",
+                                reacted ? "bg-primary/20" : "hover:bg-secondary"
+                              )}
+                            >
+                              {emoji}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                  {/* Comments button */}
+                  {onComment && (
+                    <button
+                      onClick={() => onComment(message)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary/60 border border-border hover:border-primary/30 hover:bg-primary/10 text-muted-foreground hover:text-primary transition-all text-[12px] font-bold group"
+                    >
+                      <MessageSquare size={12} className="group-hover:scale-110 transition-transform" />
+                      Комментарии
+                    </button>
+                  )}
+                </div>
               </div>
             )}
 
