@@ -624,6 +624,13 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
         } catch {}
       });
 
+      es.addEventListener("moderation-removed", (e: MessageEvent) => {
+        try {
+          const data = JSON.parse(e.data);
+          window.dispatchEvent(new CustomEvent("pulse:moderation-removed", { detail: data }));
+        } catch {}
+      });
+
       es.onerror = () => {
         es?.close();
         es = null;

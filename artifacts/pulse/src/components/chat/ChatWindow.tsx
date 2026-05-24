@@ -387,6 +387,11 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
       });
     });
 
+    es.addEventListener("message-deleted", () => {
+      queryClient.invalidateQueries({ queryKey: getGetMessagesQueryKey({ chatId }) });
+      queryClient.invalidateQueries({ queryKey: getGetChatsQueryKey() });
+    });
+
     es.addEventListener("messages-read", () => {
       // Someone read messages in this chat — re-fetch so sender's ✓ → ✓✓
       queryClient.invalidateQueries({ queryKey: getGetMessagesQueryKey({ chatId }) });
@@ -428,6 +433,24 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
       es.close();
       sseRef.current = null;
     };
+  }, [chatId]);
+
+  // Listen for AI moderation removals and notify the sender
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (!detail) return;
+      if (detail.chatId && detail.chatId !== chatId) return;
+      toast({
+        title: "Сообщение удалено модерацией",
+        description: detail.reason || "Ваше сообщение нарушает правила платформы.",
+        variant: "destructive",
+      });
+      queryClient.invalidateQueries({ queryKey: getGetMessagesQueryKey({ chatId }) });
+      queryClient.invalidateQueries({ queryKey: getGetChatsQueryKey() });
+    };
+    window.addEventListener("pulse:moderation-removed", handler);
+    return () => window.removeEventListener("pulse:moderation-removed", handler);
   }, [chatId]);
 
   useEffect(() => {
