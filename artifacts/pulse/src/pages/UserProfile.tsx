@@ -12,7 +12,6 @@ import {
   getGetContactsQueryKey,
   getGetChatsQueryKey,
 } from "@workspace/api-client-react";
-import { GiftShowcase } from "@/components/GiftShowcase";
 import { GiftLeaderboard } from "@/components/GiftLeaderboard";
 import {
   ArrowLeft,
@@ -780,7 +779,6 @@ export default function UserProfile() {
 
           <GiftLeaderboard userId={userId} />
 
-          <GiftShowcase userId={userId} />
         </div>
       </div>
 

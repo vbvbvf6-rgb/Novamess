@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Crown, Zap, Check, Star, Shield, MessageCircle, Image,
+  Crown, Zap, Check, Star, Shield, Image,
   Infinity as InfinityIcon, X, AlertTriangle, Palette, RefreshCw, TrendingUp,
   ShoppingCart, Bell, Clock, Lock, CalendarClock, RotateCcw, Flame,
-  Sparkles, Mic, Video, Brush, Layers, ChevronDown, ChevronUp,
-  Radio, Eye, Smile, Pin, Bot, Users, Music, Globe,
-  BarChart3, QrCode, Fingerprint, Headphones, Wand2, Trash2
+  Sparkles, Brush, Layers, ChevronDown, ChevronUp,
+  Smile, Music, Globe,
+  BarChart3, QrCode, Headphones, Wand2, Trash2
 } from "lucide-react";
 import { useGetMe, getGetMeQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -52,24 +52,16 @@ const PLUS_EXCLUSIVE = [
   { icon: Zap,          text: "Ежедневный бонус 50 ⚡ вместо 25 ⚡",                  color: "text-fuchsia-400",bg: "bg-fuchsia-500/10"},
   { icon: Brush,        text: "Кастомный цвет имени: градиентный текст",              color: "text-purple-400", bg: "bg-purple-500/10" },
   { icon: Palette,      text: "Полная палитра тем + анимированный фон профиля",       color: "text-purple-400", bg: "bg-purple-500/10" },
-  { icon: Mic,          text: "Транскрипция голосовых сообщений в текст (AI)",        color: "text-fuchsia-400",bg: "bg-fuchsia-500/10"},
-  { icon: Video,        text: "Видео-аватар профиля",                                 color: "text-fuchsia-400",bg: "bg-fuchsia-500/10"},
   { icon: Layers,       text: "Эксклюзивный пак стикеров Prime+",                    color: "text-purple-400", bg: "bg-purple-500/10" },
   { icon: Shield,       text: "VIP+ метка в группах и каналах",                      color: "text-purple-400", bg: "bg-purple-500/10" },
   { icon: Zap,          text: "100 ⚡ Spark бонус при оформлении",                    color: "text-fuchsia-400",bg: "bg-fuchsia-500/10"},
-  { icon: MessageCircle,text: "Приоритет в очереди AI-ассистента",                    color: "text-fuchsia-400",bg: "bg-fuchsia-500/10"},
-  { icon: Radio,        text: "Голосовые сообщения без ограничений длины",            color: "text-violet-400", bg: "bg-violet-500/10" },
   { icon: Trash2,       text: "Просмотр удалённых сообщений — 48 часов",             color: "text-violet-400", bg: "bg-violet-500/10" },
   { icon: Globe,        text: "Кастомный анимированный статус профиля",               color: "text-violet-400", bg: "bg-violet-500/10" },
-  { icon: Pin,          text: "Закрепление до 10 сообщений в чате",                   color: "text-fuchsia-400",bg: "bg-fuchsia-500/10"},
   { icon: Smile,        text: "Двойные реакции: отправляй ×2 реакции на сообщение",  color: "text-fuchsia-400",bg: "bg-fuchsia-500/10"},
-  { icon: Bot,          text: "AI-генерация аватара: новый стиль каждый месяц",       color: "text-violet-400", bg: "bg-violet-500/10" },
-  { icon: Users,        text: "Увеличенный лимит контактов до 10 000",                color: "text-violet-400", bg: "bg-violet-500/10" },
   { icon: Music,        text: "Кастомные звуки и рингтоны уведомлений",               color: "text-purple-400", bg: "bg-purple-500/10" },
   { icon: Wand2,        text: "Эффекты отправки: конфетти, снег, огонь в чате",       color: "text-purple-400", bg: "bg-purple-500/10" },
   { icon: QrCode,       text: "QR-код профиля с кастомным дизайном Prime+",           color: "text-violet-400", bg: "bg-violet-500/10" },
   { icon: BarChart3,    text: "Детальная статистика трат Spark и активности",          color: "text-violet-400", bg: "bg-violet-500/10" },
-  { icon: Fingerprint,  text: "Сквозное шифрование E2E+ для секретных чатов",         color: "text-violet-400", bg: "bg-violet-500/10" },
   { icon: Headphones,   text: "Эксклюзивный доступ к Prime+ Lounge — закрытому чату", color: "text-fuchsia-400",bg: "bg-fuchsia-500/10"},
 ];
 
@@ -82,13 +74,8 @@ const COMPARISON_ROWS = [
   { label: "Множитель заданий",        prime: "2×",              plus: "3×" },
   { label: "Бонус при старте",         prime: "50 ⚡",           plus: "100 ⚡" },
   { label: "Темы оформления",          prime: "3 темы",          plus: "Все темы + анимация" },
-  { label: "Транскрипция голосовых",   prime: "—",               plus: "✓ AI" },
-  { label: "Видео-аватар",             prime: "—",               plus: "✓" },
-  { label: "Голосовые без лимита",     prime: "—",               plus: "✓" },
   { label: "Цвет имени",              prime: "—",               plus: "Градиент на выбор" },
-  { label: "Закреп. сообщений",        prime: "1",               plus: "10" },
-  { label: "Лимит контактов",          prime: "5 000",           plus: "10 000" },
-  { label: "E2E+ шифрование",          prime: "—",               plus: "✓" },
+  { label: "Двойные реакции",          prime: "—",               plus: "✓" },
   { label: "Prime+ Lounge",            prime: "—",               plus: "✓ Эксклюзив" },
 ];
 
