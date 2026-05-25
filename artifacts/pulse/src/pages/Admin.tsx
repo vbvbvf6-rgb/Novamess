@@ -392,6 +392,9 @@ export default function Admin() {
   const [newBannedWord, setNewBannedWord] = useState("");
   const [newBannedCategory, setNewBannedCategory] = useState("custom");
   const [addingWord, setAddingWord] = useState(false);
+  const [bulkMode, setBulkMode] = useState(false);
+  const [bulkText, setBulkText] = useState("");
+  const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number } | null>(null);
   const [editingEvent, setEditingEvent] = useState<PlatformEvent | null>(null);
   const [eventTitle, setEventTitle] = useState("");
   const [eventDesc, setEventDesc] = useState("");
@@ -467,6 +470,37 @@ export default function Admin() {
         showToast("Слово добавлено", "ok");
       } else { showToast("Ошибка", "err"); }
     } catch { showToast("Ошибка", "err"); } finally { setAddingWord(false); }
+  };
+
+  const addBulkBannedWords = async () => {
+    const words = bulkText
+      .split(/[\n,;]+/)
+      .map(w => w.trim().toLowerCase())
+      .filter(w => w.length > 0 && w.length <= 100);
+    const unique = [...new Set(words)];
+    if (unique.length === 0) return;
+    setBulkProgress({ done: 0, total: unique.length });
+    let added = 0;
+    let skipped = 0;
+    for (let i = 0; i < unique.length; i++) {
+      try {
+        const res = await fetch("/api/admin/banned-words", {
+          method: "POST",
+          headers: { ...getHeader(), "Content-Type": "application/json" },
+          body: JSON.stringify({ word: unique[i], category: newBannedCategory }),
+        });
+        if (res.ok) {
+          const row = await res.json();
+          setBannedWords(prev => [row, ...prev.filter(w => w.word !== row.word)]);
+          added++;
+        } else { skipped++; }
+      } catch { skipped++; }
+      setBulkProgress({ done: i + 1, total: unique.length });
+    }
+    setBulkProgress(null);
+    setBulkText("");
+    setBulkMode(false);
+    showToast(`Добавлено: ${added}${skipped ? `, пропущено: ${skipped}` : ""}`, "ok");
   };
 
   const deleteBannedWord = async (id: number) => {
@@ -2222,19 +2256,23 @@ export default function Admin() {
             <div className="border-t border-border">
               {/* Add word form */}
               <div className="p-4 border-b border-border space-y-3">
-                <p className="text-xs text-muted-foreground">Любое слово или фраза в этом списке будет <span className="text-orange-400 font-semibold">автоматически блокировать</span> пост в ленте.</p>
-                <div className="flex gap-2">
-                  <input
-                    value={newBannedWord}
-                    onChange={e => setNewBannedWord(e.target.value)}
-                    onKeyDown={e => e.key === "Enter" && addBannedWord()}
-                    placeholder="Слово или фраза…"
-                    className="flex-1 bg-background border border-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-orange-500 transition-colors"
-                  />
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-muted-foreground">Любое слово или фраза будет <span className="text-orange-400 font-semibold">блокировать</span> пост в ленте.</p>
+                  <button
+                    onClick={() => { setBulkMode(v => !v); setBulkText(""); setNewBannedWord(""); }}
+                    className={`text-[10px] font-bold px-2 py-1 rounded-lg border transition-colors ${bulkMode ? "bg-orange-500/20 border-orange-500/40 text-orange-400" : "border-border text-muted-foreground hover:text-foreground hover:border-border/80"}`}
+                  >
+                    {bulkMode ? "✕ Одиночный" : "📋 Массовый импорт"}
+                  </button>
+                </div>
+
+                {/* Category selector — shared */}
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground shrink-0">Категория:</span>
                   <select
                     value={newBannedCategory}
                     onChange={e => setNewBannedCategory(e.target.value)}
-                    className="bg-background border border-border rounded-xl px-2 py-2 text-xs focus:outline-none focus:border-orange-500 transition-colors"
+                    className="bg-background border border-border rounded-xl px-2 py-1.5 text-xs focus:outline-none focus:border-orange-500 transition-colors"
                   >
                     <option value="custom">Общее</option>
                     <option value="insult">Оскорбление</option>
@@ -2242,15 +2280,63 @@ export default function Admin() {
                     <option value="hate">Ненависть</option>
                     <option value="adult">18+</option>
                   </select>
-                  <button
-                    onClick={addBannedWord}
-                    disabled={addingWord || !newBannedWord.trim()}
-                    className="px-3 py-2 rounded-xl bg-orange-500 text-white text-xs font-bold hover:bg-orange-600 transition-colors disabled:opacity-50 flex items-center gap-1"
-                  >
-                    {addingWord ? <div className="w-3 h-3 border border-white/30 border-t-white rounded-full animate-spin" /> : <Plus size={13} />}
-                    Добавить
-                  </button>
                 </div>
+
+                {bulkMode ? (
+                  <div className="space-y-2">
+                    <textarea
+                      value={bulkText}
+                      onChange={e => setBulkText(e.target.value)}
+                      placeholder={"Вставьте слова через запятую, точку с запятой или каждое с новой строки:\nплохое, слово1\nслово2; слово3\nслово4"}
+                      rows={6}
+                      className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-orange-500 transition-colors resize-none font-mono"
+                    />
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] text-muted-foreground">
+                        {bulkText.trim()
+                          ? `≈ ${[...new Set(bulkText.split(/[\n,;]+/).map(w => w.trim().toLowerCase()).filter(w => w.length > 0))].length} уникальных слов`
+                          : "Разделители: запятая, точка с запятой, новая строка"}
+                      </span>
+                      {bulkProgress ? (
+                        <div className="flex items-center gap-2">
+                          <div className="w-24 h-1.5 bg-border rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-orange-500 transition-all duration-200 rounded-full"
+                              style={{ width: `${(bulkProgress.done / bulkProgress.total) * 100}%` }}
+                            />
+                          </div>
+                          <span className="text-xs text-muted-foreground">{bulkProgress.done}/{bulkProgress.total}</span>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={addBulkBannedWords}
+                          disabled={!bulkText.trim()}
+                          className="px-4 py-1.5 rounded-xl bg-orange-500 text-white text-xs font-bold hover:bg-orange-600 transition-colors disabled:opacity-50 flex items-center gap-1.5"
+                        >
+                          <Plus size={12} /> Добавить все
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <input
+                      value={newBannedWord}
+                      onChange={e => setNewBannedWord(e.target.value)}
+                      onKeyDown={e => e.key === "Enter" && addBannedWord()}
+                      placeholder="Слово или фраза…"
+                      className="flex-1 bg-background border border-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-orange-500 transition-colors"
+                    />
+                    <button
+                      onClick={addBannedWord}
+                      disabled={addingWord || !newBannedWord.trim()}
+                      className="px-3 py-2 rounded-xl bg-orange-500 text-white text-xs font-bold hover:bg-orange-600 transition-colors disabled:opacity-50 flex items-center gap-1"
+                    >
+                      {addingWord ? <div className="w-3 h-3 border border-white/30 border-t-white rounded-full animate-spin" /> : <Plus size={13} />}
+                      Добавить
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Words list */}
