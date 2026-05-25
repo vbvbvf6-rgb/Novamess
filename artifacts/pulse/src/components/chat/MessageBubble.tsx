@@ -507,6 +507,7 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
         await fetch(`/api/messages/${message.id}/reactions`, {
           method: "POST", headers, body: JSON.stringify({ emoji }),
         });
+        import("@/utils/questTracker").then(({ trackQuestAction }) => trackQuestAction("reaction_added"));
       } else if (myCount === 1 && viewerIsPrimePlus) {
         // Prime+: add second reaction (double reaction ×2)
         await fetch(`/api/messages/${message.id}/reactions`, {

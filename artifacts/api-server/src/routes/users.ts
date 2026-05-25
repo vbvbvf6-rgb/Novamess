@@ -240,4 +240,38 @@ router.post("/users/:userId/report", async (req, res) => {
   }
 });
 
+/* ── Public leaderboard (/api/leaderboard?sort=balance|messages) ── */
+router.get("/leaderboard", async (req, res) => {
+  try {
+    const sort = (req.query.sort as string) || "balance";
+    let rows;
+    if (sort === "messages") {
+      rows = await db.execute(sql`
+        SELECT u.id, u.username, u.display_name, u.avatar_color, u.avatar_url,
+               u.has_prime, u.prime_tier, u.is_verified,
+               COUNT(m.id)::int AS messages_sent
+        FROM users u
+        LEFT JOIN messages m ON m.sender_id = u.id AND m.is_deleted = false
+        WHERE u.is_bot = false
+        GROUP BY u.id
+        ORDER BY messages_sent DESC
+        LIMIT 20
+      `);
+    } else {
+      rows = await db.execute(sql`
+        SELECT id, username, display_name, avatar_color, avatar_url,
+               has_prime, prime_tier, is_verified, balance
+        FROM users
+        WHERE is_bot = false
+        ORDER BY balance DESC
+        LIMIT 20
+      `);
+    }
+    res.json(rows.rows);
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 export default router;

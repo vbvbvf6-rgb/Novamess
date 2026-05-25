@@ -463,6 +463,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
       queryClient.invalidateQueries({ queryKey: getGetMessagesQueryKey({ chatId }) });
       queryClient.invalidateQueries({ queryKey: getGetChatsQueryKey() });
       onMessageSent?.();
+      import("@/utils/questTracker").then(({ trackQuestAction }) => trackQuestAction("message_sent"));
     } finally { setIsSending(false); }
   };
 

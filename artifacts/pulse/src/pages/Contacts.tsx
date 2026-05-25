@@ -30,6 +30,7 @@ export default function Contacts() {
       {
         onSuccess: async () => {
           queryClient.invalidateQueries({ queryKey: getGetContactsQueryKey() });
+          import("@/utils/questTracker").then(({ trackQuestAction }) => trackQuestAction("contact_added"));
           try {
             const res = await fetch("/api/chats/direct", {
               method: "POST",

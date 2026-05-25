@@ -2,11 +2,12 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   CalendarDays, MapPin, Users, Clock, Star, Flame, Zap,
-  Trophy, CheckCircle2, Circle, Gift, Target, Swords,
+  Trophy, CheckCircle2, Gift, Target, Swords,
   MessageCircle, Phone, Heart, Send, Crown, ChevronRight,
-  TrendingUp, Lock, Sparkles, Medal,
+  TrendingUp, Lock, Sparkles, Medal, UserPlus, Info,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { maybeResetQuests } from "@/utils/questTracker";
 
 /* ─── Types ─────────────────────────────────────────────────────────── */
 type Tab = "quests" | "events" | "leaderboard";
@@ -25,18 +26,14 @@ interface Quest {
   color: string;
 }
 
-interface PulseEvent {
+interface ApiEvent {
   id: number;
   title: string;
   description: string;
-  date: string;
-  time: string;
-  location: string;
-  category: string;
-  attendees: number;
-  featured?: boolean;
-  color: string;
-  emoji: string;
+  startsAt?: string;
+  endsAt?: string;
+  isActive?: boolean;
+  createdAt?: string;
 }
 
 interface LeaderEntry {
@@ -48,45 +45,7 @@ interface LeaderEntry {
   isMe?: boolean;
 }
 
-/* ─── Data ───────────────────────────────────────────────────────────── */
-const EVENTS: PulseEvent[] = [
-  {
-    id: 1, title: "Pulse Community Meetup",
-    description: "Встреча сообщества Pulse — новые функции, команда, знакомства.",
-    date: "28 мая", time: "19:00", location: "Москва, Центр",
-    category: "Встреча", attendees: 142, featured: true,
-    color: "from-violet-500 to-indigo-600", emoji: "🎉",
-  },
-  {
-    id: 2, title: "Pulse Hackathon 2026",
-    description: "48-часовой хакатон. Создайте лучшее приложение и выиграйте Spark-награды.",
-    date: "1 июня", time: "10:00", location: "Онлайн",
-    category: "Хакатон", attendees: 389, featured: true,
-    color: "from-orange-500 to-rose-600", emoji: "💻",
-  },
-  {
-    id: 3, title: "AMA с командой Pulse",
-    description: "Сессия вопросов и ответов с командой разработчиков.",
-    date: "5 июня", time: "18:00", location: "Pulse Live",
-    category: "AMA", attendees: 671,
-    color: "from-sky-500 to-blue-600", emoji: "🎙️",
-  },
-  {
-    id: 4, title: "Pulse Gaming Tournament",
-    description: "Онлайн-турнир среди пользователей Pulse. Соревнуйтесь за Spark.",
-    date: "10 июня", time: "20:00", location: "Онлайн",
-    category: "Турнир", attendees: 204,
-    color: "from-green-500 to-emerald-600", emoji: "🎮",
-  },
-  {
-    id: 5, title: "Вебинар: Приватность в Pulse",
-    description: "Всё о настройках приватности, 2FA и безопасности аккаунта.",
-    date: "15 июня", time: "17:00", location: "Онлайн",
-    category: "Вебинар", attendees: 118,
-    color: "from-gray-500 to-slate-600", emoji: "🔒",
-  },
-];
-
+/* ─── Static leaderboard (demo) ──────────────────────────────────────── */
 const LEADERBOARD: LeaderEntry[] = [
   { rank: 1, name: "Артём К.",   avatar: "🦁", score: 4820, delta: +120 },
   { rank: 2, name: "Мария С.",   avatar: "🦊", score: 4310, delta: +85  },
@@ -109,15 +68,34 @@ function loadProgress(): Record<string, number> {
   try { return JSON.parse(localStorage.getItem("pulse-quests-progress") || "{}"); }
   catch { return {}; }
 }
-function saveProgress(p: Record<string, number>) {
-  localStorage.setItem("pulse-quests-progress", JSON.stringify(p));
-}
 function loadJoined(): Set<number> {
   try { return new Set(JSON.parse(localStorage.getItem("pulse-events-joined") || "[]")); }
   catch { return new Set(); }
 }
 function saveJoined(s: Set<number>) {
   localStorage.setItem("pulse-events-joined", JSON.stringify([...s]));
+}
+
+/* ─── Event color helpers ────────────────────────────────────────────── */
+const EVENT_COLORS = [
+  "from-violet-500 to-indigo-600",
+  "from-orange-500 to-rose-600",
+  "from-sky-500 to-blue-600",
+  "from-green-500 to-emerald-600",
+  "from-pink-500 to-fuchsia-600",
+  "from-amber-500 to-yellow-600",
+];
+const EVENT_EMOJIS = ["🎉", "💻", "🎙️", "🎮", "🔒", "🌟", "🚀", "🎯"];
+function eventColor(id: number) { return EVENT_COLORS[id % EVENT_COLORS.length]; }
+function eventEmoji(id: number) { return EVENT_EMOJIS[id % EVENT_EMOJIS.length]; }
+
+function formatEventDate(dateStr?: string): string {
+  if (!dateStr) return "";
+  try {
+    return new Date(dateStr).toLocaleDateString("ru-RU", {
+      day: "numeric", month: "long", hour: "2-digit", minute: "2-digit",
+    });
+  } catch { return dateStr; }
 }
 
 /* ─── Component ─────────────────────────────────────────────────────── */
@@ -129,6 +107,39 @@ export default function Events() {
   const [sparks, setSparks] = useState<number>(() => Number(localStorage.getItem("pulse-sparks") || "0"));
   const [claimAnim, setClaimAnim] = useState<string | null>(null);
   const [questFilter, setQuestFilter] = useState<"all" | "daily" | "weekly" | "special">("all");
+  const [apiEvents, setApiEvents] = useState<ApiEvent[]>([]);
+  const [eventsLoading, setEventsLoading] = useState(false);
+
+  /* On mount: reset expired daily/weekly quests */
+  useEffect(() => {
+    maybeResetQuests();
+    setCompleted(loadCompleted());
+    setProgress(loadProgress());
+  }, []);
+
+  /* Listen for quest progress updates triggered by real actions */
+  useEffect(() => {
+    const handler = () => {
+      setProgress(loadProgress());
+      setCompleted(loadCompleted());
+    };
+    window.addEventListener("pulse:quest-progress", handler);
+    return () => window.removeEventListener("pulse:quest-progress", handler);
+  }, []);
+
+  /* Fetch real platform events from API */
+  useEffect(() => {
+    const token = sessionStorage.getItem("pulse-token");
+    if (!token) return;
+    setEventsLoading(true);
+    fetch("/api/platform-events", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(r => r.ok ? r.json() : [])
+      .then((data: ApiEvent[]) => setApiEvents(Array.isArray(data) ? data : []))
+      .catch(() => setApiEvents([]))
+      .finally(() => setEventsLoading(false));
+  }, []);
 
   /* Build quest list with persisted progress */
   const QUESTS: Quest[] = [
@@ -138,7 +149,7 @@ export default function Events() {
       title: "Отправь 5 сообщений",
       desc: "Напиши что-нибудь в любом чате",
       reward: 50, rewardIcon: "⚡",
-      progress: progress["q1"] ?? 2, total: 5,
+      progress: progress["q1"] ?? 0, total: 5,
       completed: completed.has("q1"),
       color: "from-sky-500 to-blue-600",
     },
@@ -158,7 +169,7 @@ export default function Events() {
       title: "Поставь 3 реакции",
       desc: "Отреагируй на сообщения друзей",
       reward: 40, rewardIcon: "⚡",
-      progress: progress["q3"] ?? 1, total: 3,
+      progress: progress["q3"] ?? 0, total: 3,
       completed: completed.has("q3"),
       color: "from-rose-500 to-pink-600",
     },
@@ -174,11 +185,11 @@ export default function Events() {
     },
     {
       id: "q5", type: "weekly",
-      icon: <Users size={18} />,
+      icon: <UserPlus size={18} />,
       title: "Добавить 3 контакта",
       desc: "Расширь свою сеть за неделю",
       reward: 200, rewardIcon: "⚡",
-      progress: progress["q5"] ?? 1, total: 3,
+      progress: progress["q5"] ?? 0, total: 3,
       completed: completed.has("q5"),
       color: "from-violet-500 to-indigo-600",
     },
@@ -188,7 +199,7 @@ export default function Events() {
       title: "5 звонков за неделю",
       desc: "Общайся голосом с разными людьми",
       reward: 300, rewardIcon: "⚡",
-      progress: progress["q6"] ?? 2, total: 5,
+      progress: progress["q6"] ?? 0, total: 5,
       completed: completed.has("q6"),
       color: "from-teal-500 to-cyan-600",
     },
@@ -198,7 +209,7 @@ export default function Events() {
       title: "Войти 7 дней подряд",
       desc: "Не прерывай серию заходов",
       reward: 500, rewardIcon: "⚡",
-      progress: progress["q7"] ?? 3, total: 7,
+      progress: progress["q7"] ?? 0, total: 7,
       completed: completed.has("q7"),
       color: "from-yellow-500 to-amber-600",
     },
@@ -218,14 +229,13 @@ export default function Events() {
       title: "Топ-10 таблицы лидеров",
       desc: "Попади в десятку лучших игроков",
       reward: 1000, rewardIcon: "⚡",
-      progress: 1, total: 1,
+      progress: progress["q9"] ?? 0, total: 1,
       completed: completed.has("q9"),
       color: "from-orange-400 to-red-600",
     },
   ];
 
   const visibleQuests = questFilter === "all" ? QUESTS : QUESTS.filter(q => q.type === questFilter);
-  const totalSparks = QUESTS.filter(q => q.completed).reduce((sum, q) => sum + q.reward, 0) + sparks;
   const doneCount = QUESTS.filter(q => q.completed).length;
 
   function claimReward(quest: Quest) {
@@ -239,14 +249,6 @@ export default function Events() {
     localStorage.setItem("pulse-sparks", String(newSparks));
     setClaimAnim(quest.id);
     setTimeout(() => setClaimAnim(null), 1200);
-  }
-
-  function addProgress(questId: string, current: number, total: number) {
-    if (completed.has(questId) || current >= total) return;
-    const newVal = Math.min(current + 1, total);
-    const next = { ...progress, [questId]: newVal };
-    setProgress(next);
-    saveProgress(next);
   }
 
   function toggleJoin(id: number) {
@@ -278,14 +280,14 @@ export default function Events() {
             </div>
             {/* Spark balance */}
             <motion.div
-              key={totalSparks}
+              key={sparks}
               initial={{ scale: 1 }}
               animate={{ scale: [1, 1.15, 1] }}
               transition={{ duration: 0.35 }}
               className="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 rounded-full"
             >
               <Zap size={13} className="text-amber-400 fill-amber-400" />
-              <span className="text-sm font-black text-amber-400">{totalSparks.toLocaleString()}</span>
+              <span className="text-sm font-black text-amber-400">{sparks.toLocaleString()}</span>
             </motion.div>
           </div>
 
@@ -387,6 +389,15 @@ export default function Events() {
                   </div>
                 </div>
 
+                {/* How it works hint */}
+                <div className="flex items-start gap-2 bg-primary/5 border border-primary/15 rounded-xl px-3 py-2.5">
+                  <Info size={13} className="text-primary mt-0.5 shrink-0" />
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    Прогресс обновляется автоматически, когда ты выполняешь действия в приложении.
+                    Ежедневные задания сбрасываются в полночь.
+                  </p>
+                </div>
+
                 {/* Quest cards */}
                 <div className="space-y-2.5">
                   {visibleQuests.map((quest, i) => {
@@ -457,27 +468,16 @@ export default function Events() {
                             </div>
                           </div>
 
-                          {/* Bottom row */}
-                          {!quest.completed && (
+                          {/* Claim button — only shown when progress is complete */}
+                          {!quest.completed && canClaim && (
                             <div className="flex items-center gap-2 mt-3">
-                              {/* Simulate progress button */}
-                              <button
-                                onClick={() => addProgress(quest.id, quest.progress, quest.total)}
-                                disabled={quest.progress >= quest.total}
-                                className="flex-1 py-1.5 rounded-xl bg-secondary text-xs font-semibold text-muted-foreground hover:bg-secondary/80 disabled:opacity-40 transition-all"
+                              <motion.button
+                                whileTap={{ scale: 0.92 }}
+                                onClick={() => claimReward(quest)}
+                                className="flex-1 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-black shadow-[0_2px_12px_rgba(245,158,11,0.4)] hover:shadow-[0_4px_16px_rgba(245,158,11,0.5)] transition-all"
                               >
-                                {quest.progress >= quest.total ? "Готово к получению" : "+ прогресс"}
-                              </button>
-
-                              {canClaim && (
-                                <motion.button
-                                  whileTap={{ scale: 0.92 }}
-                                  onClick={() => claimReward(quest)}
-                                  className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-black shadow-[0_2px_12px_rgba(245,158,11,0.4)] hover:shadow-[0_4px_16px_rgba(245,158,11,0.5)] transition-all"
-                                >
-                                  {isClaiming ? "✓" : `Забрать ${quest.rewardIcon}`}
-                                </motion.button>
-                              )}
+                                {isClaiming ? "✓ Получено!" : `🎁 Забрать награду ${quest.rewardIcon}${quest.reward}`}
+                              </motion.button>
                             </div>
                           )}
 
@@ -533,92 +533,128 @@ export default function Events() {
             {tab === "events" && (
               <motion.div key="events" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="space-y-3">
 
-                {/* Featured horizontal scroll */}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Flame size={13} className="text-orange-500" />
-                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Избранные</span>
-                  </div>
-                  <div className="flex gap-3 overflow-x-auto scrollbar-none -mx-4 px-4 pb-1">
-                    {EVENTS.filter(e => e.featured).map(event => (
-                      <motion.div
-                        key={event.id}
-                        whileTap={{ scale: 0.97 }}
-                        className={cn("min-w-[260px] rounded-2xl bg-gradient-to-br p-4 text-white cursor-pointer shrink-0 relative overflow-hidden", event.color)}
-                      >
-                        <div className="absolute top-3 right-3 text-2xl opacity-60">{event.emoji}</div>
-                        <div className="text-[10px] font-black uppercase tracking-wider opacity-75 mb-1">{event.category}</div>
-                        <p className="font-black text-base leading-tight mb-2 pr-8">{event.title}</p>
-                        <div className="flex items-center gap-3 text-xs opacity-80">
-                          <span className="flex items-center gap-1"><Clock size={11}/>{event.date} · {event.time}</span>
-                          <span className="flex items-center gap-1"><Users size={11}/>{event.attendees}</span>
-                        </div>
-                        <button
-                          onClick={() => toggleJoin(event.id)}
-                          className="mt-3 w-full py-2 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs font-bold transition-colors border border-white/20"
-                        >
-                          {joined.has(event.id) ? "✓ Вы участвуете" : "Участвовать"}
-                        </button>
-                      </motion.div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* All events */}
-                <div className="space-y-2.5">
-                  {EVENTS.map((event, i) => (
-                    <motion.div
-                      key={event.id}
-                      initial={{ opacity: 0, y: 12 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.05 }}
-                      className="bg-card border border-border rounded-2xl overflow-hidden"
-                    >
-                      <div className="p-4">
+                {eventsLoading ? (
+                  <div className="space-y-3">
+                    {[1, 2, 3].map(i => (
+                      <div key={i} className="bg-card border border-border rounded-2xl p-4 animate-pulse">
                         <div className="flex items-start gap-3">
-                          <div className={cn("w-11 h-11 rounded-xl bg-gradient-to-br flex items-center justify-center text-xl shrink-0", event.color)}>
-                            {event.emoji}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between gap-2">
-                              <div>
-                                <p className="font-bold text-sm text-foreground leading-tight">{event.title}</p>
-                                <span className="text-[10px] font-semibold text-muted-foreground bg-secondary px-1.5 py-0.5 rounded-full mt-0.5 inline-block">
-                                  {event.category}
-                                </span>
-                              </div>
-                              {event.featured && <Star size={14} className="text-amber-400 fill-amber-400 shrink-0 mt-0.5" />}
-                            </div>
-                            <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed line-clamp-2">{event.description}</p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
-                          <span className="flex items-center gap-1.5"><Clock size={12} className="text-primary/70"/>{event.date} · {event.time}</span>
-                          <span className="flex items-center gap-1.5"><MapPin size={12} className="text-primary/70"/>{event.location}</span>
-                          <span className="flex items-center gap-1.5 ml-auto"><Users size={12}/>{event.attendees}</span>
-                        </div>
-
-                        <div className="flex items-center gap-2 mt-3">
-                          <button
-                            onClick={() => toggleJoin(event.id)}
-                            className={cn(
-                              "flex-1 py-2 rounded-xl text-xs font-bold transition-all",
-                              joined.has(event.id)
-                                ? "bg-primary/10 text-primary border border-primary/20"
-                                : "bg-primary text-primary-foreground hover:opacity-90 shadow-[0_2px_10px_rgba(139,92,246,0.25)]"
-                            )}
-                          >
-                            {joined.has(event.id) ? "✓ Участвую" : "Участвовать"}
-                          </button>
-                          <div className="px-3 py-2 rounded-xl border border-border text-[10px] font-bold text-amber-400 flex items-center gap-1">
-                            <Zap size={10} className="fill-amber-400" />+100 ⚡
+                          <div className="w-11 h-11 rounded-xl bg-secondary shrink-0" />
+                          <div className="flex-1 space-y-2">
+                            <div className="h-4 bg-secondary rounded w-3/4" />
+                            <div className="h-3 bg-secondary rounded w-1/2" />
+                            <div className="h-3 bg-secondary rounded w-full" />
                           </div>
                         </div>
                       </div>
-                    </motion.div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : apiEvents.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-16 text-center">
+                    <div className="w-16 h-16 rounded-2xl bg-violet-500/10 flex items-center justify-center mb-4">
+                      <CalendarDays size={28} className="text-violet-400" />
+                    </div>
+                    <p className="text-base font-black text-foreground mb-1">Событий пока нет</p>
+                    <p className="text-sm text-muted-foreground max-w-[220px] leading-relaxed">
+                      Здесь появятся мероприятия, хакатоны и встречи сообщества.
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    {/* Featured events (horizontal scroll if multiple) */}
+                    {apiEvents.length > 1 && (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Flame size={13} className="text-orange-500" />
+                          <span className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Активные события</span>
+                        </div>
+                        <div className="flex gap-3 overflow-x-auto scrollbar-none -mx-4 px-4 pb-1">
+                          {apiEvents.slice(0, 3).map(event => (
+                            <motion.div
+                              key={event.id}
+                              whileTap={{ scale: 0.97 }}
+                              className={cn("min-w-[260px] rounded-2xl bg-gradient-to-br p-4 text-white cursor-pointer shrink-0 relative overflow-hidden", eventColor(event.id))}
+                            >
+                              <div className="absolute top-3 right-3 text-2xl opacity-60">{eventEmoji(event.id)}</div>
+                              <p className="font-black text-base leading-tight mb-2 pr-8">{event.title}</p>
+                              {event.startsAt && (
+                                <div className="flex items-center gap-1.5 text-xs opacity-80 mb-3">
+                                  <Clock size={11} />{formatEventDate(event.startsAt)}
+                                </div>
+                              )}
+                              <button
+                                onClick={() => toggleJoin(event.id)}
+                                className="mt-1 w-full py-2 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs font-bold transition-colors border border-white/20"
+                              >
+                                {joined.has(event.id) ? "✓ Вы участвуете" : "Участвовать"}
+                              </button>
+                            </motion.div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* All events list */}
+                    <div className="space-y-2.5">
+                      {apiEvents.map((event, i) => (
+                        <motion.div
+                          key={event.id}
+                          initial={{ opacity: 0, y: 12 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: i * 0.05 }}
+                          className="bg-card border border-border rounded-2xl overflow-hidden"
+                        >
+                          <div className="p-4">
+                            <div className="flex items-start gap-3">
+                              <div className={cn("w-11 h-11 rounded-xl bg-gradient-to-br flex items-center justify-center text-xl shrink-0", eventColor(event.id))}>
+                                {eventEmoji(event.id)}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-bold text-sm text-foreground leading-tight">{event.title}</p>
+                                {event.description && (
+                                  <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed line-clamp-2">{event.description}</p>
+                                )}
+                              </div>
+                            </div>
+
+                            {(event.startsAt || event.endsAt) && (
+                              <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground flex-wrap">
+                                {event.startsAt && (
+                                  <span className="flex items-center gap-1.5">
+                                    <Clock size={12} className="text-primary/70" />
+                                    Начало: {formatEventDate(event.startsAt)}
+                                  </span>
+                                )}
+                                {event.endsAt && (
+                                  <span className="flex items-center gap-1.5">
+                                    <Clock size={12} className="text-rose-400/70" />
+                                    Конец: {formatEventDate(event.endsAt)}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+
+                            <div className="flex items-center gap-2 mt-3">
+                              <button
+                                onClick={() => toggleJoin(event.id)}
+                                className={cn(
+                                  "flex-1 py-2 rounded-xl text-xs font-bold transition-all",
+                                  joined.has(event.id)
+                                    ? "bg-primary/10 text-primary border border-primary/20"
+                                    : "bg-primary text-primary-foreground hover:opacity-90 shadow-[0_2px_10px_rgba(139,92,246,0.25)]"
+                                )}
+                              >
+                                {joined.has(event.id) ? "✓ Участвую" : "Участвовать"}
+                              </button>
+                              <div className="px-3 py-2 rounded-xl border border-border text-[10px] font-bold text-amber-400 flex items-center gap-1">
+                                <Zap size={10} className="fill-amber-400" />+100 ⚡
+                              </div>
+                            </div>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </>
+                )}
               </motion.div>
             )}
 

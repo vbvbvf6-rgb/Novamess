@@ -383,6 +383,7 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
       });
       if (!res.ok) throw new Error("Failed to create call");
       call = await res.json();
+      import("@/utils/questTracker").then(({ trackQuestAction }) => trackQuestAction("call_made"));
     } catch (err) {
       console.error("startCall: API error", err);
       localStreamRef.current?.getTracks().forEach((t) => t.stop());
