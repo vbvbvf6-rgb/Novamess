@@ -1335,7 +1335,7 @@ export default function Settings() {
   const [activeSection, setActiveSection] = useState<string | null>(null);
 
   // Events
-  const [showEvents, setShowEvents] = useState(() => lsb("pulse-show-events", false));
+  const [showEvents, setShowEvents] = useState(() => lsb("pulse-show-events", true));
 
   // Chat Settings
   const [linkPreview, setLinkPreview] = useState(() => lsb("pulse-link-preview", true));

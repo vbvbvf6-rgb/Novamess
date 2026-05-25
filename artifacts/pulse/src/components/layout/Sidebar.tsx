@@ -119,7 +119,7 @@ export function Sidebar({ mobileSidebarOpen, onMobileClose, onMobileOpen, onOpen
   const { data: me } = useGetMe();
   const { data: chats } = useGetChats();
   const [isAdmin, setIsAdmin] = useState(false);
-  const [showEvents, setShowEvents] = useState(() => localStorage.getItem("pulse-show-events") === "true");
+  const [showEvents, setShowEvents] = useState(() => localStorage.getItem("pulse-show-events") !== "false");
 
   useEffect(() => {
     setIsAdmin((me as any)?.isAdmin === true);
