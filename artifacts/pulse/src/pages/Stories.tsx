@@ -375,11 +375,11 @@ export default function Stories() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 bg-black"
+              className="fixed inset-0 z-50 bg-neutral-900"
             >
               <div className="relative w-full h-full flex items-stretch justify-center">
                 <div
-                  className="hidden md:block flex-1 bg-black/80 cursor-pointer"
+                  className="hidden md:block flex-1 bg-black/40 cursor-pointer"
                   onClick={() => setViewingGroup(null)}
                 />
                 <div className="relative w-full max-w-[430px] h-full overflow-hidden">
@@ -462,7 +462,7 @@ export default function Stories() {
 
                   <button
                     onClick={() => setViewingGroup(null)}
-                    className="absolute z-10 w-10 h-10 rounded-full bg-black/50 flex items-center justify-center text-white hover:bg-black/70 transition-colors"
+                    className="absolute z-10 w-10 h-10 rounded-full bg-black/40 flex items-center justify-center text-white hover:bg-black/60 transition-colors"
                     style={{ top: "max(52px, calc(env(safe-area-inset-top, 0px) + 40px))", right: "16px" }}
                   >
                     <X size={20} />
@@ -481,7 +481,7 @@ export default function Stories() {
                 </div>
 
                 <div
-                  className="hidden md:block flex-1 bg-black/80 cursor-pointer"
+                  className="hidden md:block flex-1 bg-black/40 cursor-pointer"
                   onClick={() => setViewingGroup(null)}
                 />
               </div>

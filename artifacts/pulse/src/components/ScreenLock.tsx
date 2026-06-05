@@ -132,8 +132,8 @@ export function ScreenLock({ children }: ScreenLockProps) {
                     <KeyRound size={32} className="text-blue-400" />
                   </div>
                   <div className="text-center">
-                    <h2 className="text-xl font-bold text-white">Сброс PIN-кода</h2>
-                    <p className="text-sm text-white/50 mt-0.5">Введите пароль от вашего аккаунта</p>
+                    <h2 className="text-xl font-bold text-foreground">Сброс PIN-кода</h2>
+                    <p className="text-sm text-muted-foreground/60 mt-0.5">Введите пароль от вашего аккаунта</p>
                   </div>
                 </div>
 
@@ -155,12 +155,12 @@ export function ScreenLock({ children }: ScreenLockProps) {
                         onKeyDown={e => e.key === "Enter" && handleResetByPassword()}
                         placeholder="Пароль от аккаунта"
                         autoFocus
-                        className="w-full bg-white/8 border border-white/15 rounded-2xl px-4 py-3.5 text-white placeholder:text-white/30 text-base font-medium focus:outline-none focus:border-blue-500/50 focus:bg-white/12 transition-all pr-12"
+                        className="w-full bg-black/8 border border-black/20 rounded-2xl px-4 py-3.5 text-foreground placeholder:text-muted-foreground/50 text-base font-medium focus:outline-none focus:border-blue-500/50 focus:bg-black/12 transition-all pr-12"
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(v => !v)}
-                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors"
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-muted-foreground transition-colors"
                       >
                         {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                       </button>
@@ -179,7 +179,7 @@ export function ScreenLock({ children }: ScreenLockProps) {
                     <button
                       onClick={handleResetByPassword}
                       disabled={resetLoading}
-                      className="w-full py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-base active:scale-95 transition-all disabled:opacity-60"
+                      className="w-full py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-500 text-foreground font-bold text-base active:scale-95 transition-all disabled:opacity-60"
                     >
                       {resetLoading ? "Проверяем..." : "Сбросить PIN и войти"}
                     </button>
@@ -188,7 +188,7 @@ export function ScreenLock({ children }: ScreenLockProps) {
 
                 <button
                   onClick={() => { setResetMode(false); setPassword(""); setResetError(""); }}
-                  className="flex items-center gap-1.5 text-white/40 hover:text-white/70 text-sm font-medium transition-colors"
+                  className="flex items-center gap-1.5 text-foreground/40 hover:text-foreground/70 text-sm font-medium transition-colors"
                 >
                   <ArrowLeft size={14} /> Назад к PIN
                 </button>
@@ -210,8 +210,8 @@ export function ScreenLock({ children }: ScreenLockProps) {
                     <Lock size={32} className="text-primary" />
                   </div>
                   <div className="text-center">
-                    <h2 className="text-xl font-bold text-white">Aether заблокирован</h2>
-                    <p className="text-sm text-white/50 mt-0.5">Введите PIN-код для доступа</p>
+                    <h2 className="text-xl font-bold text-foreground">Aether заблокирован</h2>
+                    <p className="text-sm text-muted-foreground/60 mt-0.5">Введите PIN-код для доступа</p>
                   </div>
                 </motion.div>
 
@@ -222,7 +222,7 @@ export function ScreenLock({ children }: ScreenLockProps) {
                       className={`w-3.5 h-3.5 rounded-full border-2 transition-all duration-200 ${
                         i < pin.length
                           ? "bg-primary border-primary shadow-[0_0_8px_rgba(255,80,0,0.5)]"
-                          : "border-white/30"
+                          : "border-black/30"
                       }`}
                     />
                   ))}
@@ -231,7 +231,7 @@ export function ScreenLock({ children }: ScreenLockProps) {
                 {!pinLengthKnown && pin.length >= 4 && (
                   <button
                     onClick={handleUnlock}
-                    className="w-full py-3 rounded-2xl bg-primary text-white font-bold text-base hover:bg-primary/90 active:scale-95 transition-all"
+                    className="w-full py-3 rounded-2xl bg-primary text-foreground font-bold text-base hover:bg-primary/90 active:scale-95 transition-all"
                   >
                     Войти
                   </button>
@@ -258,9 +258,9 @@ export function ScreenLock({ children }: ScreenLockProps) {
                       disabled={!d}
                       className={`h-14 rounded-2xl text-xl font-bold transition-all active:scale-95 ${
                         d === "⌫"
-                          ? "bg-white/5 text-white/50 hover:bg-white/10 hover:text-white"
+                          ? "bg-black/5 text-muted-foreground/60 hover:bg-black/10 hover:text-foreground"
                           : d
-                          ? "bg-white/8 text-white hover:bg-white/15 border border-white/10"
+                          ? "bg-black/8 text-foreground hover:bg-black/15 border border-black/10"
                           : "invisible"
                       }`}
                     >
@@ -271,7 +271,7 @@ export function ScreenLock({ children }: ScreenLockProps) {
 
                 <button
                   onClick={() => { setResetMode(true); setPin(""); setError(""); }}
-                  className="text-white/35 hover:text-white/60 text-sm font-medium transition-colors"
+                  className="text-muted-foreground/40 hover:text-muted-foreground text-sm font-medium transition-colors"
                 >
                   Забыли PIN-код?
                 </button>
@@ -279,7 +279,7 @@ export function ScreenLock({ children }: ScreenLockProps) {
             )}
           </AnimatePresence>
 
-          <div className="flex items-center gap-2 text-xs text-white/30">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground/50">
             <Zap size={10} className="text-primary/50" />
             <span>Aether Messenger</span>
           </div>

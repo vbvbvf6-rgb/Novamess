@@ -95,37 +95,37 @@ function InviteModal({ onClose }: { onClose: () => void }) {
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-[80] flex items-end justify-center"
     >
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
       <motion.div
         initial={{ y: "100%" }}
         animate={{ y: 0 }}
         exit={{ y: "100%" }}
         transition={{ type: "spring", stiffness: 380, damping: 32 }}
-        className="relative w-full max-w-sm bg-zinc-900 rounded-t-3xl overflow-hidden shadow-2xl z-10"
+        className="relative w-full max-w-sm bg-white rounded-t-3xl overflow-hidden shadow-2xl z-10"
       >
         {/* Handle */}
         <div className="flex justify-center pt-3 pb-1">
-          <div className="w-10 h-1 rounded-full bg-white/20" />
+          <div className="w-10 h-1 rounded-full bg-black/10" />
         </div>
 
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-3">
-          <h3 className="text-white font-bold text-lg">Пригласить участника</h3>
-          <button onClick={onClose} className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/60 hover:text-white">
+          <h3 className="text-foreground font-bold text-lg">Пригласить участника</h3>
+          <button onClick={onClose} className="w-8 h-8 rounded-full bg-black/5 flex items-center justify-center text-muted-foreground hover:text-foreground">
             <X size={16} />
           </button>
         </div>
 
         {/* Search */}
         <div className="px-4 pb-3">
-          <div className="flex items-center gap-2 bg-white/8 rounded-xl px-3 py-2.5">
-            <Search size={15} className="text-white/40 shrink-0" />
+          <div className="flex items-center gap-2 bg-secondary/60 rounded-xl px-3 py-2.5 border border-border">
+            <Search size={15} className="text-muted-foreground shrink-0" />
             <input
               autoFocus
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Поиск контактов…"
-              className="flex-1 bg-transparent text-white text-sm outline-none placeholder:text-white/30"
+              className="flex-1 bg-transparent text-foreground text-sm outline-none placeholder:text-muted-foreground/60"
             />
           </div>
         </div>
@@ -133,25 +133,25 @@ function InviteModal({ onClose }: { onClose: () => void }) {
         {/* Contacts list */}
         <div className="overflow-y-auto max-h-72 px-2 pb-8">
           {(!filtered || filtered.length === 0) ? (
-            <p className="text-center text-white/30 text-sm py-8">Контакты не найдены</p>
+            <p className="text-center text-muted-foreground text-sm py-8">Контакты не найдены</p>
           ) : (
             filtered.map((c) => (
               <button
                 key={c.id}
                 onClick={() => handleInvite(c.id, c.displayName || c.username || "Пользователь")}
                 disabled={inviting === c.id}
-                className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-white/8 transition-colors disabled:opacity-50"
+                className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-secondary/60 transition-colors disabled:opacity-50"
               >
                 <Avatar user={c} size={44} />
                 <div className="flex-1 text-left min-w-0">
-                  <p className="text-white font-semibold text-sm truncate">{c.displayName}</p>
-                  {c.username && <p className="text-white/40 text-xs truncate">@{c.username}</p>}
+                  <p className="text-foreground font-semibold text-sm truncate">{c.displayName}</p>
+                  {c.username && <p className="text-muted-foreground text-xs truncate">@{c.username}</p>}
                 </div>
                 <div className="shrink-0">
                   {inviting === c.id ? (
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <div className="w-5 h-5 border-2 border-border border-t-primary rounded-full animate-spin" />
                   ) : (
-                    <UserPlus size={17} className="text-white/40" />
+                    <UserPlus size={17} className="text-muted-foreground" />
                   )}
                 </div>
               </button>
@@ -183,7 +183,7 @@ function ParticipantTile({
 
   const bg = user?.avatarColor || "#333";
   return (
-    <div className="relative rounded-2xl overflow-hidden bg-zinc-900 aspect-video flex items-center justify-center">
+    <div className="relative rounded-2xl overflow-hidden bg-neutral-100 aspect-video flex items-center justify-center">
       {stream ? (
         <video ref={videoRef} autoPlay playsInline muted={muted} className="w-full h-full object-cover" />
       ) : (
@@ -192,7 +192,7 @@ function ParticipantTile({
         </div>
       )}
       {user && (
-        <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-sm px-2 py-0.5 rounded-full text-white text-xs font-medium">
+        <div className="absolute bottom-2 left-2 bg-black/50 backdrop-blur-sm px-2 py-0.5 rounded-full text-white text-xs font-medium">
           {user.displayName}
         </div>
       )}
@@ -316,7 +316,7 @@ export function ActiveCall() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden"
-          style={{ background: `radial-gradient(ellipse at 50% 30%, ${avatarBg}33 0%, #0a0a0a 70%)` }}
+          style={{ background: `radial-gradient(ellipse at 50% 30%, ${avatarBg}22 0%, #f5f7fa 70%)` }}
         >
           <div className="relative mb-8">
             <PulseRings color={avatarBg} />
@@ -333,22 +333,22 @@ export function ActiveCall() {
               )}
             </motion.div>
           </div>
-          <h2 className="text-white text-3xl font-bold mb-2 drop-shadow-lg">{callee?.displayName}</h2>
+          <h2 className="text-foreground text-3xl font-bold mb-2">{callee?.displayName}</h2>
           <motion.p
             animate={{ opacity: [1, 0.4, 1] }}
             transition={{ duration: 1.4, repeat: Infinity }}
-            className="text-white/50 text-lg mb-16"
+            className="text-muted-foreground text-lg mb-16"
           >
             {activeCall.type === "video" ? "Видеозвонок…" : "Звоним…"}
           </motion.p>
           <motion.button
             whileTap={{ scale: 0.9 }}
             onClick={hangUp}
-            className="w-20 h-20 rounded-full bg-red-500 text-white flex items-center justify-center shadow-[0_0_40px_rgba(239,68,68,0.5)] hover:bg-red-600 transition-colors"
+            className="w-20 h-20 rounded-full bg-red-500 text-white flex items-center justify-center shadow-[0_0_40px_rgba(239,68,68,0.3)] hover:bg-red-600 transition-colors"
           >
             <PhoneOff size={30} />
           </motion.button>
-          <p className="text-white/30 text-sm mt-4">Нажмите чтобы отменить</p>
+          <p className="text-muted-foreground/60 text-sm mt-4">Нажмите чтобы отменить</p>
         </motion.div>
       </AnimatePresence>
     );
@@ -372,7 +372,7 @@ export function ActiveCall() {
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="absolute top-16 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2 px-4 py-2 rounded-full bg-black/80 border border-yellow-500/30 text-yellow-400 text-xs font-medium shadow-lg backdrop-blur-sm"
+              className="absolute top-16 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2 px-4 py-2 rounded-full bg-card border border-yellow-500/30 text-yellow-600 text-xs font-medium shadow-lg"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
               {callError}
@@ -383,7 +383,7 @@ export function ActiveCall() {
           {isVideo ? (
             <>
               {/* Remote video / group grid / placeholder */}
-              <div className="absolute inset-0 bg-zinc-950">
+              <div className="absolute inset-0 bg-neutral-900">
                 {isGroup ? (
                   /* Group video grid */
                   <div className={`w-full h-full grid gap-1 p-1 ${remoteStreams.size === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
@@ -402,7 +402,7 @@ export function ActiveCall() {
                 ) : (
                   <div
                     className="w-full h-full flex flex-col items-center justify-center gap-5"
-                    style={{ background: `radial-gradient(circle at 50% 40%, ${avatarBg}44 0%, #0a0a0a 70%)` }}
+                    style={{ background: `radial-gradient(circle at 50% 40%, ${avatarBg}33 0%, #f8fafc 70%)` }}
                   >
                     <motion.div className="relative" animate={{ scale: [1, 1.03, 1] }} transition={{ duration: 3, repeat: Infinity }}>
                       <PulseRings color={avatarBg} />
@@ -417,7 +417,7 @@ export function ActiveCall() {
                         )}
                       </div>
                     </motion.div>
-                    <p className="text-white/50 text-sm tracking-wide animate-pulse">Ожидание видео…</p>
+                    <p className="text-muted-foreground text-sm tracking-wide animate-pulse">Ожидание видео…</p>
                   </div>
                 )}
               </div>
@@ -448,7 +448,7 @@ export function ActiveCall() {
                 className="absolute top-16 right-4 z-20 cursor-grab active:cursor-grabbing"
                 animate={{ width: isPipExpanded ? 160 : 100, height: isPipExpanded ? 220 : 140 }}
               >
-                <div className="w-full h-full rounded-2xl overflow-hidden border-2 border-white/20 shadow-2xl bg-zinc-900">
+                <div className="w-full h-full rounded-2xl overflow-hidden border-2 border-white/20 shadow-2xl bg-neutral-800">
                   {localStream && !isVideoOff ? (
                     <video
                       ref={localVideoRef}
@@ -458,13 +458,13 @@ export function ActiveCall() {
                       className={`w-full h-full object-cover ${!isScreenSharing ? "scale-x-[-1]" : ""}`}
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-zinc-800">
+                    <div className="w-full h-full flex items-center justify-center bg-neutral-700">
                       <CameraOff size={20} className="text-white/30" />
                     </div>
                   )}
                   {isScreenSharing && (
                     <div className="absolute inset-0 flex items-end justify-center pb-1">
-                      <span className="text-white/60 text-[9px] font-medium bg-black/60 px-1.5 py-0.5 rounded-full">Экран</span>
+                      <span className="text-white/60 text-[9px] font-medium bg-black/50 px-1.5 py-0.5 rounded-full">Экран</span>
                     </div>
                   )}
                 </div>
@@ -480,11 +480,11 @@ export function ActiveCall() {
             /* ── AUDIO CALL ── */
             <div
               className="absolute inset-0 flex flex-col items-center justify-center"
-              style={{ background: `radial-gradient(ellipse at 50% 30%, ${avatarBg}33 0%, #0d0d0d 65%)` }}
+              style={{ background: `radial-gradient(ellipse at 50% 30%, ${avatarBg}22 0%, #f5f7fa 65%)` }}
             >
               <div className="absolute inset-0 opacity-[0.03]"
                 style={{
-                  backgroundImage: "linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)",
+                  backgroundImage: "linear-gradient(rgba(0,0,0,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.3) 1px, transparent 1px)",
                   backgroundSize: "40px 40px",
                 }}
               />
@@ -493,7 +493,7 @@ export function ActiveCall() {
               {isGroup && (
                 <div className="flex -space-x-3 mb-6 z-10">
                   {[...remoteStreams.keys()].slice(0, 5).map((uid) => (
-                    <div key={uid} className="w-12 h-12 rounded-full border-2 border-zinc-900 bg-zinc-700 flex items-center justify-center text-white text-lg font-bold overflow-hidden">
+                    <div key={uid} className="w-12 h-12 rounded-full border-2 border-neutral-900 bg-neutral-600 flex items-center justify-center text-white text-lg font-bold overflow-hidden">
                       {uid}
                     </div>
                   ))}
@@ -516,13 +516,13 @@ export function ActiveCall() {
                 </motion.div>
               </div>
 
-              <h2 className="text-white text-3xl font-bold mb-1 z-10 drop-shadow-lg">
+              <h2 className="text-foreground text-3xl font-bold mb-1 z-10">
                 {isGroup ? `Групповой звонок` : otherUser?.displayName}
               </h2>
               {isGroup && (
-                <p className="text-white/40 text-sm mb-1 z-10">{remoteStreams.size + 1} участника</p>
+                <p className="text-muted-foreground text-sm mb-1 z-10">{remoteStreams.size + 1} участника</p>
               )}
-              <p className="text-white/50 font-mono text-xl tabular-nums mb-10 z-10">{formatDuration(duration)}</p>
+              <p className="text-muted-foreground font-mono text-xl tabular-nums mb-10 z-10">{formatDuration(duration)}</p>
 
               <div className="z-10 mb-2 opacity-80">
                 <SoundWaves active={!isMuted && remoteStreams.size > 0} />
@@ -621,15 +621,15 @@ function ControlBtn({
   label: string;
 }) {
   const activeClass = activeColor === "red"
-    ? "bg-red-500/20 text-red-400"
-    : "bg-blue-500/30 text-blue-400";
+    ? "bg-red-500/20 text-red-500"
+    : "bg-blue-500/20 text-blue-500";
 
   return (
     <motion.button
       whileTap={{ scale: 0.9 }}
       onClick={onClick}
       title={label}
-      className={`w-14 h-14 rounded-full flex items-center justify-center transition-colors ${active ? activeClass : "bg-white/10 text-white hover:bg-white/20"}`}
+      className={`w-14 h-14 rounded-full flex items-center justify-center transition-colors ${active ? activeClass : "bg-black/5 text-foreground hover:bg-black/10"}`}
     >
       {children}
     </motion.button>

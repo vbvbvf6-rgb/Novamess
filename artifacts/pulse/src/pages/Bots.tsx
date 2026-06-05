@@ -1358,7 +1358,7 @@ if __name__ == "__main__":
       <AnimatePresence>
         {showCreate && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-end sm:items-center justify-center p-4"
+            className="fixed inset-0 z-50 bg-black/40 backdrop-blur-md flex items-end sm:items-center justify-center p-4"
             onClick={e => { if (e.target === e.currentTarget) setShowCreate(false); }}
           >
             <motion.div initial={{ y: 48, opacity: 0, scale: 0.96 }} animate={{ y: 0, opacity: 1, scale: 1 }} exit={{ y: 24, opacity: 0, scale: 0.97 }}
@@ -1434,7 +1434,7 @@ if __name__ == "__main__":
       <AnimatePresence>
         {codeBot && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center p-4"
+            className="fixed inset-0 z-50 bg-black/40 backdrop-blur-md flex items-end sm:items-center justify-center p-4"
             onClick={e => { if (e.target === e.currentTarget) setCodeBot(null); }}
           >
             <motion.div initial={{ y: 48, opacity: 0, scale: 0.96 }} animate={{ y: 0, opacity: 1, scale: 1 }} exit={{ y: 24, opacity: 0, scale: 0.97 }}
@@ -1522,7 +1522,7 @@ if __name__ == "__main__":
       <AnimatePresence>
         {editBot && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-end sm:items-center justify-center p-4"
+            className="fixed inset-0 z-50 bg-black/40 backdrop-blur-md flex items-end sm:items-center justify-center p-4"
             onClick={e => { if (e.target === e.currentTarget) setEditBot(null); }}
           >
             <motion.div initial={{ y: 48, opacity: 0, scale: 0.96 }} animate={{ y: 0, opacity: 1, scale: 1 }} exit={{ y: 24, opacity: 0, scale: 0.97 }}

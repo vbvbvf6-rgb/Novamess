@@ -167,23 +167,23 @@ export default function Login({ onLogin }: LoginProps) {
 
   const inputStyle = (name: string) => ({
     width: "100%",
-    background: focusedInput === name ? "rgba(255,120,30,0.06)" : "rgba(255,255,255,0.04)",
-    border: `1px solid ${focusedInput === name ? "rgba(255,120,30,0.45)" : "rgba(255,255,255,0.08)"}`,
+    background: focusedInput === name ? "rgba(249,115,22,0.04)" : "#f8fafc",
+    border: `1px solid ${focusedInput === name ? "rgba(249,115,22,0.5)" : "rgba(0,0,0,0.08)"}`,
     borderRadius: "14px",
     transition: "all 0.2s",
-    boxShadow: focusedInput === name ? "0 0 0 3px rgba(255,120,30,0.12)" : "none",
+    boxShadow: focusedInput === name ? "0 0 0 3px rgba(249,115,22,0.1)" : "none",
   } as React.CSSProperties);
 
   const getStepIcon = () => {
-    if (step === "2fa") return <ShieldCheck size={38} style={{ color: "#ff7820", filter: "drop-shadow(0 0 14px rgba(255,120,30,0.6))" }} />;
-    if (step === "qr") return <QrCode size={38} style={{ color: "#ff7820", filter: "drop-shadow(0 0 14px rgba(255,120,30,0.6))" }} />;
-    return <Zap size={40} style={{ color: "#ff7820", filter: "drop-shadow(0 0 18px rgba(255,120,30,0.75))" }} />;
+    if (step === "2fa") return <ShieldCheck size={34} style={{ color: "#f97316" }} />;
+    if (step === "qr") return <QrCode size={34} style={{ color: "#f97316" }} />;
+    return <Zap size={36} style={{ color: "#f97316" }} />;
   };
 
   const getStepTitle = () => {
     if (step === "2fa") return "Верификация";
     if (step === "qr") return "QR вход";
-    return "Aether";
+    return "Pulse";
   };
 
   const getStepSubtitle = () => {
@@ -198,31 +198,16 @@ export default function Login({ onLogin }: LoginProps) {
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      background: "#080808",
+      background: "#f5f7fa",
       fontFamily: "'Inter', system-ui, sans-serif",
       position: "relative",
       overflow: "hidden",
       padding: "16px",
     }}>
-      {/* Top radial glow */}
+      {/* Subtle background pattern */}
       <div style={{
-        position: "absolute", top: "-20%", left: "50%", transform: "translateX(-50%)",
-        width: "80%", height: "70%", borderRadius: "50%",
-        background: "radial-gradient(ellipse, rgba(255,120,30,0.07) 0%, transparent 65%)",
-        filter: "blur(60px)", pointerEvents: "none",
-      }} />
-      {/* Bottom radial glow */}
-      <div style={{
-        position: "absolute", bottom: "-25%", left: "50%", transform: "translateX(-50%)",
-        width: "70%", height: "60%", borderRadius: "50%",
-        background: "radial-gradient(ellipse, rgba(255,80,20,0.05) 0%, transparent 65%)",
-        filter: "blur(60px)", pointerEvents: "none",
-      }} />
-      {/* Subtle grid */}
-      <div style={{
-        position: "absolute", inset: 0, pointerEvents: "none", opacity: 0.025,
-        backgroundImage: "linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)",
-        backgroundSize: "60px 60px",
+        position: "absolute", inset: 0, pointerEvents: "none",
+        backgroundImage: "radial-gradient(circle at 20% 20%, rgba(249,115,22,0.04) 0%, transparent 50%), radial-gradient(circle at 80% 80%, rgba(249,115,22,0.03) 0%, transparent 50%)",
       }} />
 
       <motion.div
@@ -238,12 +223,12 @@ export default function Login({ onLogin }: LoginProps) {
             animate={{ scale: 1, opacity: 1 }}
             transition={{ type: "spring", stiffness: 160, damping: 18, delay: 0.1 }}
             style={{
-              width: "88px", height: "88px", borderRadius: "26px",
-              background: "linear-gradient(145deg, #1d1d1d 0%, #141414 100%)",
-              border: "1px solid rgba(255,255,255,0.08)",
+              width: "72px", height: "72px", borderRadius: "20px",
+              background: "#fff",
+              border: "1px solid rgba(0,0,0,0.06)",
               display: "flex", alignItems: "center", justifyContent: "center",
-              marginBottom: "22px",
-              boxShadow: "0 0 0 1px rgba(255,120,30,0.14), 0 8px 40px rgba(0,0,0,0.85), 0 0 60px rgba(255,100,20,0.09), inset 0 1px 0 rgba(255,255,255,0.06)",
+              marginBottom: "20px",
+              boxShadow: "0 4px 24px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.02)",
             }}
           >
             {getStepIcon()}
@@ -256,17 +241,17 @@ export default function Login({ onLogin }: LoginProps) {
             style={{ textAlign: "center" }}
           >
             <h1 style={{
-              fontSize: "42px", fontWeight: 900, letterSpacing: "-2px",
-              color: "#ffffff", marginBottom: "6px", lineHeight: 1,
+              fontSize: "36px", fontWeight: 900, letterSpacing: "-1.5px",
+              color: "#111827", marginBottom: "4px", lineHeight: 1,
             }}>
               {getStepTitle()}
             </h1>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
-              <div style={{ height: "1px", width: "24px", background: "rgba(255,255,255,0.12)" }} />
-              <p style={{ color: "rgba(255,255,255,0.35)", fontSize: "12px", fontWeight: 600, letterSpacing: "0.08em" }}>
+              <div style={{ height: "1px", width: "24px", background: "rgba(0,0,0,0.1)" }} />
+              <p style={{ color: "rgba(0,0,0,0.4)", fontSize: "12px", fontWeight: 600, letterSpacing: "0.08em" }}>
                 {getStepSubtitle().toUpperCase()}
               </p>
-              <div style={{ height: "1px", width: "24px", background: "rgba(255,255,255,0.12)" }} />
+              <div style={{ height: "1px", width: "24px", background: "rgba(0,0,0,0.1)" }} />
             </div>
           </motion.div>
         </div>
@@ -277,11 +262,11 @@ export default function Login({ onLogin }: LoginProps) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.6 }}
           style={{
-            background: "linear-gradient(160deg, rgba(24,24,24,0.98) 0%, rgba(16,16,16,0.98) 100%)",
-            border: "1px solid rgba(255,255,255,0.07)",
-            borderRadius: "28px",
+            background: "#ffffff",
+            border: "1px solid rgba(0,0,0,0.06)",
+            borderRadius: "24px",
             padding: "28px 24px",
-            boxShadow: "0 40px 100px rgba(0,0,0,0.85), 0 0 0 1px rgba(255,255,255,0.03), inset 0 1px 0 rgba(255,255,255,0.06)",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.04), 0 8px 32px rgba(0,0,0,0.06)",
           }}
         >
           <AnimatePresence mode="wait">
@@ -299,7 +284,7 @@ export default function Login({ onLogin }: LoginProps) {
                     <label style={{
                       display: "block", fontSize: "10px", fontWeight: 800,
                       letterSpacing: "0.14em", textTransform: "uppercase",
-                      color: "rgba(255,255,255,0.3)", marginBottom: "9px", paddingLeft: "2px",
+                      color: "rgba(0,0,0,0.4)", marginBottom: "9px", paddingLeft: "2px",
                     }}>
                       Имя или никнейм
                     </label>
@@ -315,7 +300,7 @@ export default function Login({ onLogin }: LoginProps) {
                         onBlur={() => setFocusedInput(null)}
                         style={{
                           width: "100%", background: "transparent", border: "none", outline: "none",
-                          padding: "14px 16px", color: "rgba(255,255,255,0.92)", fontSize: "15px",
+                          padding: "14px 16px", color: "rgba(0,0,0,0.85)", fontSize: "15px",
                           fontWeight: 500, boxSizing: "border-box",
                         }}
                       />
@@ -327,11 +312,11 @@ export default function Login({ onLogin }: LoginProps) {
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "9px", padding: "0 2px" }}>
                       <label style={{
                         fontSize: "10px", fontWeight: 800, letterSpacing: "0.14em",
-                        textTransform: "uppercase", color: "rgba(255,255,255,0.3)",
+                        textTransform: "uppercase", color: "rgba(0,0,0,0.4)",
                       }}>Пароль</label>
                       <Link href="/forgot-password">
                         <button type="button" style={{
-                          fontSize: "12px", color: "rgba(255,120,40,0.9)", fontWeight: 700,
+                          fontSize: "12px", color: "#ea580c", fontWeight: 700,
                           background: "none", border: "none", cursor: "pointer",
                         }}>Забыли?</button>
                       </Link>
@@ -347,7 +332,7 @@ export default function Login({ onLogin }: LoginProps) {
                         onBlur={() => setFocusedInput(null)}
                         style={{
                           width: "100%", background: "transparent", border: "none", outline: "none",
-                          padding: "14px 48px 14px 16px", color: "rgba(255,255,255,0.92)",
+                          padding: "14px 48px 14px 16px", color: "rgba(0,0,0,0.85)",
                           fontSize: "15px", fontWeight: 500, boxSizing: "border-box",
                         }}
                       />
@@ -357,7 +342,7 @@ export default function Login({ onLogin }: LoginProps) {
                         style={{
                           position: "absolute", right: "14px", top: "50%", transform: "translateY(-50%)",
                           background: "none", border: "none", cursor: "pointer",
-                          color: "rgba(255,255,255,0.28)", display: "flex", alignItems: "center",
+                          color: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center",
                         }}
                       >
                         {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
@@ -389,9 +374,9 @@ export default function Login({ onLogin }: LoginProps) {
                     whileTap={!loading ? { scale: 0.975 } : {}}
                     style={{
                       width: "100%", padding: "15px", borderRadius: "14px", border: "none", cursor: loading ? "not-allowed" : "pointer",
-                      background: loading ? "rgba(255,120,30,0.5)" : "linear-gradient(135deg, #ff7820 0%, #ff4d10 100%)",
+                      background: loading ? "rgba(234,88,12,0.5)" : "linear-gradient(135deg, #ea580c 0%, #c2410c 100%)",
                       color: "white", fontSize: "15px", fontWeight: 800,
-                      boxShadow: loading ? "none" : "0 8px 30px rgba(255,100,20,0.42), inset 0 1px 0 rgba(255,255,255,0.2)",
+                      boxShadow: loading ? "none" : "0 4px 16px rgba(234,88,12,0.3), inset 0 1px 0 rgba(255,255,255,0.2)",
                       marginTop: "2px", opacity: loading ? 0.7 : 1, transition: "opacity 0.2s",
                     }}
                   >
@@ -399,20 +384,20 @@ export default function Login({ onLogin }: LoginProps) {
                   </motion.button>
                 </form>
 
-                <div style={{ marginTop: "18px", paddingTop: "18px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                <div style={{ marginTop: "18px", paddingTop: "18px", borderTop: "1px solid rgba(0,0,0,0.06)" }}>
                   <motion.button
                     type="button"
                     onClick={startQrLogin}
-                    whileHover={{ background: "rgba(255,255,255,0.06)" }}
+                    whileHover={{ background: "rgba(0,0,0,0.04)" }}
                     style={{
                       width: "100%", padding: "13px", borderRadius: "14px",
-                      background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
-                      cursor: "pointer", color: "rgba(255,255,255,0.5)", fontSize: "13px", fontWeight: 600,
+                      background: "rgba(0,0,0,0.02)", border: "1px solid rgba(0,0,0,0.06)",
+                      cursor: "pointer", color: "rgba(0,0,0,0.5)", fontSize: "13px", fontWeight: 600,
                       display: "flex", alignItems: "center", justifyContent: "center", gap: "7px",
                       transition: "background 0.15s",
                     }}
                   >
-                    <QrCode size={15} style={{ color: "rgba(255,120,40,0.8)" }} />
+                    <QrCode size={15} style={{ color: "rgba(234,88,12,0.8)" }} />
                     Войти по QR-коду
                   </motion.button>
                 </div>
@@ -428,7 +413,7 @@ export default function Login({ onLogin }: LoginProps) {
                 transition={{ duration: 0.25 }}
               >
                 <div style={{ textAlign: "center", marginBottom: "22px" }}>
-                  <p style={{ fontSize: "14px", fontWeight: 500, color: "rgba(255,255,255,0.45)", lineHeight: 1.6 }}>
+                  <p style={{ fontSize: "14px", fontWeight: 500, color: "rgba(0,0,0,0.45)", lineHeight: 1.6 }}>
                     Откройте приложение аутентификации и введите 6-значный код.
                   </p>
                 </div>
@@ -447,7 +432,7 @@ export default function Login({ onLogin }: LoginProps) {
                       onBlur={() => setFocusedInput(null)}
                       style={{
                         width: "100%", background: "transparent", border: "none", outline: "none",
-                        padding: "20px 16px", color: "rgba(255,255,255,0.92)",
+                        padding: "20px 16px", color: "rgba(0,0,0,0.85)",
                         fontSize: "36px", fontFamily: "monospace", letterSpacing: "0.5em",
                         fontWeight: 900, textAlign: "center", boxSizing: "border-box",
                       }}
@@ -479,9 +464,9 @@ export default function Login({ onLogin }: LoginProps) {
                     style={{
                       width: "100%", padding: "15px", borderRadius: "14px", border: "none",
                       cursor: twoFaLoading || twoFaCode.length !== 6 ? "not-allowed" : "pointer",
-                      background: "linear-gradient(135deg, #ff7820 0%, #ff4d10 100%)",
+                      background: "linear-gradient(135deg, #ea580c 0%, #c2410c 100%)",
                       color: "white", fontSize: "15px", fontWeight: 800,
-                      boxShadow: "0 8px 30px rgba(255,100,20,0.42), inset 0 1px 0 rgba(255,255,255,0.2)",
+                      boxShadow: "0 4px 16px rgba(234,88,12,0.3), inset 0 1px 0 rgba(255,255,255,0.2)",
                       opacity: twoFaLoading || twoFaCode.length !== 6 ? 0.5 : 1, transition: "opacity 0.2s",
                     }}
                   >
@@ -493,11 +478,11 @@ export default function Login({ onLogin }: LoginProps) {
                     onClick={() => { setStep("credentials"); setTwoFaCode(""); setTwoFaError(""); }}
                     style={{
                       background: "none", border: "none", cursor: "pointer",
-                      color: "rgba(255,255,255,0.35)", fontSize: "13px", fontWeight: 700,
+                      color: "rgba(0,0,0,0.35)", fontSize: "13px", fontWeight: 700,
                       padding: "8px", textAlign: "center", transition: "color 0.15s",
                     }}
-                    onMouseEnter={e => (e.currentTarget.style.color = "rgba(255,255,255,0.7)")}
-                    onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.35)")}
+                    onMouseEnter={e => (e.currentTarget.style.color = "rgba(0,0,0,0.7)")}
+                    onMouseLeave={e => (e.currentTarget.style.color = "rgba(0,0,0,0.35)")}
                   >
                     ← Назад
                   </button>
@@ -523,7 +508,7 @@ export default function Login({ onLogin }: LoginProps) {
                     }}>
                       <Clock size={26} style={{ color: "#f87171" }} />
                     </div>
-                    <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.4)", fontWeight: 500 }}>QR-код истёк</p>
+                    <p style={{ fontSize: "13px", color: "rgba(0,0,0,0.4)", fontWeight: 500 }}>QR-код истёк</p>
                     <motion.button
                       onClick={startQrLogin}
                       whileHover={{ scale: 1.02 }}
@@ -531,8 +516,8 @@ export default function Login({ onLogin }: LoginProps) {
                       style={{
                         display: "flex", alignItems: "center", gap: "8px",
                         padding: "10px 20px", borderRadius: "14px",
-                        background: "rgba(255,120,30,0.1)", border: "1px solid rgba(255,120,30,0.3)",
-                        color: "#ff7820", fontSize: "13px", fontWeight: 700, cursor: "pointer",
+                        background: "rgba(249,115,22,0.08)", border: "1px solid rgba(249,115,22,0.3)",
+                        color: "#ea580c", fontSize: "13px", fontWeight: 700, cursor: "pointer",
                       }}
                     >
                       <RefreshCw size={14} /> Обновить QR
@@ -552,21 +537,21 @@ export default function Login({ onLogin }: LoginProps) {
                     >
                       <CheckCircle2 size={28} style={{ color: "#22c55e" }} />
                     </motion.div>
-                    <p style={{ fontSize: "14px", fontWeight: 700, color: "rgba(255,255,255,0.85)" }}>Вход подтверждён!</p>
-                    <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)" }}>Выполняем вход...</p>
+                    <p style={{ fontSize: "14px", fontWeight: 700, color: "rgba(0,0,0,0.85)" }}>Вход подтверждён!</p>
+                    <p style={{ fontSize: "12px", color: "rgba(0,0,0,0.35)" }}>Выполняем вход...</p>
                   </div>
                 ) : (
                   <>
                     <p style={{
-                      fontSize: "13px", color: "rgba(255,255,255,0.4)", fontWeight: 500,
+                      fontSize: "13px", color: "rgba(0,0,0,0.4)", fontWeight: 500,
                       textAlign: "center", marginBottom: "18px", lineHeight: 1.6,
                     }}>
-                      Откройте Aether на другом устройстве и отсканируйте код
+                      Откройте Pulse на другом устройстве и отсканируйте код
                     </p>
 
                     <div style={{
                       padding: "12px", borderRadius: "20px", marginBottom: "12px", position: "relative",
-                      background: "rgba(0,0,0,0.6)", border: "1px solid rgba(255,255,255,0.08)",
+                      background: "#f8fafc", border: "1px solid rgba(0,0,0,0.08)",
                     }}>
                       {qrImageUrl ? (
                         <img
@@ -577,24 +562,24 @@ export default function Login({ onLogin }: LoginProps) {
                           style={{ borderRadius: "12px", imageRendering: "pixelated", display: "block" }}
                         />
                       ) : (
-                        <div style={{ width: "168px", height: "168px", borderRadius: "12px", background: "rgba(255,255,255,0.04)" }} />
+                        <div style={{ width: "168px", height: "168px", borderRadius: "12px", background: "rgba(0,0,0,0.04)" }} />
                       )}
                       <motion.div
                         style={{
                           position: "absolute", inset: "12px", borderRadius: "12px",
-                          border: "2px solid rgba(255,120,30,0.35)", pointerEvents: "none",
+                          border: "2px solid rgba(249,115,22,0.35)", pointerEvents: "none",
                         }}
                         animate={{ opacity: [0.3, 0.8, 0.3] }}
                         transition={{ duration: 2, repeat: Infinity }}
                       />
                     </div>
 
-                    <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", color: "rgba(255,255,255,0.3)", fontWeight: 500, marginBottom: "18px" }}>
-                      <Clock size={11} style={{ color: "rgba(255,120,30,0.7)" }} />
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", color: "rgba(0,0,0,0.35)", fontWeight: 500, marginBottom: "18px" }}>
+                      <Clock size={11} style={{ color: "rgba(249,115,22,0.7)" }} />
                       <span>Код действителен {formatTime(qrTimeLeft)}</span>
                     </div>
 
-                    <div style={{ display: "flex", alignItems: "center", gap: "7px", fontSize: "12px", color: "rgba(255,255,255,0.25)" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "7px", fontSize: "12px", color: "rgba(0,0,0,0.3)" }}>
                       <motion.div
                         style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#22c55e" }}
                         animate={{ opacity: [1, 0.3, 1] }}
@@ -633,11 +618,11 @@ export default function Login({ onLogin }: LoginProps) {
           >
             <Link href="/register">
               <motion.button
-                whileHover={{ background: "rgba(255,255,255,0.05)" }}
+                whileHover={{ background: "rgba(0,0,0,0.04)" }}
                 style={{
                   width: "100%", padding: "15px", borderRadius: "20px",
-                  background: "transparent", border: "1px solid rgba(255,255,255,0.08)",
-                  cursor: "pointer", color: "rgba(255,255,255,0.55)", fontSize: "15px", fontWeight: 700,
+                  background: "transparent", border: "1px solid rgba(0,0,0,0.12)",
+                  cursor: "pointer", color: "rgba(0,0,0,0.65)", fontSize: "15px", fontWeight: 700,
                   transition: "background 0.15s",
                 }}
               >
@@ -656,9 +641,9 @@ export default function Login({ onLogin }: LoginProps) {
             marginTop: "22px", paddingBottom: "8px",
           }}
         >
-          <Shield size={10} style={{ color: "rgba(255,255,255,0.18)" }} />
-          <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.18)", fontWeight: 500 }}>
-            Aether Messenger · Ваши данные надёжно защищены
+          <Shield size={10} style={{ color: "rgba(0,0,0,0.2)" }} />
+          <p style={{ fontSize: "11px", color: "rgba(0,0,0,0.2)", fontWeight: 500 }}>
+            Pulse Messenger · Ваши данные надёжно защищены
           </p>
         </motion.div>
       </motion.div>

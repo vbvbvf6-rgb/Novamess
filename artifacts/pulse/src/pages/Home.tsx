@@ -96,17 +96,17 @@ export default function Home() {
           <div className="flex-1 flex items-center justify-center bg-background/50 relative overflow-hidden">
             <div className="absolute inset-0 pointer-events-none">
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-primary/5 blur-[120px]" />
-              <div className="absolute top-1/4 left-1/3 w-[300px] h-[300px] rounded-full bg-violet-500/3 blur-[80px]" />
+              <div className="absolute top-1/4 left-1/3 w-[300px] h-[300px] rounded-full bg-orange-500/3 blur-[80px]" />
             </div>
             <div className="text-center relative z-10 space-y-8 max-w-sm px-6">
               <div className="space-y-4">
-                <div className="w-20 h-20 mx-auto rounded-[28px] bg-gradient-to-br from-primary to-violet-700 flex items-center justify-center shadow-[0_8px_40px_rgba(139,92,246,0.35)]">
+                <div className="w-20 h-20 mx-auto rounded-[28px] bg-gradient-to-br from-primary to-orange-600 flex items-center justify-center shadow-[0_8px_40px_rgba(234,88,12,0.2)]">
                   <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
                     <path d="M13 2L4.5 13.5H11L10 22L19.5 10.5H13L13 2Z" fill="white" />
                   </svg>
                 </div>
                 <div className="space-y-1.5">
-                  <h2 className="text-2xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-br from-foreground to-muted-foreground">Aether</h2>
+                  <h2 className="text-2xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-br from-foreground to-muted-foreground">Pulse</h2>
                   <p className="text-[14px] text-muted-foreground leading-relaxed">
                     Выберите чат слева или начните новый
                   </p>

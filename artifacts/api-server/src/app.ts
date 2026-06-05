@@ -117,6 +117,11 @@ app.use("/api", (req: Request, res: Response, next: NextFunction) => {
 app.use("/api", router);
 app.use("/bot", botApiRouter);
 
+// Unknown API routes — return 404 instead of proxying to frontend
+app.use("/api", (req: Request, res: Response, next: NextFunction) => {
+  res.status(404).json({ error: "Not found" });
+});
+
 if (process.env.NODE_ENV === "production") {
   const staticDir = path.join(process.cwd(), "artifacts/pulse/dist/public");
   app.use(express.static(staticDir, { maxAge: "1h", index: false }));

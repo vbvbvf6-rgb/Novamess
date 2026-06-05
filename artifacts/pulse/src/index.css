@@ -5,7 +5,6 @@
 @plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(html.dark *));
-@custom-variant light (&:is(html.light *));
 @custom-variant landscape (@media (max-width: 767px) and (orientation: landscape));
 
 @theme inline {
@@ -48,70 +47,70 @@
 }
 
 :root {
-  /* Soft Violet Night */
-  --background: 240 22% 7%;
-  --foreground: 250 15% 92%;
-
-  --card: 240 18% 11%;
-  --card-foreground: 250 15% 92%;
-  --card-border: 240 14% 17%;
-
-  --popover: 240 18% 11%;
-  --popover-foreground: 250 15% 92%;
-  --popover-border: 240 14% 17%;
-
-  --primary: 262 72% 68%;
-  --primary-foreground: 0 0% 100%;
-
-  --secondary: 240 16% 16%;
-  --secondary-foreground: 250 15% 92%;
-
-  --muted: 240 16% 16%;
-  --muted-foreground: 246 10% 58%;
-
-  --accent: 252 68% 68%;
-  --accent-foreground: 0 0% 100%;
-
-  --destructive: 0 84% 60%;
-  --destructive-foreground: 0 0% 100%;
-
-  --border: 240 14% 17%;
-  --input: 240 14% 17%;
-  --ring: 262 72% 68%;
-
-  --radius: 1rem;
-}
-
-.light {
-  --background: 248 40% 97%;
-  --foreground: 240 20% 12%;
+  /* Pulse Clean — airy, light, uncluttered like VK Messenger */
+  --background: 0 0% 100%;
+  --foreground: 220 14% 18%;
 
   --card: 0 0% 100%;
-  --card-foreground: 240 20% 12%;
-  --card-border: 248 20% 88%;
+  --card-foreground: 220 14% 18%;
+  --card-border: 220 12% 92%;
 
   --popover: 0 0% 100%;
-  --popover-foreground: 240 20% 12%;
-  --popover-border: 248 20% 88%;
+  --popover-foreground: 220 14% 18%;
+  --popover-border: 220 12% 92%;
 
-  --primary: 262 70% 57%;
+  --primary: 22 85% 52%;
   --primary-foreground: 0 0% 100%;
 
-  --secondary: 248 22% 93%;
-  --secondary-foreground: 240 20% 12%;
+  --secondary: 220 12% 96%;
+  --secondary-foreground: 220 14% 25%;
 
-  --muted: 248 22% 93%;
-  --muted-foreground: 245 10% 44%;
+  --muted: 220 12% 96%;
+  --muted-foreground: 220 8% 50%;
 
-  --accent: 262 70% 57%;
+  --accent: 22 85% 52%;
   --accent-foreground: 0 0% 100%;
 
-  --destructive: 0 84% 60%;
+  --destructive: 0 72% 55%;
   --destructive-foreground: 0 0% 100%;
 
-  --border: 248 20% 88%;
-  --input: 248 20% 88%;
-  --ring: 262 70% 57%;
+  --border: 220 12% 92%;
+  --input: 220 12% 92%;
+  --ring: 22 85% 52%;
+
+  --radius: 0.875rem;
+}
+
+.dark {
+  --background: 220 16% 8%;
+  --foreground: 220 10% 92%;
+
+  --card: 220 14% 11%;
+  --card-foreground: 220 10% 92%;
+  --card-border: 220 12% 18%;
+
+  --popover: 220 14% 11%;
+  --popover-foreground: 220 10% 92%;
+  --popover-border: 220 12% 18%;
+
+  --primary: 22 85% 52%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 220 10% 16%;
+  --secondary-foreground: 220 10% 85%;
+
+  --muted: 220 10% 16%;
+  --muted-foreground: 220 8% 55%;
+
+  --accent: 22 85% 52%;
+  --accent-foreground: 0 0% 100%;
+
+  --destructive: 0 72% 55%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 220 12% 18%;
+  --input: 220 12% 18%;
+  --ring: 22 85% 52%;
 }
 
 @layer base {
@@ -193,6 +192,35 @@
   100% { background-position: 0% 50%; }
 }
 
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(16px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 12px hsl(var(--primary) / 0.2); }
+  50% { box-shadow: 0 0 24px hsl(var(--primary) / 0.35); }
+}
+
+/* Reduce motion for weak devices */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 /* Premium scrollbar */
 ::-webkit-scrollbar {
   width: 4px;
@@ -222,38 +250,38 @@
 .chat-bg {
   background-color: hsl(var(--background));
   background-image:
-    radial-gradient(circle at 20% 80%, hsl(262 72% 68% / 0.06) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, hsl(246 68% 68% / 0.04) 0%, transparent 50%);
+    radial-gradient(circle at 20% 80%, hsl(22 85% 52% / 0.04) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, hsl(220 12% 80% / 0.04) 0%, transparent 50%);
 }
 
 /* Message bubble — outgoing */
 .bubble-mine {
-  background: linear-gradient(135deg, hsl(252 80% 68%) 0%, hsl(262 72% 58%) 100%);
-  box-shadow: 0 4px 20px hsl(262 72% 62% / 0.32);
-  border: 1px solid hsl(262 72% 85% / 0.30);
+  background: linear-gradient(135deg, hsl(22 85% 52%) 0%, hsl(20 90% 48%) 100%);
+  box-shadow: 0 2px 12px hsl(22 85% 52% / 0.2);
+  border: 1px solid hsl(22 85% 60% / 0.2);
 }
 
-/* Glass morphism card */
+/* Glass morphism card — lighter on weak devices */
 .glass-card {
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 /* Sidebar glow for active item */
 .nav-active-glow {
-  box-shadow: 0 0 20px hsl(var(--primary) / 0.22);
+  box-shadow: 0 0 20px hsl(var(--primary) / 0.15);
 }
 
-/* Wallet hero card — dark gradient in dark mode, white card in light mode */
+/* Wallet hero card — orange accent in light mode */
 .wallet-hero {
-  background: linear-gradient(135deg, #1a1a3e 0%, #0d2545 50%, #1a1a3e 100%);
-}
-html.light .wallet-hero {
-  background: hsl(var(--card));
+  background: linear-gradient(135deg, #fef3c7 0%, #fff7ed 50%, #fef3c7 100%);
   border: 1px solid hsl(var(--border));
   box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+.dark .wallet-hero {
+  background: linear-gradient(135deg, #1a1a3e 0%, #0d2545 50%, #1a1a3e 100%);
 }
 
 /* ─── Landscape phone layout optimizations ──────────────────────────────── */

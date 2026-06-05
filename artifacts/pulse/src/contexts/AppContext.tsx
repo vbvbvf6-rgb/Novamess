@@ -649,7 +649,7 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
       es.onerror = () => {
         es?.close();
         es = null;
-        if (!dead) retryTimeout = setTimeout(connect, 3000);
+        if (!dead) retryTimeout = setTimeout(connect, 15000);
       };
     };
 

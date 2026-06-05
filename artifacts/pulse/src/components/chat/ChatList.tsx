@@ -458,7 +458,7 @@ export function ChatList() {
           </div>
           <button
             onClick={openCreate}
-            className="w-12 h-12 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center hover:bg-primary/90 transition-all shadow-[0_4px_14px_rgba(139,92,246,0.3)] shrink-0"
+            className="w-12 h-12 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center hover:bg-primary/90 transition-all shadow-[0_4px_14px_rgba(234,88,12,0.3)] shrink-0"
           >
             <SquarePen size={20} />
           </button>
@@ -765,7 +765,7 @@ export function ChatList() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-md flex items-end sm:items-center justify-center p-4"
+            className="fixed inset-0 z-[9999] bg-black/40 backdrop-blur-md flex items-end sm:items-center justify-center p-4"
             onClick={e => { if (e.target === e.currentTarget) setShowCreate(false); }}
           >
             <motion.div
@@ -846,7 +846,7 @@ export function ChatList() {
                       <button
                         disabled={!createName.trim()}
                         onClick={() => setCreateStep("members")}
-                        className="w-full py-4 rounded-xl bg-primary text-primary-foreground font-black disabled:opacity-50 hover:bg-primary/90 transition-all text-base shadow-[0_4px_14px_rgba(139,92,246,0.3)] hover:-translate-y-0.5 active:translate-y-0 disabled:shadow-none disabled:-translate-y-0"
+                        className="w-full py-4 rounded-xl bg-primary text-primary-foreground font-black disabled:opacity-50 hover:bg-primary/90 transition-all text-base shadow-[0_4px_14px_rgba(234,88,12,0.3)] hover:-translate-y-0.5 active:translate-y-0 disabled:shadow-none disabled:-translate-y-0"
                       >
                         Далее
                       </button>
@@ -913,7 +913,7 @@ export function ChatList() {
                       <button
                         onClick={handleCreate}
                         disabled={creating}
-                        className="w-full py-4 rounded-xl bg-primary text-primary-foreground font-black disabled:opacity-50 hover:bg-primary/90 transition-all text-base shadow-[0_4px_14px_rgba(139,92,246,0.3)] hover:-translate-y-0.5 active:translate-y-0"
+                        className="w-full py-4 rounded-xl bg-primary text-primary-foreground font-black disabled:opacity-50 hover:bg-primary/90 transition-all text-base shadow-[0_4px_14px_rgba(234,88,12,0.3)] hover:-translate-y-0.5 active:translate-y-0"
                       >
                         {creating ? "Создание..." : `Создать ${createType === "group" ? "группу" : "канал"} (${selectedMembers.length})`}
                       </button>
@@ -936,7 +936,7 @@ export function ChatList() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-md flex items-end sm:items-center justify-center p-4"
+            className="fixed inset-0 z-[9999] bg-black/40 backdrop-blur-md flex items-end sm:items-center justify-center p-4"
             onClick={e => { if (e.target === e.currentTarget) setShowFolderCreate(false); }}
           >
             <motion.div
@@ -989,7 +989,7 @@ export function ChatList() {
                 <button
                   onClick={createFolder}
                   disabled={!newFolderName.trim() || creatingFolder}
-                  className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-black disabled:opacity-50 hover:bg-primary/90 transition-all shadow-[0_4px_14px_rgba(139,92,246,0.3)]"
+                  className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-black disabled:opacity-50 hover:bg-primary/90 transition-all shadow-[0_4px_14px_rgba(234,88,12,0.3)]"
                 >
                   {creatingFolder ? "Создание..." : `Создать папку ${newFolderIcon}`}
                 </button>

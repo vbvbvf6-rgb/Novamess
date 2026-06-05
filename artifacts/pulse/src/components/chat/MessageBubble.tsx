@@ -139,7 +139,7 @@ function VoicePlayer({ src, durationSec, isMine, messageId, viewerIsPrimePlus }:
           "w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-all",
           isMine
             ? "bg-white text-primary shadow-sm hover:scale-105 active:scale-95"
-            : "bg-primary text-white shadow-[0_4px_14px_rgba(139,92,246,0.35)] hover:scale-105 active:scale-95"
+            : "bg-primary text-white shadow-[0_4px_14px_rgba(234,88,12,0.35)] hover:scale-105 active:scale-95"
         )}
       >
         {playing ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" className="ml-1" />}
@@ -171,7 +171,7 @@ function VoicePlayer({ src, durationSec, isMine, messageId, viewerIsPrimePlus }:
             className={cn(
               "text-[10px] font-black px-1.5 py-0.5 rounded-md border transition-all hover:scale-105 active:scale-95",
               isMine
-                ? "border-white/30 text-white/80 hover:border-white/60 bg-white/10"
+                ? "border-white/30 text-white/80 hover:border-white/60 bg-black/10"
                 : "border-muted-foreground/30 text-muted-foreground hover:border-primary/50 hover:text-primary bg-secondary/50"
             )}
           >
@@ -186,7 +186,7 @@ function VoicePlayer({ src, durationSec, isMine, messageId, viewerIsPrimePlus }:
                 "text-[10px] font-black px-1.5 py-0.5 rounded-md border transition-all hover:scale-105 active:scale-95 flex items-center gap-0.5",
                 transcript && showTranscript
                   ? isMine ? "border-purple-300/60 text-purple-200 bg-purple-500/20" : "border-purple-500/60 text-purple-400 bg-purple-500/10"
-                  : isMine ? "border-white/20 text-white/60 hover:border-white/40 bg-white/5" : "border-muted-foreground/20 text-muted-foreground hover:border-purple-500/40 hover:text-purple-400"
+                  : isMine ? "border-white/20 text-white/60 hover:border-white/40 bg-black/5" : "border-muted-foreground/20 text-muted-foreground hover:border-purple-500/40 hover:text-purple-400"
               )}
             >
               {transcribing ? "..." : "АА"}
@@ -279,14 +279,14 @@ function PollDisplay({ pollData, messageId, chatId, currentUserId, isMine }: {
                 className={cn(
                   "absolute inset-0 transition-all duration-500",
                   isMyVote
-                    ? isMine ? "bg-white/20" : "bg-primary/20"
-                    : isMine ? "bg-white/10" : "bg-secondary"
+                    ? isMine ? "bg-white/10" : "bg-primary/20"
+                    : isMine ? "bg-black/10" : "bg-secondary"
                 )}
                 style={{ width: `${pct}%`, minWidth: pct > 0 ? "8px" : "0" }}
               />
               <div className={cn(
                 "relative px-3 py-2 flex items-center justify-between",
-                isMine ? "bg-white/5" : "bg-secondary/50"
+                isMine ? "bg-black/5" : "bg-secondary/50"
               )}>
                 <span className={cn("text-[13px] font-semibold truncate pr-2", isMine ? "text-white" : "text-foreground")}>
                   {option}
@@ -674,7 +674,7 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/70 backdrop-blur-md"
+                className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/40 backdrop-blur-md"
                 onClick={() => setShowGiftInfo(false)}
               >
                 <motion.div
@@ -782,7 +782,7 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
           if (last < text.length) segments.push({ text: text.slice(last) });
 
           return segments.map((seg, i) => {
-            if (seg.code) return <code key={i} className={cn("px-1 py-0.5 rounded text-[13px] font-mono", isMine ? "bg-white/20 text-white" : "bg-secondary text-foreground")}>{seg.text}</code>;
+            if (seg.code) return <code key={i} className={cn("px-1 py-0.5 rounded text-[13px] font-mono", isMine ? "bg-white/10 text-white" : "bg-secondary text-foreground")}>{seg.text}</code>;
             if (seg.url) return <a key={i} href={seg.url} target="_blank" rel="noopener noreferrer" className={cn("underline underline-offset-2", isMine ? "text-white/90" : "text-primary")} onClick={e => e.stopPropagation()}>{seg.text}</a>;
             if (seg.bold && seg.italic) return <strong key={i}><em>{seg.text}</em></strong>;
             if (seg.bold)   return <strong key={i}>{seg.text}</strong>;
@@ -864,7 +864,7 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
                   />
                   {i === 3 && extra > 0 && (
                     <div
-                      className="absolute inset-0 bg-black/60 flex items-center justify-center cursor-zoom-in"
+                      className="absolute inset-0 bg-black/40 flex items-center justify-center cursor-zoom-in"
                       onClick={() => setLightbox({ urls: albumUrls, idx: 3 })}
                     >
                       <span className="text-white text-2xl font-black">+{extra}</span>
@@ -1260,11 +1260,11 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[9999] bg-black/95 flex items-center justify-center"
+            className="fixed inset-0 z-[9999] bg-black/90 flex items-center justify-center"
             onClick={() => setLightbox(null)}
           >
             <button
-              className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors z-10"
+              className="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/10 hover:bg-white/10 flex items-center justify-center text-white transition-colors z-10"
               onClick={() => setLightbox(null)}
             >
               <X size={20} />
@@ -1273,14 +1273,14 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
             {lightbox.urls.length > 1 && (
               <>
                 <button
-                  className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors z-10"
+                  className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/10 hover:bg-white/10 flex items-center justify-center text-white transition-colors z-10"
                   onClick={(e) => { e.stopPropagation(); setLightbox(l => l ? { ...l, idx: Math.max(0, l.idx - 1) } : null); }}
                   disabled={lightbox.idx === 0}
                 >
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
                 </button>
                 <button
-                  className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors z-10"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/10 hover:bg-white/10 flex items-center justify-center text-white transition-colors z-10"
                   onClick={(e) => { e.stopPropagation(); setLightbox(l => l ? { ...l, idx: Math.min(l.urls.length - 1, l.idx + 1) } : null); }}
                   disabled={lightbox.idx === lightbox.urls.length - 1}
                 >
@@ -1288,7 +1288,7 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
                 </button>
                 <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
                   {lightbox.urls.map((_, i) => (
-                    <div key={i} className={`w-1.5 h-1.5 rounded-full transition-colors ${i === lightbox.idx ? "bg-white" : "bg-white/40"}`} />
+                    <div key={i} className={`w-1.5 h-1.5 rounded-full transition-colors ${i === lightbox.idx ? "bg-white" : "bg-white/30"}`} />
                   ))}
                 </div>
               </>

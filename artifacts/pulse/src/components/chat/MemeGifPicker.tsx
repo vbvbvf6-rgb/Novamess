@@ -184,7 +184,7 @@ export function MemeGifPicker({ onSelect, onClose }: MemeGifPickerProps) {
                       (e.currentTarget as HTMLImageElement).src = meme.url;
                     }}
                   />
-                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-1.5">
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-1.5">
                     <p className="text-white text-[9px] font-bold leading-tight line-clamp-2">
                       {meme.title}
                     </p>

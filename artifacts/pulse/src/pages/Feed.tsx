@@ -91,7 +91,7 @@ function AppealModal({ post, onClose, onSubmitted }: { post: any; onClose: () =>
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
       onClick={onClose}
     >
       <motion.div
@@ -1216,7 +1216,7 @@ export default function Feed() {
                       <button
                         type="button"
                         onClick={() => setNewPostImage(null)}
-                        className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-0.5 hover:bg-black/80 transition-colors"
+                        className="absolute top-1 right-1 bg-black/40 text-white rounded-full p-0.5 hover:bg-black/60 transition-colors"
                       >
                         <X size={14} />
                       </button>

@@ -47,7 +47,9 @@ router.post("/contacts", async (req, res) => {
       });
     }
 
-    await db.insert(contactsTable).values({ userId: uid, contactId: body.userId }).onConflictDoNothing();
+    try {
+      await db.insert(contactsTable).values({ userId: uid, contactId: body.userId }).onConflictDoNothing();
+    } catch {}
     const user = await db.query.usersTable.findFirst({ where: eq(usersTable.id, body.userId) });
     if (!user) return res.status(404).json({ error: "User not found" });
     res.status(201).json(user);

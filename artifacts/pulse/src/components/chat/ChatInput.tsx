@@ -724,7 +724,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
                   <button
                     onClick={handleScheduledSend}
                     disabled={!text.trim() || !scheduledAt}
-                    className="w-full py-3.5 bg-primary text-primary-foreground rounded-[14px] text-[14px] font-black disabled:opacity-40 transition-all hover:bg-primary/90 shadow-[0_4px_14px_rgba(139,92,246,0.3)] hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2"
+                    className="w-full py-3.5 bg-primary text-primary-foreground rounded-[14px] text-[14px] font-black disabled:opacity-40 transition-all hover:bg-primary/90 shadow-[0_4px_14px_rgba(234,88,12,0.3)] hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2"
                   >
                     <CalendarClock size={16} />
                     {scheduledAt ? `Запланировать на ${formatScheduledAt(scheduledAt)}` : "Выберите время"}
@@ -1088,7 +1088,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
                 <motion.div key={idx} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
                   className="relative rounded-2xl overflow-hidden border border-border shadow-sm shrink-0 group">
                   <img src={src} alt="" className="h-28 w-28 object-cover block" />
-                  <button onClick={() => removeImage(idx)} className="absolute top-1.5 right-1.5 w-7 h-7 bg-black/50 backdrop-blur-md text-white rounded-full flex items-center justify-center hover:bg-black/80 transition-colors opacity-0 group-hover:opacity-100">
+                  <button onClick={() => removeImage(idx)} className="absolute top-1.5 right-1.5 w-7 h-7 bg-black/40 backdrop-blur-md text-white rounded-full flex items-center justify-center hover:bg-black/40 transition-colors opacity-0 group-hover:opacity-100">
                     <X size={14} />
                   </button>
                 </motion.div>
@@ -1348,7 +1348,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
                 <button
                   onClick={() => handleSend()}
                   disabled={isSending}
-                  className="w-12 h-12 flex items-center justify-center bg-primary text-primary-foreground rounded-[20px] hover:bg-primary/90 transition-all disabled:opacity-50 shadow-[0_4px_14px_rgba(139,92,246,0.3)] hover:scale-105 active:scale-95"
+                  className="w-12 h-12 flex items-center justify-center bg-primary text-primary-foreground rounded-[20px] hover:bg-primary/90 transition-all disabled:opacity-50 shadow-[0_4px_14px_rgba(234,88,12,0.3)] hover:scale-105 active:scale-95"
                 >
                   <SendHorizontal size={20} className={isSending ? "animate-pulse" : "translate-x-[-1px]"} />
                 </button>

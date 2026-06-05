@@ -35,13 +35,13 @@ export function IncomingCall() {
         className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] w-[92%] max-w-sm"
       >
         <div
-          className="relative rounded-[28px] overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.7)]"
+          className="relative rounded-[28px] overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.12)]"
           style={{
-            background: `linear-gradient(145deg, ${avatarBg}22 0%, #1a1a1a 60%)`,
-            borderTop: `1px solid ${avatarBg}55`,
-            borderLeft: `1px solid ${avatarBg}33`,
-            borderRight: `1px solid ${avatarBg}11`,
-            borderBottom: "1px solid rgba(255,255,255,0.06)",
+            background: `linear-gradient(145deg, ${avatarBg}15 0%, #ffffff 60%)`,
+            borderTop: `1px solid ${avatarBg}40`,
+            borderLeft: `1px solid ${avatarBg}20`,
+            borderRight: `1px solid ${avatarBg}10`,
+            borderBottom: "1px solid rgba(0,0,0,0.06)",
           }}
         >
           {/* Glow strip */}
@@ -79,16 +79,16 @@ export function IncomingCall() {
 
             {/* Text */}
             <div className="flex-1 min-w-0">
-              <p className="text-white font-bold text-[17px] truncate leading-tight">
+              <p className="text-foreground font-bold text-[17px] truncate leading-tight">
                 {caller?.displayName ?? "Неизвестно"}
               </p>
               <div className="flex items-center gap-1.5 mt-1">
                 <motion.div
                   animate={{ opacity: [1, 0.3, 1] }}
                   transition={{ duration: 1.2, repeat: Infinity }}
-                  className="w-1.5 h-1.5 rounded-full bg-green-400"
+                  className="w-1.5 h-1.5 rounded-full bg-green-500"
                 />
-                <span className="text-white/60 text-[13px]">
+                <span className="text-muted-foreground text-[13px]">
                   {isVideo ? "Входящий видеозвонок" : "Входящий звонок"}
                 </span>
               </div>

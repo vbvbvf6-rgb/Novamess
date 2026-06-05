@@ -49,80 +49,80 @@ interface ChatTheme {
 const CHAT_THEMES: ChatTheme[] = [
   {
     id: "sunset", name: "Закат", emoji: "🌅", tier: "prime",
-    bg: { background: "linear-gradient(160deg, #1a0a0a 0%, #2d1008 40%, #1a0d1a 100%)" },
-    bubble: { background: "linear-gradient(135deg, #6366f1, #ec4899)", boxShadow: "0 4px 16px rgba(99,102,241,0.35)" },
-    preview: "linear-gradient(135deg, #6366f1, #ec4899)",
+    bg: { background: "linear-gradient(160deg, #fff5f0 0%, #fff0e6 40%, #fef3c7 100%)" },
+    bubble: { background: "linear-gradient(135deg, #ea580c, #f97316)", boxShadow: "0 2px 12px rgba(234,88,12,0.2)" },
+    preview: "linear-gradient(135deg, #ea580c, #f97316)",
   },
   {
     id: "ocean", name: "Океан", emoji: "🌊", tier: "prime",
-    bg: { background: "linear-gradient(160deg, #050e1a 0%, #07203a 50%, #060a14 100%)" },
-    bubble: { background: "linear-gradient(135deg, #0ea5e9, #6366f1)", boxShadow: "0 4px 16px rgba(14,165,233,0.35)" },
-    preview: "linear-gradient(135deg, #0ea5e9, #6366f1)",
+    bg: { background: "linear-gradient(160deg, #f0f9ff 0%, #e0f2fe 50%, #f0f9ff 100%)" },
+    bubble: { background: "linear-gradient(135deg, #0ea5e9, #3b82f6)", boxShadow: "0 2px 12px rgba(14,165,233,0.2)" },
+    preview: "linear-gradient(135deg, #0ea5e9, #3b82f6)",
   },
   {
     id: "forest", name: "Лес", emoji: "🌿", tier: "prime",
-    bg: { background: "linear-gradient(160deg, #060f08 0%, #0a2010 50%, #06100a 100%)" },
-    bubble: { background: "linear-gradient(135deg, #22c55e, #14b8a6)", boxShadow: "0 4px 16px rgba(34,197,94,0.35)" },
-    preview: "linear-gradient(135deg, #22c55e, #14b8a6)",
+    bg: { background: "linear-gradient(160deg, #f0fdf4 0%, #dcfce7 50%, #f0fdf4 100%)" },
+    bubble: { background: "linear-gradient(135deg, #22c55e, #16a34a)", boxShadow: "0 2px 12px rgba(34,197,94,0.2)" },
+    preview: "linear-gradient(135deg, #22c55e, #16a34a)",
   },
   {
     id: "sakura", name: "Сакура", emoji: "🌸", tier: "prime",
-    bg: { background: "linear-gradient(160deg, #150a10 0%, #28101c 50%, #12070f 100%)" },
-    bubble: { background: "linear-gradient(135deg, #f43f5e, #ec4899)", boxShadow: "0 4px 16px rgba(244,63,94,0.35)" },
+    bg: { background: "linear-gradient(160deg, #fdf2f8 0%, #fce7f3 50%, #fdf2f8 100%)" },
+    bubble: { background: "linear-gradient(135deg, #f43f5e, #ec4899)", boxShadow: "0 2px 12px rgba(244,63,94,0.2)" },
     preview: "linear-gradient(135deg, #f43f5e, #ec4899)",
   },
   {
     id: "dusk", name: "Сумерки", emoji: "🔮", tier: "prime",
-    bg: { background: "linear-gradient(160deg, #0c0814 0%, #1a0f2e 50%, #0a0612 100%)" },
-    bubble: { background: "linear-gradient(135deg, #8b5cf6, #6366f1)", boxShadow: "0 4px 16px rgba(139,92,246,0.35)" },
+    bg: { background: "linear-gradient(160deg, #faf5ff 0%, #f3e8ff 50%, #faf5ff 100%)" },
+    bubble: { background: "linear-gradient(135deg, #8b5cf6, #6366f1)", boxShadow: "0 2px 12px rgba(139,92,246,0.2)" },
     preview: "linear-gradient(135deg, #8b5cf6, #6366f1)",
   },
   {
     id: "ember", name: "Огонь", emoji: "🔥", tier: "prime",
-    bg: { background: "linear-gradient(160deg, #120503 0%, #251008 50%, #100402 100%)" },
-    bubble: { background: "linear-gradient(135deg, #ef4444, #dc2626)", boxShadow: "0 4px 16px rgba(239,68,68,0.35)" },
+    bg: { background: "linear-gradient(160deg, #fef2f2 0%, #fee2e2 50%, #fef2f2 100%)" },
+    bubble: { background: "linear-gradient(135deg, #ef4444, #dc2626)", boxShadow: "0 2px 12px rgba(239,68,68,0.2)" },
     preview: "linear-gradient(135deg, #ef4444, #dc2626)",
   },
   {
     id: "arctic", name: "Арктика", emoji: "❄️", tier: "prime",
-    bg: { background: "linear-gradient(160deg, #040c12 0%, #081a28 50%, #04101a 100%)" },
-    bubble: { background: "linear-gradient(135deg, #06b6d4, #3b82f6)", boxShadow: "0 4px 16px rgba(6,182,212,0.35)" },
+    bg: { background: "linear-gradient(160deg, #ecfeff 0%, #cffafe 50%, #ecfeff 100%)" },
+    bubble: { background: "linear-gradient(135deg, #06b6d4, #3b82f6)", boxShadow: "0 2px 12px rgba(6,182,212,0.2)" },
     preview: "linear-gradient(135deg, #06b6d4, #3b82f6)",
   },
   {
     id: "gold", name: "Золото", emoji: "✨", tier: "prime",
-    bg: { background: "linear-gradient(160deg, #110d02 0%, #221a04 50%, #0e0a02 100%)" },
-    bubble: { background: "linear-gradient(135deg, #eab308, #d97706)", boxShadow: "0 4px 16px rgba(234,179,8,0.35)" },
+    bg: { background: "linear-gradient(160deg, #fefce8 0%, #fef9c3 50%, #fefce8 100%)" },
+    bubble: { background: "linear-gradient(135deg, #eab308, #d97706)", boxShadow: "0 2px 12px rgba(234,179,8,0.2)" },
     preview: "linear-gradient(135deg, #eab308, #d97706)",
   },
   {
     id: "galaxy", name: "Галактика", emoji: "🌌", tier: "prime_plus",
     bg: {
-      background: "linear-gradient(160deg, #08041a 0%, #120a2e 35%, #04100e 70%, #0e0418 100%)",
-      backgroundImage: "radial-gradient(ellipse at 20% 40%, rgba(139,92,246,0.12) 0%, transparent 50%), radial-gradient(ellipse at 80% 60%, rgba(6,182,212,0.08) 0%, transparent 50%)",
+      background: "linear-gradient(160deg, #faf5ff 0%, #f3e8ff 35%, #f0f9ff 70%, #fdf2f8 100%)",
+      backgroundImage: "radial-gradient(ellipse at 20% 40%, rgba(139,92,246,0.06) 0%, transparent 50%), radial-gradient(ellipse at 80% 60%, rgba(6,182,212,0.04) 0%, transparent 50%)",
     },
-    bubble: { background: "linear-gradient(135deg, #7c3aed, #06b6d4)", boxShadow: "0 4px 16px rgba(124,58,237,0.4)" },
-    preview: "linear-gradient(135deg, #7c3aed, #06b6d4)",
+    bubble: { background: "linear-gradient(135deg, #8b5cf6, #06b6d4)", boxShadow: "0 2px 12px rgba(139,92,246,0.2)" },
+    preview: "linear-gradient(135deg, #8b5cf6, #06b6d4)",
   },
   {
     id: "neon", name: "Неон", emoji: "💚", tier: "prime_plus",
-    bg: { background: "linear-gradient(160deg, #030a04 0%, #071408 50%, #03100a 100%)" },
-    bubble: { background: "linear-gradient(135deg, #10b981, #84cc16)", boxShadow: "0 4px 20px rgba(16,185,129,0.45)", border: "1px solid rgba(16,185,129,0.3)" },
+    bg: { background: "linear-gradient(160deg, #f0fdf4 0%, #dcfce7 50%, #f0fdf4 100%)" },
+    bubble: { background: "linear-gradient(135deg, #10b981, #84cc16)", boxShadow: "0 2px 12px rgba(16,185,129,0.2)", border: "1px solid rgba(16,185,129,0.2)" },
     preview: "linear-gradient(135deg, #10b981, #84cc16)",
   },
   {
     id: "rosegold", name: "Розовое золото", emoji: "💎", tier: "prime_plus",
-    bg: { background: "linear-gradient(160deg, #120808 0%, #241010 35%, #180e0e 70%, #0e0808 100%)" },
-    bubble: { background: "linear-gradient(135deg, #f43f5e, #eab308)", boxShadow: "0 4px 16px rgba(244,63,94,0.35)" },
+    bg: { background: "linear-gradient(160deg, #fdf2f8 0%, #fce7f3 35%, #fffbeb 70%, #fdf2f8 100%)" },
+    bubble: { background: "linear-gradient(135deg, #f43f5e, #eab308)", boxShadow: "0 2px 12px rgba(244,63,94,0.2)" },
     preview: "linear-gradient(135deg, #f43f5e, #eab308)",
   },
   {
     id: "aurora", name: "Аврора", emoji: "🌈", tier: "prime_plus",
     bg: {
-      background: "linear-gradient(160deg, #04080e 0%, #081224 100%)",
-      backgroundImage: "radial-gradient(ellipse at 15% 50%, rgba(16,185,129,0.1) 0%, transparent 45%), radial-gradient(ellipse at 85% 30%, rgba(139,92,246,0.1) 0%, transparent 45%), radial-gradient(ellipse at 50% 80%, rgba(14,165,233,0.08) 0%, transparent 40%)",
+      background: "linear-gradient(160deg, #f0f9ff 0%, #f0fdf4 100%)",
+      backgroundImage: "radial-gradient(ellipse at 15% 50%, rgba(16,185,129,0.06) 0%, transparent 45%), radial-gradient(ellipse at 85% 30%, rgba(139,92,246,0.06) 0%, transparent 45%), radial-gradient(ellipse at 50% 80%, rgba(14,165,233,0.04) 0%, transparent 40%)",
     },
-    bubble: { background: "linear-gradient(135deg, #10b981, #8b5cf6, #0ea5e9)", boxShadow: "0 4px 20px rgba(139,92,246,0.35)" },
+    bubble: { background: "linear-gradient(135deg, #10b981, #8b5cf6, #0ea5e9)", boxShadow: "0 2px 12px rgba(139,92,246,0.2)" },
     preview: "linear-gradient(135deg, #10b981, #8b5cf6, #0ea5e9)",
   },
 ];
@@ -140,7 +140,7 @@ function ChatThemePicker({
   return (
     <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-4"
       onClick={onClose}
     >
       <motion.div
@@ -962,7 +962,7 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
                     }}
                     className="rounded-xl cursor-pointer py-2.5"
                   >
-                    <Users size={18} className="mr-3 text-green-500" />
+                    <Users size={18} className="mr-3 text-orange-500" />
                     <span className="font-semibold">Создать группу</span>
                   </DropdownMenuItem>
                 </>
@@ -980,7 +980,7 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleToggleMute} className="rounded-xl cursor-pointer py-2.5">
                 {chat.isMuted ? (
-                  <><Bell size={18} className="mr-3 text-green-500" /><span className="font-semibold">{t("chat.muteOff")}</span></>
+                  <><Bell size={18} className="mr-3 text-orange-500" /><span className="font-semibold">{t("chat.muteOff")}</span></>
                 ) : (
                   <><BellOff size={18} className="mr-3 text-violet-400" /><span className="font-semibold">{t("chat.muteOn")}</span></>
                 )}
@@ -1546,7 +1546,7 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
             onClick={(e) => { if (e.target === e.currentTarget) setShowCreateGroupDialog(false); }}
           >
             <motion.div
@@ -1557,8 +1557,8 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
               className="w-full max-w-sm bg-card border border-border rounded-[24px] shadow-2xl overflow-hidden"
             >
               <div className="p-6">
-                <div className="w-14 h-14 rounded-2xl bg-green-500/10 border border-green-500/20 flex items-center justify-center mx-auto mb-4">
-                  <Users size={28} className="text-green-500" />
+                <div className="w-14 h-14 rounded-2xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center mx-auto mb-4">
+                  <Users size={28} className="text-orange-500" />
                 </div>
                 <h2 className="text-center font-black text-xl mb-1">Создать группу</h2>
                 <p className="text-center text-sm text-muted-foreground mb-5">
@@ -1623,7 +1623,7 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
       </AnimatePresence>
 
       {summaryOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setSummaryOpen(false)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={() => setSummaryOpen(false)}>
           <div className="relative w-full max-w-md bg-card border border-border rounded-3xl shadow-2xl p-6" onClick={e => e.stopPropagation()}>
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">

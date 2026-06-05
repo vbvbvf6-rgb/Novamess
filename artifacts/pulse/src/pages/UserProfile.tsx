@@ -110,7 +110,7 @@ function ReportUserDialog({ userId, displayName }: { userId: number; displayName
             className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
             onClick={e => { if (e.target === e.currentTarget) close(); }}
           >
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={close} />
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={close} />
             <motion.div
               initial={{ scale: 0.95, y: 20 }}
               animate={{ scale: 1, y: 0 }}
@@ -222,7 +222,7 @@ function BegModal({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[9999] bg-black/70 backdrop-blur-md flex items-end sm:items-center justify-center p-4"
+        className="fixed inset-0 z-[9999] bg-black/40 backdrop-blur-md flex items-end sm:items-center justify-center p-4"
         onClick={e => { if (e.target === e.currentTarget) onClose(); }}
       >
         <motion.div

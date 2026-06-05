@@ -269,7 +269,7 @@ export function Sidebar({ mobileSidebarOpen, onMobileClose, onMobileOpen, onOpen
         <div className="w-9 h-9 rounded-[12px] flex items-center justify-center shrink-0 drop-shadow-[0_0_10px_rgba(139,92,246,0.5)]">
           <PulseLogo size={36} />
         </div>
-        <span className="font-black text-xl tracking-tight bg-clip-text text-transparent bg-gradient-to-br from-foreground to-muted-foreground flex-1">Aether</span>
+        <span className="font-black text-xl tracking-tight bg-clip-text text-transparent bg-gradient-to-br from-foreground to-muted-foreground flex-1">Pulse</span>
         <button
           onClick={onOpenPalette}
           title="Поиск (Ctrl+K)"
@@ -297,7 +297,7 @@ export function Sidebar({ mobileSidebarOpen, onMobileClose, onMobileOpen, onOpen
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group relative",
                 isActive
-                  ? "bg-primary text-primary-foreground shadow-[0_4px_14px_rgba(139,92,246,0.3)]"
+                  ? "bg-primary text-primary-foreground shadow-[0_4px_14px_rgba(234,88,12,0.3)]"
                   : "text-muted-foreground hover:bg-secondary/80 hover:text-foreground"
               )}
             >
@@ -331,7 +331,7 @@ export function Sidebar({ mobileSidebarOpen, onMobileClose, onMobileOpen, onOpen
           className={cn(
             "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group border mt-2",
             location.startsWith("/prime")
-              ? "bg-gradient-to-r from-violet-600 to-indigo-500 text-white border-transparent shadow-[0_4px_14px_rgba(139,92,246,0.4)]"
+              ? "bg-gradient-to-r from-orange-500 to-red-500 text-white border-transparent shadow-[0_4px_14px_rgba(234,88,12,0.4)]"
               : "border-violet-500/20 text-violet-400 hover:bg-violet-500/10 hover:border-violet-500/30"
           )}
         >
@@ -439,7 +439,7 @@ export function Sidebar({ mobileSidebarOpen, onMobileClose, onMobileOpen, onOpen
           <div className="w-9 h-9 rounded-[12px] flex items-center justify-center shrink-0 drop-shadow-[0_0_10px_rgba(139,92,246,0.5)]">
             <PulseLogo size={36} />
           </div>
-          <span className="font-black text-xl tracking-tight bg-clip-text text-transparent bg-gradient-to-br from-foreground to-muted-foreground flex-1">Aether</span>
+          <span className="font-black text-xl tracking-tight bg-clip-text text-transparent bg-gradient-to-br from-foreground to-muted-foreground flex-1">Pulse</span>
           <button onClick={onMobileClose} className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-all">
             <X size={18} />
           </button>
@@ -457,7 +457,7 @@ export function Sidebar({ mobileSidebarOpen, onMobileClose, onMobileOpen, onOpen
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group relative",
                   isActive
-                    ? "bg-primary text-primary-foreground shadow-[0_4px_14px_rgba(139,92,246,0.3)]"
+                    ? "bg-primary text-primary-foreground shadow-[0_4px_14px_rgba(234,88,12,0.3)]"
                     : "text-muted-foreground hover:bg-secondary/80 hover:text-foreground"
                 )}
               >
@@ -480,7 +480,7 @@ export function Sidebar({ mobileSidebarOpen, onMobileClose, onMobileOpen, onOpen
             className={cn(
               "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group border mt-2",
               location.startsWith("/prime")
-                ? "bg-gradient-to-r from-violet-600 to-indigo-500 text-white border-transparent shadow-[0_4px_14px_rgba(139,92,246,0.4)]"
+                ? "bg-gradient-to-r from-orange-500 to-red-500 text-white border-transparent shadow-[0_4px_14px_rgba(234,88,12,0.4)]"
                 : "border-violet-500/20 text-violet-400 hover:bg-violet-500/10 hover:border-violet-500/30"
             )}
           >

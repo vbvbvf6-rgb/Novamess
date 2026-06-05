@@ -511,7 +511,7 @@ export default function Wallet() {
       <AnimatePresence>
         {showReceiveModal && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
             onClick={() => setShowReceiveModal(false)}>
             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
               onClick={(e) => e.stopPropagation()} className="bg-card border border-border rounded-3xl p-6 w-full max-w-sm shadow-2xl">
@@ -551,7 +551,7 @@ export default function Wallet() {
       <AnimatePresence>
         {showSendModal && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
             onClick={() => setShowSendModal(false)}>
             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
               onClick={(e) => e.stopPropagation()} className="bg-card border border-border rounded-3xl p-6 w-full max-w-sm shadow-2xl">
@@ -586,7 +586,7 @@ export default function Wallet() {
       <AnimatePresence>
         {showBuyModal && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-4"
             onClick={() => setShowBuyModal(false)}>
             <motion.div initial={{ scale: 0.95, opacity: 0, y: 40 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 40 }}
               onClick={(e) => e.stopPropagation()} className="bg-card border border-border rounded-3xl p-5 w-full max-w-sm shadow-2xl">
@@ -644,7 +644,7 @@ export default function Wallet() {
       <AnimatePresence>
         {showBonusModal && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
             onClick={() => setShowBonusModal(false)}>
             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
               onClick={(e) => e.stopPropagation()} className="bg-card border border-border rounded-3xl p-6 w-full max-w-sm shadow-2xl">
