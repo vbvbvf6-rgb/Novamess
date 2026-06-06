@@ -107,4 +107,3 @@ channel = "stable-25_05"
 [userenv.shared]
 VAPID_PUBLIC_KEY = "BMYTPQMepM0IUhvdnCp9EEZCX787iklvM032FY1m7vq6PheB6OUr-ZxocSlQE2tdmUBNULyvc_vfA5kyu9vVf7I"
 VAPID_EMAIL = "mailto:admin@pulse.app"
-JWT_SECRET = "ed97e5ff902749c95451a168739a3a02bf7e16bf1a49ef34e523e8e11d61ff29e0246831f02bd2b869b01cdb0d8fb2208f5087cd08aeaa5aa3e5129cb8b49fa4"
