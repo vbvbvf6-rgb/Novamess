@@ -342,3 +342,74 @@
     max-height: 80px !important;
   }
 }
+
+/* ─── Mobile momentum scrolling ─────────────────────────────────────────── */
+/* Required for smooth touch scrolling on Android WebView and iOS Safari */
+.overflow-y-auto,
+.overflow-y-scroll {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+}
+
+/* ─── Cross-browser opacity color fix ───────────────────────────────────── */
+/* Tailwind v4 opacity modifiers (bg-primary/10 etc.) use color-mix(in oklab),
+   which requires Chrome 112+. Many Android WebViews are older and render
+   these as fully opaque. Override with hsl(var / alpha) which works in
+   Chrome 65+ (Android 8+, 2018). These unlayered rules take priority over
+   Tailwind's @layer utilities output. */
+
+.bg-primary\/5    { background-color: hsl(var(--primary) / 0.05); }
+.bg-primary\/8    { background-color: hsl(var(--primary) / 0.08); }
+.bg-primary\/10   { background-color: hsl(var(--primary) / 0.10); }
+.bg-primary\/15   { background-color: hsl(var(--primary) / 0.15); }
+.bg-primary\/20   { background-color: hsl(var(--primary) / 0.20); }
+.bg-primary\/25   { background-color: hsl(var(--primary) / 0.25); }
+.bg-primary\/30   { background-color: hsl(var(--primary) / 0.30); }
+.bg-primary\/40   { background-color: hsl(var(--primary) / 0.40); }
+
+.hover\:bg-primary\/10:hover  { background-color: hsl(var(--primary) / 0.10); }
+.hover\:bg-primary\/15:hover  { background-color: hsl(var(--primary) / 0.15); }
+.hover\:bg-primary\/20:hover  { background-color: hsl(var(--primary) / 0.20); }
+
+.border-primary\/20 { border-color: hsl(var(--primary) / 0.20); }
+.border-primary\/25 { border-color: hsl(var(--primary) / 0.25); }
+.border-primary\/30 { border-color: hsl(var(--primary) / 0.30); }
+.border-primary\/40 { border-color: hsl(var(--primary) / 0.40); }
+.hover\:border-primary\/40:hover { border-color: hsl(var(--primary) / 0.40); }
+
+.shadow-primary\/25 { --tw-shadow-color: hsl(var(--primary) / 0.25); }
+.shadow-primary\/30 { --tw-shadow-color: hsl(var(--primary) / 0.30); }
+.shadow-primary\/40 { --tw-shadow-color: hsl(var(--primary) / 0.40); }
+
+.ring-primary\/10 { --tw-ring-color: hsl(var(--primary) / 0.10); }
+
+.from-primary\/5   { --tw-gradient-from: hsl(var(--primary) / 0.05); }
+.from-primary\/10  { --tw-gradient-from: hsl(var(--primary) / 0.10); }
+.from-primary\/15  { --tw-gradient-from: hsl(var(--primary) / 0.15); }
+.to-primary\/5     { --tw-gradient-to:   hsl(var(--primary) / 0.05); }
+.to-primary\/10    { --tw-gradient-to:   hsl(var(--primary) / 0.10); }
+.via-primary\/5    { --tw-gradient-via:  hsl(var(--primary) / 0.05); }
+
+.bg-secondary\/30  { background-color: hsl(var(--secondary) / 0.30); }
+.bg-secondary\/50  { background-color: hsl(var(--secondary) / 0.50); }
+.bg-secondary\/80  { background-color: hsl(var(--secondary) / 0.80); }
+.hover\:bg-secondary\/50:hover { background-color: hsl(var(--secondary) / 0.50); }
+.hover\:bg-secondary\/80:hover { background-color: hsl(var(--secondary) / 0.80); }
+
+.bg-card\/30  { background-color: hsl(var(--card) / 0.30); }
+.bg-card\/80  { background-color: hsl(var(--card) / 0.80); }
+.bg-card\/90  { background-color: hsl(var(--card) / 0.90); }
+
+.bg-background\/30 { background-color: hsl(var(--background) / 0.30); }
+.bg-background\/50 { background-color: hsl(var(--background) / 0.50); }
+.bg-background\/80 { background-color: hsl(var(--background) / 0.80); }
+.bg-background\/95 { background-color: hsl(var(--background) / 0.95); }
+
+.bg-destructive\/10 { background-color: hsl(var(--destructive) / 0.10); }
+.bg-destructive\/20 { background-color: hsl(var(--destructive) / 0.20); }
+.border-destructive\/20 { border-color: hsl(var(--destructive) / 0.20); }
+
+.bg-muted-foreground\/40 { background-color: hsl(var(--muted-foreground) / 0.40); }
+
+.selection\:bg-primary\/30::selection { background-color: hsl(var(--primary) / 0.30); }
+.selection\:text-primary::selection   { color: hsl(var(--primary)); }
