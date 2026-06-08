@@ -83,6 +83,17 @@ router.post("/posts", async (req, res) => {
     const { text, imageUrl, topic } = req.body;
     if (!text && !imageUrl) return res.status(400).json({ error: "text or image required" });
 
+    // ── Admin bypass: skip all moderation ────────────────────────────────────
+    const isAdminRow = await db.execute(sql`SELECT is_admin FROM users WHERE id = ${uid}`);
+    const isAdmin = !!(isAdminRow.rows[0] as any)?.is_admin;
+    if (isAdmin) {
+      const [post] = await db.insert(postsTable).values({
+        userId: uid, text, imageUrl, topic: topic || null,
+      }).returning();
+      const built = await buildPost(post.id, uid);
+      return res.status(201).json(built);
+    }
+
     // ── Strike check: auto-mute after 3 blocked posts in 24h ─────────────────
     if (await isUserFeedMuted(uid)) {
       return res.status(429).json({
@@ -153,7 +164,7 @@ router.post("/posts", async (req, res) => {
     if (text && text.trim().length >= 5) {
       try {
         const aiResult = await moderateContent(text);
-        if (aiResult.flagged && aiResult.confidence >= 20) {
+        if (aiResult.flagged && aiResult.confidence >= 75) {
           // Insert as rejected so it counts as a strike
           await db.insert(postsTable).values({
             userId: uid, text, imageUrl, topic: topic || null,
@@ -186,7 +197,7 @@ router.post("/posts", async (req, res) => {
       if (!text || text.trim().length < 5) return;
       try {
         const result = await moderateContent(text);
-        if (result.flagged && result.confidence >= 20) {
+        if (result.flagged && result.confidence >= 75) {
           await db.execute(sql`
             UPDATE posts SET
               moderation_status = 'rejected',

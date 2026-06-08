@@ -4,7 +4,7 @@ import {
   CalendarDays, MapPin, Users, Clock, Star, Flame, Zap,
   Trophy, CheckCircle2, Gift, Target, Swords,
   MessageCircle, Phone, Heart, Send, Crown, ChevronRight,
-  TrendingUp, Lock, Sparkles, Medal, UserPlus, Info,
+  TrendingUp, Lock, Sparkles, Medal, UserPlus, Info, Plus, Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { maybeResetQuests } from "@/utils/questTracker";
@@ -696,6 +696,21 @@ export default function Events() {
             {tab === "events" && (
               <motion.div key="events" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="space-y-3">
 
+                {(me as any)?.isAdmin && (
+                  <div className="flex items-center justify-between bg-violet-500/10 border border-violet-500/25 rounded-2xl px-4 py-3">
+                    <div className="flex items-center gap-2 text-violet-400">
+                      <Settings size={14} />
+                      <span className="text-xs font-bold">Панель администратора</span>
+                    </div>
+                    <button
+                      onClick={() => window.location.href = "/admin"}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-500 text-white rounded-xl text-xs font-bold hover:bg-violet-600 transition-colors"
+                    >
+                      <Plus size={12} /> Создать событие
+                    </button>
+                  </div>
+                )}
+
                 {eventsLoading ? (
                   <div className="space-y-3">
                     {[1, 2, 3].map(i => (
@@ -720,6 +735,14 @@ export default function Events() {
                     <p className="text-sm text-muted-foreground max-w-[220px] leading-relaxed">
                       Здесь появятся мероприятия, хакатоны и встречи сообщества.
                     </p>
+                    {(me as any)?.isAdmin && (
+                      <button
+                        onClick={() => window.location.href = "/admin"}
+                        className="mt-5 flex items-center gap-2 px-5 py-2.5 bg-violet-500 text-white rounded-2xl text-sm font-bold hover:bg-violet-600 transition-colors shadow-lg shadow-violet-500/30"
+                      >
+                        <Plus size={15} /> Создать первое событие
+                      </button>
+                    )}
                   </div>
                 ) : (
                   <>
