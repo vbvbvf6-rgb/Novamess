@@ -124,78 +124,126 @@ function VoicePlayer({ src, durationSec, isMine, messageId, viewerIsPrimePlus }:
   const fmt = (s: number) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`;
   const displayDur = playing ? currentSec : durationSec;
 
-  const bars = Array.from({ length: 32 }, (_, i) => {
-    const h = 18 + Math.sin(i * 1.5 + 1) * 14 + Math.cos(i * 0.8) * 10;
-    const filled = (i / 32) * 100 < progress;
-    return { h: Math.max(4, h), filled };
+  // 40 bars with organic height variation seeded by position
+  const BARS = 40;
+  const bars = Array.from({ length: BARS }, (_, i) => {
+    const t = i / BARS;
+    const h = 6
+      + Math.abs(Math.sin(i * 0.97 + 0.5)) * 18
+      + Math.abs(Math.cos(i * 1.73 + 1.2)) * 10
+      + Math.abs(Math.sin(i * 3.1 + 2.5)) * 6;
+    const filled = t * 100 < progress;
+    return { h: Math.max(4, Math.min(34, h)), filled };
   });
 
   return (
-    <div className="flex items-center gap-3.5 min-w-[220px]">
+    <div className="flex items-center gap-3 min-w-[220px]">
       <audio ref={audioRef} src={src} preload="metadata" />
-      <button
-        onClick={toggle}
-        className={cn(
-          "w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-all",
-          isMine
-            ? "bg-white text-primary shadow-sm hover:scale-105 active:scale-95"
-            : "bg-primary text-white shadow-[0_4px_14px_rgba(234,88,12,0.35)] hover:scale-105 active:scale-95"
-        )}
-      >
-        {playing ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" className="ml-1" />}
-      </button>
 
-      <div className="flex-1 flex flex-col gap-1.5 justify-center">
-        <div className="flex items-end gap-[2px] h-8">
+      {/* Play / Pause button */}
+      <div className="relative shrink-0">
+        {playing && (
+          <motion.div
+            className={cn(
+              "absolute inset-0 rounded-full",
+              isMine ? "bg-white/30" : "bg-primary/20"
+            )}
+            animate={{ scale: [1, 1.55, 1], opacity: [0.5, 0, 0.5] }}
+            transition={{ duration: 1.6, repeat: Infinity, ease: "easeOut" }}
+          />
+        )}
+        <button
+          onClick={toggle}
+          className={cn(
+            "relative w-11 h-11 rounded-full flex items-center justify-center transition-all active:scale-90",
+            isMine
+              ? "bg-white/95 text-primary shadow-sm hover:bg-white"
+              : "bg-primary text-white shadow-[0_4px_16px_rgba(234,88,12,0.40)] hover:brightness-110"
+          )}
+        >
+          {playing
+            ? <Pause size={16} fill="currentColor" />
+            : <Play size={16} fill="currentColor" className="ml-0.5" />}
+        </button>
+      </div>
+
+      {/* Waveform + controls */}
+      <div className="flex-1 flex flex-col gap-2 min-w-0">
+        {/* Waveform bars */}
+        <div className="flex items-center gap-[2.5px] h-9">
           {bars.map((bar, i) => (
             <motion.div
               key={i}
-              animate={playing ? { scaleY: [1, 1.5, 0.8, 1.3, 1] } : { scaleY: 1 }}
-              transition={playing ? { duration: 0.5, repeat: Infinity, delay: i * 0.02, ease: "easeInOut" } : {}}
               style={{ height: bar.h }}
+              animate={playing && !bar.filled
+                ? { scaleY: [1, 1.6, 0.7, 1.3, 1] }
+                : { scaleY: 1 }}
+              transition={playing && !bar.filled
+                ? { duration: 0.55, repeat: Infinity, delay: i * 0.018, ease: "easeInOut" }
+                : { duration: 0.15 }}
               className={cn(
-                "w-[3px] rounded-[1px] transition-colors origin-bottom",
+                "w-[2.5px] rounded-full origin-center transition-colors",
                 bar.filled
                   ? isMine ? "bg-white" : "bg-primary"
-                  : isMine ? "bg-white/30" : "bg-muted-foreground/30"
+                  : isMine ? "bg-white/35" : "bg-foreground/20"
               )}
             />
           ))}
         </div>
+
+        {/* Time + speed + transcript */}
         <div className="flex items-center gap-2">
-          <span className={cn("text-[11px] font-black font-mono tracking-wider", isMine ? "text-white/80" : "text-muted-foreground")}>
+          <span className={cn(
+            "text-[11px] font-bold font-mono tabular-nums leading-none",
+            isMine ? "text-white/75" : "text-muted-foreground"
+          )}>
             {fmt(displayDur)}
           </span>
+
           <button
             onClick={cycleSpeed}
             className={cn(
-              "text-[10px] font-black px-1.5 py-0.5 rounded-md border transition-all hover:scale-105 active:scale-95",
+              "text-[9px] font-black px-1.5 py-0.5 rounded-full border leading-none transition-all hover:scale-105 active:scale-95",
               isMine
-                ? "border-white/30 text-white/80 hover:border-white/60 bg-black/10"
-                : "border-muted-foreground/30 text-muted-foreground hover:border-primary/50 hover:text-primary bg-secondary/50"
+                ? "border-white/25 text-white/70 bg-black/10 hover:border-white/50"
+                : "border-border text-muted-foreground bg-secondary/50 hover:text-primary hover:border-primary/40"
             )}
           >
             {speed}×
           </button>
+
           {viewerIsPrimePlus && messageId && (
             <button
               onClick={handleTranscribe}
               disabled={transcribing}
               title="AI транскрипция (Prime+)"
               className={cn(
-                "text-[10px] font-black px-1.5 py-0.5 rounded-md border transition-all hover:scale-105 active:scale-95 flex items-center gap-0.5",
+                "text-[9px] font-black px-1.5 py-0.5 rounded-full border leading-none transition-all hover:scale-105 active:scale-95",
                 transcript && showTranscript
-                  ? isMine ? "border-purple-300/60 text-purple-200 bg-purple-500/20" : "border-purple-500/60 text-purple-400 bg-purple-500/10"
-                  : isMine ? "border-white/20 text-white/60 hover:border-white/40 bg-black/5" : "border-muted-foreground/20 text-muted-foreground hover:border-purple-500/40 hover:text-purple-400"
+                  ? isMine
+                    ? "border-purple-300/50 text-purple-100 bg-purple-500/25"
+                    : "border-purple-500/50 text-purple-400 bg-purple-500/10"
+                  : isMine
+                    ? "border-white/20 text-white/55 bg-black/5 hover:border-white/40"
+                    : "border-border text-muted-foreground bg-secondary/50 hover:text-purple-400 hover:border-purple-500/40"
               )}
             >
-              {transcribing ? "..." : "АА"}
+              {transcribing ? "…" : "АА"}
             </button>
           )}
+
+          {/* Mic icon to indicate voice */}
+          <Mic size={11} className={cn("ml-auto shrink-0", isMine ? "text-white/40" : "text-muted-foreground/40")} />
         </div>
+
         {showTranscript && transcript && (
-          <p className={cn("text-[12px] italic mt-1 leading-snug", isMine ? "text-white/70" : "text-muted-foreground")}>
-            "{transcript}"
+          <p className={cn(
+            "text-[11px] italic leading-snug border-l-2 pl-2 mt-0.5",
+            isMine
+              ? "text-white/70 border-white/25"
+              : "text-muted-foreground border-primary/30"
+          )}>
+            {transcript}
           </p>
         )}
       </div>
