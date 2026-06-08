@@ -96,20 +96,6 @@ async function compressImage(file: File, maxPx = 960, quality = 0.75): Promise<s
   });
 }
 
-const BOT_COMMANDS = [
-  { command: "/start", description: "Запустить бота" },
-  { command: "/help", description: "Получить справку" },
-];
-
-const GENERAL_COMMANDS = [
-  { command: "/gif",      description: "Отправить GIF-анимацию 🎭" },
-  { command: "/poll",     description: "Создать опрос 📊" },
-  { command: "/schedule", description: "Запланировать сообщение ⏰" },
-  { command: "/shrug",    description: "Вставить ¯\\_(ツ)_/¯" },
-  { command: "/flip",     description: "Перевернуть стол (╯°□°)╯" },
-  { command: "/unflip",   description: "Поставить стол обратно ┬─┬" },
-  { command: "/memer",    description: "Случайный мем 🎭" },
-];
 
 export interface ChatInputProps {
   chatId: number;
@@ -582,14 +568,6 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
     }
   };
 
-  const showCommandMenu = isBot && !editMessage && text.startsWith("/") && text.length > 0;
-  const filteredCommands = BOT_COMMANDS.filter(c =>
-    c.command.startsWith(text.split(" ")[0].toLowerCase())
-  );
-  const showGeneralCommandMenu = !isBot && !editMessage && text.startsWith("/") && text.length > 0 && !showMemeGifPicker;
-  const filteredGeneralCommands = GENERAL_COMMANDS.filter(c =>
-    c.command.startsWith(text.split(" ")[0].toLowerCase())
-  );
 
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const val = e.target.value;
@@ -805,76 +783,6 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
           )}
         </AnimatePresence>
 
-        <AnimatePresence>
-          {showGeneralCommandMenu && filteredGeneralCommands.length > 0 && !showMemeGifPicker && (
-            <motion.div
-              initial={{ opacity: 0, y: 8, scale: 0.97 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 8, scale: 0.97 }}
-              className="absolute bottom-full mb-2 left-0 right-0 z-50 bg-card border border-border rounded-[20px] shadow-2xl overflow-hidden"
-            >
-              <div className="px-4 py-2 border-b border-border">
-                <span className="text-[11px] font-black text-muted-foreground uppercase tracking-wider">Команды</span>
-              </div>
-              {filteredGeneralCommands.map((cmd) => (
-                <button
-                  key={cmd.command}
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    if (cmd.command === "/memer" || cmd.command === "/gif") {
-                      setText("");
-                      setShowMemeGifPicker(true);
-                    } else if (cmd.command === "/poll") {
-                      setText("");
-                      setShowPollCreator(true);
-                    } else if (cmd.command === "/schedule") {
-                      setText("");
-                      setShowScheduler(true);
-                    } else if (cmd.command === "/shrug") {
-                      setText("¯\\_(ツ)_/¯");
-                    } else if (cmd.command === "/flip") {
-                      setText("(╯°□°)╯︵ ┻━┻");
-                    } else if (cmd.command === "/unflip") {
-                      setText("┬─┬ノ(ᵒ 'ᵒノ)");
-                    } else {
-                      setText(cmd.command + " ");
-                    }
-                    textareaRef.current?.focus();
-                  }}
-                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-secondary transition-colors text-left"
-                >
-                  <span className="text-[15px] font-black text-primary">{cmd.command}</span>
-                  <span className="text-[13px] text-muted-foreground">{cmd.description}</span>
-                </button>
-              ))}
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <AnimatePresence>
-          {showCommandMenu && filteredCommands.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 8, scale: 0.97 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 8, scale: 0.97 }}
-              className="absolute bottom-full mb-2 left-0 right-0 z-50 bg-card border border-border rounded-[20px] shadow-2xl overflow-hidden"
-            >
-              <div className="px-4 py-2 border-b border-border">
-                <span className="text-[11px] font-black text-muted-foreground uppercase tracking-wider">Команды бота</span>
-              </div>
-              {filteredCommands.map((cmd) => (
-                <button
-                  key={cmd.command}
-                  onMouseDown={(e) => { e.preventDefault(); setText(cmd.command + " "); textareaRef.current?.focus(); }}
-                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-secondary transition-colors text-left"
-                >
-                  <span className="text-[15px] font-black text-primary">{cmd.command}</span>
-                  <span className="text-[13px] text-muted-foreground">{cmd.description}</span>
-                </button>
-              ))}
-            </motion.div>
-          )}
-        </AnimatePresence>
 
         <AnimatePresence>
           {showEmoji && (
