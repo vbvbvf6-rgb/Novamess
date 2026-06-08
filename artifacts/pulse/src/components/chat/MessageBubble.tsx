@@ -5,7 +5,7 @@ import { useAppContext } from "@/contexts/AppContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { getGetMessagesQueryKey, getGetChatsQueryKey } from "@workspace/api-client-react";
 import { cn } from "@/lib/utils";
-import { Check, CheckCheck, Clock, X, Info, Play, Pause, Mic, Reply, Pencil, Trash2, Copy, SmilePlus, Languages, Pin, PinOff, BarChart2, Eye, Crown, Wand2, MessageSquare } from "lucide-react";
+import { Check, CheckCheck, Clock, X, Info, Play, Pause, Mic, Reply, Pencil, Trash2, Copy, SmilePlus, Languages, Pin, PinOff, BarChart2, Eye, Crown, Wand2, MessageSquare, Shield, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   AlertDialog,
@@ -388,6 +388,7 @@ export interface MessageBubbleProps {
   messageRef?: React.RefCallback<HTMLDivElement>;
   isChannel?: boolean;
   onComment?: (msg: Message) => void;
+  isSenderAdmin?: boolean;
 }
 
 function HighlightText({ text, query, isMine }: { text: string; query: string; isMine: boolean }) {
@@ -414,7 +415,7 @@ function HighlightText({ text, query, isMine }: { text: string; query: string; i
   );
 }
 
-export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin, typingOut, onTypingDone, searchHighlight, isActiveMatch, messageRef, isChannel, onComment }: MessageBubbleProps) {
+export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin, typingOut, onTypingDone, searchHighlight, isActiveMatch, messageRef, isChannel, onComment, isSenderAdmin }: MessageBubbleProps) {
   const { currentUserId } = useAppContext();
   const { data: me } = useGetMe();
   const queryClient = useQueryClient();
@@ -914,15 +915,59 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
               style={isMine && ownBubbleStyle && message.type !== "sticker" ? ownBubbleStyle : undefined}
             >
               {!isMine && message.sender && (
-                <div className="flex items-center gap-1 mb-1.5">
-                  <p className="text-[12px] font-black leading-none" style={{ color: message.sender.avatarColor }}>
-                    {message.sender.displayName}
-                  </p>
-                  {(message.sender as any).hasPrime && (message.sender as any).primeTier === "prime_plus" && (
-                    <span className="text-[9px] font-black px-1 py-0.5 rounded border bg-purple-500/15 text-purple-400 border-purple-500/30 leading-none">VIP+</span>
+                <div className="flex items-center gap-1 mb-1.5 flex-wrap">
+                  {/* Sender name: gradient for Prime+ */}
+                  {(message.sender as any).hasPrime && (message.sender as any).primeTier === "prime_plus" ? (
+                    <p
+                      className="text-[12px] font-black leading-none"
+                      style={{
+                        background: "linear-gradient(90deg, #a855f7, #ec4899, #f97316)",
+                        WebkitBackgroundClip: "text",
+                        WebkitTextFillColor: "transparent",
+                        backgroundClip: "text",
+                      }}
+                    >
+                      {message.sender.displayName}
+                    </p>
+                  ) : (
+                    <p className="text-[12px] font-black leading-none" style={{ color: message.sender.avatarColor }}>
+                      {message.sender.displayName}
+                    </p>
                   )}
+                  {/* Prime+ diamond badge */}
+                  {(message.sender as any).hasPrime && (message.sender as any).primeTier === "prime_plus" && (
+                    <span
+                      className="inline-flex items-center gap-0.5 text-[9px] font-black px-1.5 py-0.5 rounded-full leading-none border"
+                      style={{
+                        background: "linear-gradient(135deg, rgba(168,85,247,0.2), rgba(236,72,153,0.15))",
+                        borderColor: "rgba(168,85,247,0.4)",
+                        color: "#c084fc",
+                      }}
+                    >
+                      <Sparkles size={8} className="shrink-0" />
+                      PRIME+
+                    </span>
+                  )}
+                  {/* Prime crown badge */}
                   {(message.sender as any).hasPrime && (message.sender as any).primeTier === "prime" && (
-                    <span className="text-[9px] font-black px-1 py-0.5 rounded border bg-yellow-500/15 text-yellow-400 border-yellow-500/30 leading-none">VIP</span>
+                    <span className="inline-flex items-center gap-0.5 text-[9px] font-black px-1.5 py-0.5 rounded-full leading-none border bg-yellow-500/15 text-yellow-400 border-yellow-500/30">
+                      <Crown size={8} className="shrink-0" />
+                      PRIME
+                    </span>
+                  )}
+                  {/* Admin badge for global admins or channel/group admins */}
+                  {(isSenderAdmin || (message.sender as any).isAdmin) && (
+                    <span
+                      className="inline-flex items-center gap-0.5 text-[9px] font-black px-1.5 py-0.5 rounded-full leading-none border"
+                      style={{
+                        background: "linear-gradient(135deg, rgba(99,102,241,0.25), rgba(139,92,246,0.2))",
+                        borderColor: "rgba(99,102,241,0.45)",
+                        color: "#818cf8",
+                      }}
+                    >
+                      <Shield size={8} className="shrink-0" />
+                      ADMIN
+                    </span>
                   )}
                 </div>
               )}

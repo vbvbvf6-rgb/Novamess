@@ -93,7 +93,7 @@ async function buildMessage(msg: typeof messagesTable.$inferSelect, viewerIsPrim
       const senderPrimeRow = await db.execute(sql`SELECT has_prime, prime_tier, prime_expires_at FROM users WHERE id = ${sender.id}`);
       const sp = senderPrimeRow.rows[0] as any;
       const senderHasPrime = (sp?.has_prime === true || sp?.has_prime === "t") && sp?.prime_expires_at && new Date(sp.prime_expires_at) > new Date();
-      senderWithPrime = { ...sender, hasPrime: !!senderHasPrime, primeTier: senderHasPrime ? sp?.prime_tier : null } as any;
+      senderWithPrime = { ...sender, hasPrime: !!senderHasPrime, primeTier: senderHasPrime ? sp?.prime_tier : null, isAdmin: !!(sender as any).is_admin } as any;
     } catch {}
   }
 
@@ -170,9 +170,14 @@ async function buildMessagesBatch(msgs: (typeof messagesTable.$inferSelect)[], v
 
   return msgs.map(msg => {
     const sender = senderMap.get(msg.senderId);
-    // Prime info was already fetched in the sender row; attach it
+    // Prime info + admin flag
     const senderWithPrime = sender
-      ? { ...sender, hasPrime: !!(sender as any).hasPrime, primeTier: (sender as any).primeTier ?? null }
+      ? {
+          ...sender,
+          hasPrime: !!(sender as any).hasPrime,
+          primeTier: (sender as any).primeTier ?? null,
+          isAdmin: !!(sender as any).is_admin,
+        }
       : null;
 
     // Deleted message masking

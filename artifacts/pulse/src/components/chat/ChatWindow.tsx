@@ -1424,6 +1424,7 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
                   messageRef={(el) => { messageRefs.current[message.id] = el; }}
                   isChannel={isChannel}
                   onComment={(msg) => setThreadMessage(msg)}
+                  isSenderAdmin={adminUserIds.has(message.senderId)}
                 />
               );
             })}

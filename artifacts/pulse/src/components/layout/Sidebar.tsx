@@ -362,30 +362,80 @@ export function Sidebar({ mobileSidebarOpen, onMobileClose, onMobileOpen, onOpen
           <DropdownMenuTrigger asChild>
             <button className="w-full flex items-center gap-3 p-3 rounded-2xl bg-secondary/30 hover:bg-secondary border border-border/30 hover:border-border shadow-sm transition-all focus:outline-none">
               <div className="relative shrink-0">
+                {/* Animated ring for Prime+ / static for Prime */}
+                {isPremium && (me as any)?.primeTier === "prime_plus" ? (
+                  <div
+                    className="absolute -inset-[3px] rounded-full"
+                    style={{
+                      background: "linear-gradient(135deg, #a855f7, #ec4899, #f97316, #a855f7)",
+                      backgroundSize: "300% 300%",
+                      animation: "primeRingSpin 2.5s linear infinite",
+                    }}
+                  />
+                ) : isPremium ? (
+                  <div className="absolute -inset-[3px] rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 opacity-90" />
+                ) : null}
                 <div
-                  className={cn(
-                    "w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm overflow-hidden",
-                    isPremium && "ring-2 ring-orange-500 ring-offset-2 ring-offset-card"
-                  )}
-                  style={{ backgroundColor: me?.avatarColor || "#3B82F6" }}
+                  className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm overflow-hidden relative z-10"
+                  style={{
+                    backgroundColor: me?.avatarColor || "#3B82F6",
+                    outline: isPremium ? "2px solid var(--background)" : undefined,
+                    outlineOffset: isPremium ? "1px" : undefined,
+                  }}
                 >
                   {me?.avatarUrl
                     ? <img src={me.avatarUrl} alt="" className="w-full h-full object-cover" />
                     : initial}
                 </div>
-                {isPremium && (
-                  <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-orange-500 flex items-center justify-center shadow-sm border-2 border-card">
-                    <Sparkles size={10} className="text-white" />
+                {/* Prime+ sparkle badge */}
+                {isPremium && (me as any)?.primeTier === "prime_plus" && (
+                  <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center shadow-sm border-2 border-card z-10"
+                    style={{ background: "linear-gradient(135deg, #a855f7, #ec4899)" }}>
+                    <Sparkles size={9} className="text-white" />
+                  </div>
+                )}
+                {/* Prime crown badge */}
+                {isPremium && (me as any)?.primeTier !== "prime_plus" && (
+                  <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-yellow-500 flex items-center justify-center shadow-sm border-2 border-card z-10">
+                    <Crown size={9} className="text-white" />
+                  </div>
+                )}
+                {/* Admin shield badge */}
+                {isAdmin && !isPremium && (
+                  <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center shadow-sm border-2 border-card z-10"
+                    style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)" }}>
+                    <Shield size={9} className="text-white" />
+                  </div>
+                )}
+                {isAdmin && isPremium && (
+                  <div className="absolute -top-1 -left-1 w-4 h-4 rounded-full flex items-center justify-center shadow-sm border border-card z-10"
+                    style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)" }}>
+                    <Shield size={7} className="text-white" />
                   </div>
                 )}
                 {savedAccounts.length > 1 && (
-                  <div className="absolute -top-1 -right-1 w-[18px] h-[18px] rounded-full bg-primary text-white text-[10px] font-bold flex items-center justify-center shadow-sm border-2 border-card">
+                  <div className="absolute -top-1 -right-1 w-[18px] h-[18px] rounded-full bg-primary text-white text-[10px] font-bold flex items-center justify-center shadow-sm border-2 border-card z-10">
                     {savedAccounts.length}
                   </div>
                 )}
               </div>
               <div className="flex-1 min-w-0 text-left">
-                <p className="text-[14px] font-bold truncate text-foreground leading-tight">{me?.displayName || "..."}</p>
+                <div className="flex items-center gap-1.5">
+                  <p className="text-[14px] font-bold truncate text-foreground leading-tight">{me?.displayName || "..."}</p>
+                  {isAdmin && (
+                    <span
+                      className="inline-flex items-center gap-0.5 text-[9px] font-black px-1.5 py-0.5 rounded-full leading-none border shrink-0"
+                      style={{
+                        background: "linear-gradient(135deg, rgba(99,102,241,0.25), rgba(139,92,246,0.2))",
+                        borderColor: "rgba(99,102,241,0.5)",
+                        color: "#818cf8",
+                      }}
+                    >
+                      <Shield size={8} className="shrink-0" />
+                      ADMIN
+                    </span>
+                  )}
+                </div>
                 <p className="text-[12px] text-muted-foreground truncate font-medium">@{me?.username || "..."}</p>
               </div>
               <MoreHorizontal size={18} className="text-muted-foreground shrink-0" />
