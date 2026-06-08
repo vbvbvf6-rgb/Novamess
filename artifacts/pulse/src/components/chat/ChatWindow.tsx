@@ -341,6 +341,7 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [summaryText, setSummaryText] = useState("");
   const [summaryLoading, setSummaryLoading] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastMessageCountRef = useRef<number>(0);
   const sseRef = useRef<EventSource | null>(null);
@@ -995,112 +996,108 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
             <Menu size={20} />
           </button>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="w-10 h-10 flex items-center justify-center hover:bg-secondary rounded-xl transition-all hover:text-foreground">
-                <MoreVertical size={20} />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-60 rounded-2xl p-2 border-border shadow-2xl">
-              {chat.type === "direct" && !(chat.otherUser as any)?.isBot && (
-                <div className="md:hidden">
-                  <DropdownMenuItem onClick={() => handleStartCall("audio")} disabled={calling} className="rounded-xl cursor-pointer py-2.5">
-                    <Phone size={18} className="mr-3 text-green-500" />
-                    <span className="font-semibold">Аудиозвонок</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleStartCall("video")} disabled={calling} className="rounded-xl cursor-pointer py-2.5">
-                    <Video size={18} className="mr-3 text-blue-500" />
-                    <span className="font-semibold">Видеозвонок</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                </div>
-              )}
-              {chat.type === "direct" && chat.otherUser?.id && (
-                <>
-                  <DropdownMenuItem onClick={openProfile} className="rounded-xl cursor-pointer py-2.5">
-                    <User size={18} className="mr-3 text-primary" />
-                    <span className="font-semibold">{t("chat.openProfile")}</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => {
-                      setCreateGroupName("");
-                      setShowCreateGroupDialog(true);
-                    }}
-                    className="rounded-xl cursor-pointer py-2.5"
-                  >
-                    <Users size={18} className="mr-3 text-orange-500" />
-                    <span className="font-semibold">Создать группу</span>
-                  </DropdownMenuItem>
-                </>
-              )}
-              <DropdownMenuItem onClick={() => { setShowSearch(v => !v); }} className="rounded-xl cursor-pointer py-2.5">
-                <Search size={18} className="mr-3 text-muted-foreground" />
-                <span className="font-semibold">{t("chat.searchMessages")}</span>
-              </DropdownMenuItem>
-              {chat.type === "direct" && messages && messages.length > 3 && (
-                <DropdownMenuItem onClick={handleSummarize} className="rounded-xl cursor-pointer py-2.5">
-                  <Sparkles size={18} className="mr-3 text-amber-400" />
-                  <span className="font-semibold">Резюме чата</span>
+          {/* Mobile: plain button — no Radix, bypasses iOS touch issues */}
+          <button
+            className="md:hidden w-10 h-10 flex items-center justify-center hover:bg-secondary rounded-xl transition-all hover:text-foreground"
+            onClick={() => setShowMobileMenu(true)}
+            aria-label="Меню"
+          >
+            <MoreVertical size={20} />
+          </button>
+
+          {/* Desktop: Radix DropdownMenu */}
+          <div className="hidden md:block">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="w-10 h-10 flex items-center justify-center hover:bg-secondary rounded-xl transition-all hover:text-foreground">
+                  <MoreVertical size={20} />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-60 rounded-2xl p-2 border-border shadow-2xl">
+                {chat.type === "direct" && chat.otherUser?.id && (
+                  <>
+                    <DropdownMenuItem onClick={openProfile} className="rounded-xl cursor-pointer py-2.5">
+                      <User size={18} className="mr-3 text-primary" />
+                      <span className="font-semibold">{t("chat.openProfile")}</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => { setCreateGroupName(""); setShowCreateGroupDialog(true); }}
+                      className="rounded-xl cursor-pointer py-2.5"
+                    >
+                      <Users size={18} className="mr-3 text-orange-500" />
+                      <span className="font-semibold">Создать группу</span>
+                    </DropdownMenuItem>
+                  </>
+                )}
+                <DropdownMenuItem onClick={() => { setShowSearch(v => !v); }} className="rounded-xl cursor-pointer py-2.5">
+                  <Search size={18} className="mr-3 text-muted-foreground" />
+                  <span className="font-semibold">{t("chat.searchMessages")}</span>
                 </DropdownMenuItem>
-              )}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleToggleMute} className="rounded-xl cursor-pointer py-2.5">
-                {chat.isMuted ? (
-                  <><Bell size={18} className="mr-3 text-orange-500" /><span className="font-semibold">{t("chat.muteOff")}</span></>
-                ) : (
-                  <><BellOff size={18} className="mr-3 text-violet-400" /><span className="font-semibold">{t("chat.muteOn")}</span></>
-                )}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleTogglePin} className="rounded-xl cursor-pointer py-2.5">
-                {chat.isPinned ? (
-                  <><PinOff size={18} className="mr-3 text-muted-foreground" /><span className="font-semibold">{t("chat.unpin")}</span></>
-                ) : (
-                  <><Pin size={18} className="mr-3 text-indigo-500" /><span className="font-semibold">{t("chat.pin")}</span></>
-                )}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => setShowAutoDeleteMenu(true)}
-                className="flex items-center justify-between rounded-xl cursor-pointer py-2.5"
-              >
-                <div className="flex items-center font-semibold">
-                  <Flame size={18} className={`mr-3 ${autoDeleteTimer ? "text-violet-400 fill-violet-500/20" : "text-muted-foreground"}`} />
-                  {t("chat.autoDelete")}
-                </div>
-                <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider bg-secondary px-2 py-0.5 rounded-md">{autoDeleteLabel}</span>
-              </DropdownMenuItem>
-              {(chat.type === "group" || chat.type === "channel") && (
-                <>
-                  <DropdownMenuItem onClick={() => setShowInfoPanel(v => !v)} className="rounded-xl cursor-pointer py-2.5">
-                    <Settings size={18} className="mr-3 text-primary" />
-                    <span className="font-semibold">{chat.type === "channel" ? "Настройки канала" : "Настройки группы"}</span>
+                {chat.type === "direct" && messages && messages.length > 3 && (
+                  <DropdownMenuItem onClick={handleSummarize} className="rounded-xl cursor-pointer py-2.5">
+                    <Sparkles size={18} className="mr-3 text-amber-400" />
+                    <span className="font-semibold">Резюме чата</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem
-                    className="text-destructive focus:text-destructive rounded-xl cursor-pointer py-2.5"
-                    onClick={async () => {
-                      try {
-                        await fetch(`/api/chats/${chatId}/leave`, { method: "POST", headers: getCWAuthHeaders() });
-                        queryClient.invalidateQueries({ queryKey: getGetChatsQueryKey() });
-                        setSelectedChatId(null);
-                      } catch {
-                        toast({ title: "Ошибка", description: "Не удалось покинуть чат", variant: "destructive" });
-                      }
-                    }}
-                  >
-                    <ArrowLeft size={18} className="mr-3" />
-                    <span className="font-semibold">Покинуть чат</span>
-                  </DropdownMenuItem>
-                </>
-              )}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className="text-destructive focus:text-destructive rounded-xl cursor-pointer py-2.5"
-                onClick={() => setShowDeleteDialog(true)}
-              >
-                <Trash2 size={18} className="mr-3" />
-                <span className="font-semibold">{t("chat.deleteChat")}</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleToggleMute} className="rounded-xl cursor-pointer py-2.5">
+                  {chat.isMuted ? (
+                    <><Bell size={18} className="mr-3 text-orange-500" /><span className="font-semibold">{t("chat.muteOff")}</span></>
+                  ) : (
+                    <><BellOff size={18} className="mr-3 text-violet-400" /><span className="font-semibold">{t("chat.muteOn")}</span></>
+                  )}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleTogglePin} className="rounded-xl cursor-pointer py-2.5">
+                  {chat.isPinned ? (
+                    <><PinOff size={18} className="mr-3 text-muted-foreground" /><span className="font-semibold">{t("chat.unpin")}</span></>
+                  ) : (
+                    <><Pin size={18} className="mr-3 text-indigo-500" /><span className="font-semibold">{t("chat.pin")}</span></>
+                  )}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setShowAutoDeleteMenu(true)}
+                  className="flex items-center justify-between rounded-xl cursor-pointer py-2.5"
+                >
+                  <div className="flex items-center font-semibold">
+                    <Flame size={18} className={`mr-3 ${autoDeleteTimer ? "text-violet-400 fill-violet-500/20" : "text-muted-foreground"}`} />
+                    {t("chat.autoDelete")}
+                  </div>
+                  <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider bg-secondary px-2 py-0.5 rounded-md">{autoDeleteLabel}</span>
+                </DropdownMenuItem>
+                {(chat.type === "group" || chat.type === "channel") && (
+                  <>
+                    <DropdownMenuItem onClick={() => setShowInfoPanel(v => !v)} className="rounded-xl cursor-pointer py-2.5">
+                      <Settings size={18} className="mr-3 text-primary" />
+                      <span className="font-semibold">{chat.type === "channel" ? "Настройки канала" : "Настройки группы"}</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="text-destructive focus:text-destructive rounded-xl cursor-pointer py-2.5"
+                      onClick={async () => {
+                        try {
+                          await fetch(`/api/chats/${chatId}/leave`, { method: "POST", headers: getCWAuthHeaders() });
+                          queryClient.invalidateQueries({ queryKey: getGetChatsQueryKey() });
+                          setSelectedChatId(null);
+                        } catch {
+                          toast({ title: "Ошибка", description: "Не удалось покинуть чат", variant: "destructive" });
+                        }
+                      }}
+                    >
+                      <ArrowLeft size={18} className="mr-3" />
+                      <span className="font-semibold">Покинуть чат</span>
+                    </DropdownMenuItem>
+                  </>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="text-destructive focus:text-destructive rounded-xl cursor-pointer py-2.5"
+                  onClick={() => setShowDeleteDialog(true)}
+                >
+                  <Trash2 size={18} className="mr-3" />
+                  <span className="font-semibold">{t("chat.deleteChat")}</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </header>
 
@@ -1781,6 +1778,202 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
           </div>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* ── Mobile chat menu bottom sheet ───────────────────────────────── */}
+      <AnimatePresence>
+        {showMobileMenu && (
+          <>
+            <motion.div
+              key="mobile-menu-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.18 }}
+              className="fixed inset-0 z-[9990] bg-black/50 md:hidden"
+              onClick={() => setShowMobileMenu(false)}
+            />
+            <motion.div
+              key="mobile-menu-sheet"
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 32, stiffness: 320 }}
+              className="fixed bottom-0 left-0 right-0 z-[9991] bg-card rounded-t-[28px] pb-[env(safe-area-inset-bottom,16px)] md:hidden overflow-hidden"
+              style={{ maxHeight: "85dvh" }}
+            >
+              {/* Handle */}
+              <div className="flex justify-center pt-3 pb-1">
+                <div className="w-10 h-1 rounded-full bg-muted-foreground/25" />
+              </div>
+
+              <div className="overflow-y-auto px-3 pb-4" style={{ maxHeight: "calc(85dvh - 32px)" }}>
+                {/* Calls — direct non-bot only */}
+                {chat.type === "direct" && !(chat.otherUser as any)?.isBot && (
+                  <>
+                    <button
+                      onClick={() => { setShowMobileMenu(false); handleStartCall("audio"); }}
+                      disabled={calling}
+                      className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-secondary transition-colors font-semibold disabled:opacity-50"
+                    >
+                      <div className="w-9 h-9 rounded-xl bg-green-500/10 flex items-center justify-center shrink-0">
+                        <Phone size={18} className="text-green-500" />
+                      </div>
+                      Аудиозвонок
+                    </button>
+                    <button
+                      onClick={() => { setShowMobileMenu(false); handleStartCall("video"); }}
+                      disabled={calling}
+                      className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-secondary transition-colors font-semibold disabled:opacity-50"
+                    >
+                      <div className="w-9 h-9 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
+                        <Video size={18} className="text-blue-500" />
+                      </div>
+                      Видеозвонок
+                    </button>
+                    <div className="h-px bg-border my-1 mx-2" />
+                  </>
+                )}
+
+                {/* Profile & group */}
+                {chat.type === "direct" && chat.otherUser?.id && (
+                  <>
+                    <button
+                      onClick={() => { setShowMobileMenu(false); openProfile(); }}
+                      className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-secondary transition-colors font-semibold"
+                    >
+                      <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                        <User size={18} className="text-primary" />
+                      </div>
+                      {t("chat.openProfile")}
+                    </button>
+                    <button
+                      onClick={() => { setShowMobileMenu(false); setCreateGroupName(""); setShowCreateGroupDialog(true); }}
+                      className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-secondary transition-colors font-semibold"
+                    >
+                      <div className="w-9 h-9 rounded-xl bg-orange-500/10 flex items-center justify-center shrink-0">
+                        <Users size={18} className="text-orange-500" />
+                      </div>
+                      Создать группу
+                    </button>
+                  </>
+                )}
+
+                {/* Search */}
+                <button
+                  onClick={() => { setShowMobileMenu(false); setShowSearch(v => !v); }}
+                  className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-secondary transition-colors font-semibold"
+                >
+                  <div className="w-9 h-9 rounded-xl bg-secondary flex items-center justify-center shrink-0">
+                    <Search size={18} className="text-muted-foreground" />
+                  </div>
+                  {t("chat.searchMessages")}
+                </button>
+
+                {/* Summary */}
+                {chat.type === "direct" && messages && messages.length > 3 && (
+                  <button
+                    onClick={() => { setShowMobileMenu(false); handleSummarize(); }}
+                    className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-secondary transition-colors font-semibold"
+                  >
+                    <div className="w-9 h-9 rounded-xl bg-amber-500/10 flex items-center justify-center shrink-0">
+                      <Sparkles size={18} className="text-amber-400" />
+                    </div>
+                    Резюме чата
+                  </button>
+                )}
+
+                <div className="h-px bg-border my-1 mx-2" />
+
+                {/* Mute */}
+                <button
+                  onClick={() => { setShowMobileMenu(false); handleToggleMute(); }}
+                  className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-secondary transition-colors font-semibold"
+                >
+                  <div className="w-9 h-9 rounded-xl bg-secondary flex items-center justify-center shrink-0">
+                    {chat.isMuted
+                      ? <Bell size={18} className="text-orange-500" />
+                      : <BellOff size={18} className="text-violet-400" />}
+                  </div>
+                  {chat.isMuted ? t("chat.muteOff") : t("chat.muteOn")}
+                </button>
+
+                {/* Pin */}
+                <button
+                  onClick={() => { setShowMobileMenu(false); handleTogglePin(); }}
+                  className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-secondary transition-colors font-semibold"
+                >
+                  <div className="w-9 h-9 rounded-xl bg-secondary flex items-center justify-center shrink-0">
+                    {chat.isPinned
+                      ? <PinOff size={18} className="text-muted-foreground" />
+                      : <Pin size={18} className="text-indigo-500" />}
+                  </div>
+                  {chat.isPinned ? t("chat.unpin") : t("chat.pin")}
+                </button>
+
+                {/* Auto-delete */}
+                <button
+                  onClick={() => { setShowMobileMenu(false); setShowAutoDeleteMenu(true); }}
+                  className="w-full flex items-center justify-between px-4 py-3.5 rounded-2xl hover:bg-secondary transition-colors"
+                >
+                  <div className="flex items-center gap-3 font-semibold">
+                    <div className="w-9 h-9 rounded-xl bg-secondary flex items-center justify-center shrink-0">
+                      <Flame size={18} className={autoDeleteTimer ? "text-violet-400" : "text-muted-foreground"} />
+                    </div>
+                    {t("chat.autoDelete")}
+                  </div>
+                  <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider bg-secondary px-2 py-0.5 rounded-md">{autoDeleteLabel}</span>
+                </button>
+
+                {/* Group/Channel settings + leave */}
+                {(chat.type === "group" || chat.type === "channel") && (
+                  <>
+                    <button
+                      onClick={() => { setShowMobileMenu(false); setShowInfoPanel(v => !v); }}
+                      className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-secondary transition-colors font-semibold"
+                    >
+                      <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                        <Settings size={18} className="text-primary" />
+                      </div>
+                      {chat.type === "channel" ? "Настройки канала" : "Настройки группы"}
+                    </button>
+                    <button
+                      onClick={async () => {
+                        setShowMobileMenu(false);
+                        try {
+                          await fetch(`/api/chats/${chatId}/leave`, { method: "POST", headers: getCWAuthHeaders() });
+                          queryClient.invalidateQueries({ queryKey: getGetChatsQueryKey() });
+                          setSelectedChatId(null);
+                        } catch {
+                          toast({ title: "Ошибка", description: "Не удалось покинуть чат", variant: "destructive" });
+                        }
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-secondary transition-colors font-semibold text-destructive"
+                    >
+                      <div className="w-9 h-9 rounded-xl bg-destructive/10 flex items-center justify-center shrink-0">
+                        <ArrowLeft size={18} className="text-destructive" />
+                      </div>
+                      Покинуть чат
+                    </button>
+                  </>
+                )}
+
+                <div className="h-px bg-border my-1 mx-2" />
+
+                {/* Delete */}
+                <button
+                  onClick={() => { setShowMobileMenu(false); setShowDeleteDialog(true); }}
+                  className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-destructive/10 transition-colors font-semibold text-destructive"
+                >
+                  <div className="w-9 h-9 rounded-xl bg-destructive/10 flex items-center justify-center shrink-0">
+                    <Trash2 size={18} className="text-destructive" />
+                  </div>
+                  {t("chat.deleteChat")}
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
