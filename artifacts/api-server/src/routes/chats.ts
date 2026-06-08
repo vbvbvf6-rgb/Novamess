@@ -260,6 +260,30 @@ router.post("/chats", async (req, res) => {
   }
 });
 
+router.get("/chats/discover", async (req, res) => {
+  try {
+    const uid = req.currentUserId;
+    const q = ((req.query.q as string) || "").trim();
+    const rows = await db.execute(sql`
+      SELECT
+        c.id, c.name, c.type, c.avatar_url, c.avatar_color, c.description,
+        COUNT(DISTINCT cm.user_id)::int AS member_count,
+        EXISTS(SELECT 1 FROM chat_members WHERE chat_id = c.id AND user_id = ${uid}) AS is_member
+      FROM chats c
+      LEFT JOIN chat_members cm ON cm.chat_id = c.id
+      WHERE c.type IN ('group','channel')
+        AND (${q} = '' OR c.name ILIKE ${'%' + q + '%'} OR COALESCE(c.description,'') ILIKE ${'%' + q + '%'})
+      GROUP BY c.id
+      ORDER BY member_count DESC, c.created_at DESC
+      LIMIT 40
+    `);
+    res.json(rows.rows);
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 router.get("/chats/:chatId", async (req, res) => {
   try {
     const uid = req.currentUserId;
@@ -546,31 +570,6 @@ router.post("/chats/:chatId/leave", async (req, res) => {
       and(eq(chatMembersTable.chatId, chatId), eq(chatMembersTable.userId, uid))
     );
     res.status(204).send();
-  } catch (err) {
-    req.log.error(err);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-// Discover public groups and channels (with optional search query)
-router.get("/chats/discover", async (req, res) => {
-  try {
-    const uid = req.currentUserId;
-    const q = ((req.query.q as string) || "").trim();
-    const rows = await db.execute(sql`
-      SELECT
-        c.id, c.name, c.type, c.avatar_url, c.avatar_color, c.description,
-        COUNT(DISTINCT cm.user_id)::int AS member_count,
-        EXISTS(SELECT 1 FROM chat_members WHERE chat_id = c.id AND user_id = ${uid}) AS is_member
-      FROM chats c
-      LEFT JOIN chat_members cm ON cm.chat_id = c.id
-      WHERE c.type IN ('group','channel')
-        AND (${q} = '' OR c.name ILIKE ${'%' + q + '%'} OR COALESCE(c.description,'') ILIKE ${'%' + q + '%'})
-      GROUP BY c.id
-      ORDER BY member_count DESC, c.created_at DESC
-      LIMIT 40
-    `);
-    res.json(rows.rows);
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });

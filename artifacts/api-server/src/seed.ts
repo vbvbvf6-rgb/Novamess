@@ -1,8 +1,5 @@
 import { db } from "@workspace/db";
 import { sql } from "drizzle-orm";
-import { createHash } from "node:crypto";
-
-const hash = (pass: string) => createHash("sha256").update(pass).digest("hex");
 
 const GIFT_CATALOG = [
   // ── COMMON (50–200 ⚡) ──────────────────────────────────────────────────
@@ -178,7 +175,8 @@ const SYSTEM_USERS = [
     isVerified: true,
     isAdmin: true,
     status: "online",
-    password: "pulse2024",
+    // bcrypt hash of "pulse2024" — never change this automatically
+    passwordHash: "$2b$12$ejJ4JyOdHbph7ETga8QpdeJTzN28FDCNZ3tw.1B1d/936/2ZDZ/fa",
   },
 ];
 
@@ -211,13 +209,12 @@ export async function runSeed() {
   for (const u of SYSTEM_USERS) {
     const rows = await db.execute(sql`SELECT id FROM users WHERE username = ${u.username} LIMIT 1`);
     if ((rows.rows as any[]).length === 0) {
-      const pwHash = u.password ? hash(u.password) : null;
       await db.execute(sql`
         INSERT INTO users (username, display_name, avatar_color, avatar_url, status, is_bot, is_verified, is_admin, password_hash, balance)
         VALUES (
           ${u.username}, ${u.displayName}, ${u.avatarColor}, ${null}, ${u.status},
           ${u.isBot ?? false}, ${u.isVerified ?? false}, ${u.isAdmin ?? false},
-          ${pwHash}, 0
+          ${u.passwordHash}, 0
         )
       `);
       console.log(`[seed] Created user: ${u.username}`);

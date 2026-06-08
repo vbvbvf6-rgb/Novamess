@@ -430,7 +430,7 @@ export function ChatList() {
     });
 
   return (
-    <div className="w-full md:w-[380px] lg:w-[420px] flex flex-col h-[100dvh] bg-background border-r border-border shrink-0 z-20">
+    <div className="relative overflow-hidden w-full md:w-[380px] lg:w-[420px] flex flex-col h-[100dvh] bg-background border-r border-border shrink-0 z-20">
       <AnimatePresence>
         {showGlobalSearch && (
           <GlobalSearch onClose={() => setShowGlobalSearch(false)} />
