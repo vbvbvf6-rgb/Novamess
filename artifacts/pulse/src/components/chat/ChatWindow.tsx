@@ -849,8 +849,8 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
   return (
     <div className="flex-1 flex flex-col h-full bg-background relative overflow-hidden z-30">
       {/* Header */}
-      <header className="border-b border-border flex items-center px-6 justify-between bg-card/95 backdrop-blur-md z-20 shrink-0 relative" style={{ minHeight: "calc(4rem + env(safe-area-inset-top, 0px))", paddingTop: "env(safe-area-inset-top, 0px)", boxShadow: "0 1px 0 0 hsl(var(--border)), 0 4px 20px -4px rgba(0,0,0,0.12)" }}>
-        <div className="flex items-center gap-3 min-w-0">
+      <header className="border-b border-border flex items-center px-3 md:px-6 justify-between bg-card/95 backdrop-blur-md z-20 shrink-0 relative" style={{ minHeight: "calc(4rem + env(safe-area-inset-top, 0px))", paddingTop: "env(safe-area-inset-top, 0px)", boxShadow: "0 1px 0 0 hsl(var(--border)), 0 4px 20px -4px rgba(0,0,0,0.12)" }}>
+        <div className="flex items-center gap-2 md:gap-3 min-w-0">
           <button
             className="flex items-center justify-center w-11 h-11 -ml-2 rounded-2xl bg-secondary hover:bg-secondary/80 text-foreground transition-colors shrink-0 md:hidden"
             onClick={() => setSelectedChatId(null)}
@@ -923,13 +923,13 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
                 </svg>
               )}
               {autoDeleteTimer ? (
-                <span className="flex items-center gap-1 text-[11px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-violet-500 text-white shrink-0 shadow-[0_2px_8px_rgba(139,92,246,0.3)]">
+                <span className="hidden md:inline-flex items-center gap-1 text-[11px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-violet-500 text-white shrink-0 shadow-[0_2px_8px_rgba(139,92,246,0.3)]">
                   <Flame size={12} fill="currentColor" />
                   {autoDeleteLabel}
                 </span>
               ) : null}
             </div>
-            <p className="text-[13px] text-muted-foreground truncate font-medium mt-0.5">
+            <p className="text-[13px] text-muted-foreground font-medium mt-0.5 truncate min-w-0 overflow-hidden whitespace-nowrap">
               {(botTyping || typingUsers.length > 0) ? (
                 <span className="text-primary font-semibold">
                   {(() => {
@@ -946,17 +946,13 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
                   {lastSeenLabel}
                 </span>
               ) : isChannel ? (
-                <span className="flex items-center gap-1">
-                  <span className="text-primary font-semibold">Верифицированный канал</span>
-                  <span>·</span>
-                  <span>{chat.members?.length || 0} подписчиков</span>
-                </span>
+                <><span className="text-primary font-semibold">Верифицированный канал</span>{" · "}{chat.members?.length || 0} подписчиков</>
               ) : `${chat.members?.length || 0} ${t("chat.members")}`}
             </p>
           </button>
         </div>
 
-        <div className="flex items-center gap-1.5 text-muted-foreground shrink-0">
+        <div className="flex items-center gap-0.5 md:gap-1.5 text-muted-foreground shrink-0">
           {chat.type === "direct" && !(chat.otherUser as any)?.isBot && (
             <>
               {p2p.isConnected && (
