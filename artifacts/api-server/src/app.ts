@@ -1,16 +1,10 @@
 import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import cors from "cors";
-import * as pinoHttpModule from "pino-http";
+import { pinoHttp } from "pino-http";
 import http from "node:http";
 import path from "node:path";
 import { rateLimit } from "express-rate-limit";
 import jwt from "jsonwebtoken";
-
-// pino-http ships as a CJS module; under bundler moduleResolution the
-// default export may be wrapped – unwrap it so we get the callable function.
-const pinoHttp: typeof pinoHttpModule.default =
-  (pinoHttpModule as unknown as { default: typeof pinoHttpModule.default }).default ??
-  (pinoHttpModule as unknown as typeof pinoHttpModule.default);
 import router from "./routes";
 import botApiRouter from "./routes/botapi";
 import { logger } from "./lib/logger";
@@ -59,10 +53,10 @@ app.use(
   pinoHttp({
     logger,
     serializers: {
-      req(req) {
-        return { id: req.id, method: req.method, url: req.url?.split("?")[0] };
+      req(req: Record<string, unknown> & { id?: unknown; method?: string; url?: string }) {
+        return { id: req.id, method: req.method, url: (req.url as string | undefined)?.split("?")[0] };
       },
-      res(res) {
+      res(res: Record<string, unknown> & { statusCode?: number }) {
         return { statusCode: res.statusCode };
       },
     },
