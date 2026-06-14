@@ -5,7 +5,7 @@ import { Trophy, Users, Crown, BadgeCheck, Medal, Zap } from "lucide-react";
 import { useGetMe } from "@workspace/api-client-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
-type Tab = "referral" | "balance";
+type Tab = "referral" | "balance" | "messages";
 
 const TOKEN_KEY = "pulse-token";
 const getToken = () => sessionStorage.getItem(TOKEN_KEY);
@@ -32,6 +32,7 @@ function UserAvatar({ user, rank }: { user: any; rank: number }) {
             src={user.avatar_url || user.avatarUrl}
             alt={user.display_name || user.displayName}
             className="w-full h-full rounded-full object-cover"
+            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
           />
         ) : (
           (user.display_name || user.displayName || "U")[0].toUpperCase()
@@ -74,7 +75,7 @@ function ReferralLeaderboard({ me }: { me: any }) {
     navigator.clipboard.writeText(myCode.code).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    });
+    }).catch(() => {});
   };
 
   const handleCopyLink = () => {
@@ -82,7 +83,7 @@ function ReferralLeaderboard({ me }: { me: any }) {
     navigator.clipboard.writeText(myCode.link).then(() => {
       setCopiedLink(true);
       setTimeout(() => setCopiedLink(false), 2000);
-    });
+    }).catch(() => {});
   };
 
   const handleShare = () => {
@@ -281,6 +282,7 @@ function StatsLeaderboard({ tab, me }: { tab: Tab; me: any }) {
 const TABS: { key: Tab; label: string; icon: React.ReactNode }[] = [
   { key: "referral", label: "Рефералы", icon: <Users size={14} /> },
   { key: "balance", label: "Баланс", icon: <Zap size={14} /> },
+  { key: "messages", label: "Сообщения", icon: <Trophy size={14} /> },
 ];
 
 export default function Leaderboard() {

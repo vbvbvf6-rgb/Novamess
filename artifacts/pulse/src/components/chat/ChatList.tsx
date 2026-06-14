@@ -119,7 +119,7 @@ function ChatAvatar({ chat, displayName }: { chat: Chat; displayName: string }) 
         style={{ backgroundColor: avatarColor }}
       >
         {avatarUrl ? (
-          <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
+          <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
         ) : chat.type === "channel" ? (
           <Radio size={24} className="text-white opacity-80" />
         ) : chat.type === "group" ? (
@@ -879,7 +879,7 @@ export function ChatList() {
                                   className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm overflow-hidden"
                                   style={{ backgroundColor: user.avatarColor || "#333" }}
                                 >
-                                  {user.avatarUrl ? <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" /> : user.displayName[0].toUpperCase()}
+                                  {user.avatarUrl ? <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} /> : user.displayName[0].toUpperCase()}
                                 </div>
                                 <div className="text-left">
                                   <p className="font-bold text-sm text-foreground">{user.displayName}</p>

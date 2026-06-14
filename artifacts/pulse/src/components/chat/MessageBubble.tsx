@@ -891,7 +891,7 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
               style={{ backgroundColor: message.sender?.avatarColor || "#555" }}
             >
               {message.sender?.avatarUrl ? (
-                <img src={message.sender.avatarUrl} alt="" className="w-full h-full object-cover" />
+                <img src={message.sender.avatarUrl} alt="" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
               ) : (
                 (message.sender?.displayName || "U")[0].toUpperCase()
               )}
@@ -1314,6 +1314,7 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
               alt="photo"
               className="max-w-[95vw] max-h-[90vh] object-contain rounded-lg shadow-2xl"
               onClick={(e) => e.stopPropagation()}
+              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
             />
           </motion.div>
         )}

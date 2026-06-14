@@ -65,7 +65,9 @@ export function ChannelThread({
 
   useEffect(() => {
     load();
-    setTimeout(() => textareaRef.current?.focus(), 300);
+    if (window.matchMedia("(hover: hover)").matches) {
+      setTimeout(() => textareaRef.current?.focus(), 300);
+    }
   }, [messageId]);
 
   useEffect(() => {
@@ -207,7 +209,7 @@ export function ChannelThread({
                     }`}
                   >
                     {comment.type === "image" && comment.mediaUrl ? (
-                      <img src={comment.mediaUrl} alt="GIF" className="max-w-[180px] rounded-lg" />
+                      <img src={comment.mediaUrl} alt="GIF" className="max-w-[180px] rounded-lg" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
                     ) : (
                       comment.text
                     )}

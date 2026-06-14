@@ -198,7 +198,7 @@ export function CommandPalette({ open, onClose }: Props) {
                             style={{ backgroundColor: item.avatarColor || "#6366f1" }}
                           >
                             {item.avatarUrl
-                              ? <img src={item.avatarUrl} alt="" className="w-full h-full object-cover" />
+                              ? <img src={item.avatarUrl} alt="" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
                               : initial}
                           </div>
                         ) : (

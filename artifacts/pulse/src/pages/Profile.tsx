@@ -31,7 +31,7 @@ function ReferralSection() {
     navigator.clipboard.writeText(myCode.code).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    });
+    }).catch(() => {});
   };
 
   const handleShare = () => {
@@ -42,7 +42,7 @@ function ReferralSection() {
       navigator.clipboard.writeText(referralLink).then(() => {
         setCopiedLink(true);
         setTimeout(() => setCopiedLink(false), 2000);
-      });
+      }).catch(() => {});
     }
   };
 
@@ -185,7 +185,7 @@ function QRCodeSection({ user }: { user: any }) {
               style={{ background: "linear-gradient(135deg, #7c3aed, #06b6d4)" }}
             >
               {user?.avatarUrl ? (
-                <img src={user.avatarUrl} alt="" className="w-full h-full rounded-full object-cover" />
+                <img src={user.avatarUrl} alt="" className="w-full h-full rounded-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
               ) : (
                 <span className="text-white font-black text-xs">{(user?.displayName || "U")[0]}</span>
               )}
@@ -366,7 +366,7 @@ function IncomingBegRequests() {
               style={{ backgroundColor: req.avatar_color || "#3B82F6" }}
             >
               {req.avatar_url
-                ? <img src={req.avatar_url} alt="" className="w-full h-full object-cover rounded-full" />
+                ? <img src={req.avatar_url} alt="" className="w-full h-full object-cover rounded-full" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
                 : (req.display_name?.[0] || "?").toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
@@ -381,6 +381,7 @@ function IncomingBegRequests() {
           <div className="flex gap-2 items-center">
             <input
               type="number"
+              inputMode="numeric"
               min={1}
               value={fulfillAmounts[req.id] ?? (req.amount > 0 ? String(req.amount) : "")}
               onChange={e => setFulfillAmounts(prev => ({ ...prev, [req.id]: e.target.value }))}
@@ -583,7 +584,7 @@ export default function Profile() {
                   style={{ backgroundColor: user?.avatarColor || "#333" }}
                 >
                   {user?.avatarUrl ? (
-                    <img src={user.avatarUrl} alt={user.displayName} className="w-full h-full rounded-full object-cover" />
+                    <img src={user.avatarUrl} alt={user.displayName} className="w-full h-full rounded-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
                   ) : (
                     (user?.displayName || "U")[0].toUpperCase()
                   )}

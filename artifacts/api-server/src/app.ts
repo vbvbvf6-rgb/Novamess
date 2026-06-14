@@ -1,5 +1,6 @@
 import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import cors from "cors";
+import helmet from "helmet";
 import { pinoHttp } from "pino-http";
 import http from "node:http";
 import path from "node:path";
@@ -20,24 +21,49 @@ declare global {
 export const JWT_SECRET = process.env.JWT_SECRET || "pulse-messenger-jwt-secret-please-change-in-production";
 
 if (process.env.NODE_ENV === "production" && !process.env.JWT_SECRET) {
-  console.warn("[WARN] JWT_SECRET is not set — using default insecure key. Set JWT_SECRET in production!");
+  console.warn("[SECURITY WARN] JWT_SECRET is not set — using default insecure key. Set JWT_SECRET env var in production!");
 }
 
 const app: Express = express();
 
 app.set("trust proxy", 1);
 
-// ── Security headers ──────────────────────────────────────────────────────
-app.use((_req: Request, res: Response, next: NextFunction) => {
-  res.setHeader("X-Content-Type-Options", "nosniff");
-  res.setHeader("X-Frame-Options", "DENY");
-  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
-  next();
-});
+// ── Helmet — comprehensive security headers ────────────────────────────────
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:", "blob:", "https:"],
+        connectSrc: ["'self'", "wss:", "ws:", "https:"],
+        fontSrc: ["'self'", "data:", "https:"],
+        mediaSrc: ["'self'", "blob:", "data:", "https:"],
+        workerSrc: ["'self'", "blob:"],
+        frameSrc: ["'none'"],
+        objectSrc: ["'none'"],
+        upgradeInsecureRequests: process.env.NODE_ENV === "production" ? [] : null,
+      },
+    },
+    crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    hsts: process.env.NODE_ENV === "production"
+      ? { maxAge: 31536000, includeSubDomains: true, preload: true }
+      : false,
+    referrerPolicy: { policy: "strict-origin-when-cross-origin" },
+    xContentTypeOptions: true,
+    xFrameOptions: { action: "deny" },
+    xXssProtection: true,
+    dnsPrefetchControl: { allow: false },
+    ieNoOpen: true,
+    noSniff: true,
+    permittedCrossDomainPolicies: { permittedPolicies: "none" },
+  })
+);
 
 // ── Request timeout (60s) — prevents hanging connections ──────────────────
 app.use((req: Request, res: Response, next: NextFunction) => {
-  // Skip timeout for SSE endpoints — they are long-lived by design
   if (req.path.endsWith("/events")) return next();
   const timer = setTimeout(() => {
     if (!res.headersSent) {
@@ -67,17 +93,30 @@ app.use(cors({ origin: true, credentials: true }));
 app.use(express.json({ limit: "20mb" }));
 app.use(express.urlencoded({ extended: true, limit: "20mb" }));
 
-const authLimiter = rateLimit({
+// ── Global rate limit — 500 req/15min per IP (DDoS basic protection) ──────
+const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 25,
-  message: { error: "Слишком много попыток. Подождите 15 минут." },
+  max: 500,
+  message: { error: "Слишком много запросов. Попробуйте позже." },
   standardHeaders: true,
   legacyHeaders: false,
   skip: (req) => req.ip === "::1" || req.ip === "127.0.0.1",
 });
+app.use("/api", globalLimiter);
 
+// ── Auth rate limit — strict: 20 attempts / 15min per IP ─────────────────
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  message: { error: "Слишком много попыток входа. Подождите 15 минут." },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => req.ip === "::1" || req.ip === "127.0.0.1",
+});
 app.use("/api/auth/login", authLimiter);
 app.use("/api/auth/register", authLimiter);
+app.use("/api/auth/reset-password", authLimiter);
+app.use("/api/auth/2fa", authLimiter);
 
 // ── Message send rate limit — 60 messages per minute per user ────────────
 const messageLimiter = rateLimit({
@@ -86,10 +125,33 @@ const messageLimiter = rateLimit({
   message: { error: "Слишком много сообщений. Подождите немного." },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => req.currentUserId ? `user:${req.currentUserId}` : "anonymous",
+  keyGenerator: (req) => req.currentUserId ? `user:${req.currentUserId}` : (req.ip ?? "unknown"),
   skip: (req) => !req.currentUserId,
 });
 app.use("/api/messages", messageLimiter);
+
+// ── Upload rate limit — prevent file upload spam ──────────────────────────
+const uploadLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  message: { error: "Слишком много загрузок. Подождите немного." },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => req.currentUserId ? `upload:${req.currentUserId}` : (req.ip ?? "unknown"),
+});
+app.use("/api/upload", uploadLimiter);
+app.use("/api/stories", uploadLimiter);
+
+// ── Admin routes stricter limit ───────────────────────────────────────────
+const adminLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 120,
+  message: { error: "Слишком много запросов к панели администратора." },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => req.currentUserId ? `admin:${req.currentUserId}` : (req.ip ?? "unknown"),
+});
+app.use("/api/admin", adminLimiter);
 
 // Routes that do NOT require a valid session
 const PUBLIC_API_PATHS = [
@@ -128,7 +190,6 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
     } catch {}
   }
 
-  // Not authenticated
   req.currentUserId = 0;
   next();
 });
@@ -150,7 +211,7 @@ app.use("/api", router);
 app.use("/bot", botApiRouter);
 
 // Unknown API routes — return 404 instead of proxying to frontend
-app.use("/api", (req: Request, res: Response, next: NextFunction) => {
+app.use("/api", (_req: Request, res: Response) => {
   res.status(404).json({ error: "Not found" });
 });
 

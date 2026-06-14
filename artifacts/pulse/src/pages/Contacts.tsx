@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useGetContacts, useSearchUsers, useAddContact, useRemoveContact, getGetContactsQueryKey, getGetChatsQueryKey } from "@workspace/api-client-react";
+import type { User } from "@workspace/api-client-react";
 import { Search, UserPlus, UserMinus, MessageSquare } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -117,8 +118,8 @@ export default function Contacts() {
           </div>
         ) : (
           <div className="space-y-3">
-            {displayUsers?.map((user) => {
-              const isContact = contacts?.some(c => c.id === user.id) ?? false;
+            {displayUsers?.map((user: User) => {
+              const isContact = contacts?.some((c: { id: number }) => c.id === user.id) ?? false;
               return (
                 <div key={user.id} className="flex items-center gap-4 p-4 rounded-xl border border-border bg-card/50 hover:bg-card transition-colors group">
                   <div className="relative shrink-0">
@@ -128,7 +129,7 @@ export default function Contacts() {
                       style={{ backgroundColor: user.avatarColor || "#333" }}
                     >
                       {user.avatarUrl ? (
-                        <img src={user.avatarUrl} alt={user.displayName} className="w-full h-full object-cover" />
+                        <img src={user.avatarUrl} alt={user.displayName} className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
                       ) : (
                         user.displayName[0].toUpperCase()
                       )}

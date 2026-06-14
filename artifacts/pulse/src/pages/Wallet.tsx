@@ -133,7 +133,7 @@ export default function Wallet() {
   useEffect(() => {
     fetchWallet();
     const stored = localStorage.getItem(tasksKey);
-    if (stored) setCompletedTasks(JSON.parse(stored));
+    if (stored) { try { setCompletedTasks(JSON.parse(stored)); } catch {} }
     const storedTx = localStorage.getItem(txKey);
     if (storedTx) {
       try { setTxHistory(JSON.parse(storedTx).map((tx: any) => ({ ...tx, time: new Date(tx.time) }))); } catch {}
@@ -142,7 +142,8 @@ export default function Wallet() {
     const today = new Date().toDateString();
     if (lastLogin !== today) {
       localStorage.setItem(loginKey, today);
-      const tasks: string[] = stored ? JSON.parse(stored) : [];
+      let tasks: string[] = [];
+      if (stored) { try { tasks = JSON.parse(stored); } catch {} }
       if (!tasks.includes("daily_login")) earnTask("daily_login", 5, tasks);
     }
     const lastBonus = localStorage.getItem(bonusKey);
@@ -557,7 +558,7 @@ export default function Wallet() {
                 </div>
                 <div>
                   <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Сумма ⚡</label>
-                  <input type="number" value={sendAmount} onChange={e => setSendAmount(e.target.value)} onKeyDown={e => { if (["e", "E", "+", "-"].includes(e.key)) e.preventDefault(); }} placeholder="100" min={1} max={balance}
+                  <input type="number" inputMode="numeric" value={sendAmount} onChange={e => setSendAmount(e.target.value)} onKeyDown={e => { if (["e", "E", "+", "-"].includes(e.key)) e.preventDefault(); }} placeholder="100" min={1} max={balance}
                     className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-primary transition-colors" />
                   <p className="text-xs text-muted-foreground mt-1">Доступно: {balance.toLocaleString()} ⚡</p>
                 </div>

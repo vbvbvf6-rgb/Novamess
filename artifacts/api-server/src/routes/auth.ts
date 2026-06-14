@@ -10,6 +10,27 @@ import { generateTotpSecret, verifyTotp, buildTotpUri } from "../lib/totp";
 const router = Router();
 const SALT_ROUNDS = 12;
 
+// ── In-memory brute force tracker (per username, resets on success) ────────
+const loginFailures = new Map<string, { count: number; until: number }>();
+const MAX_LOGIN_FAILS = 10;
+const LOCKOUT_MS = 15 * 60 * 1000; // 15 min
+
+function isLockedOut(key: string): boolean {
+  const entry = loginFailures.get(key);
+  if (!entry) return false;
+  if (Date.now() > entry.until) { loginFailures.delete(key); return false; }
+  return entry.count >= MAX_LOGIN_FAILS;
+}
+function recordFailure(key: string): void {
+  const entry = loginFailures.get(key) ?? { count: 0, until: 0 };
+  entry.count += 1;
+  entry.until = Date.now() + LOCKOUT_MS;
+  loginFailures.set(key, entry);
+}
+function clearFailures(key: string): void {
+  loginFailures.delete(key);
+}
+
 function generateReferralCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let code = "";
@@ -39,20 +60,33 @@ router.post("/auth/login", async (req, res) => {
       return res.status(400).json({ error: "Неверное имя или пароль" });
     }
 
+    const ukey = String(username).toLowerCase().trim();
+
+    // ── Brute force: block after 10 failed attempts ────────────────────────
+    if (isLockedOut(ukey)) {
+      return res.status(429).json({ error: "Аккаунт временно заблокирован из-за многочисленных неудачных попыток. Подождите 15 минут." });
+    }
+
     const rows = await db.execute(
       sql`SELECT id, username, display_name, avatar_color, avatar_url, bio, status, status_text,
-                 is_verified, is_bot, is_admin, created_at, balance, password_hash,
+                 is_verified, is_bot, is_admin, is_banned, created_at, balance, password_hash,
                  COALESCE(totp_enabled, false) as totp_enabled,
                  COALESCE(age_verified, false) as age_verified
           FROM users
-          WHERE LOWER(username) = LOWER(${String(username).trim()})
-             OR LOWER(display_name) = LOWER(${String(username).trim()})
-          ORDER BY CASE WHEN LOWER(username) = LOWER(${String(username).trim()}) THEN 0 ELSE 1 END
+          WHERE LOWER(username) = ${ukey}
+             OR LOWER(display_name) = ${ukey}
+          ORDER BY CASE WHEN LOWER(username) = ${ukey} THEN 0 ELSE 1 END
           LIMIT 1`
     );
     const user = rows.rows[0] as any;
     if (!user) {
+      recordFailure(ukey);
       return res.status(401).json({ error: "Неверное имя или пароль" });
+    }
+
+    // ── Ban check ──────────────────────────────────────────────────────────
+    if (user.is_banned === true || user.is_banned === "t" || user.is_banned === 1) {
+      return res.status(403).json({ error: "Ваш аккаунт заблокирован. Обратитесь в поддержку." });
     }
 
     const pass = String(password);
@@ -70,8 +104,12 @@ router.post("/auth/login", async (req, res) => {
     }
 
     if (!passwordValid) {
+      recordFailure(ukey);
       return res.status(401).json({ error: "Неверное имя или пароль" });
     }
+
+    // ── Successful login — clear failure counter ───────────────────────────
+    clearFailures(ukey);
 
     if (user.totp_enabled) {
       const pendingToken = signPending2faToken(user.id);

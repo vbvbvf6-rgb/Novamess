@@ -1,5 +1,6 @@
 import React from "react";
 import { useGetStories, useGetMe } from "@workspace/api-client-react";
+import type { StoryGroup } from "@workspace/api-client-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLocation } from "wouter";
 import { SmilePlus } from "lucide-react";
@@ -35,7 +36,7 @@ export function StoriesBar() {
         <span className="text-xs text-muted-foreground font-medium">История</span>
       </div>
 
-      {stories?.map((storyGroup) => {
+      {stories?.map((storyGroup: StoryGroup) => {
         const isMe = me && storyGroup.user.id === (me as any).id;
         return (
           <div
@@ -50,7 +51,7 @@ export function StoriesBar() {
                 style={{ backgroundColor: storyGroup.user.avatarColor }}
               >
                 {storyGroup.user.avatarUrl ? (
-                  <img src={storyGroup.user.avatarUrl} alt={storyGroup.user.displayName} className="w-full h-full object-cover" />
+                  <img src={storyGroup.user.avatarUrl} alt={storyGroup.user.displayName} className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
                 ) : (
                   storyGroup.user.displayName[0].toUpperCase()
                 )}

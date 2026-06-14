@@ -321,7 +321,7 @@ function TwoFaSection({ user, toast, lang }: { user: any; toast: any; lang: stri
         <div className="bg-background rounded-xl border border-border p-4 space-y-3">
           <p className="text-xs text-muted-foreground">{lang === "ru" ? "Отсканируйте QR-код в приложении Google Authenticator или Authy:" : "Scan the QR code in Google Authenticator or Authy:"}</p>
           <div className="flex justify-center">
-            <img src={setupData.qrUrl} alt="QR Code" className="w-40 h-40 rounded-xl border border-border" />
+            <img src={setupData.qrUrl} alt="QR Code" className="w-40 h-40 rounded-xl border border-border" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
           </div>
           <div className="bg-muted rounded-lg px-3 py-2 text-center">
             <p className="text-[10px] text-muted-foreground mb-0.5">{lang === "ru" ? "Или введите ключ вручную:" : "Or enter key manually:"}</p>
@@ -1610,7 +1610,7 @@ export default function Settings() {
             style={{ backgroundColor: avatarColor }}
           >
             {avatarPreview
-              ? <img src={avatarPreview} alt="" className="w-full h-full object-cover" />
+              ? <img src={avatarPreview} alt="" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
               : (displayName[0]?.toUpperCase() || "?")}
           </div>
           <div className="flex-1 min-w-0">

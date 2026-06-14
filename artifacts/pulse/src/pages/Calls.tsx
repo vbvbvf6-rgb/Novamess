@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useGetCallHistory } from "@workspace/api-client-react";
+import type { Call } from "@workspace/api-client-react";
 import { Phone, Video, PhoneMissed, PhoneForwarded, PhoneIncoming, PhoneCall, Search, X } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
@@ -20,7 +21,7 @@ export default function Calls() {
   const [showNewCall, setShowNewCall] = useState(false);
   const [search, setSearch] = useState("");
 
-  const filtered = calls?.filter((call) => {
+  const filtered = calls?.filter((call: Call) => {
     const isOutgoing = call.callerId === currentUserId;
     const isMissed = call.status === "missed";
     if (filter === "missed") return isMissed;
@@ -36,9 +37,9 @@ export default function Calls() {
     { id: "outgoing", label: "Исходящие" },
   ];
 
-  const missedCount = calls?.filter(c => c.status === "missed").length ?? 0;
+  const missedCount = calls?.filter((c: Call) => c.status === "missed").length ?? 0;
 
-  const filteredContacts = contacts?.filter(c =>
+  const filteredContacts = contacts?.filter((c: { displayName?: string; username?: string }) =>
     c.displayName?.toLowerCase().includes(search.toLowerCase()) ||
     c.username?.toLowerCase().includes(search.toLowerCase())
   );
@@ -111,7 +112,7 @@ export default function Calls() {
         ) : (
           <div className="p-4 space-y-2 max-w-2xl mx-auto w-full">
             <AnimatePresence initial={false}>
-              {filtered?.map((call, i) => {
+              {filtered?.map((call: Call, i: number) => {
                 const isOutgoing = call.callerId === currentUserId;
                 const otherUser = isOutgoing ? call.callee : call.caller;
                 const isMissed = call.status === "missed";
@@ -135,7 +136,7 @@ export default function Calls() {
                       style={{ backgroundColor: otherUser?.avatarColor || "#444" }}
                     >
                       {otherUser?.avatarUrl ? (
-                        <img src={otherUser.avatarUrl} alt="" className="w-full h-full object-cover" />
+                        <img src={otherUser.avatarUrl} alt="" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
                       ) : (
                         (otherUser?.displayName || "?")[0].toUpperCase()
                       )}
@@ -233,14 +234,14 @@ export default function Calls() {
               <div className="overflow-y-auto max-h-72 px-4 pb-4 space-y-1">
                 {filteredContacts?.length === 0 ? (
                   <p className="text-center text-sm text-muted-foreground py-8">Контакты не найдены</p>
-                ) : filteredContacts?.map((c) => (
+                ) : filteredContacts?.map((c: { id: number; displayName?: string | null; username?: string | null; avatarColor?: string | null; avatarUrl?: string | null }) => (
                   <div key={c.id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-secondary transition-colors">
                     <div
                       className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold shrink-0 overflow-hidden"
                       style={{ backgroundColor: (c as any).avatarColor || "#444" }}
                     >
                       {(c as any).avatarUrl ? (
-                        <img src={(c as any).avatarUrl} alt="" className="w-full h-full object-cover" />
+                        <img src={(c as any).avatarUrl} alt="" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
                       ) : (
                         (c.displayName || "?")[0].toUpperCase()
                       )}

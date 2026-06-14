@@ -50,7 +50,7 @@ function Avatar({ user, size = 32 }: { user: any; size?: number }) {
       style={{ width: size, height: size, backgroundColor: bg, fontSize: size * 0.35 }}
     >
       {user?.avatarUrl ? (
-        <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" />
+        <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
       ) : (
         user?.displayName?.[0]?.toUpperCase() ?? "?"
       )}
@@ -67,7 +67,7 @@ function InviteModal({ onClose }: { onClose: () => void }) {
   const [inviting, setInviting] = useState<number | null>(null);
 
   const filtered = contacts?.filter(
-    (c) =>
+    (c: { id: number; displayName?: string | null; username?: string | null }) =>
       c.id !== currentUserId &&
       c.id !== activeCall?.callerId &&
       c.id !== activeCall?.calleeId &&
@@ -121,7 +121,7 @@ function InviteModal({ onClose }: { onClose: () => void }) {
           <div className="flex items-center gap-2 bg-secondary/60 rounded-xl px-3 py-2.5 border border-border">
             <Search size={15} className="text-muted-foreground shrink-0" />
             <input
-              autoFocus
+              autoFocus={typeof window !== "undefined" && window.matchMedia("(hover: hover)").matches}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Поиск контактов…"
@@ -135,14 +135,14 @@ function InviteModal({ onClose }: { onClose: () => void }) {
           {(!filtered || filtered.length === 0) ? (
             <p className="text-center text-muted-foreground text-sm py-8">Контакты не найдены</p>
           ) : (
-            filtered.map((c) => (
+            filtered.map((c: { id: number; displayName?: string | null; username?: string | null }) => (
               <button
                 key={c.id}
                 onClick={() => handleInvite(c.id, c.displayName || c.username || "Пользователь")}
                 disabled={inviting === c.id}
                 className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-secondary/60 transition-colors disabled:opacity-50"
               >
-                <Avatar user={c} size={44} />
+                <Avatar user={c as any} size={44} />
                 <div className="flex-1 text-left min-w-0">
                   <p className="text-foreground font-semibold text-sm truncate">{c.displayName}</p>
                   {c.username && <p className="text-muted-foreground text-xs truncate">@{c.username}</p>}
@@ -350,7 +350,7 @@ export function ActiveCall() {
               style={{ backgroundColor: avatarBg }}
             >
               {callee?.avatarUrl ? (
-                <img src={callee.avatarUrl} alt="" className="w-full h-full object-cover" />
+                <img src={callee.avatarUrl} alt="" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
               ) : (
                 callee?.displayName?.[0]?.toUpperCase()
               )}
@@ -452,7 +452,7 @@ export function ActiveCall() {
                         style={{ backgroundColor: avatarBg }}
                       >
                         {otherUser?.avatarUrl ? (
-                          <img src={otherUser.avatarUrl} alt="" className="w-full h-full object-cover" />
+                          <img src={otherUser.avatarUrl} alt="" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
                         ) : (
                           otherUser?.displayName?.[0]?.toUpperCase()
                         )}
@@ -464,7 +464,7 @@ export function ActiveCall() {
               </div>
 
               {/* Top bar */}
-              <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-5 pt-[env(safe-area-inset-top,0px)] pt-5 pointer-events-none z-10">
+              <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-5 pointer-events-none z-10" style={{ paddingTop: "max(1.25rem, env(safe-area-inset-top, 0px))" }}>
                 <div className="bg-black/60 backdrop-blur-md px-4 py-1.5 rounded-full text-white font-mono text-sm tabular-nums">
                   {formatDuration(duration)}
                 </div>
@@ -554,7 +554,7 @@ export function ActiveCall() {
                   style={{ backgroundColor: avatarBg }}
                 >
                   {otherUser?.avatarUrl ? (
-                    <img src={otherUser.avatarUrl} alt="" className="w-full h-full object-cover" />
+                    <img src={otherUser.avatarUrl} alt="" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
                   ) : (
                     otherUser?.displayName?.[0]?.toUpperCase()
                   )}

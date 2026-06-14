@@ -94,7 +94,7 @@ function AvatarCircle({ name, color, url, size = 20, type }: {
       style={{ width: size, height: size, backgroundColor: color || "#3B82F6", fontSize: size * 0.35 }}
     >
       {url
-        ? <img src={url} alt={name} className="w-full h-full object-cover" />
+        ? <img src={url} alt={name} className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
         : type === "channel"
         ? <Radio size={size * 0.45} />
         : type === "group"
@@ -234,7 +234,7 @@ export function ChatInfoPanel({
     navigator.clipboard.writeText(inviteLink).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    });
+    }).catch(() => {});
   };
 
   const handleResetInvite = async () => {
@@ -397,14 +397,14 @@ export function ChatInfoPanel({
                       style={{ backgroundColor: avatarColor }}
                     >
                       {avatarPreview ? (
-                        <img src={avatarPreview} alt="" className="w-full h-full object-cover" />
+                        <img src={avatarPreview} alt="" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
                       ) : chatType === "channel" ? (
                         <Radio size={28} />
                       ) : (
                         (displayName || "G")[0]?.toUpperCase() || "G"
                       )}
                     </div>
-                    <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity">
                       <Camera size={22} className="text-white" />
                     </div>
                   </div>
@@ -746,7 +746,7 @@ export function ChatInfoPanel({
                             <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-primary/15 text-primary">Админ</span>
                           )}
                           {isAdmin && m.role !== "owner" && m.userId !== currentUserId && (
-                            <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-all">
+                            <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 [@media(hover:none)]:opacity-100 transition-all">
                               {m.role === "admin" ? (
                                 <button
                                   onClick={() => handlePromoteMember(m.userId, "member")}

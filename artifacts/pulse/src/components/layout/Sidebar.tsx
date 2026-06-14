@@ -65,7 +65,7 @@ function AccountRow({
         style={{ backgroundColor: account.avatarColor }}
       >
         {account.avatarUrl ? (
-          <img src={account.avatarUrl} alt="" className="w-full h-full object-cover" />
+          <img src={account.avatarUrl} alt="" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
         ) : initial}
       </div>
       <div className="flex-1 min-w-0">
@@ -77,7 +77,7 @@ function AccountRow({
         {!isActive && (
           <button
             onClick={(e) => { e.stopPropagation(); onRemove(); }}
-            className="p-1.5 rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all"
+            className="p-1.5 rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto [@media(hover:none)]:opacity-100 [@media(hover:none)]:pointer-events-auto text-muted-foreground hover:bg-destructive/10 hover:text-destructive active:bg-destructive/10 active:text-destructive transition-all"
             title="Удалить аккаунт"
           >
             <Trash2 size={14} />
@@ -109,7 +109,7 @@ function MobileAccountFooter({
             className={cn("w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm overflow-hidden", isPremium && "ring-2 ring-violet-500 ring-offset-2 ring-offset-card")}
             style={{ backgroundColor: me?.avatarColor || "#3B82F6" }}
           >
-            {me?.avatarUrl ? <img src={me.avatarUrl} alt="" className="w-full h-full object-cover" /> : initial}
+            {me?.avatarUrl ? <img src={me.avatarUrl} alt="" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} /> : initial}
           </div>
           {savedAccounts.length > 1 && (
             <div className="absolute -top-1 -right-1 w-[18px] h-[18px] rounded-full bg-primary text-white text-[10px] font-bold flex items-center justify-center shadow-sm border-2 border-card">
@@ -384,7 +384,7 @@ export function Sidebar({ mobileSidebarOpen, onMobileClose, onMobileOpen, onOpen
                   }}
                 >
                   {me?.avatarUrl
-                    ? <img src={me.avatarUrl} alt="" className="w-full h-full object-cover" />
+                    ? <img src={me.avatarUrl} alt="" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
                     : initial}
                 </div>
                 {/* Prime+ sparkle badge */}

@@ -178,7 +178,7 @@ function BlockedPostCard({ post, onAppealSubmitted }: { post: any; onAppealSubmi
             style={{ backgroundColor: post.author?.avatarColor || "#333" }}
           >
             {post.author?.avatarUrl ? (
-              <img src={post.author.avatarUrl} alt="" className="w-full h-full object-cover" />
+              <img src={post.author.avatarUrl} alt="" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
             ) : (
               (post.author?.displayName || "U")[0].toUpperCase()
             )}
@@ -354,7 +354,7 @@ function CommentThread({ post, onCountChange }: { post: any; onCountChange: (n: 
                   style={{ backgroundColor: comment.author?.avatarColor || "#333" }}
                 >
                   {comment.author?.avatarUrl ? (
-                    <img src={comment.author.avatarUrl} alt="" className="w-full h-full object-cover" />
+                    <img src={comment.author.avatarUrl} alt="" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
                   ) : (
                     (comment.author?.displayName || "U")[0].toUpperCase()
                   )}
@@ -381,7 +381,7 @@ function CommentThread({ post, onCountChange }: { post: any; onCountChange: (n: 
                   <button
                     onClick={() => handleDeleteComment(comment.id)}
                     disabled={deletingId === comment.id}
-                    className="opacity-0 group-hover:opacity-100 self-start mt-1 p-1 text-muted-foreground hover:text-destructive rounded-lg hover:bg-destructive/10 transition-all disabled:opacity-30 shrink-0"
+                    className="opacity-0 group-hover:opacity-100 [@media(hover:none)]:opacity-100 self-start mt-1 p-1 text-muted-foreground hover:text-destructive active:text-destructive rounded-lg hover:bg-destructive/10 active:bg-destructive/10 transition-all disabled:opacity-30 shrink-0"
                   >
                     <Trash2 size={12} />
                   </button>
@@ -399,7 +399,7 @@ function CommentThread({ post, onCountChange }: { post: any; onCountChange: (n: 
             style={{ backgroundColor: (me as any)?.avatarColor || "#3B82F6" }}
           >
             {(me as any)?.avatarUrl ? (
-              <img src={(me as any).avatarUrl} alt="" className="w-full h-full object-cover" />
+              <img src={(me as any).avatarUrl} alt="" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
             ) : (
               ((me as any)?.displayName || "U")[0].toUpperCase()
             )}
@@ -497,7 +497,7 @@ function PostCard({ post, onAppealSubmitted, onTopicClick }: { post: Post & { ap
             style={{ backgroundColor: post.author?.avatarColor || "#333" }}
           >
             {post.author?.avatarUrl ? (
-              <img src={post.author.avatarUrl} alt="" className="w-full h-full object-cover" />
+              <img src={post.author.avatarUrl} alt="" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
             ) : (
               (post.author?.displayName || "U")[0].toUpperCase()
             )}
@@ -555,7 +555,7 @@ function PostCard({ post, onAppealSubmitted, onTopicClick }: { post: Post & { ap
 
         {post.imageUrl && (
           <div className="border-t border-b border-border relative group cursor-pointer" onClick={() => setLightboxImg(post.imageUrl!)}>
-            <img src={post.imageUrl} alt="" className="w-full max-h-80 object-cover" />
+            <img src={post.imageUrl} alt="" className="w-full max-h-80 object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
               <ZoomIn size={28} className="text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
             </div>
@@ -1218,7 +1218,7 @@ export default function Feed() {
                   )}
                   {newPostImage && !imageLoading && (
                     <div className="relative inline-block">
-                      <img src={newPostImage} alt="preview" className="max-h-40 rounded-xl object-contain border border-border" />
+                      <img src={newPostImage} alt="preview" className="max-h-40 rounded-xl object-contain border border-border" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
                       <button
                         type="button"
                         onClick={() => setNewPostImage(null)}

@@ -879,7 +879,7 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
               style={{ backgroundColor: avatarColor }}
             >
               {(chat.type === "direct" ? (chat.otherUser as any)?.avatarUrl : chat.avatarUrl) ? (
-                <img src={(chat.type === "direct" ? (chat.otherUser as any)?.avatarUrl : chat.avatarUrl)} alt={displayName} className="w-full h-full object-cover" />
+                <img src={(chat.type === "direct" ? (chat.otherUser as any)?.avatarUrl : chat.avatarUrl)} alt={displayName} className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
               ) : (
                 (displayName[0] || "?").toUpperCase()
               )}
@@ -1140,7 +1140,7 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
                         style={{ backgroundColor: lastAdminMessage.sender?.avatarColor || "#555" }}
                       >
                         {lastAdminMessage.sender?.avatarUrl ? (
-                          <img src={lastAdminMessage.sender.avatarUrl} alt="" className="w-full h-full object-cover rounded-full" />
+                          <img src={lastAdminMessage.sender.avatarUrl} alt="" className="w-full h-full object-cover rounded-full" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
                         ) : (
                           (lastAdminMessage.sender?.displayName || "A")[0].toUpperCase()
                         )}
@@ -1357,7 +1357,7 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
               style={{ backgroundColor: avatarColor }}
             >
               {(chat.otherUser as any)?.avatarUrl ? (
-                <img src={(chat.otherUser as any).avatarUrl} alt={displayName} className="w-full h-full object-cover" />
+                <img src={(chat.otherUser as any).avatarUrl} alt={displayName} className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
               ) : (displayName[0] || "?").toUpperCase()}
             </div>
             <div className="space-y-1.5">

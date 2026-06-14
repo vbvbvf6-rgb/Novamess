@@ -181,7 +181,7 @@ export default function QrConfirm() {
                     style={{ backgroundColor: (me as any).avatarColor || "#3B82F6" }}
                   >
                     {(me as any).avatarUrl ? (
-                      <img src={(me as any).avatarUrl} alt="" className="w-full h-full object-cover" />
+                      <img src={(me as any).avatarUrl} alt="" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
                     ) : (
                       (me.displayName?.[0] || <User size={16} />)
                     )}

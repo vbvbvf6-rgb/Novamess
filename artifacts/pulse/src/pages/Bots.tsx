@@ -973,7 +973,7 @@ export default function Bots() {
                           style={{ background: bot.avatar_color }}
                           onClick={(e) => { e.stopPropagation(); avatarUploadBotRef.current = bot.bot_user_id; avatarInputRef.current?.click(); }}
                         >
-                          {bot.avatar_url ? <img src={bot.avatar_url} alt="" className="w-full h-full object-cover" /> : bot.display_name[0]?.toUpperCase()}
+                          {bot.avatar_url ? <img src={bot.avatar_url} alt="" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} /> : bot.display_name[0]?.toUpperCase()}
                           <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
                             {uploadingAvatar === bot.bot_user_id ? <RefreshCw size={14} className="text-white animate-spin" /> : <Camera size={14} className="text-white" />}
                           </div>
@@ -1531,7 +1531,7 @@ if __name__ == "__main__":
             >
               <div className="relative flex items-center gap-3 px-6 py-5 border-b border-border/60">
                 <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-black text-base shrink-0" style={{ background: editBot.avatar_color }}>
-                  {editBot.avatar_url ? <img src={editBot.avatar_url} alt="" className="w-full h-full object-cover rounded-xl" /> : editBot.display_name[0]?.toUpperCase()}
+                  {editBot.avatar_url ? <img src={editBot.avatar_url} alt="" className="w-full h-full object-cover rounded-xl" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} /> : editBot.display_name[0]?.toUpperCase()}
                 </div>
                 <div>
                   <h2 className="font-bold text-foreground text-sm leading-tight">Редактировать бота</h2>

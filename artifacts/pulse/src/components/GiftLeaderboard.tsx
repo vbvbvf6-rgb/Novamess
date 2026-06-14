@@ -72,7 +72,7 @@ export function GiftLeaderboard({ userId: _userId }: { userId: number }) {
                 style={{ backgroundColor: entry.avatarColor || "#6366f1" }}
               >
                 {entry.avatarUrl
-                  ? <img src={entry.avatarUrl} alt="" className="w-full h-full object-cover" />
+                  ? <img src={entry.avatarUrl} alt="" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
                   : (entry.displayName?.[0]?.toUpperCase() || "?")}
               </div>
               <div className="flex-1 min-w-0">

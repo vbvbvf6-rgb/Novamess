@@ -210,7 +210,7 @@ export default function Stories() {
                     style={{ backgroundColor: latestStory?.backgroundColor || "#111" }}
                   >
                     {latestStory?.type === "image" && latestStory.mediaUrl && (
-                      <img src={latestStory.mediaUrl} alt="" className="w-full h-full object-cover" />
+                      <img src={latestStory.mediaUrl} alt="" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
                     )}
                     {latestStory?.type === "text" && (
                       <div className="w-full h-full flex items-center justify-center p-4 text-center">
@@ -239,7 +239,7 @@ export default function Stories() {
                           style={{ backgroundColor: group.user.avatarColor }}
                         >
                           {group.user.avatarUrl ? (
-                            <img src={group.user.avatarUrl} alt="" className="w-full h-full object-cover" />
+                            <img src={group.user.avatarUrl} alt="" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
                           ) : (
                             group.user.displayName[0].toUpperCase()
                           )}
@@ -284,7 +284,7 @@ export default function Stories() {
               {storyType === "text" && storyText ? (
                 <p className="text-white font-bold text-lg text-center px-4 drop-shadow-lg">{storyText}</p>
               ) : storyType === "image" && storyImageUrl ? (
-                <img src={storyImageUrl} alt="" className="w-full h-full object-cover" />
+                <img src={storyImageUrl} alt="" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
               ) : (
                 <p className="text-white/40 text-sm">{storyType === "text" ? "Предпросмотр текста" : "Предпросмотр изображения"}</p>
               )}
@@ -448,7 +448,7 @@ export default function Stories() {
                       style={{ backgroundColor: viewingGroup.user.avatarColor }}
                     >
                       {viewingGroup.user.avatarUrl ? (
-                        <img src={viewingGroup.user.avatarUrl} alt="" className="w-full h-full object-cover" />
+                        <img src={viewingGroup.user.avatarUrl} alt="" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
                       ) : viewingGroup.user.displayName[0].toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">

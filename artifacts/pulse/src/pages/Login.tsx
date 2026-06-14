@@ -257,7 +257,7 @@ export default function Login({ onLogin }: LoginProps) {
                         onChange={(e) => setUsername(e.target.value)}
                         placeholder="@никнейм"
                         autoComplete="username"
-                        autoFocus
+                        autoFocus={typeof window !== "undefined" && window.matchMedia("(hover: hover)").matches}
                         onFocus={() => setFocusedInput("username")}
                         onBlur={() => setFocusedInput(null)}
                         className="w-full bg-transparent border-none outline-none px-4 py-3.5 text-[15px] font-medium text-foreground placeholder:text-muted-foreground/50"
@@ -370,7 +370,7 @@ export default function Login({ onLogin }: LoginProps) {
                       value={twoFaCode}
                       onChange={(e) => setTwoFaCode(e.target.value.replace(/\D/g, ""))}
                       placeholder="000000"
-                      autoFocus
+                      autoFocus={typeof window !== "undefined" && window.matchMedia("(hover: hover)").matches}
                       onFocus={() => setFocusedInput("2fa")}
                       onBlur={() => setFocusedInput(null)}
                       className="w-full bg-transparent border-none outline-none py-6 text-4xl font-mono tracking-[0.5em] font-black text-center text-foreground placeholder:text-muted-foreground/30"
@@ -459,7 +459,7 @@ export default function Login({ onLogin }: LoginProps) {
                     <div className="bg-white p-4 rounded-3xl shadow-sm border border-black/5 mb-6 relative group">
                       <div className="absolute inset-0 bg-primary/5 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                       {qrImageUrl ? (
-                        <img src={qrImageUrl} alt="QR Code" className="w-[200px] h-[200px]" />
+                        <img src={qrImageUrl} alt="QR Code" className="w-[200px] h-[200px]" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
                       ) : (
                         <div className="w-[200px] h-[200px] bg-secondary/50 rounded-2xl animate-pulse" />
                       )}

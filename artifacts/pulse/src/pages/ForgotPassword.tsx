@@ -185,7 +185,7 @@ export default function ForgotPassword() {
                       onChange={(e) => setUsername(e.target.value)}
                       placeholder="@ваш_никнейм"
                       autoComplete="username"
-                      autoFocus
+                      autoFocus={typeof window !== "undefined" && window.matchMedia("(hover: hover)").matches}
                       className="w-full bg-secondary/60 border border-border rounded-2xl px-4 py-3.5 text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all text-[15px] font-medium"
                     />
                   </div>
@@ -248,7 +248,7 @@ export default function ForgotPassword() {
                       value={answer}
                       onChange={(e) => setAnswer(e.target.value)}
                       placeholder="Введите ответ"
-                      autoFocus
+                      autoFocus={typeof window !== "undefined" && window.matchMedia("(hover: hover)").matches}
                       className="w-full bg-secondary/60 border border-border rounded-2xl px-4 py-3.5 text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all text-[15px] font-medium"
                     />
                   </div>

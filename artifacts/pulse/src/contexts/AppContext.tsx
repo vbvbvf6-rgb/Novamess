@@ -647,7 +647,7 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
         try {
           const data = JSON.parse(e.data);
           if (ringTimeoutRef.current) { clearTimeout(ringTimeoutRef.current); ringTimeoutRef.current = null; }
-          setActiveCall((prev) => (prev ? { ...prev, status: "active", ...data } : null));
+          setActiveCall((prev: Call | null) => (prev ? { ...prev, status: "active", ...data } : null));
         } catch {}
       });
 

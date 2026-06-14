@@ -304,7 +304,7 @@ export default function Register({ onLogin }: RegisterProps) {
                         }}
                         placeholder="ДД"
                         className="w-full bg-card/50 border border-border rounded-2xl px-3 py-4 text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-xl text-center font-black"
-                        autoFocus
+                        autoFocus={typeof window !== "undefined" && window.matchMedia("(hover: hover)").matches}
                       />
                     </div>
                     <div className="flex-1">
@@ -539,7 +539,7 @@ export default function Register({ onLogin }: RegisterProps) {
                   className="relative w-24 h-24 rounded-full overflow-hidden border-2 border-dashed border-primary/40 hover:border-primary transition-all group"
                 >
                   {avatarUrl ? (
-                    <img src={avatarUrl} alt="avatar" className="w-full h-full object-cover" />
+                    <img src={avatarUrl} alt="avatar" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
                   ) : (
                     <div className="w-full h-full bg-card/60 flex flex-col items-center justify-center gap-1">
                       <Camera size={24} className="text-muted-foreground group-hover:text-primary transition-colors" />
@@ -562,7 +562,7 @@ export default function Register({ onLogin }: RegisterProps) {
                     onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
                     placeholder="только_латиница_и_цифры"
                     autoComplete="username"
-                    autoFocus
+                    autoFocus={typeof window !== "undefined" && window.matchMedia("(hover: hover)").matches}
                     className="w-full bg-card/50 border border-border rounded-2xl px-5 py-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-base font-medium"
                   />
                 </div>
@@ -732,7 +732,7 @@ export default function Register({ onLogin }: RegisterProps) {
                         value={verifyCode}
                         onChange={(e) => setVerifyCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
                         placeholder="000000"
-                        autoFocus
+                        autoFocus={typeof window !== "undefined" && window.matchMedia("(hover: hover)").matches}
                         className="w-full bg-card/50 border border-border rounded-2xl pl-11 pr-5 py-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-xl text-center font-black tracking-widest"
                       />
                     </div>

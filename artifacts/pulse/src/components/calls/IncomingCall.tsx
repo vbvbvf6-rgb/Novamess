@@ -66,7 +66,7 @@ export function IncomingCall() {
                 style={{ backgroundColor: avatarBg }}
               >
                 {caller?.avatarUrl ? (
-                  <img src={caller.avatarUrl} alt="" className="w-full h-full object-cover" />
+                  <img src={caller.avatarUrl} alt="" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
                 ) : (
                   caller?.displayName?.[0]?.toUpperCase() ?? "?"
                 )}

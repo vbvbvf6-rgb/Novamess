@@ -87,7 +87,7 @@ function Avatar({
       style={{ backgroundColor: color || "#3B82F6", width: size * 4, height: size * 4 }}
     >
       {url ? (
-        <img src={url} alt={name} className="w-full h-full object-cover" />
+        <img src={url} alt={name} className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
       ) : icon ? icon : (
         <span className="text-base font-black">{name?.[0]?.toUpperCase() || "?"}</span>
       )}
@@ -462,7 +462,7 @@ function GlobalChatRow({
         style={{ backgroundColor: chat.avatar_color || "#3B82F6" }}
       >
         {chat.avatar_url ? (
-          <img src={chat.avatar_url} alt={chat.name} className="w-full h-full object-cover" />
+          <img src={chat.avatar_url} alt={chat.name} className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
         ) : chat.type === "channel" ? (
           <Radio size={22} className="text-white opacity-80" />
         ) : (

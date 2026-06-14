@@ -18,9 +18,9 @@ if (window.visualViewport) {
 window.addEventListener("orientationchange", () => setTimeout(updateAppHeight, 300));
 
 // Lock to portrait on mobile devices
-if (screen.orientation && typeof screen.orientation.lock === "function") {
+if (screen.orientation && typeof (screen.orientation as any).lock === "function") {
   const tryLock = () => {
-    screen.orientation.lock("portrait").catch(() => {});
+    (screen.orientation as any).lock("portrait").catch(() => {});
   };
   document.addEventListener("fullscreenchange", tryLock);
   tryLock();

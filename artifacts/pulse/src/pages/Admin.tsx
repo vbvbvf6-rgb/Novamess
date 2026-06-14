@@ -73,7 +73,7 @@ const ADMIN_GIFT_IMAGE_MAP: Record<string, string> = {
 
 function AdminGiftThumb({ name, emoji, size = 40 }: { name: string; emoji: string; size?: number }) {
   const src = ADMIN_GIFT_IMAGE_MAP[name];
-  if (src) return <img src={src} alt={name} style={{ width: size, height: size, objectFit: "contain" }} draggable={false} />;
+  if (src) return <img src={src} alt={name} style={{ width: size, height: size, objectFit: "contain" }} draggable={false} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />;
   return <span style={{ fontSize: size * 0.78, lineHeight: 1 }}>{emoji}</span>;
 }
 
@@ -1278,6 +1278,7 @@ export default function Admin() {
               <div className="flex gap-2">
                 <input
                   type="number"
+                  inputMode="numeric"
                   value={massAmount}
                   onChange={e => setMassAmount(e.target.value)}
                   placeholder="Сумма (отриц. = снять)"
@@ -1348,7 +1349,7 @@ export default function Admin() {
                           className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 overflow-hidden"
                           style={{ backgroundColor: appeal.avatar_color }}
                         >
-                          {appeal.avatar_url ? <img src={appeal.avatar_url} alt="" className="w-full h-full object-cover" /> : appeal.display_name[0]}
+                          {appeal.avatar_url ? <img src={appeal.avatar_url} alt="" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} /> : appeal.display_name[0]}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
@@ -1465,7 +1466,7 @@ export default function Admin() {
                   {topupRequests.map(r => (
                     <div key={r.id} className="p-3 flex items-center gap-3">
                       <div className="w-9 h-9 rounded-full shrink-0 flex items-center justify-center text-sm font-bold text-white" style={{ background: r.avatar_color }}>
-                        {r.avatar_url ? <img src={r.avatar_url} className="w-full h-full rounded-full object-cover" /> : r.display_name[0]?.toUpperCase()}
+                        {r.avatar_url ? <img src={r.avatar_url} className="w-full h-full rounded-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} /> : r.display_name[0]?.toUpperCase()}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold truncate">@{r.username}</p>
@@ -1602,7 +1603,7 @@ export default function Admin() {
                         {supportTickets.map(t => (
                           <button key={t.id} onClick={() => openAdminTicket(t.id)} className="w-full p-3 flex gap-3 text-left hover:bg-secondary/30 transition-colors group">
                             <div className="w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-white text-xs font-bold overflow-hidden" style={{ backgroundColor: t.avatar_color }}>
-                              {t.avatar_url ? <img src={t.avatar_url} className="w-full h-full rounded-full object-cover" alt="" /> : t.display_name[0]?.toUpperCase()}
+                              {t.avatar_url ? <img src={t.avatar_url} className="w-full h-full rounded-full object-cover" alt="" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} /> : t.display_name[0]?.toUpperCase()}
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center justify-between gap-2 mb-0.5">
@@ -1675,7 +1676,7 @@ export default function Admin() {
                       <div key={bug.id} className="p-3 space-y-2">
                         <div className="flex items-start gap-2">
                           <div className="w-7 h-7 rounded-full shrink-0 flex items-center justify-center text-white text-xs font-bold overflow-hidden" style={{ backgroundColor: bug.avatar_color }}>
-                            {bug.avatar_url ? <img src={bug.avatar_url} className="w-full h-full rounded-full object-cover" alt="" /> : bug.display_name[0]?.toUpperCase()}
+                            {bug.avatar_url ? <img src={bug.avatar_url} className="w-full h-full rounded-full object-cover" alt="" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} /> : bug.display_name[0]?.toUpperCase()}
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between gap-1">
@@ -1976,7 +1977,7 @@ export default function Admin() {
                             className="w-9 h-9 rounded-full shrink-0 flex items-center justify-center text-white text-sm font-bold overflow-hidden"
                             style={{ backgroundColor: chat.avatar_color }}
                           >
-                            {chat.avatar_url ? <img src={chat.avatar_url} className="w-full h-full object-cover" alt="" /> : (chat.name || "?")[0].toUpperCase()}
+                            {chat.avatar_url ? <img src={chat.avatar_url} className="w-full h-full object-cover" alt="" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} /> : (chat.name || "?")[0].toUpperCase()}
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-semibold truncate">{chat.name || "Без названия"}</p>
@@ -1987,7 +1988,7 @@ export default function Admin() {
                           <button
                             onClick={() => handleDeleteChat(chat.id)}
                             disabled={deletingChatId === chat.id}
-                            className="shrink-0 p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors opacity-0 group-hover:opacity-100 disabled:opacity-50"
+                            className="shrink-0 p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 active:text-destructive active:bg-destructive/10 transition-colors opacity-0 group-hover:opacity-100 [@media(hover:none)]:opacity-100 disabled:opacity-50"
                             title="Удалить чат"
                           >
                             {deletingChatId === chat.id ? <RefreshCw size={14} className="animate-spin" /> : <Trash2 size={14} />}
@@ -2130,7 +2131,7 @@ export default function Admin() {
                     {eventKind === "giveaway" && (
                       <div className="w-28">
                         <label className="text-[10px] text-muted-foreground mb-1 block">Стоимость (⚡)</label>
-                        <input type="number" min={0} value={eventCost} onChange={e => setEventCost(Number(e.target.value))}
+                        <input type="number" inputMode="numeric" min={0} value={eventCost} onChange={e => setEventCost(Number(e.target.value))}
                           className="w-full bg-background border border-border rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:border-violet-500 transition-colors" />
                       </div>
                     )}
@@ -2365,6 +2366,7 @@ export default function Admin() {
                                 <label className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">Цена (⚡)</label>
                                 <input
                                   type="number"
+                                  inputMode="numeric"
                                   value={edits.price ?? gift.price}
                                   onChange={e => setCatalogEdit(prev => ({ ...prev, [gift.id]: { ...prev[gift.id], price: Number(e.target.value) } }))}
                                   className="mt-1 w-full bg-background border border-border rounded-lg px-2.5 py-1.5 text-sm text-foreground focus:outline-none focus:border-primary transition-colors"
@@ -2374,6 +2376,7 @@ export default function Admin() {
                                 <label className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">Звёзды</label>
                                 <input
                                   type="number"
+                                  inputMode="numeric"
                                   min={1}
                                   max={200}
                                   value={edits.stars ?? gift.stars}
@@ -2465,7 +2468,7 @@ export default function Admin() {
                 ) : posts.map(post => (
                   <div key={post.id} className="p-3 border-b border-border flex gap-3 group hover:bg-secondary/30 transition-colors">
                     <div className="w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-white text-xs font-bold overflow-hidden" style={{ backgroundColor: post.avatar_color }}>
-                      {post.avatar_url ? <img src={post.avatar_url} alt="" className="w-full h-full object-cover" /> : post.display_name[0]?.toUpperCase()}
+                      {post.avatar_url ? <img src={post.avatar_url} alt="" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} /> : post.display_name[0]?.toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-semibold text-foreground truncate">@{post.username}</p>
@@ -2480,7 +2483,7 @@ export default function Admin() {
                     <button
                       onClick={() => handleDeletePost(post.id)}
                       disabled={deletingPostId === post.id}
-                      className="shrink-0 p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors opacity-0 group-hover:opacity-100 disabled:opacity-50"
+                      className="shrink-0 p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 active:text-destructive active:bg-destructive/10 transition-colors opacity-0 group-hover:opacity-100 [@media(hover:none)]:opacity-100 disabled:opacity-50"
                     >
                       <Trash2 size={14} />
                     </button>
@@ -2536,7 +2539,7 @@ export default function Admin() {
                           {idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `${idx + 1}`}
                         </span>
                         <div className="w-7 h-7 rounded-full shrink-0 flex items-center justify-center text-white text-[10px] font-bold overflow-hidden" style={{ backgroundColor: entry.avatar_color }}>
-                          {entry.avatar_url ? <img src={entry.avatar_url} alt="" className="w-full h-full object-cover" /> : entry.display_name[0]?.toUpperCase()}
+                          {entry.avatar_url ? <img src={entry.avatar_url} alt="" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} /> : entry.display_name[0]?.toUpperCase()}
                         </div>
                         <p className="flex-1 text-sm font-medium truncate">{entry.display_name}</p>
                         <p className="text-sm font-black text-primary">{Number(entry.score).toLocaleString()}</p>
@@ -2600,7 +2603,7 @@ export default function Admin() {
                           style={{ backgroundColor: item.avatarColor || "#6366f1" }}
                         >
                           {item.avatarUrl ? (
-                            <img src={item.avatarUrl} alt="" className="w-full h-full object-cover" />
+                            <img src={item.avatarUrl} alt="" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
                           ) : (
                             (item.senderName || "?")[0].toUpperCase()
                           )}
@@ -2833,7 +2836,7 @@ export default function Admin() {
                     style={{ backgroundColor: user.avatar_color }}
                   >
                     {user.avatar_url
-                      ? <img src={user.avatar_url} alt="" className="w-full h-full object-cover rounded-full" />
+                      ? <img src={user.avatar_url} alt="" className="w-full h-full object-cover rounded-full" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
                       : user.display_name[0]?.toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -2871,7 +2874,7 @@ export default function Admin() {
                       style={{ backgroundColor: selectedUser.avatar_color }}
                     >
                       {selectedUser.avatar_url
-                        ? <img src={selectedUser.avatar_url} alt="" className="w-full h-full object-cover rounded-full" />
+                        ? <img src={selectedUser.avatar_url} alt="" className="w-full h-full object-cover rounded-full" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
                         : selectedUser.display_name[0]?.toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -2948,6 +2951,7 @@ export default function Admin() {
                       <div className="flex gap-2">
                         <input
                           type="number"
+                          inputMode="numeric"
                           value={giveAmount}
                           onChange={e => setGiveAmount(e.target.value)}
                           placeholder="Сумма (отриц. — списать)"

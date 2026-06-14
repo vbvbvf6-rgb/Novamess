@@ -180,7 +180,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
           textareaRef.current.style.height = "44px";
           const maxH = Math.min(140, Math.floor(window.innerHeight / 4));
           textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, maxH) + "px";
-          textareaRef.current.focus();
+          if (window.matchMedia("(hover: hover)").matches) textareaRef.current.focus();
         }
       }, 50);
     } else if (!editMessage && prevEditRef.current) {
@@ -191,7 +191,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
   }, [editMessage]);
 
   useEffect(() => {
-    if (replyTo) {
+    if (replyTo && window.matchMedia("(hover: hover)").matches) {
       setTimeout(() => textareaRef.current?.focus(), 50);
     }
   }, [replyTo]);
@@ -551,7 +551,9 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
 
   const insertEmoji = (emoji: string) => {
     setText(prev => prev + emoji);
-    textareaRef.current?.focus();
+    if (window.matchMedia("(hover: hover)").matches) {
+      textareaRef.current?.focus();
+    }
   };
 
   const sendSticker = async (sticker: { url: string }) => {
@@ -853,7 +855,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
                         title={s.label}
                         className={`aspect-square rounded-xl transition-all hover:scale-110 active:scale-95 p-1 flex items-center justify-center ${stickerTab === "prime" ? "hover:bg-purple-500/10 ring-1 ring-purple-500/20" : "hover:bg-secondary"}`}
                       >
-                        <img src={s.url} alt={s.label} className="w-full h-full object-contain" />
+                        <img src={s.url} alt={s.label} className="w-full h-full object-contain" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
                       </button>
                     ))}
                   </div>
@@ -1014,8 +1016,8 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
               {imagePreviews.map((src, idx) => (
                 <motion.div key={idx} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
                   className="relative rounded-2xl overflow-hidden border border-border shadow-sm shrink-0 group">
-                  <img src={src} alt="" className="h-28 w-28 object-cover block" />
-                  <button onClick={() => removeImage(idx)} className="absolute top-1.5 right-1.5 w-7 h-7 bg-black/40 backdrop-blur-md text-white rounded-full flex items-center justify-center hover:bg-black/40 transition-colors opacity-0 group-hover:opacity-100">
+                  <img src={src} alt="" className="h-28 w-28 object-cover block" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+                  <button onClick={() => removeImage(idx)} className="absolute top-1.5 right-1.5 w-7 h-7 bg-black/40 backdrop-blur-md text-white rounded-full flex items-center justify-center hover:bg-black/60 transition-colors opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100">
                     <X size={14} />
                   </button>
                 </motion.div>

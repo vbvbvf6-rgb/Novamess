@@ -284,6 +284,7 @@ function BegModal({
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
                   type="number"
+                  inputMode="numeric"
                   min={1}
                   value={customAmount}
                   onChange={e => setCustomAmount(e.target.value)}
@@ -364,10 +365,10 @@ export default function UserProfile() {
   const addContact = useAddContact();
   const removeContact = useRemoveContact();
 
-  const isContact = contacts?.some((c) => c.id === userId) ?? false;
+  const isContact = contacts?.some((c: { id: number }) => c.id === userId) ?? false;
   const isMe = userId === 1;
 
-  const commonChats = chats?.filter((chat) => {
+  const commonChats = chats?.filter((chat: { type: string; otherUser?: { id: number } | null; members?: { userId: number }[] }) => {
     if (chat.type === "direct") return chat.otherUser?.id === userId;
     return chat.members?.some((m: { userId: number }) => m.userId === userId);
   }) ?? [];
@@ -554,7 +555,7 @@ export default function UserProfile() {
                     style={{ backgroundColor: user.avatarColor || "#3B82F6" }}
                   >
                     {user.avatarUrl ? (
-                      <img src={user.avatarUrl} alt={user.displayName} className="w-full h-full object-cover" />
+                      <img src={user.avatarUrl} alt={user.displayName} className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
                     ) : (
                       user.displayName[0].toUpperCase()
                     )}
@@ -717,7 +718,7 @@ export default function UserProfile() {
                 </h3>
               </div>
               <div className="p-3 space-y-1">
-                {commonChats.map((chat) => (
+                {commonChats.map((chat: { id: number; name?: string | null; avatarColor?: string | null; type: string }) => (
                   <button
                     key={chat.id}
                     onClick={() => { setSelectedChatId(chat.id); setLocation("/"); }}

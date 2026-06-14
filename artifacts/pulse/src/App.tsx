@@ -338,7 +338,7 @@ function App() {
       const accounts = getSavedAccounts();
       if (accounts.length > 0 && accounts[0].token) {
         const acc = accounts[0];
-        sessionStorage.setItem("pulse-token", acc.token);
+        sessionStorage.setItem("pulse-token", acc.token ?? "");
         sessionStorage.setItem("pulse-user-id", String(acc.userId));
         sessionStorage.setItem("pulse-user", JSON.stringify({
           id: acc.userId,
@@ -365,7 +365,7 @@ function App() {
       const accounts = getSavedAccounts();
       if (accounts.length > 0 && accounts[0].token) {
         const acc = accounts[0];
-        sessionStorage.setItem("pulse-token", acc.token);
+        sessionStorage.setItem("pulse-token", acc.token ?? "");
         sessionStorage.setItem("pulse-user-id", String(acc.userId));
         sessionStorage.setItem("pulse-user", JSON.stringify({
           id: acc.userId,

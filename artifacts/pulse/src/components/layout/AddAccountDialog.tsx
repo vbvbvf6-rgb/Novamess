@@ -177,7 +177,7 @@ export function AddAccountDialog({ open, onClose, onAccountAdded }: AddAccountDi
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="@никнейм"
-                  autoFocus
+                  autoFocus={typeof window !== "undefined" && window.matchMedia("(hover: hover)").matches}
                   className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors text-sm"
                 />
               </div>
@@ -222,7 +222,7 @@ export function AddAccountDialog({ open, onClose, onAccountAdded }: AddAccountDi
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                   placeholder="Ваше имя"
-                  autoFocus
+                  autoFocus={typeof window !== "undefined" && window.matchMedia("(hover: hover)").matches}
                   className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors text-sm"
                 />
               </div>
