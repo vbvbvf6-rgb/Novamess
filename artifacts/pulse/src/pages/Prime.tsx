@@ -392,13 +392,14 @@ export default function Prime() {
   return (
     <div className="flex-1 flex flex-col h-full bg-background overflow-y-auto">
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-xl border-b border-border px-4 md:px-6 py-4 flex items-center gap-3">
-        <div className="w-8 h-8 rounded-xl bg-yellow-500/20 flex items-center justify-center">
+      <header className="sticky top-0 z-10 border-b border-border px-5 flex items-center gap-3 relative overflow-hidden" style={{ minHeight: "calc(4rem + env(safe-area-inset-top, 0px))", paddingTop: "env(safe-area-inset-top, 0px)", background: "linear-gradient(135deg, rgba(234,179,8,0.08), rgba(249,115,22,0.04))", backdropFilter: "blur(20px)" }}>
+        <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/8 via-orange-500/4 to-transparent pointer-events-none" />
+        <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 relative z-10" style={{ background: "linear-gradient(135deg, rgba(234,179,8,0.25), rgba(249,115,22,0.12))", border: "1px solid rgba(234,179,8,0.35)", boxShadow: "0 0 12px rgba(234,179,8,0.2)" }}>
           <Crown size={18} className="text-yellow-400" />
         </div>
-        <div>
-          <h1 className="font-bold text-foreground text-lg leading-none">Nova Prime</h1>
-          <p className="text-xs text-muted-foreground mt-0.5">Выберите тарифный план</p>
+        <div className="relative z-10">
+          <h1 className="font-black text-foreground text-xl leading-none tracking-tight">Nova Prime</h1>
+          <p className="text-xs text-muted-foreground mt-0.5">Эксклюзивные возможности</p>
         </div>
       </header>
 

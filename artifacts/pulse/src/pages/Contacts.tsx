@@ -77,18 +77,24 @@ export default function Contacts() {
 
   return (
     <div className="flex-1 flex flex-col h-full bg-background overflow-hidden relative">
-      <header className="border-b border-border flex items-center px-6 justify-between bg-card/80 backdrop-blur-md z-10 shrink-0" style={{ minHeight: "calc(4rem + env(safe-area-inset-top, 0px))", paddingTop: "env(safe-area-inset-top, 0px)" }}>
-        <h1 className="text-xl font-bold">Контакты</h1>
+      <header className="border-b border-border flex items-center px-5 justify-between bg-card/90 backdrop-blur-xl z-10 shrink-0 relative overflow-hidden" style={{ minHeight: "calc(4rem + env(safe-area-inset-top, 0px))", paddingTop: "env(safe-area-inset-top, 0px)" }}>
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/6 via-transparent to-transparent pointer-events-none" />
+        <div className="flex items-center gap-3 relative z-10">
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg, rgba(234,88,12,0.15), rgba(234,88,12,0.05))", border: "1px solid rgba(234,88,12,0.2)" }}>
+            <Users size={17} className="text-primary" />
+          </div>
+          <h1 className="text-xl font-black text-foreground">Контакты</h1>
+        </div>
       </header>
 
-      <div className="p-4 border-b border-border bg-background z-10 shrink-0">
+      <div className="px-4 py-3 border-b border-border bg-background/95 backdrop-blur-sm z-10 shrink-0">
         <div className="relative max-w-3xl mx-auto w-full">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
           <Input
             placeholder="Поиск контактов и пользователей..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 bg-card border-border focus-visible:ring-primary h-12 rounded-xl"
+            className="pl-10 bg-secondary/50 border-transparent focus-visible:ring-primary focus-visible:bg-card h-11 rounded-2xl font-medium"
           />
         </div>
       </div>
@@ -121,7 +127,7 @@ export default function Contacts() {
             {displayUsers?.map((user: User) => {
               const isContact = contacts?.some((c: { id: number }) => c.id === user.id) ?? false;
               return (
-                <div key={user.id} className="flex items-center gap-4 p-4 rounded-xl border border-border bg-card/50 hover:bg-card transition-colors group">
+                <div key={user.id} className="flex items-center gap-4 p-4 rounded-2xl border border-border/60 bg-card/40 hover:bg-card hover:border-border hover:shadow-sm transition-all group">
                   <div className="relative shrink-0">
                     <button
                       onClick={() => setLocation(`/user/${user.id}`)}

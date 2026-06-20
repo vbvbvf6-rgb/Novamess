@@ -5,7 +5,6 @@ import type { P2PChannel } from "@/hooks/useP2PChannel";
 import { useQueryClient } from "@tanstack/react-query";
 import { Paperclip, Mic, SendHorizontal, X, Square, Trash2, Images, Reply, Pencil, Clock, BarChart2, Plus, Minus, Wand2, CalendarClock, Hourglass, Sticker, Smile } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MemeGifPicker } from "./MemeGifPicker";
 import { useToast } from "@/hooks/use-toast";
 
 const STICKERS = [
@@ -139,7 +138,6 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
   const [stickerTab, setStickerTab] = useState<"regular" | "prime">("regular");
   const [selectedEffect, setSelectedEffect] = useState<string | null>(null);
   const [showEffectPicker, setShowEffectPicker] = useState(false);
-  const [showMemeGifPicker, setShowMemeGifPicker] = useState(false);
   const [showMobileActions, setShowMobileActions] = useState(false);
 
   const isPrimePlus = !!(me as any)?.hasPrime && (me as any)?.primeTier === "prime_plus";
@@ -346,13 +344,6 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
       return;
     }
 
-    if (text.trim() === "/memer") {
-      setText("");
-      if (textareaRef.current) textareaRef.current.style.height = "44px";
-      setShowMemeGifPicker(true);
-      setIsSending(false);
-      return;
-    }
     if (!text.trim() && imagePreviews.length === 0 && !audioBlob) return;
     setIsSending(true);
     try {
@@ -478,7 +469,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
     }
   };
 
-  const MAX_VOICE_SECONDS = isPrimePlus ? Infinity : isPrime ? 180 : 60;
+  const MAX_VOICE_SECONDS = Infinity;
 
   const startRecording = async () => {
     try {
@@ -533,7 +524,6 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
 
   const sendGif = async (gifUrl: string) => {
     setText("");
-    setShowMemeGifPicker(false);
     if (textareaRef.current) textareaRef.current.style.height = "44px";
     setIsSending(true);
     try {
@@ -580,11 +570,6 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
     e.target.style.height = Math.min(e.target.scrollHeight, maxH) + "px";
     if (val.trim()) sendTypingEvent("text");
     if (!editMessage) localStorage.setItem(draftKey, val);
-    if (val === "/memer" || val === "/gif") {
-      setShowMemeGifPicker(true);
-    } else if (showMemeGifPicker) {
-      setShowMemeGifPicker(false);
-    }
   };
 
   const handleScheduledSend = async () => {
@@ -777,16 +762,6 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
             </motion.div>
           )}
         </AnimatePresence>
-
-        <AnimatePresence>
-          {showMemeGifPicker && (
-            <MemeGifPicker
-              onSelect={sendGif}
-              onClose={() => { setShowMemeGifPicker(false); setText(""); }}
-            />
-          )}
-        </AnimatePresence>
-
 
         <AnimatePresence>
           {showEmoji && (
@@ -1060,16 +1035,6 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
                     <BarChart2 size={19} className="text-green-400" />
                   </div>
                   <span className="text-[10px] font-bold leading-none">Опрос</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setText("/memer"); setShowMemeGifPicker(true); setShowMobileActions(false); }}
-                  className="flex flex-col items-center gap-1.5 py-4 px-2 hover:bg-secondary/60 transition-colors text-muted-foreground hover:text-foreground active:bg-secondary"
-                >
-                  <div className="w-10 h-10 rounded-2xl bg-orange-500/15 flex items-center justify-center">
-                    <span className="text-lg leading-none">😂</span>
-                  </div>
-                  <span className="text-[10px] font-bold leading-none">Мемы</span>
                 </button>
                 {isPrime ? (
                   <button

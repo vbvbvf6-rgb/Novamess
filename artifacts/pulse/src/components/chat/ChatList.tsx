@@ -72,10 +72,15 @@ function PrimePlusBadge() {
 
 function AdminBadge() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="shrink-0 inline-block">
-      <circle cx="12" cy="12" r="12" fill="#6366f1"/>
-      <path d="M12 5.5l4 2v5c0 2.5-1.8 4.7-4 5.3-2.2-.6-4-2.8-4-5.3v-5l4-2z" fill="white"/>
-    </svg>
+    <span
+      title="Администратор"
+      className="inline-flex items-center justify-center shrink-0 rounded-full"
+      style={{ width: 18, height: 18, background: "linear-gradient(135deg, #f59e0b 0%, #dc2626 100%)", boxShadow: "0 0 8px rgba(245,158,11,0.65), 0 0 16px rgba(220,38,38,0.2)" }}
+    >
+      <svg width="10" height="9" viewBox="0 0 20 15" fill="white">
+        <path d="M0 13h20v2H0zM1.5 11L4 3l5 5.5L10 0l1 8.5L16 3l2.5 8H1.5z"/>
+      </svg>
+    </span>
   );
 }
 
@@ -437,21 +442,30 @@ export function ChatList() {
         )}
       </AnimatePresence>
       <div className="px-4 pb-3" style={{ paddingTop: "max(16px, env(safe-area-inset-top, 16px))" }}>
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-[10px] flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg, #ea580c, #f97316)", boxShadow: "0 2px 10px rgba(234,88,12,0.45)" }}>
+              <Crown size={15} className="text-white" />
+            </div>
+            <span className="text-[18px] font-black text-foreground tracking-tight">Nova</span>
+          </div>
+          <button
+            onClick={openCreate}
+            className="w-10 h-10 rounded-2xl flex items-center justify-center transition-all shrink-0 hover:scale-105 active:scale-95"
+            style={{ background: "linear-gradient(135deg, rgba(234,88,12,0.15), rgba(249,115,22,0.1))", border: "1px solid rgba(234,88,12,0.25)" }}
+          >
+            <SquarePen size={18} className="text-primary" />
+          </button>
+        </div>
         <div className="flex items-center gap-3">
           <button
             onClick={() => setShowGlobalSearch(true)}
-            className="relative flex-1 flex items-center h-12 bg-secondary/50 hover:bg-secondary/80 border border-transparent hover:border-border rounded-2xl transition-all px-4 gap-3 text-left"
+            className="relative flex-1 flex items-center h-11 bg-secondary/40 hover:bg-secondary/70 border border-border/50 hover:border-border rounded-2xl transition-all px-4 gap-3 text-left"
           >
-            <Search className="text-muted-foreground w-5 h-5 shrink-0" />
-            <span className="text-[15px] font-medium text-muted-foreground/70 flex-1">
+            <Search className="text-muted-foreground w-4 h-4 shrink-0" />
+            <span className="text-[14px] font-medium text-muted-foreground/60 flex-1">
               {t("chatlist.search")}
             </span>
-          </button>
-          <button
-            onClick={openCreate}
-            className="w-12 h-12 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center hover:bg-primary/90 transition-all shadow-[0_4px_14px_rgba(234,88,12,0.3)] shrink-0"
-          >
-            <SquarePen size={20} />
           </button>
         </div>
 

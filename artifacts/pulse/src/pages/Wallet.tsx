@@ -318,12 +318,16 @@ export default function Wallet() {
 
   return (
     <div className="flex-1 flex flex-col h-full bg-background overflow-hidden">
-      <header className="border-b border-border flex items-center px-6 justify-between bg-card/80 backdrop-blur-md shrink-0" style={{ minHeight: "calc(4rem + env(safe-area-inset-top, 0px))", paddingTop: "env(safe-area-inset-top, 0px)" }}>
-        <h1 className="text-xl font-bold flex items-center gap-2">
-          <Zap className="text-primary" size={20} /> Кошелёк
-        </h1>
-        <div className="flex items-center gap-1.5 text-sm font-bold text-primary bg-primary/10 px-3 py-1.5 rounded-full border border-primary/20">
-          <Zap size={14} fill="currentColor" /> {Number(balance).toLocaleString()} МОНЕТА
+      <header className="border-b border-border flex items-center px-5 justify-between bg-card/90 backdrop-blur-xl shrink-0 relative overflow-hidden" style={{ minHeight: "calc(4rem + env(safe-area-inset-top, 0px))", paddingTop: "env(safe-area-inset-top, 0px)" }}>
+        <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/5 via-transparent to-transparent pointer-events-none" />
+        <div className="flex items-center gap-3 relative z-10">
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg, rgba(234,179,8,0.18), rgba(249,115,22,0.08))", border: "1px solid rgba(234,179,8,0.25)" }}>
+            <Zap size={17} className="text-yellow-400" fill="currentColor" />
+          </div>
+          <h1 className="text-xl font-black text-foreground">Кошелёк</h1>
+        </div>
+        <div className="flex items-center gap-1.5 text-sm font-black relative z-10 px-3 py-1.5 rounded-2xl" style={{ background: "linear-gradient(135deg, rgba(234,179,8,0.15), rgba(249,115,22,0.1))", border: "1px solid rgba(234,179,8,0.25)", color: "#fbbf24" }}>
+          <Zap size={14} fill="currentColor" /> {Number(balance).toLocaleString()} ⚡
         </div>
       </header>
 

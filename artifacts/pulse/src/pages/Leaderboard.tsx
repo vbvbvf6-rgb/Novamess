@@ -291,10 +291,13 @@ export default function Leaderboard() {
 
   return (
     <div className="flex-1 flex flex-col h-full bg-background overflow-hidden">
-      <header className="border-b border-border flex items-center px-6 justify-between bg-card/80 backdrop-blur-md z-10 shrink-0" style={{ minHeight: "calc(4rem + env(safe-area-inset-top, 0px))", paddingTop: "env(safe-area-inset-top, 0px)" }}>
-        <div className="flex items-center gap-3">
-          <Trophy size={22} className="text-yellow-400" />
-          <h1 className="text-xl font-bold">Таблица лидеров</h1>
+      <header className="border-b border-border flex items-center px-5 justify-between bg-card/90 backdrop-blur-xl z-10 shrink-0 relative overflow-hidden" style={{ minHeight: "calc(4rem + env(safe-area-inset-top, 0px))", paddingTop: "env(safe-area-inset-top, 0px)" }}>
+        <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/5 via-transparent to-transparent pointer-events-none" />
+        <div className="flex items-center gap-3 relative z-10">
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg, rgba(234,179,8,0.18), rgba(249,115,22,0.08))", border: "1px solid rgba(234,179,8,0.25)" }}>
+            <Trophy size={17} className="text-yellow-400" />
+          </div>
+          <h1 className="text-xl font-black text-foreground">Таблица лидеров</h1>
         </div>
       </header>
 

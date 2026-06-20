@@ -482,15 +482,19 @@ export default function Support() {
 
   return (
     <div className="flex-1 flex flex-col h-full bg-background overflow-hidden">
-      <header className="h-16 border-b border-border flex items-center px-6 bg-card/80 backdrop-blur-md z-10 shrink-0">
-        <h1 className="text-xl font-bold flex items-center gap-2">
-          <MessageSquare size={20} className="text-primary" /> Поддержка
-        </h1>
-        {hasPrime && (
-          <span className="ml-3 flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30">
-            <Crown size={9} /> PRIME PRIORITY
-          </span>
-        )}
+      <header className="border-b border-border flex items-center px-5 gap-3 bg-card/90 backdrop-blur-xl z-10 shrink-0 relative overflow-hidden" style={{ minHeight: "calc(4rem + env(safe-area-inset-top, 0px))", paddingTop: "env(safe-area-inset-top, 0px)" }}>
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/6 via-transparent to-transparent pointer-events-none" />
+        <div className="flex items-center gap-3 relative z-10 flex-1">
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg, rgba(234,88,12,0.15), rgba(234,88,12,0.05))", border: "1px solid rgba(234,88,12,0.2)" }}>
+            <MessageSquare size={17} className="text-primary" />
+          </div>
+          <h1 className="text-xl font-black text-foreground">Поддержка</h1>
+          {hasPrime && (
+            <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30">
+              <Crown size={9} /> PRIME
+            </span>
+          )}
+        </div>
       </header>
 
       <div className="flex-1 overflow-y-auto">

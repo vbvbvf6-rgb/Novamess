@@ -47,13 +47,20 @@ export default function Calls() {
   return (
     <div className="flex-1 flex flex-col h-full bg-background overflow-hidden">
       {/* Header */}
-      <header className="border-b border-border flex items-center px-6 justify-between bg-card/80 backdrop-blur-xl z-10 shrink-0" style={{ minHeight: "calc(4rem + env(safe-area-inset-top, 0px))", paddingTop: "env(safe-area-inset-top, 0px)" }}>
-        <h1 className="text-xl font-bold tracking-tight">Звонки</h1>
+      <header className="border-b border-border flex items-center px-5 justify-between bg-card/90 backdrop-blur-xl z-10 shrink-0 relative overflow-hidden" style={{ minHeight: "calc(4rem + env(safe-area-inset-top, 0px))", paddingTop: "env(safe-area-inset-top, 0px)" }}>
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/6 via-transparent to-transparent pointer-events-none" />
+        <div className="flex items-center gap-3 relative z-10">
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg, rgba(234,88,12,0.15), rgba(234,88,12,0.05))", border: "1px solid rgba(234,88,12,0.2)" }}>
+            <PhoneCall size={17} className="text-primary" />
+          </div>
+          <h1 className="text-xl font-black text-foreground tracking-tight">Звонки</h1>
+        </div>
         <button
           onClick={() => setShowNewCall(true)}
-          className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-all active:scale-95 shadow-[0_0_16px_rgba(255,80,0,0.35)]"
+          className="flex items-center gap-2 px-4 py-2 rounded-2xl text-sm font-bold transition-all active:scale-95 relative z-10"
+          style={{ background: "linear-gradient(135deg, #ea580c, #f97316)", boxShadow: "0 0 16px rgba(234,88,12,0.35)", color: "white" }}
         >
-          <PhoneCall size={15} />
+          <PhoneCall size={14} />
           Новый звонок
         </button>
       </header>

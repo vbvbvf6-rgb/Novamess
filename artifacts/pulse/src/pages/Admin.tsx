@@ -1225,11 +1225,15 @@ export default function Admin() {
         </div>
       )}
 
-      <header className="h-16 border-b border-border flex items-center px-6 justify-between bg-card/80 backdrop-blur-md shrink-0">
-        <h1 className="text-xl font-bold flex items-center gap-2">
-          <Shield className="text-primary" size={20} /> Панель администратора
-        </h1>
-        <button onClick={fetchData} className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
+      <header className="border-b border-border flex items-center px-5 justify-between bg-card/90 backdrop-blur-xl shrink-0 relative overflow-hidden" style={{ minHeight: "calc(4rem + env(safe-area-inset-top, 0px))", paddingTop: "env(safe-area-inset-top, 0px)" }}>
+        <div className="absolute inset-0 bg-gradient-to-r from-red-500/6 via-transparent to-transparent pointer-events-none" />
+        <div className="flex items-center gap-3 relative z-10">
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg, rgba(239,68,68,0.18), rgba(234,88,12,0.08))", border: "1px solid rgba(239,68,68,0.25)" }}>
+            <Shield size={17} className="text-red-400" />
+          </div>
+          <h1 className="text-xl font-black text-foreground">Панель администратора</h1>
+        </div>
+        <button onClick={fetchData} className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors relative z-10">
           <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
         </button>
       </header>

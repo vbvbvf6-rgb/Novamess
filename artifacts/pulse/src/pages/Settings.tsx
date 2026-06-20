@@ -1634,10 +1634,14 @@ export default function Settings() {
         activeSection === null ? "flex w-full" : "hidden"
       )}>
         {/* Sidebar header */}
-        <div className="border-b border-border flex items-center px-6 bg-card/80 backdrop-blur-md shrink-0" style={{ minHeight: "calc(4rem + env(safe-area-inset-top, 0px))", paddingTop: "env(safe-area-inset-top, 0px)" }}>
-          <h1 className="text-xl font-bold flex items-center gap-2">
-            <SettingsIcon size={20} className="text-primary" /> {t("settings.title")}
-          </h1>
+        <div className="border-b border-border flex items-center px-5 bg-card/90 backdrop-blur-xl shrink-0 relative overflow-hidden" style={{ minHeight: "calc(4rem + env(safe-area-inset-top, 0px))", paddingTop: "env(safe-area-inset-top, 0px)" }}>
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/6 via-transparent to-transparent pointer-events-none" />
+          <div className="flex items-center gap-3 relative z-10">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg, rgba(234,88,12,0.15), rgba(234,88,12,0.05))", border: "1px solid rgba(234,88,12,0.2)" }}>
+              <SettingsIcon size={17} className="text-primary" />
+            </div>
+            <h1 className="text-xl font-black text-foreground">{t("settings.title")}</h1>
+          </div>
         </div>
 
         {/* Profile card — taps into account section */}
@@ -1724,14 +1728,15 @@ export default function Settings() {
       )}>
 
         {/* Content header */}
-        <header className="border-b border-border flex items-center px-6 gap-3 bg-card/80 backdrop-blur-md shrink-0" style={{ minHeight: "calc(4rem + env(safe-area-inset-top, 0px))", paddingTop: "env(safe-area-inset-top, 0px)" }}>
+        <header className="border-b border-border flex items-center px-5 gap-3 bg-card/90 backdrop-blur-xl shrink-0 relative overflow-hidden" style={{ minHeight: "calc(4rem + env(safe-area-inset-top, 0px))", paddingTop: "env(safe-area-inset-top, 0px)" }}>
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-transparent pointer-events-none" />
           <button
             onClick={() => setActiveSection(null)}
-            className="md:hidden w-9 h-9 rounded-xl hover:bg-secondary flex items-center justify-center text-muted-foreground transition-colors shrink-0"
+            className="md:hidden w-9 h-9 rounded-xl hover:bg-secondary flex items-center justify-center text-muted-foreground transition-colors shrink-0 relative z-10"
           >
             <ArrowLeft size={20} />
           </button>
-          <h2 className="text-lg font-bold flex-1 truncate">
+          <h2 className="text-lg font-black flex-1 truncate text-foreground relative z-10">
             {displaySection === "account"       ? (lang==="ru"?"Мой аккаунт":"My Account")
             : displaySection === "notifications" ? (lang==="ru"?"Уведомления и звуки":"Notifications & Sounds")
             : displaySection === "privacy"       ? (lang==="ru"?"Конфиденциальность и безопасность":"Privacy & Security")

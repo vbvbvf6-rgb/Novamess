@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useGetPosts, useGetMe, useLikePost, useCreatePostComment, useGetPostComments, Post } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Heart, MessageCircle, Send, Image, X, Plus, Trash2, MoreVertical, ZoomIn, ShieldAlert, AlertCircle, CheckCircle2, Clock, ChevronDown, ChevronUp, TrendingUp, Hash } from "lucide-react";
+import { Heart, MessageCircle, Send, Image, X, Plus, Trash2, MoreVertical, ZoomIn, ShieldAlert, AlertCircle, CheckCircle2, Clock, ChevronDown, ChevronUp, TrendingUp, Hash, Rss } from "lucide-react";
 import { formatDistanceToNow as fDTN } from "date-fns";
 import { ru } from "date-fns/locale";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -28,8 +28,12 @@ function VerifiedBadge() {
 
 function AdminBadge() {
   return (
-    <span className="inline-flex items-center gap-0.5 text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/40 shrink-0">
-      ADMIN
+    <span
+      title="Администратор Nova"
+      className="inline-flex items-center gap-0.5 text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-full shrink-0"
+      style={{ background: "linear-gradient(135deg, rgba(245,158,11,0.2), rgba(220,38,38,0.15))", border: "1px solid rgba(245,158,11,0.45)", color: "#f59e0b", boxShadow: "0 0 8px rgba(245,158,11,0.22)" }}
+    >
+      ♛ ADMIN
     </span>
   );
 }
@@ -1146,19 +1150,23 @@ export default function Feed() {
 
   return (
     <div className="flex-1 flex flex-col h-full bg-background overflow-hidden">
-      <header className="border-b border-border bg-card/80 backdrop-blur-md z-10 shrink-0">
-        <div className="flex items-center px-6 justify-between" style={{ minHeight: "calc(4rem + env(safe-area-inset-top, 0px))", paddingTop: "env(safe-area-inset-top, 0px)" }}>
-          <h1 className="text-xl font-bold flex items-center gap-2">
-            <span className="text-primary">📡</span> Лента
-          </h1>
+      <header className="border-b border-border bg-card/90 backdrop-blur-xl z-10 shrink-0 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/6 via-transparent to-transparent pointer-events-none" />
+        <div className="flex items-center px-5 justify-between relative z-10" style={{ minHeight: "calc(4rem + env(safe-area-inset-top, 0px))", paddingTop: "env(safe-area-inset-top, 0px)" }}>
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg, rgba(234,88,12,0.15), rgba(234,88,12,0.05))", border: "1px solid rgba(234,88,12,0.2)" }}>
+              <Rss size={17} className="text-primary" />
+            </div>
+            <h1 className="text-xl font-black text-foreground">Лента</h1>
+          </div>
           <button
             onClick={() => setShowCreatePost(!showCreatePost)}
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors shadow-[0_0_10px_rgba(255,80,0,0.2)]"
+            className="flex items-center gap-2 px-4 py-2 rounded-2xl text-sm font-bold transition-all active:scale-95"
+            style={{ background: "linear-gradient(135deg, #ea580c, #f97316)", boxShadow: "0 0 14px rgba(234,88,12,0.3)", color: "white" }}
           >
-            <Plus size={16} /> Новый пост
+            <Plus size={15} /> Новый пост
           </button>
         </div>
-
       </header>
 
       <div className="flex-1 overflow-y-auto scrollbar-thin pb-24 md:pb-0">
