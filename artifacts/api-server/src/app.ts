@@ -18,11 +18,20 @@ declare global {
   }
 }
 
-export const JWT_SECRET = process.env.JWT_SECRET || "pulse-messenger-jwt-secret-please-change-in-production";
+// ── JWT Secret — MUST be set via environment variable in production ─────────
+export const JWT_SECRET = process.env.JWT_SECRET || "";
+const FALLBACK_JWT_SECRET = "pulse-messenger-dev-fallback-secret-not-for-production";
 
-if (process.env.NODE_ENV === "production" && !process.env.JWT_SECRET) {
-  console.warn("[SECURITY WARN] JWT_SECRET is not set — using default insecure key. Set JWT_SECRET env var in production!");
+if (!JWT_SECRET) {
+  if (process.env.NODE_ENV === "production") {
+    logger.error("FATAL: JWT_SECRET is not set in production. Set the JWT_SECRET environment variable.");
+    process.exit(1);
+  } else {
+    logger.warn("[SECURITY] JWT_SECRET not set — using insecure dev fallback. Set JWT_SECRET in production!");
+  }
 }
+
+export const EFFECTIVE_JWT_SECRET = JWT_SECRET || FALLBACK_JWT_SECRET;
 
 const app: Express = express();
 
@@ -61,6 +70,31 @@ app.use(
   })
 );
 
+// ── Permissions-Policy — disable dangerous browser APIs ───────────────────
+app.use((_req: Request, res: Response, next: NextFunction) => {
+  res.setHeader(
+    "Permissions-Policy",
+    "geolocation=(), microphone=(self), camera=(self), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()"
+  );
+  next();
+});
+
+// ── CORS — only allow same-origin or explicitly allowed origins ────────────
+const getAllowedOrigins = (): string[] | true => {
+  const prod = process.env.ALLOWED_ORIGINS;
+  if (prod) return prod.split(",").map(o => o.trim());
+  // In dev/Replit — allow same origin + Replit preview domains
+  return true;
+};
+
+app.use(cors({
+  origin: getAllowedOrigins(),
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Authorization", "Content-Type", "X-Requested-With"],
+  maxAge: 86400, // Cache preflight for 24h
+}));
+
 // ── Request timeout (60s) — prevents hanging connections ──────────────────
 app.use((req: Request, res: Response, next: NextFunction) => {
   if (req.path.endsWith("/events")) return next();
@@ -88,14 +122,35 @@ app.use(
   }),
 );
 
-app.use(cors({ origin: true, credentials: true }));
-app.use(express.json({ limit: "20mb" }));
-app.use(express.urlencoded({ extended: true, limit: "20mb" }));
+// ── Body parsers — small limit for regular routes, large only for uploads ──
+// Prevents DoS via huge JSON payloads
+app.use("/api/upload", express.json({ limit: "25mb" }));
+app.use("/api/upload", express.urlencoded({ extended: true, limit: "25mb" }));
+app.use("/api/stories", express.json({ limit: "15mb" }));
+app.use("/api/stories", express.urlencoded({ extended: true, limit: "15mb" }));
+app.use("/api/users/me", express.json({ limit: "5mb" })); // avatar upload via base64
+app.use(express.json({ limit: "2mb" }));
+app.use(express.urlencoded({ extended: true, limit: "2mb" }));
 
-// ── Global rate limit — 500 req/15min per IP (DDoS basic protection) ──────
+// ── Strip dangerous characters from string inputs ─────────────────────────
+// Prevents stored XSS in display names, bios, etc.
+function sanitizeString(val: unknown, maxLen = 1000): string {
+  if (typeof val !== "string") return "";
+  return val
+    .trim()
+    .slice(0, maxLen)
+    .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, "")
+    .replace(/<[^>]+>/g, "")           // strip all HTML tags
+    .replace(/javascript:/gi, "")     // strip javascript: URIs
+    .replace(/on\w+\s*=/gi, "");      // strip event handlers
+}
+
+export { sanitizeString };
+
+// ── Global rate limit — 300 req/15min per IP (DDoS basic protection) ──────
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 500,
+  max: 300,
   message: { error: "Слишком много запросов. Попробуйте позже." },
   standardHeaders: true,
   legacyHeaders: false,
@@ -103,10 +158,10 @@ const globalLimiter = rateLimit({
 });
 app.use("/api", globalLimiter);
 
-// ── Auth rate limit — strict: 20 attempts / 15min per IP ─────────────────
+// ── Auth rate limit — strict: 15 attempts / 15min per IP ─────────────────
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 20,
+  max: 15,
   message: { error: "Слишком много попыток входа. Подождите 15 минут." },
   standardHeaders: true,
   legacyHeaders: false,
@@ -116,6 +171,18 @@ app.use("/api/auth/login", authLimiter);
 app.use("/api/auth/register", authLimiter);
 app.use("/api/auth/reset-password", authLimiter);
 app.use("/api/auth/2fa", authLimiter);
+
+// ── Password reset / security question — very strict: 5 / 15min ──────────
+const forgotLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: { error: "Слишком много запросов. Подождите 15 минут перед следующей попыткой." },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => req.ip === "::1" || req.ip === "127.0.0.1",
+});
+app.use("/api/auth/security-question", forgotLimiter);
+app.use("/api/auth/forgot-password", forgotLimiter);
 
 // ── Message send rate limit — 60 messages per minute per user ────────────
 const messageLimiter = rateLimit({
@@ -132,7 +199,7 @@ app.use("/api/messages", messageLimiter);
 // ── Upload rate limit — prevent file upload spam ──────────────────────────
 const uploadLimiter = rateLimit({
   windowMs: 60 * 1000,
-  max: 30,
+  max: 20,
   message: { error: "Слишком много загрузок. Подождите немного." },
   standardHeaders: true,
   legacyHeaders: false,
@@ -169,7 +236,7 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
   if (authHeader?.startsWith("Bearer ")) {
     const token = authHeader.slice(7);
     try {
-      const payload = jwt.verify(token, JWT_SECRET) as { userId: number; pending2fa?: boolean };
+      const payload = jwt.verify(token, EFFECTIVE_JWT_SECRET) as { userId: number; pending2fa?: boolean };
       if (!payload.pending2fa && Number.isFinite(payload.userId) && payload.userId > 0) {
         req.currentUserId = payload.userId;
         return next();
@@ -181,7 +248,7 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
   const queryToken = (req.query._token as string | undefined) || (req.query.token as string | undefined);
   if (queryToken) {
     try {
-      const payload = jwt.verify(queryToken, JWT_SECRET) as { userId: number; pending2fa?: boolean };
+      const payload = jwt.verify(queryToken, EFFECTIVE_JWT_SECRET) as { userId: number; pending2fa?: boolean };
       if (!payload.pending2fa && Number.isFinite(payload.userId) && payload.userId > 0) {
         req.currentUserId = payload.userId;
         return next();

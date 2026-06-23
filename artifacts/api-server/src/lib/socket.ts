@@ -1,7 +1,7 @@
 import { Server as SocketIOServer } from "socket.io";
 import type { Server as HttpServer } from "node:http";
 import jwt from "jsonwebtoken";
-import { JWT_SECRET } from "../app";
+import { EFFECTIVE_JWT_SECRET } from "../app";
 
 let io: SocketIOServer | null = null;
 
@@ -28,7 +28,7 @@ export function initSocketIO(server: HttpServer): SocketIOServer {
       (socket.handshake.query?.token as string | undefined);
     if (!token) return next(new Error("Unauthorized"));
     try {
-      const payload = jwt.verify(token, JWT_SECRET) as { userId: number; pending2fa?: boolean };
+      const payload = jwt.verify(token, EFFECTIVE_JWT_SECRET) as { userId: number; pending2fa?: boolean };
       if (!payload.pending2fa && Number.isFinite(payload.userId) && payload.userId > 0) {
         socket.data.userId = payload.userId;
         return next();

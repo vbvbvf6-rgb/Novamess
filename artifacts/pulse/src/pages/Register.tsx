@@ -137,8 +137,8 @@ export default function Register({ onLogin }: RegisterProps) {
       setError("Пароли не совпадают");
       return;
     }
-    if (password.length < 6) {
-      setError("Пароль должен быть не менее 6 символов");
+    if (password.length < 8) {
+      setError("Пароль должен быть не менее 8 символов");
       return;
     }
     if (username.length < 3) {
@@ -618,7 +618,7 @@ export default function Register({ onLogin }: RegisterProps) {
                       type={showPassword ? "text" : "password"}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Минимум 6 символов"
+                      placeholder="Минимум 8 символов"
                       autoComplete="new-password"
                       className="w-full bg-card/50 border border-border rounded-2xl px-5 py-4 pr-14 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-base font-medium"
                     />

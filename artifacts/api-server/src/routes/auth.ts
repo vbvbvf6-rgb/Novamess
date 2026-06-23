@@ -4,11 +4,24 @@ import { sql } from "drizzle-orm";
 import { createHash, randomUUID } from "node:crypto";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { JWT_SECRET } from "../app";
+import { EFFECTIVE_JWT_SECRET, sanitizeString } from "../app";
 import { generateTotpSecret, verifyTotp, buildTotpUri } from "../lib/totp";
 
 const router = Router();
 const SALT_ROUNDS = 12;
+const MIN_PASSWORD_LENGTH = 8;
+const MAX_PASSWORD_LENGTH = 200;
+
+// ── Password strength check ────────────────────────────────────────────────
+function validatePassword(pass: string): { ok: boolean; error?: string } {
+  if (pass.length < MIN_PASSWORD_LENGTH) {
+    return { ok: false, error: `Пароль должен быть не менее ${MIN_PASSWORD_LENGTH} символов` };
+  }
+  if (pass.length > MAX_PASSWORD_LENGTH) {
+    return { ok: false, error: "Пароль слишком длинный" };
+  }
+  return { ok: true };
+}
 
 // ── In-memory brute force tracker (per username, resets on success) ────────
 const loginFailures = new Map<string, { count: number; until: number }>();
@@ -43,11 +56,11 @@ const PENDING_2FA_TTL = "5m";
 const sha256 = (pass: string) => createHash("sha256").update(pass).digest("hex");
 
 function signToken(userId: number, sessionId?: string): string {
-  return jwt.sign({ userId, ...(sessionId ? { sid: sessionId } : {}) }, JWT_SECRET, { expiresIn: TOKEN_TTL });
+  return jwt.sign({ userId, ...(sessionId ? { sid: sessionId } : {}) }, EFFECTIVE_JWT_SECRET, { expiresIn: TOKEN_TTL });
 }
 
 function signPending2faToken(userId: number): string {
-  return jwt.sign({ userId, pending2fa: true }, JWT_SECRET, { expiresIn: PENDING_2FA_TTL });
+  return jwt.sign({ userId, pending2fa: true }, EFFECTIVE_JWT_SECRET, { expiresIn: PENDING_2FA_TTL });
 }
 
 router.post("/auth/login", async (req, res) => {
@@ -176,7 +189,7 @@ router.post("/auth/2fa/complete", async (req, res) => {
 
     let payload: any;
     try {
-      payload = jwt.verify(pendingToken, JWT_SECRET) as any;
+      payload = jwt.verify(pendingToken, EFFECTIVE_JWT_SECRET) as any;
     } catch {
       return res.status(401).json({ error: "Сессия истекла. Войдите заново." });
     }
@@ -349,8 +362,9 @@ router.post("/auth/register", async (req, res) => {
       return res.status(400).json({ error: "Заполните все поля" });
     }
 
-    const rawUsername = String(username).trim();
-    const rawDisplay = String(displayName).trim();
+    const rawUsername = String(username).trim().slice(0, 32);
+    // Sanitize display name — strip HTML/scripts
+    const rawDisplay = sanitizeString(displayName, 60);
     const rawPass = String(password);
 
     if (rawUsername.length < 3 || rawUsername.length > 32) {
@@ -362,8 +376,9 @@ router.post("/auth/register", async (req, res) => {
     if (rawDisplay.length < 1 || rawDisplay.length > 60) {
       return res.status(400).json({ error: "Имя должно быть от 1 до 60 символов" });
     }
-    if (rawPass.length < 6 || rawPass.length > 200) {
-      return res.status(400).json({ error: "Пароль должен быть от 6 до 200 символов" });
+    const passCheck = validatePassword(rawPass);
+    if (!passCheck.ok) {
+      return res.status(400).json({ error: passCheck.error });
     }
 
     const existing = await db.execute(
@@ -499,8 +514,9 @@ router.post("/auth/change-password", async (req, res) => {
     if (!currentPassword || !newPassword) {
       return res.status(400).json({ error: "Укажите текущий и новый пароль" });
     }
-    if (String(newPassword).length < 6 || String(newPassword).length > 200) {
-      return res.status(400).json({ error: "Новый пароль должен быть от 6 до 200 символов" });
+    const newPassCheck = validatePassword(String(newPassword));
+    if (!newPassCheck.ok) {
+      return res.status(400).json({ error: newPassCheck.error });
     }
 
     const rows = await db.execute(sql`SELECT password_hash FROM users WHERE id = ${uid}`);
@@ -554,8 +570,9 @@ router.post("/auth/reset-password", async (req, res) => {
     if (!username || !answer || !newPassword) {
       return res.status(400).json({ error: "Все поля обязательны" });
     }
-    if (String(newPassword).length < 6 || String(newPassword).length > 200) {
-      return res.status(400).json({ error: "Новый пароль — минимум 6 символов" });
+    const resetPassCheck = validatePassword(String(newPassword));
+    if (!resetPassCheck.ok) {
+      return res.status(400).json({ error: resetPassCheck.error });
     }
 
     const rows = await db.execute(
@@ -639,7 +656,7 @@ router.get("/auth/sessions", async (req, res) => {
     let currentSid: string | null = null;
     if (authHeader?.startsWith("Bearer ")) {
       try {
-        const payload = jwt.verify(authHeader.slice(7), JWT_SECRET) as any;
+        const payload = jwt.verify(authHeader.slice(7), EFFECTIVE_JWT_SECRET) as any;
         currentSid = payload.sid || null;
       } catch {}
     }
@@ -680,7 +697,7 @@ router.delete("/auth/sessions", async (req, res) => {
     let currentSid: string | null = null;
     if (authHeader?.startsWith("Bearer ")) {
       try {
-        const payload = jwt.verify(authHeader.slice(7), JWT_SECRET) as any;
+        const payload = jwt.verify(authHeader.slice(7), EFFECTIVE_JWT_SECRET) as any;
         currentSid = payload.sid || null;
       } catch {}
     }
@@ -704,7 +721,7 @@ router.post("/auth/logout", async (req, res) => {
     const authHeader = req.headers["authorization"];
     if (authHeader?.startsWith("Bearer ")) {
       try {
-        const payload = jwt.verify(authHeader.slice(7), JWT_SECRET) as any;
+        const payload = jwt.verify(authHeader.slice(7), EFFECTIVE_JWT_SECRET) as any;
         if (payload.sid) {
           await db.execute(sql`DELETE FROM user_sessions WHERE id = ${payload.sid} AND user_id = ${uid}`);
         }
