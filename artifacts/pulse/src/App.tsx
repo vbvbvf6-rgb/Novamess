@@ -180,10 +180,28 @@ function PwaUpdateBanner() {
   const { updateAvailable, applyUpdate } = useServiceWorkerUpdate();
   const [dismissed, setDismissed] = useState(false);
   const [updating, setUpdating] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   const handleUpdate = () => {
     setUpdating(true);
-    setTimeout(() => applyUpdate(), 400);
+    setProgress(0);
+
+    // Animate progress bar over ~2 seconds
+    const startTime = Date.now();
+    const duration = 2000;
+    const tick = () => {
+      const elapsed = Date.now() - startTime;
+      const pct = Math.min(100, Math.round((elapsed / duration) * 100));
+      setProgress(pct);
+      if (pct < 100) {
+        requestAnimationFrame(tick);
+      } else {
+        // Mark changelog to show after reload, then apply update
+        localStorage.setItem("aura-pending-changelog", "true");
+        setTimeout(() => applyUpdate(), 150);
+      }
+    };
+    requestAnimationFrame(tick);
   };
 
   const show = updateAvailable && !dismissed;
@@ -198,7 +216,7 @@ function PwaUpdateBanner() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[500] bg-black/60 backdrop-blur-sm"
-            onClick={() => setDismissed(true)}
+            onClick={() => !updating && setDismissed(true)}
           />
           <motion.div
             key="pwa-modal"
@@ -209,8 +227,17 @@ function PwaUpdateBanner() {
             className="fixed inset-0 z-[501] flex items-center justify-center p-5 pointer-events-none"
           >
             <div className="pointer-events-auto w-full max-w-sm bg-card border border-border rounded-3xl shadow-2xl overflow-hidden">
-              {/* Animated top stripe */}
-              <div className="h-1 bg-gradient-to-r from-primary via-orange-400 to-amber-500 animate-pulse" />
+              {/* Top stripe: animated shimmer when idle, real progress when updating */}
+              {!updating ? (
+                <div className="h-1 bg-gradient-to-r from-primary via-orange-400 to-amber-500 animate-pulse" />
+              ) : (
+                <div className="h-1 bg-secondary/60 overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-primary via-orange-400 to-amber-500 transition-all duration-100"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+              )}
 
               <div className="px-6 pt-6 pb-5">
                 {/* Icon */}
@@ -222,47 +249,64 @@ function PwaUpdateBanner() {
                   </div>
                   <div>
                     <p className="text-[11px] font-black uppercase tracking-widest text-primary mb-0.5">Новая версия</p>
-                    <h2 className="text-[20px] font-black text-foreground leading-tight">Обновление Aura</h2>
-                    <p className="text-[13px] text-muted-foreground">готово к установке</p>
+                    <h2 className="text-[20px] font-black text-foreground leading-tight">
+                      {updating ? "Устанавливаю..." : "Обновление Aura"}
+                    </h2>
+                    <p className="text-[13px] text-muted-foreground">
+                      {updating ? `${progress}% готово` : "готово к установке"}
+                    </p>
                   </div>
                 </div>
 
-                {/* Description */}
-                <div className="bg-secondary/60 border border-border rounded-2xl px-4 py-3 mb-5 space-y-2">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-lg bg-green-500/15 flex items-center justify-center shrink-0">
-                      <Download size={14} className="text-green-400" />
+                {!updating && (
+                  <>
+                    {/* Description */}
+                    <div className="bg-secondary/60 border border-border rounded-2xl px-4 py-3 mb-5 space-y-2">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-7 h-7 rounded-lg bg-green-500/15 flex items-center justify-center shrink-0">
+                          <Download size={14} className="text-green-400" />
+                        </div>
+                        <p className="text-[13px] text-foreground font-medium">Обновление уже скачано</p>
+                      </div>
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-7 h-7 rounded-lg bg-blue-500/15 flex items-center justify-center shrink-0">
+                          <RefreshCw size={14} className="text-blue-400" />
+                        </div>
+                        <p className="text-[13px] text-muted-foreground">После обновления откроется список изменений</p>
+                      </div>
                     </div>
-                    <p className="text-[13px] text-foreground font-medium">Обновление уже скачано</p>
-                  </div>
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-lg bg-blue-500/15 flex items-center justify-center shrink-0">
-                      <RefreshCw size={14} className="text-blue-400" />
-                    </div>
-                    <p className="text-[13px] text-muted-foreground">Приложение перезапустится автоматически</p>
-                  </div>
-                </div>
 
-                {/* Buttons */}
-                <div className="flex gap-2.5">
-                  <button
-                    onClick={() => setDismissed(true)}
-                    className="flex-1 py-3 rounded-[16px] border border-border text-sm font-semibold text-muted-foreground hover:bg-secondary transition-all"
-                  >
-                    Позже
-                  </button>
-                  <button
-                    onClick={handleUpdate}
-                    disabled={updating}
-                    className="flex-[2] py-3 bg-primary text-primary-foreground rounded-[16px] text-[15px] font-black hover:bg-primary/90 transition-all shadow-[0_4px_14px_rgba(234,88,12,0.4)] hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-70 flex items-center justify-center gap-2"
-                  >
-                    {updating ? (
-                      <><RefreshCw size={15} className="animate-spin" /> Обновляю...</>
-                    ) : (
-                      <>⚡ Обновить сейчас</>
-                    )}
-                  </button>
-                </div>
+                    {/* Buttons */}
+                    <div className="flex gap-2.5">
+                      <button
+                        onClick={() => setDismissed(true)}
+                        className="flex-1 py-3 rounded-[16px] border border-border text-sm font-semibold text-muted-foreground hover:bg-secondary transition-all"
+                      >
+                        Позже
+                      </button>
+                      <button
+                        onClick={handleUpdate}
+                        className="flex-[2] py-3 bg-primary text-primary-foreground rounded-[16px] text-[15px] font-black hover:bg-primary/90 transition-all shadow-[0_4px_14px_rgba(234,88,12,0.4)] hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2"
+                      >
+                        ⚡ Обновить сейчас
+                      </button>
+                    </div>
+                  </>
+                )}
+
+                {updating && (
+                  <div className="space-y-3">
+                    <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-primary to-orange-400 rounded-full transition-all duration-100"
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
+                    <p className="text-[13px] text-center text-muted-foreground">
+                      Пожалуйста, не закрывайте приложение…
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </motion.div>

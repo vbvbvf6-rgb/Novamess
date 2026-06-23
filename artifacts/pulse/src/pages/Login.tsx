@@ -186,7 +186,7 @@ export default function Login({ onLogin }: LoginProps) {
   };
 
   return (
-    <div className="min-h-[100dvh] w-full flex items-center justify-center bg-background relative overflow-hidden p-4 sm:p-8 login-landscape">
+    <div className="min-h-[100dvh] w-full flex flex-col bg-background relative overflow-y-auto p-4 sm:p-8 login-landscape">
       {/* Dynamic Background */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
         <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-primary/20 rounded-full blur-[120px] opacity-80 animate-[pulseGlow_6s_ease-in-out_infinite_alternate]" />
@@ -216,7 +216,7 @@ export default function Login({ onLogin }: LoginProps) {
         initial={{ opacity: 0, y: 20, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-        className="w-full max-w-[420px] relative z-10"
+        className="w-full max-w-[420px] relative z-10 mx-auto my-auto"
       >
         <div className="flex flex-col items-center mb-10">
           <motion.div

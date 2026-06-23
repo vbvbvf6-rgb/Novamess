@@ -138,7 +138,7 @@ export default function Register({ onLogin }: RegisterProps) {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-background flex items-center justify-center p-4 relative overflow-y-auto">
+    <div className="min-h-[100dvh] bg-background flex flex-col items-center p-4 pt-8 pb-8 relative overflow-y-auto">
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
         <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-primary/20 rounded-full blur-[120px] opacity-80 animate-[pulseGlow_6s_ease-in-out_infinite_alternate]" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[65%] h-[65%] bg-violet-500/15 rounded-full blur-[100px] opacity-70 animate-[pulseGlow_8s_ease-in-out_infinite_alternate-reverse]" />
@@ -166,7 +166,7 @@ export default function Register({ onLogin }: RegisterProps) {
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-        className="w-full max-w-sm relative z-10 py-4"
+        className="w-full max-w-sm relative z-10 py-4 w-full"
       >
         <div className="flex flex-col items-center mb-8">
           <motion.div

@@ -1,30 +1,38 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { RefreshCw } from "lucide-react";
+import { Sparkles, X, Zap, Shield, MessageSquare, Users, Bell, RefreshCw } from "lucide-react";
 
 const APP_VERSION = "2.4.0";
-const STORAGE_KEY = "aura-update-seen-v";
+const PENDING_KEY = "aura-pending-changelog";
+const SEEN_KEY = "aura-changelog-seen-v";
+
+const CHANGELOG = [
+  { icon: RefreshCw,    color: "text-blue-400",   bg: "bg-blue-500/10",   text: "Медленный режим теперь реально работает в каналах" },
+  { icon: MessageSquare,color: "text-orange-400",  bg: "bg-orange-500/10", text: "Пересланные сообщения — метка «Переслано» вместо стикера ⤵️" },
+  { icon: Shield,       color: "text-red-400",     bg: "bg-red-500/10",    text: "Удалённые сообщения больше не выглядят как оранжевый пузырь" },
+  { icon: Users,        color: "text-green-400",   bg: "bg-green-500/10",  text: "Поиск контактов — работает с первой буквы" },
+  { icon: Zap,          color: "text-yellow-400",  bg: "bg-yellow-500/10", text: "Истории переименованы в «Статус» (как в WhatsApp)" },
+  { icon: Bell,         color: "text-purple-400",  bg: "bg-purple-500/10", text: "Исправлена прокрутка на странице входа и регистрации" },
+  { icon: Shield,       color: "text-primary",     bg: "bg-primary/10",    text: "Нельзя написать администратору напрямую" },
+];
 
 export function WhatsNewModal() {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    const seen = localStorage.getItem(STORAGE_KEY);
-    if (seen !== APP_VERSION) {
-      const timer = setTimeout(() => setOpen(true), 800);
+    // Show if: update just happened (pending flag) OR version hasn't been seen yet
+    const pending = localStorage.getItem(PENDING_KEY) === "true";
+    const seen = localStorage.getItem(SEEN_KEY);
+    if (pending || seen !== APP_VERSION) {
+      const timer = setTimeout(() => setOpen(true), 600);
       return () => clearTimeout(timer);
     }
     return undefined;
   }, []);
 
-  const handleUpdate = () => {
-    localStorage.setItem(STORAGE_KEY, APP_VERSION);
-    setOpen(false);
-    window.location.reload();
-  };
-
-  const handleSkip = () => {
-    localStorage.setItem(STORAGE_KEY, APP_VERSION);
+  const handleClose = () => {
+    localStorage.removeItem(PENDING_KEY);
+    localStorage.setItem(SEEN_KEY, APP_VERSION);
     setOpen(false);
   };
 
@@ -38,7 +46,7 @@ export function WhatsNewModal() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[300] bg-black/70 backdrop-blur-sm"
-            onClick={handleSkip}
+            onClick={handleClose}
           />
           <motion.div
             key="modal"
@@ -49,34 +57,53 @@ export function WhatsNewModal() {
             className="fixed inset-0 z-[301] flex items-center justify-center p-4 pointer-events-none"
           >
             <div className="pointer-events-auto w-full max-w-sm bg-card border border-border rounded-3xl shadow-2xl overflow-hidden">
-              <div className="px-7 pt-8 pb-6 flex flex-col items-center text-center">
-                <motion.div
-                  initial={{ scale: 0.7, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ delay: 0.1, type: "spring", stiffness: 200, damping: 18 }}
-                  className="w-18 h-18 w-[72px] h-[72px] rounded-[22px] bg-gradient-to-br from-primary via-orange-500 to-amber-500 flex items-center justify-center shadow-2xl shadow-primary/30 mb-5"
-                >
-                  <RefreshCw size={30} className="text-white" />
-                </motion.div>
+              {/* Top gradient stripe */}
+              <div className="h-1 bg-gradient-to-r from-primary via-orange-400 to-amber-500" />
 
-                <h2 className="text-2xl font-black text-foreground leading-tight mb-2">
-                  Доступно обновление
-                </h2>
-                <p className="text-[14px] text-muted-foreground leading-relaxed mb-7">
-                  Новая версия Aura готова к установке. Нажмите «Обновить» чтобы получить последние исправления и улучшения.
-                </p>
+              <div className="px-6 pt-6 pb-6">
+                {/* Header */}
+                <div className="flex items-start justify-between mb-5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-orange-500 flex items-center justify-center shadow-lg shadow-primary/30 shrink-0">
+                      <Sparkles size={22} className="text-white" />
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-black uppercase tracking-widest text-primary mb-0.5">Версия {APP_VERSION}</p>
+                      <h2 className="text-[18px] font-black text-foreground leading-tight">Что нового</h2>
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleClose}
+                    className="w-8 h-8 rounded-full bg-secondary/80 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-all"
+                  >
+                    <X size={15} />
+                  </button>
+                </div>
 
+                {/* Changelog list */}
+                <div className="space-y-2.5 mb-5">
+                  {CHANGELOG.map((item, i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, x: -12 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.05 * i, duration: 0.3 }}
+                      className="flex items-start gap-3"
+                    >
+                      <div className={`w-7 h-7 rounded-lg ${item.bg} flex items-center justify-center shrink-0 mt-0.5`}>
+                        <item.icon size={13} className={item.color} />
+                      </div>
+                      <p className="text-[13px] text-foreground/90 font-medium leading-snug">{item.text}</p>
+                    </motion.div>
+                  ))}
+                </div>
+
+                {/* Close button */}
                 <button
-                  onClick={handleUpdate}
-                  className="w-full py-4 bg-primary text-primary-foreground rounded-2xl text-[16px] font-black hover:bg-primary/90 transition-all shadow-[0_6px_24px_rgba(234,88,12,0.4)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-none mb-3"
+                  onClick={handleClose}
+                  className="w-full py-3.5 bg-primary text-primary-foreground rounded-2xl text-[15px] font-black hover:bg-primary/90 transition-all shadow-[0_4px_20px_rgba(234,88,12,0.35)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-none"
                 >
-                  Обновить
-                </button>
-                <button
-                  onClick={handleSkip}
-                  className="text-[13px] font-semibold text-muted-foreground hover:text-foreground transition-colors py-1"
-                >
-                  Позже
+                  Отлично! 🎉
                 </button>
               </div>
             </div>
