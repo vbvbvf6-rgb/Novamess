@@ -375,15 +375,28 @@ export default function ForgotPassword() {
                 <div className="w-16 h-16 rounded-2xl bg-orange-500/10 flex items-center justify-center mx-auto mb-4">
                   <Shield size={30} className="text-orange-400" />
                 </div>
-                <h2 className="font-bold text-base mb-2">Контрольный вопрос не настроен</h2>
+                <h2 className="font-bold text-base mb-2">Нужна помощь с доступом?</h2>
                 <p className="text-sm text-muted-foreground mb-5 leading-relaxed">
-                  Для аккаунта <span className="text-foreground font-semibold">@{username.trim().replace(/^@/, "")}</span> не установлен контрольный вопрос для восстановления пароля.
+                  Для аккаунта <span className="text-foreground font-semibold">@{username.trim().replace(/^@/, "")}</span> не установлен контрольный вопрос. Обратитесь к администратору — он сбросит пароль вручную.
                 </p>
-                <div className="bg-secondary/50 rounded-2xl p-4 text-left mb-5">
-                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5">Как защитить аккаунт?</p>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    После входа перейдите в <span className="text-foreground font-semibold">Настройки → Безопасность</span> и установите контрольный вопрос, чтобы в будущем вы могли восстановить пароль самостоятельно.
-                  </p>
+                <div className="bg-secondary/50 rounded-2xl p-4 text-left mb-5 space-y-3">
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                      <span className="text-base">1</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground leading-snug pt-1">
+                      Напишите администратору свой никнейм и попросите сбросить пароль.
+                    </p>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                      <span className="text-base">2</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground leading-snug pt-1">
+                      После сброса войдите с новым паролем и установите контрольный вопрос в{" "}
+                      <span className="text-foreground font-semibold">Настройки → Безопасность</span>.
+                    </p>
+                  </div>
                 </div>
                 <button
                   type="button"

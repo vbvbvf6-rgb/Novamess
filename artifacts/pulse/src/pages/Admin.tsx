@@ -2721,10 +2721,10 @@ export default function Admin() {
           )}
         </AnimatePresence>
 
-        {/* [Banwords removed] */}
-        <div className="hidden">
+        {/* Banwords */}
+        <div className="bg-card border border-border rounded-2xl overflow-hidden">
           <button
-            onClick={() => {}}
+            onClick={() => { setShowBanwords(v => !v); if (!showBanwords && banwords.length === 0) fetchBanwords(); }}
             className="w-full p-4 flex items-center justify-between hover:bg-secondary/50 transition-colors"
           >
             <div className="flex items-center gap-3">
