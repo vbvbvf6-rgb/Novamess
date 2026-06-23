@@ -85,6 +85,7 @@ function AdminBadge() {
 }
 
 function ChatAvatar({ chat, displayName }: { chat: Chat; displayName: string }) {
+  const { userStatusMap } = useAppContext();
   const avatarColor =
     chat.type === "direct"
       ? ((chat.otherUser as any)?.avatarColor || chat.avatarColor || "#333")
@@ -96,7 +97,9 @@ function ChatAvatar({ chat, displayName }: { chat: Chat; displayName: string }) 
       : (chat as any).avatarUrl;
 
   const letter = displayName[0]?.toUpperCase() || "?";
-  const status = chat.type === "direct" ? (chat.otherUser as any)?.status : null;
+  const otherUserId = chat.type === "direct" ? (chat.otherUser as any)?.id : null;
+  const liveStatus = otherUserId ? (userStatusMap[otherUserId] ?? (chat.otherUser as any)?.status) : null;
+  const status = chat.type === "direct" ? liveStatus : null;
   const statusDotColor =
     status === "online" ? "bg-green-500" :
     status === "away" ? "bg-yellow-500" : null;

@@ -276,6 +276,55 @@ router.get("/leaderboard", async (req, res) => {
   }
 });
 
+// ── Block / unblock users ──────────────────────────────────────────────────
+router.post("/users/:userId/block", async (req, res) => {
+  try {
+    const blockerId = req.currentUserId;
+    if (!blockerId) return res.status(401).json({ error: "Unauthorized" });
+    const blockedId = Number(req.params.userId);
+    if (!blockedId || blockedId === blockerId) return res.status(400).json({ error: "Invalid userId" });
+    await db.execute(sql`
+      INSERT INTO user_blocks (blocker_id, blocked_id, created_at)
+      VALUES (${blockerId}, ${blockedId}, NOW())
+      ON CONFLICT (blocker_id, blocked_id) DO NOTHING
+    `);
+    res.json({ ok: true, blocked: true });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.delete("/users/:userId/block", async (req, res) => {
+  try {
+    const blockerId = req.currentUserId;
+    if (!blockerId) return res.status(401).json({ error: "Unauthorized" });
+    const blockedId = Number(req.params.userId);
+    await db.execute(sql`
+      DELETE FROM user_blocks WHERE blocker_id = ${blockerId} AND blocked_id = ${blockedId}
+    `);
+    res.json({ ok: true, blocked: false });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.get("/users/:userId/block", async (req, res) => {
+  try {
+    const blockerId = req.currentUserId;
+    if (!blockerId) return res.status(401).json({ error: "Unauthorized" });
+    const blockedId = Number(req.params.userId);
+    const rows = await db.execute(sql`
+      SELECT 1 FROM user_blocks WHERE blocker_id = ${blockerId} AND blocked_id = ${blockedId}
+    `);
+    res.json({ blocked: rows.rows.length > 0 });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 // ── Account deletion — purge all user data ─────────────────────────────────
 router.delete("/users/me", async (req, res) => {
   try {

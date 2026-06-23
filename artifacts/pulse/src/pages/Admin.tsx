@@ -403,9 +403,6 @@ export default function Admin() {
   const [announcementMsg, setAnnouncementMsg] = useState("");
   const [announcementSaving, setAnnouncementSaving] = useState(false);
   const [currentAnnouncement, setCurrentAnnouncement] = useState<string | null>(null);
-  const [broadcastMsg, setBroadcastMsg] = useState("");
-  const [broadcastSending, setBroadcastSending] = useState(false);
-  const [broadcastResult, setBroadcastResult] = useState<string | null>(null);
   const fetchCurrentAnnouncement = async () => {
     try {
       const r = await fetch("/api/announcement", { headers: getHeader() });
@@ -1240,7 +1237,7 @@ export default function Admin() {
         </button>
       </header>
 
-      <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-5">
+      <div className="flex-1 overflow-y-auto p-4 md:p-6 pb-24 md:pb-8 space-y-5">
 
         {/* Stats grid */}
         {stats && (
@@ -1817,7 +1814,7 @@ export default function Admin() {
         {/* Global Announcements — combined panel */}
         <div className="bg-card border border-border rounded-2xl overflow-hidden">
           <button
-            onClick={() => { setShowAnnouncementPanel(v => !v); if (!showAnnouncementPanel) { fetchCurrentAnnouncement(); setBroadcastResult(null); } }}
+            onClick={() => { setShowAnnouncementPanel(v => !v); if (!showAnnouncementPanel) { fetchCurrentAnnouncement(); } }}
             className="w-full p-4 flex items-center justify-between hover:bg-secondary/50 transition-colors"
           >
             <div className="flex items-center gap-3">
@@ -1891,58 +1888,6 @@ export default function Admin() {
                     </button>
                   )}
                 </div>
-              </div>
-
-              {/* ── Блок 2: Рассылка в личные сообщения ─────────────────── */}
-              <div className="px-4 py-4 space-y-3">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-blue-400">Рассылка в ЛС</span>
-                  <span className="text-[10px] text-muted-foreground">— отправляется каждому пользователю в чат с ботом</span>
-                </div>
-                {broadcastResult && (
-                  <div className="flex items-start gap-2 p-3 bg-green-500/10 border border-green-500/20 rounded-xl">
-                    <span className="text-green-400 text-xs leading-relaxed">{broadcastResult}</span>
-                  </div>
-                )}
-                <textarea
-                  value={broadcastMsg}
-                  onChange={e => { setBroadcastMsg(e.target.value); setBroadcastResult(null); }}
-                  placeholder="Текст сообщения (будет отправлено в личный чат каждому пользователю)..."
-                  rows={3}
-                  className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-blue-500 transition-colors resize-none"
-                />
-                <button
-                  onClick={async () => {
-                    if (!broadcastMsg.trim()) return showToast("Введите текст рассылки", "err");
-                    if (!window.confirm(`Отправить сообщение ВСЕМ пользователям?\n\n"${broadcastMsg.trim().slice(0, 100)}..."`)) return;
-                    setBroadcastSending(true);
-                    setBroadcastResult(null);
-                    try {
-                      const r = await fetch("/api/admin/broadcast", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json", ...getHeader() },
-                        body: JSON.stringify({ text: broadcastMsg.trim() }),
-                      });
-                      const d = await r.json();
-                      if (r.ok && d.success) {
-                        setBroadcastResult(`✅ Отправлено ${d.chatsSent} пользователям`);
-                        setBroadcastMsg("");
-                        showToast(`✅ Рассылка отправлена ${d.chatsSent} пользователям`, "ok");
-                      } else {
-                        showToast(d.error || "Ошибка отправки", "err");
-                      }
-                    } catch { showToast("Ошибка соединения", "err"); }
-                    setBroadcastSending(false);
-                  }}
-                  disabled={broadcastSending}
-                  className="w-full py-2.5 rounded-xl bg-blue-600 text-white text-xs font-bold hover:opacity-90 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  {broadcastSending ? (
-                    <>⏳ Отправляю всем пользователям...</>
-                  ) : (
-                    <>✉️ Разослать всем пользователям</>
-                  )}
-                </button>
               </div>
 
             </div>

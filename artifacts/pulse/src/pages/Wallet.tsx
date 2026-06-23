@@ -609,8 +609,7 @@ export default function Wallet() {
                     {SPARK_PACKAGES.map((pkg) => (
                       <motion.button key={pkg.id} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
                         onClick={() => handleBuyPackage(pkg)} disabled={buyingPackage !== null}
-                        className="relative rounded-2xl p-3.5 text-left border border-white/5 overflow-hidden disabled:opacity-60 transition-all"
-                        style={{ background: "hsl(222,47%,11%)" }}>
+                        className="relative rounded-2xl p-3.5 text-left border border-border overflow-hidden disabled:opacity-60 transition-all bg-secondary hover:bg-secondary/80">
                         {pkg.popular && (
                           <span className="absolute top-2 right-2 text-[9px] font-black uppercase tracking-wider bg-violet-500 text-white px-1.5 py-0.5 rounded-full">ХИТ</span>
                         )}

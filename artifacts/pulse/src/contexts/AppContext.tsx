@@ -63,6 +63,7 @@ export interface AppState {
   remoteStreams: Map<number, MediaStream>;
   isScreenSharing: boolean;
   callParticipantIds: number[];
+  userStatusMap: Record<number, string>;
 }
 
 const AppContext = createContext<AppState | undefined>(undefined);
@@ -88,6 +89,7 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [remoteStreams, setRemoteStreams] = useState<Map<number, MediaStream>>(new Map());
   const [isScreenSharing, setIsScreenSharing] = useState(false);
+  const [userStatusMap, setUserStatusMap] = useState<Record<number, string>>({});
 
   const currentUserId = Number(sessionStorage.getItem("pulse-user-id") || "1");
   const currentUserIdRef = useRef(currentUserId);
@@ -729,6 +731,17 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
     };
   }, [currentUserId, cleanupCall]);
 
+  // ── socket connect on mount for status tracking ───────────────────────────
+  useEffect(() => {
+    const sock = getSocket();
+    sock.on("user-status", ({ userId, status }: { userId: number; status: string }) => {
+      setUserStatusMap(prev => ({ ...prev, [userId]: status }));
+    });
+    return () => {
+      sock.off("user-status");
+    };
+  }, [getSocket]);
+
   // ── socket cleanup on unmount ─────────────────────────────────────────────
   useEffect(() => {
     return () => {
@@ -798,6 +811,7 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
     remoteStreams,
     isScreenSharing,
     callParticipantIds,
+    userStatusMap,
   };
 
   return <AppContext.Provider value={state}>{children}</AppContext.Provider>;

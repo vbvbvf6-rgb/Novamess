@@ -138,7 +138,7 @@ export default function Register({ onLogin }: RegisterProps) {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-background flex flex-col items-center p-4 pt-8 pb-8 relative overflow-y-auto">
+    <div className="h-[100dvh] bg-background flex flex-col items-center p-4 pt-8 pb-8 relative overflow-y-auto">
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
         <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-primary/20 rounded-full blur-[120px] opacity-80 animate-[pulseGlow_6s_ease-in-out_infinite_alternate]" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[65%] h-[65%] bg-violet-500/15 rounded-full blur-[100px] opacity-70 animate-[pulseGlow_8s_ease-in-out_infinite_alternate-reverse]" />

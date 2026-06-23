@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useParams, useLocation } from "wouter";
 import {
@@ -28,6 +28,8 @@ import {
   HandCoins,
   Flag,
   AlertTriangle,
+  ShieldBan,
+  ShieldCheck,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -358,6 +360,31 @@ export default function UserProfile() {
   const queryClient = useQueryClient();
   const [isStartingChat, setIsStartingChat] = useState(false);
   const [showBeg, setShowBeg] = useState(false);
+  const [isBlocked, setIsBlocked] = useState(false);
+  const [blockLoading, setBlockLoading] = useState(false);
+
+  useEffect(() => {
+    if (!userId) return;
+    const token = sessionStorage.getItem("pulse-token");
+    fetch(`/api/users/${userId}/block`, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setIsBlocked(d.blocked); })
+      .catch(() => {});
+  }, [userId]);
+
+  const handleBlock = async () => {
+    setBlockLoading(true);
+    const token = sessionStorage.getItem("pulse-token");
+    try {
+      const method = isBlocked ? "DELETE" : "POST";
+      const res = await fetch(`/api/users/${userId}/block`, {
+        method,
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (res.ok) setIsBlocked(!isBlocked);
+    } catch {}
+    setBlockLoading(false);
+  };
 
   const { data: user, isLoading } = useGetUserById(userId, { query: { enabled: !!userId } as any });
   const { data: contacts } = useGetContacts();
@@ -383,7 +410,12 @@ export default function UserProfile() {
   const handleRemoveContact = () => {
     removeContact.mutate(
       { contactId: userId },
-      { onSuccess: () => queryClient.invalidateQueries({ queryKey: getGetContactsQueryKey() }) }
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: getGetContactsQueryKey() });
+          queryClient.invalidateQueries({ queryKey: getGetChatsQueryKey() });
+        }
+      }
     );
   };
 
@@ -476,7 +508,7 @@ export default function UserProfile() {
                   <MoreVertical size={20} />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuContent align="end" className="w-52">
                 {isContact ? (
                   <DropdownMenuItem onClick={handleRemoveContact} className="text-destructive focus:text-destructive">
                     <UserMinus size={15} className="mr-2" /> Удалить из контактов
@@ -486,6 +518,16 @@ export default function UserProfile() {
                     <UserPlus size={15} className="mr-2" /> Добавить в контакты
                   </DropdownMenuItem>
                 )}
+                <DropdownMenuItem
+                  onClick={handleBlock}
+                  disabled={blockLoading}
+                  className={isBlocked ? "text-green-500 focus:text-green-500" : "text-destructive focus:text-destructive"}
+                >
+                  {isBlocked
+                    ? <><ShieldCheck size={15} className="mr-2" /> Разблокировать</>
+                    : <><ShieldBan size={15} className="mr-2" /> Заблокировать</>
+                  }
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </>

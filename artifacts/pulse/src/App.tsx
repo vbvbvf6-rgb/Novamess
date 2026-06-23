@@ -17,6 +17,7 @@ import { useServiceWorkerUpdate } from "@/hooks/useServiceWorkerUpdate";
 import { useToast } from "@/hooks/use-toast";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { WhatsNewModal } from "@/components/WhatsNewModal";
+import { OnboardingModal } from "@/components/OnboardingModal";
 
 import Home from "@/pages/Home";
 import Calls from "@/pages/Calls";
@@ -366,6 +367,7 @@ function MainAppInner({ onLogout, onSwitchAccount, onRemoveAccount, onOpenAddAcc
         <GlobalNotificationListener />
         <PwaUpdateBanner />
         <WhatsNewModal />
+        <OnboardingModal />
         <AnnouncementBanner />
         <ScreenLock>
           <AppLayout>

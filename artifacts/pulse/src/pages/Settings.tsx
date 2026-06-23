@@ -16,7 +16,7 @@ import {
   SlidersHorizontal, Layers, Calendar, Play, FileText, MapPin
 } from "lucide-react";
 import { useLocation } from "wouter";
-import { useGetMe, useUpdateMe } from "@workspace/api-client-react";
+import { useGetMe, useUpdateMe, getGetChatsQueryKey } from "@workspace/api-client-react";
 import { useAppContext } from "@/contexts/AppContext";
 import { RINGTONES, previewRingtone, storeCustomRingtone } from "@/lib/ringtones";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -1359,6 +1359,7 @@ export default function Settings() {
       {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
+          queryClient.invalidateQueries({ queryKey: getGetChatsQueryKey() });
           setHasChanges(false);
           setSaved(true);
           setTimeout(() => setSaved(false), 2000);

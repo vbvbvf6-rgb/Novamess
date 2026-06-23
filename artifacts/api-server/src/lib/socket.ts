@@ -1,6 +1,8 @@
 import { Server as SocketIOServer } from "socket.io";
 import type { Server as HttpServer } from "node:http";
 import jwt from "jsonwebtoken";
+import { db } from "@workspace/db";
+import { sql } from "drizzle-orm";
 import { EFFECTIVE_JWT_SECRET } from "../app";
 
 let io: SocketIOServer | null = null;
@@ -41,6 +43,10 @@ export function initSocketIO(server: HttpServer): SocketIOServer {
 
   io.on("connection", (socket) => {
     const userId = socket.data.userId as number;
+
+    // Mark user online and broadcast to all clients
+    db.execute(sql`UPDATE users SET status = 'online' WHERE id = ${userId}`).catch(() => {});
+    io.emit("user-status", { userId, status: "online" });
 
     socket.on("join-call", ({ callId }: { callId: number }) => {
       if (!callId) return;
@@ -160,14 +166,21 @@ export function initSocketIO(server: HttpServer): SocketIOServer {
 
     socket.on("disconnect", () => {
       const callId = socket.data.callId as number | undefined;
-      if (!callId) return;
-      socket.to(`call:${callId}`).emit("peer-left", { userId, callId });
-      setTimeout(() => {
-        const room = io?.sockets.adapter.rooms.get(`call:${callId}`);
-        if (!room || room.size === 0) {
-          signalBuffer.delete(callId);
-        }
-      }, 10_000);
+      if (callId) {
+        socket.to(`call:${callId}`).emit("peer-left", { userId, callId });
+        setTimeout(() => {
+          const room = io?.sockets.adapter.rooms.get(`call:${callId}`);
+          if (!room || room.size === 0) signalBuffer.delete(callId);
+        }, 10_000);
+      }
+      // Check if user has any other active connections before marking offline
+      const userSockets = [...(io?.sockets.sockets.values() ?? [])].filter(
+        s => s.id !== socket.id && s.data.userId === userId
+      );
+      if (userSockets.length === 0) {
+        db.execute(sql`UPDATE users SET status = 'offline' WHERE id = ${userId}`).catch(() => {});
+        io?.emit("user-status", { userId, status: "offline" });
+      }
     });
   });
 
