@@ -47,14 +47,6 @@ const STEPS: Step[] = [
     tip: "💡 Раздел «Истории» в меню — для твоих собственных историй",
   },
   {
-    icon: <Gift size={32} />,
-    color: "text-pink-400",
-    gradient: "from-pink-500/20 to-pink-600/5",
-    title: "Подарки",
-    description: "Отправляй анимированные подарки четырёх редкостей: обычные, редкие, эпические и легендарные!",
-    tip: "💡 Раздел «Подарки» → выбери подарок и отправь другу",
-  },
-  {
     icon: <Zap size={32} />,
     color: "text-yellow-400",
     gradient: "from-yellow-500/20 to-yellow-600/5",

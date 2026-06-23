@@ -119,27 +119,6 @@ export default function Events() {
   const [apiEvents, setApiEvents] = useState<ApiEvent[]>([]);
   const [eventsLoading, setEventsLoading] = useState(false);
   const [streakDays, setStreakDays] = useState<number>(1);
-  const SPIN_SYMBOLS = [
-    "/stickers/sticker-01.svg",
-    "/stickers/sticker-02.svg",
-    "/stickers/sticker-03.svg",
-    "/stickers/sticker-04.svg",
-    "/stickers/sticker-05.svg",
-    "/stickers/sticker-06.svg",
-    "/stickers/sticker-07.svg",
-    "/stickers/sticker-08.svg",
-  ];
-  const [spinning, setSpinning] = useState(false);
-  const [spinSlots, setSpinSlots] = useState([
-    "/stickers/sticker-01.svg",
-    "/stickers/sticker-04.svg",
-    "/stickers/sticker-07.svg",
-  ]);
-  const [spinReward, setSpinReward] = useState<number | null>(null);
-  const [hasSpunToday, setHasSpunToday] = useState(() => {
-    const today = new Date().toISOString().slice(0, 10);
-    return localStorage.getItem("nova-spin-date") === today;
-  });
   const { data: me } = useGetMe();
   const { data: leaderboard = [], isLoading: lbLoading } = useQuery<any[]>({
     queryKey: ["events-leaderboard"],
