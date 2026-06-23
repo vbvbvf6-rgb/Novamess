@@ -220,7 +220,7 @@ export default function Privacy() {
   const l = lang;
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="absolute inset-0 overflow-y-auto bg-background text-foreground">
       <div className="sticky top-0 z-10 bg-background/90 backdrop-blur border-b border-border/40 px-4 py-3 flex items-center gap-3">
         <button onClick={() => navigate(-1 as any)} className="p-2 rounded-xl hover:bg-muted/60 transition-colors">
           <ArrowLeft size={20} />
