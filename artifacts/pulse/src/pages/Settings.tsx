@@ -1036,7 +1036,6 @@ export default function Settings() {
   const [statusText, setStatusText] = useState("");
   const [avatarColor, setAvatarColor] = useState("#3B82F6");
   const [avatarUrl, setAvatarUrl] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
   const [onlineStatus, setOnlineStatus] = useState<"online" | "offline" | "away">("online");
   const [hasChanges, setHasChanges] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -1325,7 +1324,6 @@ export default function Settings() {
       setStatusText((user as any).statusText || "");
       setAvatarColor(user.avatarColor || "#3B82F6");
       setAvatarUrl((user as any).avatarUrl || "");
-      setPhoneNumber((user as any).phoneNumber || "");
       setOnlineStatus((user.status as any) || "online");
       if ((user as any).readReceiptsEnabled !== undefined) setReadReceipts(!!(user as any).readReceiptsEnabled);
       if ((user as any).showOnlineStatus !== undefined) setShowOnlineStatusToggle(!!(user as any).showOnlineStatus);
@@ -1341,10 +1339,10 @@ export default function Settings() {
       statusText !== ((user as any).statusText || "") ||
       avatarColor !== (user.avatarColor || "#3B82F6") ||
       avatarUrl !== ((user as any).avatarUrl || "") ||
-      phoneNumber !== ((user as any).phoneNumber || "") ||
+
       onlineStatus !== ((user.status as any) || "online");
     setHasChanges(changed);
-  }, [displayName, bio, statusText, avatarColor, avatarUrl, phoneNumber, onlineStatus, user]);
+  }, [displayName, bio, statusText, avatarColor, avatarUrl, onlineStatus, user]);
 
   const handleSave = () => {
     updateMe.mutate(
@@ -1355,7 +1353,6 @@ export default function Settings() {
           avatarColor,
           statusText,
           avatarUrl: avatarUrl || undefined,
-          phoneNumber: phoneNumber || undefined,
           status: onlineStatus,
         } as any,
       },
@@ -1537,7 +1534,6 @@ export default function Settings() {
           <div className="flex-1 min-w-0">
             <p className="font-bold text-base truncate">{displayName || user?.displayName || "..."}</p>
             <p className="text-sm text-muted-foreground truncate">@{user?.username}</p>
-            {phoneNumber && <p className="text-xs text-muted-foreground mt-0.5 truncate">{phoneNumber}</p>}
           </div>
           <ChevronRight size={18} className="text-muted-foreground shrink-0" />
         </button>
@@ -1769,11 +1765,6 @@ export default function Settings() {
                     <Label className="text-sm font-medium mb-1 block">{t("settings.bio")}</Label>
                     <Textarea value={bio} onChange={e => setBio(e.target.value)} placeholder={t("settings.bioPlaceholder")} rows={3} className="bg-background resize-none"/>
                   </div>
-                  <div>
-                    <Label className="text-sm font-medium mb-1 block flex items-center gap-1.5"><Phone size={13}/> {t("settings.phone")}</Label>
-                    <Input value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)} placeholder={t("settings.phonePlaceholder")} type="tel" className="bg-background"/>
-                    <p className="text-xs text-muted-foreground mt-1">{t("settings.phoneNote")}</p>
-                  </div>
                 </div>
 
                 <div className="p-4 border-t border-border">
@@ -1815,7 +1806,7 @@ export default function Settings() {
                   <p className="text-sm text-muted-foreground">{t("settings.unsavedChanges")}</p>
                   <div className="flex gap-2 shrink-0">
                     <button
-                      onClick={() => { if (user) { setDisplayName(user.displayName||""); setBio(user.bio||""); setStatusText((user as any).statusText||""); setAvatarColor(user.avatarColor||"#3B82F6"); setAvatarUrl((user as any).avatarUrl||""); setPhoneNumber((user as any).phoneNumber||""); setOnlineStatus((user.status as any)||"online"); }}}
+                      onClick={() => { if (user) { setDisplayName(user.displayName||""); setBio(user.bio||""); setStatusText((user as any).statusText||""); setAvatarColor(user.avatarColor||"#3B82F6"); setAvatarUrl((user as any).avatarUrl||""); setOnlineStatus((user.status as any)||"online"); }}}
                       className="px-4 py-2 rounded-xl text-sm font-medium text-muted-foreground hover:bg-secondary transition-colors border border-border">
                       {t("common.cancel")}
                     </button>

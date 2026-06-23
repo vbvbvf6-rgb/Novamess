@@ -337,42 +337,6 @@ export default function Events() {
     }
   }
 
-  function doSpin() {
-    if (spinning || hasSpunToday) return;
-    setSpinning(true);
-    setSpinReward(null);
-    let count = 0;
-    const interval = setInterval(() => {
-      setSpinSlots([
-        SPIN_SYMBOLS[Math.floor(Math.random() * SPIN_SYMBOLS.length)],
-        SPIN_SYMBOLS[Math.floor(Math.random() * SPIN_SYMBOLS.length)],
-        SPIN_SYMBOLS[Math.floor(Math.random() * SPIN_SYMBOLS.length)],
-      ]);
-      count++;
-      if (count >= 20) {
-        clearInterval(interval);
-        const a = SPIN_SYMBOLS[Math.floor(Math.random() * SPIN_SYMBOLS.length)];
-        const b = SPIN_SYMBOLS[Math.floor(Math.random() * SPIN_SYMBOLS.length)];
-        const c = SPIN_SYMBOLS[Math.floor(Math.random() * SPIN_SYMBOLS.length)];
-        setSpinSlots([a, b, c]);
-        let reward: number;
-        if (a === b && b === c) reward = Math.floor(Math.random() * 100) + 100;
-        else if (a === b || b === c || a === c) reward = Math.floor(Math.random() * 50) + 30;
-        else reward = Math.floor(Math.random() * 20) + 5;
-        setSpinReward(reward);
-        setSpinning(false);
-        setHasSpunToday(true);
-        const today = new Date().toISOString().slice(0, 10);
-        localStorage.setItem("nova-spin-date", today);
-        setSparks(prev => {
-          const newSparks = prev + reward;
-          localStorage.setItem("pulse-sparks", String(newSparks));
-          return newSparks;
-        });
-      }
-    }, 80);
-  }
-
   return (
     <div className="flex flex-col w-full h-full bg-background overflow-hidden">
       <div className="flex-1 overflow-y-auto scrollbar-none pb-24 md:pb-8">
@@ -431,52 +395,6 @@ export default function Events() {
             {/* ══════════ QUESTS TAB ══════════ */}
             {tab === "quests" && (
               <motion.div key="quests" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="space-y-4">
-
-                {/* Daily Spin */}
-                <div className="bg-gradient-to-br from-violet-500/10 via-purple-500/5 to-indigo-500/10 border border-violet-500/20 rounded-2xl p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-9 h-9 rounded-xl bg-violet-500/20 flex items-center justify-center shadow-sm">
-                        <Sparkles size={17} className="text-violet-400" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-black text-foreground">Ежедневный спин</p>
-                        <p className="text-xs text-muted-foreground">{hasSpunToday ? "Вернись завтра" : "Крути и выигрывай ⚡"}</p>
-                      </div>
-                    </div>
-                    <AnimatePresence>
-                      {spinReward !== null && (
-                        <motion.div
-                          initial={{ scale: 0, opacity: 0 }}
-                          animate={{ scale: 1, opacity: 1 }}
-                          exit={{ scale: 0, opacity: 0 }}
-                          className="px-2.5 py-1 bg-amber-500/20 rounded-full border border-amber-500/30"
-                        >
-                          <span className="text-xs font-black text-amber-400">+{spinReward} ⚡</span>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                  <div className="flex gap-2 justify-center">
-                    {spinSlots.map((src, i) => (
-                      <motion.div
-                        key={i}
-                        animate={spinning ? { y: [0, -5, 0] } : {}}
-                        transition={{ duration: 0.12, repeat: Infinity, delay: i * 0.04 }}
-                        className="w-[72px] h-[68px] rounded-2xl bg-background border border-border shadow-inner flex items-center justify-center select-none"
-                      >
-                        <img src={src} alt="sticker" className="w-10 h-10 object-contain" draggable={false} />
-                      </motion.div>
-                    ))}
-                  </div>
-                  <button
-                    onClick={doSpin}
-                    disabled={spinning || hasSpunToday}
-                    className="w-full py-2.5 rounded-xl bg-gradient-to-r from-violet-500 to-purple-600 text-white font-bold text-sm shadow-lg shadow-violet-500/20 hover:opacity-90 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {spinning ? "🎰 Крутится..." : hasSpunToday ? "✓ Использовано сегодня" : "🎰 Крутить"}
-                  </button>
-                </div>
 
                 {/* Streak banner */}
                 <div className="relative rounded-2xl overflow-hidden bg-gradient-to-r from-orange-500/20 via-amber-500/10 to-yellow-500/5 border border-orange-500/20 p-4">

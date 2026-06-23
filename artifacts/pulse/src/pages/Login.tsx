@@ -364,16 +364,6 @@ export default function Login({ onLogin }: LoginProps) {
                   </Link>
                 </div>
 
-                <p className="mt-5 text-center text-[11px] text-muted-foreground/60 leading-relaxed">
-                  Продолжая, вы принимаете{" "}
-                  <Link href="/terms" className="text-muted-foreground hover:text-primary transition-colors underline underline-offset-2">
-                    Условия использования
-                  </Link>{" "}
-                  и{" "}
-                  <Link href="/privacy" className="text-muted-foreground hover:text-primary transition-colors underline underline-offset-2">
-                    Политику конфиденциальности
-                  </Link>
-                </p>
               </motion.div>
             )}
 
