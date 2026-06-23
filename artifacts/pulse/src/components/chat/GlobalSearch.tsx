@@ -215,9 +215,13 @@ export function GlobalSearch({ onClose, initialQuery = "" }: GlobalSearchProps) 
     return name.toLowerCase().includes(query.toLowerCase());
   }).slice(0, 5);
 
-  const globalNotInMy = globalChats.filter(gc =>
-    !(myChats || []).some((mc: Chat) => mc.id === gc.id)
-  );
+  const globalNotInMy = globalChats.filter(gc => {
+    const alreadyIn = (myChats || []).some((mc: Chat) => mc.id === gc.id);
+    if (alreadyIn) return false;
+    const isMember = gc.is_member === true || (gc.is_member as any) === "true" || (gc.is_member as any) === 1;
+    if (isMember) return true;
+    return gc.type === "channel";
+  });
 
   const hasAnyResults =
     filteredMyChats.length > 0 ||

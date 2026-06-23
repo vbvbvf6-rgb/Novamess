@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Sparkles, MessageSquare, Shield, Zap, Star, Bell, Palette } from "lucide-react";
+import { X, Sparkles, MessageSquare, Shield, Zap, Star, Bell, Palette, Bug, Lock } from "lucide-react";
 
-const APP_VERSION = "2.1.0";
+const APP_VERSION = "2.2.0";
 const STORAGE_KEY = "nova-whats-new-seen-version";
 
 interface ChangelogEntry {
@@ -16,44 +16,44 @@ const CHANGELOG: ChangelogEntry[] = [
   {
     icon: <Sparkles size={18} />,
     color: "text-amber-400 bg-amber-500/15",
-    title: "SVG-графика везде",
-    description: "Все иконки и эмодзи теперь используют векторный формат SVG — чёткость на любом экране.",
+    title: "Новые темы оформления",
+    description: "Добавлены 4 новые темы: «Закат», «Аметист», «Полночь» и «Лес». Переключайте в Настройках → Расширенные.",
+  },
+  {
+    icon: <Bug size={18} />,
+    color: "text-rose-400 bg-rose-500/15",
+    title: "Исправление ошибок",
+    description: "Устранён вылет приложения при открытии чата, исправлено обновление профиля при смене аккаунта.",
+  },
+  {
+    icon: <Shield size={18} />,
+    color: "text-green-400 bg-green-500/15",
+    title: "Улучшена безопасность",
+    description: "Усилена защита сессий. Ссылки на Политику конфиденциальности и Соглашение теперь открываются корректно.",
   },
   {
     icon: <MessageSquare size={18} />,
     color: "text-blue-400 bg-blue-500/15",
-    title: "Флаги стран в пикере",
-    description: "Флаги всех стран теперь отображаются корректно через Twemoji — больше никаких кодов.",
-  },
-  {
-    icon: <Star size={18} />,
-    color: "text-purple-400 bg-purple-500/15",
-    title: "Стикеры — скоро",
-    description: "Раздел стикеров временно скрыт. Мы готовим уникальный пак стикеров Aura — следите за обновлениями!",
-  },
-  {
-    icon: <Bell size={18} />,
-    color: "text-green-400 bg-green-500/15",
-    title: "Журнал изменений",
-    description: "Теперь при каждом обновлении вы видите это окно с новыми функциями. Всегда в курсе!",
-  },
-  {
-    icon: <Shield size={18} />,
-    color: "text-rose-400 bg-rose-500/15",
-    title: "Улучшена безопасность",
-    description: "Оптимизирована работа JWT-токенов и улучшена защита сессий.",
+    title: "Истории — только свои",
+    description: "Страница Историй теперь показывает только ваши истории. Истории контактов доступны через бар чатов.",
   },
   {
     icon: <Zap size={18} />,
     color: "text-orange-400 bg-orange-500/15",
     title: "Быстрее и стабильнее",
-    description: "Ускорена загрузка чатов, исправлены мелкие баги в интерфейсе.",
+    description: "Оптимизирована загрузка чатов, ускорен поиск, уменьшено потребление памяти.",
+  },
+  {
+    icon: <Lock size={18} />,
+    color: "text-purple-400 bg-purple-500/15",
+    title: "Приватность поиска",
+    description: "Закрытые группы больше не отображаются в поиске для тех, кто не является их участником.",
   },
   {
     icon: <Palette size={18} />,
     color: "text-cyan-400 bg-cyan-500/15",
-    title: "Railway-деплой",
-    description: "Приложение теперь полностью поддерживает деплой на Railway с автоматической конфигурацией.",
+    title: "Чёрный цвет аватара",
+    description: "В палитру цветов аватара добавлен чёрный цвет. Выбирайте в Настройках → Мой аккаунт.",
   },
 ];
 

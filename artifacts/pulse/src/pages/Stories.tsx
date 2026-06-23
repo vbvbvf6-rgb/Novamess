@@ -188,14 +188,14 @@ export default function Stories() {
               <p className="text-xs text-muted-foreground mt-1">24 часа</p>
             </motion.div>
 
-            {stories?.length === 0 && (
+            {(stories?.filter((g: any) => g.user?.id === currentUserId) ?? []).length === 0 && (
               <div className="col-span-full text-center text-muted-foreground mt-8 py-8">
-                <p className="font-medium">Нет историй</p>
-                <p className="text-sm mt-1 opacity-60">Истории ваших контактов появятся здесь</p>
+                <p className="font-medium">У вас нет историй</p>
+                <p className="text-sm mt-1 opacity-60">Нажмите «Добавить историю», чтобы поделиться моментом</p>
               </div>
             )}
 
-            {stories?.map((group: any) => {
+            {stories?.filter((group: any) => group.user?.id === currentUserId).map((group: any) => {
               const latestStory = group.stories[0];
               return (
                 <motion.div

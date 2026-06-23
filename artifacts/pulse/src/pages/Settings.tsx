@@ -35,7 +35,7 @@ import {
 import type { Lang } from "@/i18n/translations";
 
 const AVATAR_COLORS = [
-  "#3B82F6","#EC4899","#10B981","#F59E0B","#8B5CF6",
+  "#000000","#3B82F6","#EC4899","#10B981","#F59E0B","#8B5CF6",
   "#06B6D4","#EF4444","#F97316","#14B8A6","#84CC16",
   "#6366F1","#A855F7","#E11D48","#059669","#D97706",
 ];
@@ -1705,7 +1705,6 @@ export default function Settings() {
           {/* Group 4: Help */}
           <NavGroup>
             <NavItem id="faq"      icon={<HelpCircle size={16}/>} color="bg-teal-500"   label="Aura FAQ"                                   active={displaySection} onClick={setActiveSection}/>
-            <NavItem id="features" icon={<Layers size={16}/>}     color="bg-cyan-600"   label={lang==="ru"?"Возможности Aura":"Aura Features"} active={displaySection} onClick={setActiveSection}/>
             <NavItem id="support"  icon={<Shield size={16}/>}     color="bg-green-600"  label={lang==="ru"?"Поддержка":"Support"}             active={displaySection} onClick={setActiveSection}/>
           </NavGroup>
 
@@ -1752,7 +1751,6 @@ export default function Settings() {
             : displaySection === "prime"         ? "Aura Prime"
 
             : displaySection === "faq"           ? "Aura FAQ"
-            : displaySection === "features"      ? (lang==="ru"?"Возможности Aura":"Aura Features")
             : displaySection === "support"       ? (lang==="ru"?"Поддержка":"Support")
             : ""}
           </h2>
@@ -1818,16 +1816,6 @@ export default function Settings() {
                           className="flex items-center gap-2 px-3 py-2 bg-purple-500/10 border border-purple-500/30 rounded-xl text-sm text-purple-400 hover:bg-purple-500/20 transition-colors"
                         >
                           <span className="text-[12px]">🎬</span> {lang==="ru"?"Видео-аватар":"Video avatar"}
-                        </button>
-                      )}
-                      {(user as any)?.hasPrime && (
-                        <button
-                          type="button"
-                          onClick={handleGenerateAIAvatar}
-                          disabled={aiAvatarGenerating}
-                          className="flex items-center gap-2 px-3 py-2 bg-purple-500/10 border border-purple-500/30 rounded-xl text-sm text-purple-400 hover:bg-purple-500/20 transition-colors disabled:opacity-50"
-                        >
-                          <Wand2 size={14}/> {lang==="ru"?"AI аватар":"AI avatar"}
                         </button>
                       )}
                       {avatarUrl && (
@@ -2319,7 +2307,7 @@ export default function Settings() {
                   <ChevronRight size={18} className="text-muted-foreground"/>
                 </div>
 
-                <a href="/privacy" className="p-4 flex items-center justify-between hover:bg-secondary transition-colors border-t border-border/50">
+                <div className="p-4 flex items-center justify-between hover:bg-secondary transition-colors border-t border-border/50 cursor-pointer" onClick={() => setLocation("/privacy")}>
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-green-500/10 text-green-500 rounded-xl"><Shield size={18}/></div>
                     <div>
@@ -2328,9 +2316,9 @@ export default function Settings() {
                     </div>
                   </div>
                   <ChevronRight size={18} className="text-muted-foreground"/>
-                </a>
+                </div>
 
-                <a href="/terms" className="p-4 flex items-center justify-between hover:bg-secondary transition-colors border-t border-border/50">
+                <div className="p-4 flex items-center justify-between hover:bg-secondary transition-colors border-t border-border/50 cursor-pointer" onClick={() => setLocation("/terms")}>
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-orange-500/10 text-orange-500 rounded-xl"><FileText size={18}/></div>
                     <div>
@@ -2339,7 +2327,7 @@ export default function Settings() {
                     </div>
                   </div>
                   <ChevronRight size={18} className="text-muted-foreground"/>
-                </a>
+                </div>
 
                 {/* Delete Account */}
                 <div className="border-t border-border/50">
@@ -2412,25 +2400,6 @@ export default function Settings() {
                   label={lang==="ru"?"Группировка по дате":"Group by Date"}
                   desc={lang==="ru"?"Разделять сообщения по датам":"Separate messages by date"}
                   right={<Switch checked={msgGroupDate} onCheckedChange={v => { setMsgGroupDate(v); setLs("pulse-msg-group-date", v); toast({ title: t("common.saved") }); }}/>}/>
-                <div className="p-4">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="p-2 bg-orange-500/10 text-orange-500 rounded-xl"><Type size={18}/></div>
-                    <div>
-                      <p className="text-sm font-medium">{lang==="ru"?"Размер эмодзи":"Emoji Size"}</p>
-                      <p className="text-xs text-muted-foreground">{lang==="ru"?"Размер больших эмодзи в сообщениях":"Size of large emoji in messages"}</p>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    {[{ value:"small", label:lang==="ru"?"Маленький":"Small", px:"20px" },{ value:"medium", label:lang==="ru"?"Средний":"Medium", px:"28px" },{ value:"large", label:lang==="ru"?"Большой":"Large", px:"36px" }].map(opt => (
-                      <button key={opt.value} onClick={() => { setEmojiSize(opt.value); setLs("pulse-emoji-size", opt.value); toast({ title: t("common.saved") }); }}
-                        className={`py-3 rounded-xl border text-center transition-all flex flex-col items-center gap-1 ${emojiSize===opt.value ? "border-primary bg-primary/8 text-primary" : "border-border hover:border-primary/30"}`}
-                        style={{ fontSize: opt.px }}>
-                        😊
-                        <span className="text-xs text-muted-foreground" style={{ fontSize:"11px" }}>{opt.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
               </Section>
             </div>
           )}
@@ -2619,7 +2588,6 @@ export default function Settings() {
           {displaySection === "faq" && <FaqSection lang={lang} />}
 
           {/* ─── PULSE FEATURES ────────────────────────────── */}
-          {displaySection === "features" && <FeaturesSection lang={lang} navigate={(path: string) => { setLocation(path); }} />}
 
           {/* ─── SUPPORT ───────────────────────────────────── */}
           {displaySection === "support" && <SupportSection lang={lang} user={user} t={t} currentStatusOpt={currentStatusOpt} onNavigate={setActiveSection} />}
