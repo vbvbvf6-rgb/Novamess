@@ -3,7 +3,7 @@ import { useGetChatById, useGetMessages, getGetMessagesQueryKey, useMarkChatAsRe
 import { useP2PChannel } from "@/hooks/useP2PChannel";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useLastSeen } from "@/hooks/useLastSeen";
-import { Phone, Video, MoreVertical, ArrowLeft, Menu, Search, BellOff, Bell, Pin, PinOff, User, Trash2, X, Timer, Flame, ChevronRight, ChevronDown, ChevronUp, Settings, Crown, Palette, Check, Sparkles, Lock, MessageSquare, Users, Megaphone } from "lucide-react";
+import { Phone, Video, MoreVertical, ArrowLeft, Menu, Search, BellOff, Bell, Pin, PinOff, User, Trash2, X, Timer, Flame, ChevronRight, ChevronDown, ChevronUp, Settings, Crown, Palette, Check, Sparkles, Lock, MessageSquare, Users, Megaphone, UserCheck } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChatInfoPanel } from "./ChatInfoPanel";
 import { useAppContext } from "@/contexts/AppContext";
@@ -287,7 +287,7 @@ function formatAutoDeleteLabel(seconds: number | null | undefined): string {
 }
 
 export function ChatWindow({ chatId }: ChatWindowProps) {
-  const { setSelectedChatId, setActiveCall, setTypingForChat, startCall, currentUserId } = useAppContext();
+  const { setSelectedChatId, setActiveCall, setTypingForChat, startCall, inviteToCall, currentUserId } = useAppContext();
   const { permission, requestPermission, notify } = useNotifications();
   const { t } = useLanguage();
   const [, setLocation] = useLocation();
@@ -343,6 +343,10 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
   const [summaryText, setSummaryText] = useState("");
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [showGroupCallModal, setShowGroupCallModal] = useState<"audio" | "video" | null>(null);
+  const [groupCallMembers, setGroupCallMembers] = useState<any[]>([]);
+  const [groupCallLoading, setGroupCallLoading] = useState(false);
+  const [groupCallSelected, setGroupCallSelected] = useState<Set<number>>(new Set());
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastMessageCountRef = useRef<number>(0);
   const sseRef = useRef<EventSource | null>(null);
@@ -643,6 +647,45 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
       setSummaryText("Не удалось получить резюме. Попробуйте позже.");
     } finally {
       setSummaryLoading(false);
+    }
+  };
+
+  const handleOpenGroupCall = async (type: "audio" | "video") => {
+    setShowGroupCallModal(type);
+    setGroupCallSelected(new Set());
+    setGroupCallLoading(true);
+    const token = sessionStorage.getItem("pulse-token");
+    try {
+      const res = await fetch(`/api/chats/${chatId}/members`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+      if (res.ok) {
+        const data = await res.json();
+        setGroupCallMembers(data.filter((m: any) => m.userId !== currentUserId));
+      }
+    } catch {}
+    setGroupCallLoading(false);
+  };
+
+  const handleStartGroupCall = async () => {
+    const selected = [...groupCallSelected];
+    const callType = showGroupCallModal || "audio";
+    if (selected.length === 0) return;
+    setShowGroupCallModal(null);
+    setCalling(true);
+    try {
+      await startCall(selected[0], chatId, callType);
+      for (let i = 1; i < selected.length; i++) {
+        await new Promise(r => setTimeout(r, 1500));
+        try { await inviteToCall(selected[i]); } catch {}
+      }
+    } catch (err: any) {
+      const msg = err?.message || "";
+      if (msg === "MEDIA_PERMISSION_DENIED") {
+        toast({ title: "Доступ запрещён", description: "Разрешите доступ к микрофону/камере", variant: "destructive" });
+      } else {
+        toast({ title: "Не удалось начать звонок", variant: "destructive" });
+      }
+    } finally {
+      setCalling(false);
     }
   };
 
@@ -984,7 +1027,7 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
                 onClick={() => handleStartCall("audio")}
                 disabled={calling}
                 className="hidden md:flex w-10 h-10 items-center justify-center hover:bg-secondary rounded-xl transition-all hover:text-foreground disabled:opacity-50"
-                title="Audio call"
+                title="Аудиозвонок"
               >
                 <Phone size={20} />
               </button>
@@ -992,7 +1035,27 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
                 onClick={() => handleStartCall("video")}
                 disabled={calling}
                 className="hidden md:flex w-10 h-10 items-center justify-center hover:bg-secondary rounded-xl transition-all hover:text-foreground disabled:opacity-50"
-                title="Video call"
+                title="Видеозвонок"
+              >
+                <Video size={22} />
+              </button>
+            </>
+          )}
+          {(chat.type === "group") && (
+            <>
+              <button
+                onClick={() => handleOpenGroupCall("audio")}
+                disabled={calling}
+                className="hidden md:flex w-10 h-10 items-center justify-center hover:bg-secondary rounded-xl transition-all hover:text-foreground disabled:opacity-50"
+                title="Групповой аудиозвонок"
+              >
+                <Phone size={20} />
+              </button>
+              <button
+                onClick={() => handleOpenGroupCall("video")}
+                disabled={calling}
+                className="hidden md:flex w-10 h-10 items-center justify-center hover:bg-secondary rounded-xl transition-all hover:text-foreground disabled:opacity-50"
+                title="Групповой видеозвонок"
               >
                 <Video size={22} />
               </button>
@@ -1798,6 +1861,55 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
               className="w-full h-12 rounded-xl bg-card border border-border hover:bg-secondary font-bold text-[15px] transition-colors"
             >
               Закрыть
+            </button>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* ── Group call member picker ────────────────────────────────────── */}
+      <AlertDialog open={!!showGroupCallModal} onOpenChange={open => !open && setShowGroupCallModal(null)}>
+        <AlertDialogContent className="max-w-sm rounded-[24px] p-0 overflow-hidden">
+          <div className="px-6 pt-6 pb-4 bg-card border-b border-border text-center">
+            <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-3">
+              {showGroupCallModal === "video" ? <Video size={28} className="text-primary" /> : <Phone size={28} className="text-primary" />}
+            </div>
+            <h2 className="font-black text-xl mb-1">Групповой {showGroupCallModal === "video" ? "видеозвонок" : "звонок"}</h2>
+            <p className="text-sm font-medium text-muted-foreground">Выберите участников для звонка</p>
+          </div>
+          <div className="max-h-[320px] overflow-y-auto p-2 scrollbar-none">
+            {groupCallLoading ? (
+              <div className="flex justify-center py-8"><div className="w-8 h-8 rounded-full border-4 border-primary border-t-transparent animate-spin" /></div>
+            ) : groupCallMembers.length === 0 ? (
+              <p className="text-center py-8 text-muted-foreground text-sm">Нет других участников</p>
+            ) : groupCallMembers.map((m: any) => {
+              const uid = m.userId ?? m.id;
+              const name = m.user?.displayName ?? m.displayName ?? "Пользователь";
+              const avatar = m.user?.avatarUrl ?? m.avatarUrl;
+              const selected = groupCallSelected.has(uid);
+              return (
+                <button key={uid}
+                  onClick={() => setGroupCallSelected(prev => {
+                    const next = new Set(prev);
+                    if (next.has(uid)) next.delete(uid); else next.add(uid);
+                    return next;
+                  })}
+                  className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all ${selected ? "bg-primary/15 border border-primary/30" : "hover:bg-secondary"}`}
+                >
+                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center shrink-0 overflow-hidden">
+                    {avatar ? <img src={avatar} className="w-full h-full object-cover" /> : <span className="text-primary font-bold text-sm">{name[0]?.toUpperCase()}</span>}
+                  </div>
+                  <span className="text-sm font-semibold flex-1 text-left">{name}</span>
+                  {selected && <UserCheck size={18} className="text-primary shrink-0" />}
+                </button>
+              );
+            })}
+          </div>
+          <div className="p-4 bg-secondary/50 border-t border-border flex gap-2">
+            <button onClick={() => setShowGroupCallModal(null)} className="flex-1 h-12 rounded-xl bg-card border border-border hover:bg-secondary font-bold text-sm transition-colors">Отмена</button>
+            <button onClick={handleStartGroupCall} disabled={groupCallSelected.size === 0}
+              className="flex-1 h-12 rounded-xl bg-primary text-primary-foreground font-bold text-sm transition-all disabled:opacity-40 flex items-center justify-center gap-2">
+              {showGroupCallModal === "video" ? <Video size={16}/> : <Phone size={16}/>}
+              Позвонить ({groupCallSelected.size})
             </button>
           </div>
         </AlertDialogContent>

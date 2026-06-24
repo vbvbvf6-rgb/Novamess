@@ -14,7 +14,7 @@ interface BottomNavProps {
 export function BottomNav({ onOpenPalette, onOpenSidebar }: BottomNavProps) {
   const [location] = useLocation();
   const { data: chats } = useGetChats();
-  const { selectedChatId } = useAppContext();
+  const { selectedChatId, activeCall } = useAppContext();
 
   const totalUnread = chats?.reduce((sum: number, c: any) => sum + (c.unreadCount || 0), 0) ?? 0;
 
@@ -25,6 +25,7 @@ export function BottomNav({ onOpenPalette, onOpenSidebar }: BottomNavProps) {
     { href: "/feed",     icon: Rss,           label: "Лента",    badge: 0 },
   ];
 
+  if (activeCall) return null;
   if (selectedChatId && location === "/") return null;
 
   return (

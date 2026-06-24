@@ -317,20 +317,24 @@ router.put("/chats/:chatId", async (req, res) => {
     const uid = req.currentUserId;
     const chatId = Number(req.params.chatId);
     const body = UpdateChatBody.parse(req.body);
+    const raw = req.body as Record<string, unknown>;
 
     if (body.isMuted !== undefined) {
       await db.update(chatMembersTable)
         .set({ isMuted: body.isMuted })
         .where(and(eq(chatMembersTable.chatId, chatId), eq(chatMembersTable.userId, uid)));
     }
-    const hasChatUpdate = [body.name, body.description, body.avatarUrl, (body as any).slowMode, (body as any).whoCanSend, (body as any).isPublic].some(v => v !== undefined);
+    const rawSlowMode = raw.slowMode;
+    const rawWhoCanSend = raw.whoCanSend;
+    const rawIsPublic = raw.isPublic;
+    const hasChatUpdate = [body.name, body.description, body.avatarUrl, rawSlowMode, rawWhoCanSend, rawIsPublic].some(v => v !== undefined);
     if (hasChatUpdate) {
       if (body.name !== undefined) await db.execute(sql`UPDATE chats SET name = ${body.name} WHERE id = ${chatId}`);
       if (body.description !== undefined) await db.execute(sql`UPDATE chats SET description = ${body.description} WHERE id = ${chatId}`);
       if (body.avatarUrl !== undefined) await db.execute(sql`UPDATE chats SET avatar_url = ${body.avatarUrl} WHERE id = ${chatId}`);
-      if ((body as any).slowMode !== undefined) await db.execute(sql`UPDATE chats SET slow_mode = ${(body as any).slowMode} WHERE id = ${chatId}`);
-      if ((body as any).whoCanSend !== undefined) await db.execute(sql`UPDATE chats SET who_can_send = ${(body as any).whoCanSend} WHERE id = ${chatId}`);
-      if ((body as any).isPublic !== undefined) await db.execute(sql`UPDATE chats SET is_public = ${(body as any).isPublic} WHERE id = ${chatId}`);
+      if (rawSlowMode !== undefined) await db.execute(sql`UPDATE chats SET slow_mode = ${rawSlowMode as number} WHERE id = ${chatId}`);
+      if (rawWhoCanSend !== undefined) await db.execute(sql`UPDATE chats SET who_can_send = ${rawWhoCanSend as string} WHERE id = ${chatId}`);
+      if (rawIsPublic !== undefined) await db.execute(sql`UPDATE chats SET is_public = ${rawIsPublic as boolean} WHERE id = ${chatId}`);
     }
 
     const chat = await buildChat(chatId, uid);
