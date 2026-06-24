@@ -47,19 +47,42 @@ let queryClient = new QueryClient();
 
 function LandscapeBlock() {
   const [on, setOn] = useState(false);
+
   useEffect(() => {
-    const mq = window.matchMedia("(orientation: landscape) and (max-height: 500px)");
+    // Try to lock orientation via the Screen Orientation API (supported in Chrome/Android WebView)
+    const tryLock = async () => {
+      try {
+        if (screen.orientation && (screen.orientation as any).lock) {
+          await (screen.orientation as any).lock("portrait");
+        }
+      } catch {
+        // Not supported or requires fullscreen — fall back to CSS overlay
+      }
+    };
+    tryLock();
+
+    // Only block on real touch devices (phones/tablets) — desktop browsers always have maxTouchPoints = 0
+    // In Replit iframe preview maxTouchPoints is also 0, so this won't fire there
+    const isTouchDevice = navigator.maxTouchPoints > 0;
+    if (!isTouchDevice) return;
+
+    const mq = window.matchMedia("(orientation: landscape) and (max-width: 1280px)");
     const update = () => setOn(mq.matches);
     update();
     mq.addEventListener("change", update);
     return () => mq.removeEventListener("change", update);
   }, []);
+
   if (!on) return null;
   return (
     <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-background gap-5 select-none">
-      <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
-        <RotateCcw size={32} className="text-primary animate-spin" style={{ animationDuration: "3s" }} />
-      </div>
+      <motion.div
+        animate={{ rotate: [0, 90] }}
+        transition={{ duration: 0.8, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
+        className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center"
+      >
+        <RotateCcw size={32} className="text-primary" />
+      </motion.div>
       <div className="text-center px-8">
         <p className="font-black text-xl mb-1">Поверните устройство</p>
         <p className="text-muted-foreground text-sm">Aura работает только в портретной ориентации</p>
