@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAppContext } from "@/contexts/AppContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Contacts() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -21,6 +22,7 @@ export default function Contacts() {
   const queryClient = useQueryClient();
   const { setSelectedChatId } = useAppContext();
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
 
   const token = sessionStorage.getItem("pulse-token");
   const authHeader: Record<string, string> = token ? { "Authorization": `Bearer ${token}` } : {};
@@ -66,9 +68,11 @@ export default function Contacts() {
         queryClient.invalidateQueries({ queryKey: getGetChatsQueryKey() });
         setSelectedChatId(chat.id);
         setLocation("/");
+      } else {
+        toast({ title: "Ошибка", description: "Не удалось открыть чат", variant: "destructive" });
       }
     } catch {
-      setLocation("/");
+      toast({ title: "Ошибка", description: "Нет соединения с сервером", variant: "destructive" });
     }
   };
 

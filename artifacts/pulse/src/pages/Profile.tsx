@@ -133,7 +133,7 @@ const ANIMATED_STATUSES = [
 
 function QRCodeSection({ user }: { user: any }) {
   const [copied, setCopied] = useState(false);
-  const profileUrl = `https://nova.app/user/${user?.username || user?.id}`;
+  const profileUrl = `${window.location.origin}/user/${user?.username || user?.id}`;
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(profileUrl)}&color=7c3aed&bgcolor=ffffff`;
 
   const handleShare = () => {

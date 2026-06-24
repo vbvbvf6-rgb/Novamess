@@ -39,12 +39,18 @@ function AdminBadge() {
 }
 
 function ImageLightbox({ src, onClose }: { src: string; onClose: () => void }) {
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, []);
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+      className="fixed inset-0 z-[99999] bg-black/90 flex items-center justify-center p-4"
       onClick={onClose}
     >
       <button

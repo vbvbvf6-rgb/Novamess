@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAppContext } from "@/contexts/AppContext";
 import { useLocation } from "wouter";
+import { useToast } from "@/hooks/use-toast";
 
 const STORY_DURATION = 5000;
 
@@ -25,7 +26,7 @@ async function compressStoryImage(file: File, maxPx = 1280, quality = 0.85): Pro
       canvas.width = width;
       canvas.height = height;
       const ctx = canvas.getContext("2d");
-      if (!ctx) { resolve(url); return; }
+      if (!ctx) { URL.revokeObjectURL(url); resolve(""); return; }
       ctx.drawImage(img, 0, 0, width, height);
       resolve(canvas.toDataURL("image/jpeg", quality));
     };
@@ -86,6 +87,7 @@ export default function Stories() {
   const [viewingIndex, setViewingIndex] = useState(0);
   const [viewCount, setViewCount] = useState<number | null>(null);
   const { currentUserId } = useAppContext();
+  const { toast } = useToast();
 
   // Auto-open a specific user's story when navigated with ?userId=X
   useEffect(() => {
@@ -118,7 +120,11 @@ export default function Stories() {
     if (!file) return;
     e.target.value = "";
     const compressed = await compressStoryImage(file);
-    if (compressed) setStoryImageUrl(compressed);
+    if (compressed) {
+      setStoryImageUrl(compressed);
+    } else {
+      toast({ title: "Ошибка", description: "Не удалось загрузить изображение. Попробуйте другой файл.", variant: "destructive" });
+    }
   };
 
   const handleCreateStory = async () => {

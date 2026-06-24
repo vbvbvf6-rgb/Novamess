@@ -48,7 +48,7 @@ async function compressImage(file: File, maxPx = 960, quality = 0.75): Promise<s
       const canvas = document.createElement("canvas");
       canvas.width = width; canvas.height = height;
       const ctx = canvas.getContext("2d");
-      if (!ctx) { resolve(url); return; }
+      if (!ctx) { readFileAsDataUrl(file).then(resolve).catch(reject); return; }
       ctx.drawImage(img, 0, 0, width, height);
       resolve(canvas.toDataURL("image/jpeg", quality));
     };
@@ -116,6 +116,13 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
   const stopTypingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevChatIdRef = useRef<number>(chatId);
   const prevEditRef = useRef<Message | null | undefined>(null);
+  // Track current text in a ref so the cleanup closure always sees the latest value
+  // even when textareaRef.current is null (DOM already removed on unmount).
+  const textValueRef = useRef<string>("");
+
+  // Keep textValueRef in sync with the text state so the draft cleanup closure
+  // always reads the latest value (even when textareaRef.current is null on unmount).
+  useEffect(() => { textValueRef.current = text; });
 
   const draftKey = `pulse-draft-${chatId}`;
 
@@ -124,8 +131,9 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
     if (saved) setText(saved);
     prevChatIdRef.current = chatId;
     return () => {
-      if (textareaRef.current && textareaRef.current.value.trim()) {
-        localStorage.setItem(`pulse-draft-${prevChatIdRef.current}`, textareaRef.current.value);
+      const currentText = textValueRef.current.trim();
+      if (currentText) {
+        localStorage.setItem(`pulse-draft-${prevChatIdRef.current}`, currentText);
       } else {
         localStorage.removeItem(`pulse-draft-${prevChatIdRef.current}`);
       }

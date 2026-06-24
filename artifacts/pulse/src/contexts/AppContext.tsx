@@ -139,6 +139,13 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
   // ── socket ────────────────────────────────────────────────────────────────
   const getSocket = useCallback((): Socket => {
     if (socketRef.current?.connected) return socketRef.current;
+    // Clean up the old disconnected socket before creating a new one
+    // to prevent duplicate event listeners from accumulating.
+    if (socketRef.current) {
+      socketRef.current.removeAllListeners();
+      socketRef.current.disconnect();
+      socketRef.current = null;
+    }
     const token = sessionStorage.getItem("pulse-token");
     // When VITE_API_URL is set (Vercel split-deploy) connect Socket.IO directly
     // to the backend. Otherwise use the current origin (single-server deploy).

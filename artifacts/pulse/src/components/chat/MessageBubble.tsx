@@ -3,6 +3,7 @@ import { Message, useGetMe, useGetChats } from "@workspace/api-client-react";
 import { format } from "date-fns";
 import { useAppContext } from "@/contexts/AppContext";
 import { useQueryClient } from "@tanstack/react-query";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { getGetMessagesQueryKey, getGetChatsQueryKey } from "@workspace/api-client-react";
 import { cn } from "@/lib/utils";
 import { Check, CheckCheck, Clock, X, Info, Play, Pause, Mic, Reply, Pencil, Trash2, Copy, SmilePlus, Languages, Pin, PinOff, BarChart2, Eye, Crown, Wand2, MessageSquare, Shield, Sparkles, Forward, Search } from "lucide-react";
@@ -399,6 +400,7 @@ function HighlightText({ text, query, isMine }: { text: string; query: string; i
 export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin, typingOut, onTypingDone, searchHighlight, isActiveMatch, messageRef, isChannel, onComment, isSenderAdmin }: MessageBubbleProps) {
   const { currentUserId } = useAppContext();
   const { data: me } = useGetMe();
+  const { lang } = useLanguage();
   const queryClient = useQueryClient();
   const isMine = message.senderId === currentUserId;
   const viewerIsPrimePlus = !!(me as any)?.hasPrime && (me as any)?.primeTier === "prime_plus";
@@ -613,7 +615,7 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
       const res = await fetch("/api/ai/translate", {
         method: "POST",
         headers,
-        body: JSON.stringify({ text: message.text, targetLang: "ru" }),
+        body: JSON.stringify({ text: message.text, targetLang: lang }),
       });
       if (res.ok) {
         const data = await res.json();
@@ -635,13 +637,24 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
     try {
       const token = sessionStorage.getItem("pulse-token");
       const authHeaders = { "Content-Type": "application/json", ...(token ? { "Authorization": `Bearer ${token}` } : {}) };
-      const forwardText = message.type === "text"
-        ? message.text || ""
-        : message.type === "image" ? "📷 Фото" : message.type === "audio" ? "🎤 Голосовое" : "Сообщение";
+      // Build payload: for media messages include type + mediaUrl so the forwarded
+      // message actually shows the photo/audio instead of just a text description.
+      const isMedia = message.type === "image" || message.type === "audio" || message.type === "sticker";
+      const payload: Record<string, unknown> = { chatId: targetChatId };
+      if (isMedia && message.mediaUrl) {
+        payload.type = message.type;
+        payload.mediaUrl = message.mediaUrl;
+        payload.text = message.text || undefined;
+      } else {
+        const forwardText = message.type === "text"
+          ? message.text || ""
+          : message.type === "image" ? "📷 Фото" : message.type === "audio" ? "🎤 Голосовое" : "Сообщение";
+        payload.text = `⤵️ ${forwardText}`;
+      }
       await fetch(`/api/messages`, {
         method: "POST",
         headers: authHeaders,
-        body: JSON.stringify({ chatId: targetChatId, text: `⤵️ ${forwardText}` }),
+        body: JSON.stringify(payload),
       });
       queryClient.invalidateQueries({ queryKey: getGetChatsQueryKey() });
     } catch {} finally {

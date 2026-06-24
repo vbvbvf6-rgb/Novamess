@@ -636,26 +636,46 @@ function SpeakersSection({ lang }: { lang: string }) {
     } catch { setPermission("denied"); }
   };
 
+  const micRafRef = useRef<number | null>(null);
+  const micStreamRef = useRef<MediaStream | null>(null);
+  const micCtxRef = useRef<AudioContext | null>(null);
+
+  const stopMicTest = useCallback(() => {
+    stopMicRef.current = true;
+    if (micRafRef.current !== null) { cancelAnimationFrame(micRafRef.current); micRafRef.current = null; }
+    micStreamRef.current?.getTracks().forEach(t => t.stop());
+    micStreamRef.current = null;
+    micCtxRef.current?.close().catch(() => {});
+    micCtxRef.current = null;
+    setTesting(null);
+    setMicLevel(0);
+  }, []);
+
+  // Ensure mic stream is released if user navigates away mid-test
+  useEffect(() => () => stopMicTest(), [stopMicTest]);
+
   const testMic = async () => {
-    if (testing === "mic") { stopMicRef.current = true; setTesting(null); setMicLevel(0); return; }
+    if (testing === "mic") { stopMicTest(); return; }
     stopMicRef.current = false;
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      micStreamRef.current = stream;
       setTesting("mic");
       const ctx = new AudioContext();
+      micCtxRef.current = ctx;
       const analyser = ctx.createAnalyser();
       ctx.createMediaStreamSource(stream).connect(analyser);
       analyser.fftSize = 64;
       const arr = new Uint8Array(analyser.frequencyBinCount);
       const tick = () => {
-        if (stopMicRef.current) { stream.getTracks().forEach(t => t.stop()); ctx.close(); return; }
+        if (stopMicRef.current) return;
         analyser.getByteFrequencyData(arr);
         const avg = arr.reduce((a, b) => a + b, 0) / arr.length;
         setMicLevel(avg);
-        requestAnimationFrame(tick);
+        micRafRef.current = requestAnimationFrame(tick);
       };
-      tick();
-      setTimeout(() => { stopMicRef.current = true; stream.getTracks().forEach(t => t.stop()); ctx.close(); setTesting(null); setMicLevel(0); }, 5000);
+      micRafRef.current = requestAnimationFrame(tick);
+      setTimeout(() => stopMicTest(), 5000);
     } catch { setPermission("denied"); }
   };
 
