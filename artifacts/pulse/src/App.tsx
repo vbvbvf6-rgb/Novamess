@@ -10,7 +10,8 @@ import { AddAccountDialog } from "@/components/layout/AddAccountDialog";
 import { getSavedAccounts, saveAccount, removeAccount, SavedAccount } from "@/lib/accounts";
 import { ScreenLock } from "@/components/ScreenLock";
 import { motion, AnimatePresence } from "framer-motion";
-import { Clock, LogOut, ShieldCheck, Megaphone, X, Download, RefreshCw } from "lucide-react";
+import { Clock, LogOut, ShieldCheck, Megaphone, X, Download, RefreshCw, RotateCcw } from "lucide-react";
+
 import { useNotifications } from "@/hooks/useNotifications";
 import { PwaInstallPrompt } from "@/components/PwaInstallPrompt";
 import { useServiceWorkerUpdate } from "@/hooks/useServiceWorkerUpdate";
@@ -43,6 +44,29 @@ import Privacy from "@/pages/Privacy";
 import Terms from "@/pages/Terms";
 
 let queryClient = new QueryClient();
+
+function LandscapeBlock() {
+  const [on, setOn] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(orientation: landscape) and (max-height: 500px)");
+    const update = () => setOn(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+  if (!on) return null;
+  return (
+    <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-background gap-5 select-none">
+      <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
+        <RotateCcw size={32} className="text-primary animate-spin" style={{ animationDuration: "3s" }} />
+      </div>
+      <div className="text-center px-8">
+        <p className="font-black text-xl mb-1">Поверните устройство</p>
+        <p className="text-muted-foreground text-sm">Aura работает только в портретной ориентации</p>
+      </div>
+    </div>
+  );
+}
 
 interface MainAppProps {
   onLogout: () => void;
@@ -619,6 +643,7 @@ function App() {
       overflow: "hidden",
     }}>
     <ErrorBoundary>
+    <LandscapeBlock />
     <LanguageProvider>
       <QueryClientProvider client={queryClient}>
         <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
