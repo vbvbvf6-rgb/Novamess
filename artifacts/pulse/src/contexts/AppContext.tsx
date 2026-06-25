@@ -398,20 +398,35 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
 
   // ── startCall ─────────────────────────────────────────────────────────────
   const startCall = useCallback(async (calleeId: number, chatId: number | null, type: "audio" | "video") => {
-    // 1. Get media — always falls back to silent stream, never throws
+    // 1. Get media — always falls back gracefully, never throws
     let stream: MediaStream;
     try {
       if (navigator.mediaDevices?.getUserMedia) {
         stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: type === "video" });
       } else {
         stream = createSilentStream();
+        window.dispatchEvent(new CustomEvent("pulse:call-error", { detail: { message: "Медиаустройства недоступны в этом браузере." } }));
       }
     } catch (mediaErr: any) {
-      if (type === "video" && (mediaErr.name === "NotFoundError" || mediaErr.name === "DevicesNotFoundError")) {
+      const errName: string = mediaErr?.name ?? "";
+      if (type === "video" && (errName === "NotFoundError" || errName === "DevicesNotFoundError")) {
+        // Camera not found — try audio only
         try { stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false }); }
         catch { stream = createSilentStream(); }
+        window.dispatchEvent(new CustomEvent("pulse:call-error", { detail: { message: "Камера не найдена. Видео недоступно." } }));
+      } else if (errName === "NotAllowedError" || errName === "PermissionDeniedError") {
+        // User denied camera/mic — try audio-only as fallback for video calls
+        if (type === "video") {
+          try { stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false }); }
+          catch { stream = createSilentStream(); }
+          window.dispatchEvent(new CustomEvent("pulse:call-error", { detail: { message: "Доступ к камере запрещён. Видео недоступно." } }));
+        } else {
+          stream = createSilentStream();
+          window.dispatchEvent(new CustomEvent("pulse:call-error", { detail: { message: "Доступ к микрофону запрещён." } }));
+        }
       } else {
         stream = createSilentStream();
+        window.dispatchEvent(new CustomEvent("pulse:call-error", { detail: { message: "Не удалось получить доступ к медиаустройствам." } }));
       }
     }
     localStreamRef.current = stream;
@@ -489,10 +504,31 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
     // 1. Get media — never throws
     let stream: MediaStream;
     try {
-      stream = navigator.mediaDevices?.getUserMedia
-        ? await navigator.mediaDevices.getUserMedia({ audio: true, video: call.type === "video" })
-        : createSilentStream();
-    } catch { stream = createSilentStream(); }
+      if (navigator.mediaDevices?.getUserMedia) {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: call.type === "video" });
+      } else {
+        stream = createSilentStream();
+        window.dispatchEvent(new CustomEvent("pulse:call-error", { detail: { message: "Медиаустройства недоступны в этом браузере." } }));
+      }
+    } catch (mediaErr: any) {
+      const errName: string = mediaErr?.name ?? "";
+      if (call.type === "video" && (errName === "NotFoundError" || errName === "DevicesNotFoundError")) {
+        try { stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false }); }
+        catch { stream = createSilentStream(); }
+        window.dispatchEvent(new CustomEvent("pulse:call-error", { detail: { message: "Камера не найдена. Видео недоступно." } }));
+      } else if (errName === "NotAllowedError" || errName === "PermissionDeniedError") {
+        if (call.type === "video") {
+          try { stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false }); }
+          catch { stream = createSilentStream(); }
+          window.dispatchEvent(new CustomEvent("pulse:call-error", { detail: { message: "Доступ к камере запрещён. Видео недоступно." } }));
+        } else {
+          stream = createSilentStream();
+          window.dispatchEvent(new CustomEvent("pulse:call-error", { detail: { message: "Доступ к микрофону запрещён." } }));
+        }
+      } else {
+        stream = createSilentStream();
+      }
+    }
     localStreamRef.current = stream;
     setLocalStream(stream);
 

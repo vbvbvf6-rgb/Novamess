@@ -504,7 +504,7 @@ export function ActiveCall() {
                 className="cursor-grab active:cursor-grabbing"
               >
                 <div className="w-full h-full rounded-2xl overflow-hidden border-2 border-white/20 shadow-2xl bg-neutral-800">
-                  {localStream && !isVideoOff ? (
+                  {localStream && !isVideoOff && hasLocalVideo ? (
                     <video
                       ref={localVideoRef}
                       autoPlay
@@ -513,8 +513,11 @@ export function ActiveCall() {
                       className={`w-full h-full object-cover ${!isScreenSharing ? "scale-x-[-1]" : ""}`}
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-neutral-700">
+                    <div className="w-full h-full flex flex-col items-center justify-center gap-1 bg-neutral-700">
                       <CameraOff size={20} className="text-white/30" />
+                      {!isVideoOff && !hasLocalVideo && (
+                        <span className="text-white/30 text-[9px] text-center px-1">Камера недоступна</span>
+                      )}
                     </div>
                   )}
                   {isScreenSharing && (
