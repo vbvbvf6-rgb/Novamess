@@ -2,7 +2,7 @@
   "version": 2,
   "installCommand": "pnpm install",
   "buildCommand": "BASE_PATH=/ pnpm --filter @workspace/pulse run build && pnpm --filter @workspace/api-server run build",
-  "outputDirectory": "artifacts/pulse/dist/public",
+  "outputDirectory": "artifacts/pulse/dist",
   "framework": null,
   "rewrites": [
     { "source": "/api/:path*", "destination": "/api/server" },
