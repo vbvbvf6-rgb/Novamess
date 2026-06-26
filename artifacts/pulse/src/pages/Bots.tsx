@@ -973,7 +973,8 @@ export default function Bots() {
                           style={{ background: bot.avatar_color }}
                           onClick={(e) => { e.stopPropagation(); avatarUploadBotRef.current = bot.bot_user_id; avatarInputRef.current?.click(); }}
                         >
-                          {bot.avatar_url ? <img src={bot.avatar_url} alt="" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} /> : bot.display_name[0]?.toUpperCase()}
+                          <span className="absolute inset-0 flex items-center justify-center">{bot.display_name[0]?.toUpperCase()}</span>
+                          {bot.avatar_url && <img src={bot.avatar_url} alt="" className="absolute inset-0 w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />}
                           <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
                             {uploadingAvatar === bot.bot_user_id ? <RefreshCw size={14} className="text-white animate-spin" /> : <Camera size={14} className="text-white" />}
                           </div>

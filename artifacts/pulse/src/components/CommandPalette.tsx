@@ -194,12 +194,11 @@ export function CommandPalette({ open, onClose }: Props) {
                       >
                         {(item.group === "chat" || item.group === "contact") ? (
                           <div
-                            className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[11px] font-bold shrink-0 overflow-hidden"
+                            className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[11px] font-bold shrink-0 overflow-hidden relative"
                             style={{ backgroundColor: item.avatarColor || "#6366f1" }}
                           >
-                            {item.avatarUrl
-                              ? <img src={item.avatarUrl} alt="" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
-                              : initial}
+                            <span className="absolute inset-0 flex items-center justify-center">{initial}</span>
+                            {item.avatarUrl && <img src={item.avatarUrl} alt="" className="absolute inset-0 w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />}
                           </div>
                         ) : (
                           <div className={cn(

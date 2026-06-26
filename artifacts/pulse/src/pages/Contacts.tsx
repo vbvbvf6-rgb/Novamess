@@ -135,14 +135,11 @@ export default function Contacts() {
                   <div className="relative shrink-0">
                     <button
                       onClick={() => setLocation(`/user/${user.id}`)}
-                      className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg overflow-hidden hover:opacity-90 transition-opacity"
+                      className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg overflow-hidden hover:opacity-90 transition-opacity relative"
                       style={{ backgroundColor: user.avatarColor || "#333" }}
                     >
-                      {user.avatarUrl ? (
-                        <img src={user.avatarUrl} alt={user.displayName} className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
-                      ) : (
-                        user.displayName[0].toUpperCase()
-                      )}
+                      <span className="absolute inset-0 flex items-center justify-center">{user.displayName[0].toUpperCase()}</span>
+                      {user.avatarUrl && <img src={user.avatarUrl} alt={user.displayName} className="absolute inset-0 w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />}
                     </button>
                     <span className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-card z-10 ${user.status === "online" ? "bg-green-500" : user.status === "away" ? "bg-yellow-500" : "bg-gray-500"}`} />
                   </div>

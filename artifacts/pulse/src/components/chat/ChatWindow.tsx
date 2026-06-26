@@ -372,11 +372,20 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
   const sseRef = useRef<EventSource | null>(null);
   const prevBotTypingRef = useRef(false);
 
+  // Scroll to bottom when switching chats
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el || !chatId) return;
+    const t = setTimeout(() => { el.scrollTop = el.scrollHeight; }, 60);
+    return () => clearTimeout(t);
+  }, [chatId]);
+
+  // Auto-scroll on new messages when near the bottom
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
     const distFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
-    if (distFromBottom < 200) {
+    if (distFromBottom < 300) {
       el.scrollTop = el.scrollHeight;
     }
   }, [messages, botTyping, typingUsers.length]);
@@ -492,6 +501,7 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
         es = null;
         sseRef.current = null;
         if (!dead) {
+          if (retryTimeout) clearTimeout(retryTimeout);
           const delay = getBackoffMs();
           retryCount++;
           retryTimeout = setTimeout(connect, delay);
@@ -957,10 +967,9 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
               className={`w-12 h-12 rounded-[16px] flex items-center justify-center text-white font-black text-xl overflow-hidden cursor-pointer hover:opacity-90 transition-opacity shadow-sm relative z-10`}
               style={{ backgroundColor: avatarColor }}
             >
-              {(chat.type === "direct" ? (chat.otherUser as any)?.avatarUrl : chat.avatarUrl) ? (
-                <img src={(chat.type === "direct" ? (chat.otherUser as any)?.avatarUrl : chat.avatarUrl)} alt={displayName} className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
-              ) : (
-                (displayName[0] || "?").toUpperCase()
+              <span className="absolute inset-0 flex items-center justify-center">{(displayName[0] || "?").toUpperCase()}</span>
+              {(chat.type === "direct" ? (chat.otherUser as any)?.avatarUrl : chat.avatarUrl) && (
+                <img src={(chat.type === "direct" ? (chat.otherUser as any)?.avatarUrl : chat.avatarUrl)} alt={displayName} className="absolute inset-0 w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
               )}
             </button>
             {otherUserHasPrime && (
@@ -1240,14 +1249,11 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
                     {/* Admin avatar + name */}
                     <div className="flex items-center gap-1 ml-auto">
                       <div
-                        className="w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-black text-white shrink-0"
+                        className="w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-black text-white shrink-0 relative overflow-hidden"
                         style={{ backgroundColor: lastAdminMessage.sender?.avatarColor || "#555" }}
                       >
-                        {lastAdminMessage.sender?.avatarUrl ? (
-                          <img src={lastAdminMessage.sender.avatarUrl} alt="" className="w-full h-full object-cover rounded-full" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
-                        ) : (
-                          (lastAdminMessage.sender?.displayName || "A")[0].toUpperCase()
-                        )}
+                        <span className="absolute inset-0 flex items-center justify-center">{(lastAdminMessage.sender?.displayName || "A")[0].toUpperCase()}</span>
+                        {lastAdminMessage.sender?.avatarUrl && <img src={lastAdminMessage.sender.avatarUrl} alt="" className="absolute inset-0 w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />}
                       </div>
                       <span className="text-[10px] text-muted-foreground font-semibold truncate max-w-[80px]">
                         {lastAdminMessage.sender?.displayName || "Администратор"}
@@ -1468,12 +1474,11 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
             className="h-full flex flex-col items-center justify-center gap-5 text-center px-8 max-w-sm mx-auto"
           >
             <div
-              className="w-24 h-24 rounded-[28px] flex items-center justify-center text-white font-black text-4xl shadow-2xl overflow-hidden"
+              className="w-24 h-24 rounded-[28px] flex items-center justify-center text-white font-black text-4xl shadow-2xl overflow-hidden relative"
               style={{ backgroundColor: avatarColor }}
             >
-              {(chat.otherUser as any)?.avatarUrl ? (
-                <img src={(chat.otherUser as any).avatarUrl} alt={displayName} className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
-              ) : (displayName[0] || "?").toUpperCase()}
+              <span className="absolute inset-0 flex items-center justify-center">{(displayName[0] || "?").toUpperCase()}</span>
+              {(chat.otherUser as any)?.avatarUrl && <img src={(chat.otherUser as any).avatarUrl} alt={displayName} className="absolute inset-0 w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />}
             </div>
             <div className="space-y-1.5">
               <div className="flex items-center justify-center gap-2">

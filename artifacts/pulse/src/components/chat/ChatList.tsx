@@ -126,16 +126,17 @@ function ChatAvatar({ chat, displayName }: { chat: Chat; displayName: string }) 
         className="w-14 h-14 rounded-[18px] flex items-center justify-center text-white font-black text-xl overflow-hidden shadow-sm relative z-10"
         style={{ backgroundColor: avatarColor }}
       >
-        {avatarUrl ? (
-          <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
-        ) : chat.type === "channel" ? (
-          <Radio size={24} className="text-white opacity-80" />
-        ) : chat.type === "group" ? (
-          <Users size={24} className="text-white opacity-80" />
-        ) : (chat.otherUser as any)?.isBot ? (
-          <Bot size={24} className="text-white opacity-80" />
-        ) : (
-          letter
+        <span className="absolute inset-0 flex items-center justify-center">
+          {chat.type === "channel" ? (
+            <Radio size={24} className="text-white opacity-80" />
+          ) : chat.type === "group" ? (
+            <Users size={24} className="text-white opacity-80" />
+          ) : (chat.otherUser as any)?.isBot ? (
+            <Bot size={24} className="text-white opacity-80" />
+          ) : letter}
+        </span>
+        {avatarUrl && (
+          <img src={avatarUrl} alt={displayName} className="absolute inset-0 w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
         )}
       </div>
       {statusDotColor && (
@@ -432,9 +433,11 @@ export function ChatList() {
     .slice().sort((a: Chat, b: Chat) => {
       if (a.isPinned && !b.isPinned) return -1;
       if (!a.isPinned && b.isPinned) return 1;
-      const aTime = a.lastMessage?.createdAt || (a as any).createdAt || "";
-      const bTime = b.lastMessage?.createdAt || (b as any).createdAt || "";
-      return new Date(bTime).getTime() - new Date(aTime).getTime();
+      const aRaw = a.lastMessage?.createdAt || (a as any).createdAt;
+      const bRaw = b.lastMessage?.createdAt || (b as any).createdAt;
+      const aMs = aRaw ? new Date(aRaw).getTime() : 0;
+      const bMs = bRaw ? new Date(bRaw).getTime() : 0;
+      return (isNaN(bMs) ? 0 : bMs) - (isNaN(aMs) ? 0 : aMs);
     });
 
   return (
@@ -892,10 +895,11 @@ export function ChatList() {
                             >
                               <div className="flex items-center gap-3">
                                 <div
-                                  className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm overflow-hidden"
+                                  className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm overflow-hidden relative"
                                   style={{ backgroundColor: user.avatarColor || "#333" }}
                                 >
-                                  {user.avatarUrl ? <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} /> : user.displayName[0].toUpperCase()}
+                                  <span className="absolute inset-0 flex items-center justify-center">{user.displayName[0].toUpperCase()}</span>
+                                  {user.avatarUrl && <img src={user.avatarUrl} alt="" className="absolute inset-0 w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />}
                                 </div>
                                 <div className="text-left">
                                   <p className="font-bold text-sm text-foreground">{user.displayName}</p>

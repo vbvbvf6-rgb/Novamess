@@ -65,11 +65,8 @@ export function IncomingCall() {
                 className="w-[60px] h-[60px] rounded-full flex items-center justify-center text-white font-bold text-2xl relative z-10 overflow-hidden shadow-lg"
                 style={{ backgroundColor: avatarBg }}
               >
-                {caller?.avatarUrl ? (
-                  <img src={caller.avatarUrl} alt="" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
-                ) : (
-                  caller?.displayName?.[0]?.toUpperCase() ?? "?"
-                )}
+                <span className="absolute inset-0 flex items-center justify-center">{caller?.displayName?.[0]?.toUpperCase() ?? "?"}</span>
+                {caller?.avatarUrl && <img src={caller.avatarUrl} alt="" className="absolute inset-0 w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />}
               </div>
             </div>
 

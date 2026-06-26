@@ -46,14 +46,11 @@ function Avatar({ user, size = 32 }: { user: any; size?: number }) {
   const bg = user?.avatarColor || "#444";
   return (
     <div
-      className="rounded-full flex items-center justify-center text-white font-bold overflow-hidden shrink-0"
+      className="rounded-full flex items-center justify-center text-white font-bold overflow-hidden shrink-0 relative"
       style={{ width: size, height: size, backgroundColor: bg, fontSize: size * 0.35 }}
     >
-      {user?.avatarUrl ? (
-        <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
-      ) : (
-        user?.displayName?.[0]?.toUpperCase() ?? "?"
-      )}
+      <span className="absolute inset-0 flex items-center justify-center">{user?.displayName?.[0]?.toUpperCase() ?? "?"}</span>
+      {user?.avatarUrl && <img src={user.avatarUrl} alt="" className="absolute inset-0 w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />}
     </div>
   );
 }
@@ -371,11 +368,8 @@ export function ActiveCall() {
               className="w-36 h-36 rounded-full flex items-center justify-center text-white font-bold text-6xl relative z-10 overflow-hidden shadow-2xl"
               style={{ backgroundColor: avatarBg }}
             >
-              {callee?.avatarUrl ? (
-                <img src={callee.avatarUrl} alt="" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
-              ) : (
-                callee?.displayName?.[0]?.toUpperCase()
-              )}
+              <span className="absolute inset-0 flex items-center justify-center">{callee?.displayName?.[0]?.toUpperCase()}</span>
+              {callee?.avatarUrl && <img src={callee.avatarUrl} alt="" className="absolute inset-0 w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />}
             </motion.div>
           </div>
           <h2 className="text-foreground text-3xl font-bold mb-2 z-10">{callee?.displayName}</h2>

@@ -139,14 +139,11 @@ export default function Calls() {
                   >
                     {/* Avatar */}
                     <div
-                      className="w-[52px] h-[52px] rounded-full flex items-center justify-center text-white font-bold text-lg overflow-hidden shrink-0 shadow-md"
+                      className="w-[52px] h-[52px] rounded-full flex items-center justify-center text-white font-bold text-lg overflow-hidden shrink-0 shadow-md relative"
                       style={{ backgroundColor: otherUser?.avatarColor || "#444" }}
                     >
-                      {otherUser?.avatarUrl ? (
-                        <img src={otherUser.avatarUrl} alt="" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
-                      ) : (
-                        (otherUser?.displayName || "?")[0].toUpperCase()
-                      )}
+                      <span className="absolute inset-0 flex items-center justify-center">{(otherUser?.displayName || "?")[0].toUpperCase()}</span>
+                      {otherUser?.avatarUrl && <img src={otherUser.avatarUrl} alt="" className="absolute inset-0 w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />}
                     </div>
 
                     {/* Info */}
@@ -244,14 +241,11 @@ export default function Calls() {
                 ) : filteredContacts?.map((c: { id: number; displayName?: string | null; username?: string | null; avatarColor?: string | null; avatarUrl?: string | null }) => (
                   <div key={c.id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-secondary transition-colors">
                     <div
-                      className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold shrink-0 overflow-hidden"
+                      className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold shrink-0 overflow-hidden relative"
                       style={{ backgroundColor: (c as any).avatarColor || "#444" }}
                     >
-                      {(c as any).avatarUrl ? (
-                        <img src={(c as any).avatarUrl} alt="" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
-                      ) : (
-                        (c.displayName || "?")[0].toUpperCase()
-                      )}
+                      <span className="absolute inset-0 flex items-center justify-center">{(c.displayName || "?")[0].toUpperCase()}</span>
+                      {(c as any).avatarUrl && <img src={(c as any).avatarUrl} alt="" className="absolute inset-0 w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />}
                     </div>
                     <span className="flex-1 text-sm font-medium truncate">{c.displayName}</span>
                     <div className="flex items-center gap-2">

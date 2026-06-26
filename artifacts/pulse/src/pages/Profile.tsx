@@ -362,12 +362,11 @@ function IncomingBegRequests() {
         >
           <div className="flex items-center gap-3">
             <div
-              className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0"
+              className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0 relative overflow-hidden"
               style={{ backgroundColor: req.avatar_color || "#3B82F6" }}
             >
-              {req.avatar_url
-                ? <img src={req.avatar_url} alt="" className="w-full h-full object-cover rounded-full" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
-                : (req.display_name?.[0] || "?").toUpperCase()}
+              <span className="absolute inset-0 flex items-center justify-center">{(req.display_name?.[0] || "?").toUpperCase()}</span>
+              {req.avatar_url && <img src={req.avatar_url} alt="" className="absolute inset-0 w-full h-full object-cover rounded-full" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />}
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-bold text-sm truncate">{req.display_name}</p>

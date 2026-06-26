@@ -68,12 +68,11 @@ export function GiftLeaderboard({ userId: _userId }: { userId: number }) {
                 {idx < 3 ? MEDAL[idx] : <span className="text-xs font-bold text-muted-foreground">{idx + 1}</span>}
               </span>
               <div
-                className="w-9 h-9 rounded-full shrink-0 flex items-center justify-center text-white font-bold text-sm overflow-hidden"
+                className="w-9 h-9 rounded-full shrink-0 flex items-center justify-center text-white font-bold text-sm overflow-hidden relative"
                 style={{ backgroundColor: entry.avatarColor || "#6366f1" }}
               >
-                {entry.avatarUrl
-                  ? <img src={entry.avatarUrl} alt="" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
-                  : (entry.displayName?.[0]?.toUpperCase() || "?")}
+                <span className="absolute inset-0 flex items-center justify-center">{entry.displayName?.[0]?.toUpperCase() || "?"}</span>
+                {entry.avatarUrl && <img src={entry.avatarUrl} alt="" className="absolute inset-0 w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1">

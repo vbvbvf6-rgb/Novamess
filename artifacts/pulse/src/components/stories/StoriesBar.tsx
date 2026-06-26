@@ -47,14 +47,11 @@ export function StoriesBar() {
           >
             <div className={`w-14 h-14 rounded-full p-[2px] ${storyGroup.hasUnviewed ? "bg-gradient-to-tr from-primary to-accent animate-pulse" : "bg-border"}`}>
               <div
-                className="w-full h-full rounded-full border-2 border-background overflow-hidden bg-muted flex items-center justify-center font-bold text-lg text-white"
+                className="w-full h-full rounded-full border-2 border-background overflow-hidden bg-muted flex items-center justify-center font-bold text-lg text-white relative"
                 style={{ backgroundColor: storyGroup.user.avatarColor }}
               >
-                {storyGroup.user.avatarUrl ? (
-                  <img src={storyGroup.user.avatarUrl} alt={storyGroup.user.displayName} className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
-                ) : (
-                  storyGroup.user.displayName[0].toUpperCase()
-                )}
+                <span className="absolute inset-0 flex items-center justify-center">{storyGroup.user.displayName[0].toUpperCase()}</span>
+                {storyGroup.user.avatarUrl && <img src={storyGroup.user.avatarUrl} alt={storyGroup.user.displayName} className="absolute inset-0 w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />}
               </div>
             </div>
             {isMe && (

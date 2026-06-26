@@ -913,15 +913,14 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
           {!isMine && (
             <div
               className={cn(
-                "w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-[13px] font-black text-white overflow-hidden shadow-sm",
+                "w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-[13px] font-black text-white overflow-hidden shadow-sm relative",
                 message.type === "audio" ? "self-center" : "mb-6"
               )}
               style={{ backgroundColor: message.sender?.avatarColor || "#555" }}
             >
-              {message.sender?.avatarUrl ? (
-                <img src={message.sender.avatarUrl} alt="" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
-              ) : (
-                (message.sender?.displayName || "U")[0].toUpperCase()
+              <span className="absolute inset-0 flex items-center justify-center">{(message.sender?.displayName || "U")[0].toUpperCase()}</span>
+              {message.sender?.avatarUrl && (
+                <img src={message.sender.avatarUrl} alt="" className="absolute inset-0 w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
               )}
             </div>
           )}
@@ -1402,10 +1401,9 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
                         onClick={() => handleForwardTo(c.id)}
                         className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-secondary transition-colors text-left disabled:opacity-60"
                       >
-                        <div className="w-10 h-10 rounded-[12px] flex items-center justify-center text-white font-black text-base shrink-0 overflow-hidden" style={{ backgroundColor: color }}>
-                          {(c.type === "direct" ? c.otherUser?.avatarUrl : c.avatarUrl) ? (
-                            <img src={c.type === "direct" ? c.otherUser?.avatarUrl : c.avatarUrl} alt={name} className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
-                          ) : initials}
+                        <div className="w-10 h-10 rounded-[12px] flex items-center justify-center text-white font-black text-base shrink-0 overflow-hidden relative" style={{ backgroundColor: color }}>
+                          <span className="absolute inset-0 flex items-center justify-center">{initials}</span>
+                          {(c.type === "direct" ? c.otherUser?.avatarUrl : c.avatarUrl) && <img src={c.type === "direct" ? c.otherUser?.avatarUrl : c.avatarUrl} alt={name} className="absolute inset-0 w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />}
                         </div>
                         <div className="min-w-0">
                           <p className="font-bold text-[14px] truncate">{name}</p>

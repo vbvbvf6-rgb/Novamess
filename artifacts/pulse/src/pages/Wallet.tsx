@@ -144,7 +144,7 @@ export default function Wallet() {
       localStorage.setItem(loginKey, today);
       let tasks: string[] = [];
       if (stored) { try { tasks = JSON.parse(stored); } catch {} }
-      if (!tasks.includes("daily_login")) earnTask("daily_login", 5, tasks);
+      if (!tasks.includes("daily_login")) earnTask("daily_login", 5 * taskMultiplier, tasks);
     }
     const lastBonus = localStorage.getItem(bonusKey);
     if (lastBonus === today) setBonusClaimed(true);

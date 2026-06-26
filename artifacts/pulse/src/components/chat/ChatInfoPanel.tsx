@@ -90,16 +90,13 @@ function AvatarCircle({ name, color, url, size = 20, type }: {
 }) {
   return (
     <div
-      className="rounded-full flex items-center justify-center text-white font-bold overflow-hidden shrink-0"
+      className="rounded-full flex items-center justify-center text-white font-bold overflow-hidden shrink-0 relative"
       style={{ width: size, height: size, backgroundColor: color || "#3B82F6", fontSize: size * 0.35 }}
     >
-      {url
-        ? <img src={url} alt={name} className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
-        : type === "channel"
-        ? <Radio size={size * 0.45} />
-        : type === "group"
-        ? <Users size={size * 0.45} />
-        : name?.[0]?.toUpperCase() || "?"}
+      <span className="absolute inset-0 flex items-center justify-center">
+        {type === "channel" ? <Radio size={size * 0.45} /> : type === "group" ? <Users size={size * 0.45} /> : name?.[0]?.toUpperCase() || "?"}
+      </span>
+      {url && <img src={url} alt={name} className="absolute inset-0 w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />}
     </div>
   );
 }
@@ -393,16 +390,13 @@ export function ChatInfoPanel({
                     onClick={() => fileInputRef.current?.click()}
                   >
                     <div
-                      className="w-20 h-20 rounded-full flex items-center justify-center text-white font-bold text-2xl overflow-hidden ring-2 ring-border group-hover:ring-primary/50 transition-all"
+                      className="w-20 h-20 rounded-full flex items-center justify-center text-white font-bold text-2xl overflow-hidden ring-2 ring-border group-hover:ring-primary/50 transition-all relative"
                       style={{ backgroundColor: avatarColor }}
                     >
-                      {avatarPreview ? (
-                        <img src={avatarPreview} alt="" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
-                      ) : chatType === "channel" ? (
-                        <Radio size={28} />
-                      ) : (
-                        (displayName || "G")[0]?.toUpperCase() || "G"
-                      )}
+                      <span className="absolute inset-0 flex items-center justify-center">
+                        {chatType === "channel" ? <Radio size={28} /> : (displayName || "G")[0]?.toUpperCase() || "G"}
+                      </span>
+                      {avatarPreview && <img src={avatarPreview} alt="" className="absolute inset-0 w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />}
                     </div>
                     <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity">
                       <Camera size={22} className="text-white" />

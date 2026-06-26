@@ -83,13 +83,14 @@ function Avatar({
 }) {
   return (
     <div
-      className={`w-${size} h-${size} ${radius} flex items-center justify-center text-white font-bold overflow-hidden shrink-0`}
+      className={`w-${size} h-${size} ${radius} flex items-center justify-center text-white font-bold overflow-hidden shrink-0 relative`}
       style={{ backgroundColor: color || "#3B82F6", width: size * 4, height: size * 4 }}
     >
-      {url ? (
-        <img src={url} alt={name} className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
-      ) : icon ? icon : (
-        <span className="text-base font-black">{name?.[0]?.toUpperCase() || "?"}</span>
+      <span className="absolute inset-0 flex items-center justify-center">
+        {icon ? icon : <span className="text-base font-black">{name?.[0]?.toUpperCase() || "?"}</span>}
+      </span>
+      {url && (
+        <img src={url} alt={name} className="absolute inset-0 w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
       )}
     </div>
   );

@@ -440,7 +440,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
     }
   };
 
-  const MAX_VOICE_SECONDS = Infinity;
+  const MAX_VOICE_SECONDS = 120; // 2 minutes max recording
 
   const startRecording = async () => {
     try {
@@ -473,7 +473,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
         });
       }, 1000);
     } catch {
-      alert("Нет доступа к микрофону.");
+      toast({ title: "Нет доступа к микрофону", description: "Разрешите доступ к микрофону в настройках браузера", variant: "destructive" });
     }
   };
 

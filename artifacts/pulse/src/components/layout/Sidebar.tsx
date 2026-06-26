@@ -61,12 +61,13 @@ function AccountRow({
       onClick={!isActive ? onSwitch : undefined}
     >
       <div
-        className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs shrink-0 overflow-hidden shadow-sm"
+        className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs shrink-0 overflow-hidden shadow-sm relative"
         style={{ backgroundColor: account.avatarColor }}
       >
-        {account.avatarUrl ? (
-          <img src={account.avatarUrl} alt="" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
-        ) : initial}
+        <span className="absolute inset-0 flex items-center justify-center">{initial}</span>
+        {account.avatarUrl && (
+          <img src={account.avatarUrl} alt="" className="absolute inset-0 w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+        )}
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-[13px] font-bold text-foreground truncate leading-tight">{account.displayName}</p>
@@ -106,10 +107,11 @@ function MobileAccountFooter({
       >
         <div className="relative shrink-0">
           <div
-            className={cn("w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm overflow-hidden", isPremium && "ring-2 ring-violet-500 ring-offset-2 ring-offset-card")}
+            className={cn("w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm overflow-hidden relative", isPremium && "ring-2 ring-violet-500 ring-offset-2 ring-offset-card")}
             style={{ backgroundColor: me?.avatarColor || "#3B82F6" }}
           >
-            {me?.avatarUrl ? <img src={me.avatarUrl} alt="" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} /> : initial}
+            <span className="absolute inset-0 flex items-center justify-center">{initial}</span>
+            {me?.avatarUrl && <img src={me.avatarUrl} alt="" className="absolute inset-0 w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />}
           </div>
           {savedAccounts.length > 1 ? (
             <div className="absolute -top-1 -right-1 w-[18px] h-[18px] rounded-full bg-primary text-white text-[10px] font-bold flex items-center justify-center shadow-sm border-2 border-card">
