@@ -255,8 +255,32 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
   next();
 });
 
-app.get("/api/health", (_req: Request, res: Response) => {
-  res.json({ ok: true, ts: Date.now() });
+app.get("/api/health", async (_req: Request, res: Response) => {
+  let dbOk = false;
+  let dbError: string | null = null;
+  let tablesExist = false;
+  try {
+    const { db } = await import("@workspace/db");
+    const { sql } = await import("drizzle-orm");
+    await db.execute(sql`SELECT 1`);
+    dbOk = true;
+    const r = await db.execute(sql`SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='public'`);
+    const count = Number((r.rows[0] as any)?.count ?? 0);
+    tablesExist = count > 0;
+  } catch (e: any) {
+    dbError = e?.message ?? String(e);
+  }
+  const status = dbOk ? 200 : 503;
+  res.status(status).json({
+    ok: dbOk,
+    db: dbOk ? "connected" : "error",
+    dbError,
+    tablesExist,
+    nodeEnv: process.env.NODE_ENV,
+    hasDatabaseUrl: !!process.env.DATABASE_URL,
+    hasJwtSecret: !!process.env.JWT_SECRET,
+    ts: Date.now(),
+  });
 });
 
 // Require authentication for all API routes except public ones
