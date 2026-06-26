@@ -1,6 +1,7 @@
 {
   "version": 2,
-  "buildCommand": "npm install -g pnpm@10 && pnpm install --frozen-lockfile && BASE_PATH=/ pnpm --filter @workspace/pulse run build && pnpm --filter @workspace/api-server run build",
+  "installCommand": "pnpm install",
+  "buildCommand": "BASE_PATH=/ pnpm --filter @workspace/pulse run build && pnpm --filter @workspace/api-server run build",
   "outputDirectory": "artifacts/pulse/dist/public",
   "framework": null,
   "rewrites": [
