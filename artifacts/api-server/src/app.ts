@@ -277,7 +277,7 @@ app.use("/api", (_req: Request, res: Response) => {
 });
 
 if (process.env.NODE_ENV === "production") {
-  const staticDir = path.join(process.cwd(), "artifacts/pulse/dist/public");
+  const staticDir = path.join(process.cwd(), "artifacts/pulse/dist");
   app.use(express.static(staticDir, { maxAge: "1h", index: false }));
   app.use("/{*path}", (_req: Request, res: Response) => {
     res.sendFile(path.join(staticDir, "index.html"));

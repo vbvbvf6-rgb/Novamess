@@ -39,7 +39,7 @@ WORKDIR /app
 RUN npm install --omit=dev nodemailer@^8
 
 COPY --from=builder /workspace/artifacts/api-server/dist ./artifacts/api-server/dist
-COPY --from=builder /workspace/artifacts/pulse/dist/public ./artifacts/pulse/dist/public
+COPY --from=builder /workspace/artifacts/pulse/dist ./artifacts/pulse/dist
 
 ENV NODE_ENV=production
 
