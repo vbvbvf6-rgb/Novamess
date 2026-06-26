@@ -223,7 +223,7 @@ function StatsLeaderboard({ tab, me }: { tab: Tab; me: any }) {
 
   const getLabel = (u: any) => {
     if (tab === "messages") return `${Number(getValue(u)).toLocaleString()} сообщ.`;
-    if (tab === "balance") return `${Number(getValue(u)).toLocaleString()} ⚡`;
+    if (tab === "balance") return `${Number(getValue(u)).toLocaleString()} ✨`;
     return "";
   };
 

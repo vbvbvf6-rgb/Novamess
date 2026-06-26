@@ -204,7 +204,7 @@ function BegModal({
       if (!res.ok) {
         toast({ title: data.error || "Ошибка", variant: "destructive" });
       } else {
-        toast({ title: `Запрос отправлен ${user.displayName}!`, description: `Ты попросил ${finalAmount} ⚡ Spark` });
+        toast({ title: `Запрос отправлен ${user.displayName}!`, description: `Ты попросил ${finalAmount} ✨ Искры` });
         onClose();
       }
     } catch {
@@ -267,7 +267,7 @@ function BegModal({
                         : "bg-secondary border-border text-muted-foreground hover:bg-secondary/80"
                     }`}
                   >
-                    {p} ⚡
+                    {p} ✨
                   </button>
                 ))}
                 <button
@@ -317,7 +317,7 @@ function BegModal({
               disabled={loading || finalAmount <= 0}
               className="w-full py-3.5 rounded-2xl font-black text-sm bg-gradient-to-r from-yellow-500 to-orange-500 text-black disabled:opacity-50 transition-all shadow-[0_0_20px_rgba(234,179,8,0.3)]"
             >
-              {loading ? "Отправка…" : `Попросить ${finalAmount > 0 ? finalAmount + " ⚡" : "Spark"}`}
+              {loading ? "Отправка…" : `Попросить ${finalAmount > 0 ? finalAmount + " ✨" : "Spark"}`}
             </motion.button>
           </div>
         </motion.div>

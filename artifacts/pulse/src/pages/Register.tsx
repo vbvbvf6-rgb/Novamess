@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Link, useSearch } from "wouter";
+import { Link, useSearch, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { Eye, EyeOff, Camera, Gift, KeyRound, HelpCircle } from "lucide-react";
+import { Eye, EyeOff, Camera, Gift, KeyRound, HelpCircle, ArrowLeft } from "lucide-react";
 import PulseLogo from "@/components/PulseLogo";
 
 async function compressAvatar(file: File): Promise<string> {
@@ -46,6 +46,7 @@ interface RegisterProps {
 }
 
 export default function Register({ onLogin }: RegisterProps) {
+  const [, navigate] = useLocation();
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [password, setPassword] = useState("");
@@ -149,6 +150,17 @@ export default function Register({ onLogin }: RegisterProps) {
 
   return (
     <div className="h-[100dvh] bg-background flex flex-col items-center p-4 pt-8 pb-8 relative overflow-y-auto">
+      {/* Back to login */}
+      <button
+        onClick={() => navigate("/login")}
+        className="absolute top-4 left-4 z-20 flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors group"
+        aria-label="Назад"
+      >
+        <div className="w-9 h-9 rounded-xl bg-card/70 border border-border flex items-center justify-center group-hover:bg-card transition-colors">
+          <ArrowLeft size={18} />
+        </div>
+      </button>
+
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
         <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-primary/20 rounded-full blur-[120px] opacity-80 animate-[pulseGlow_6s_ease-in-out_infinite_alternate]" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[65%] h-[65%] bg-violet-500/15 rounded-full blur-[100px] opacity-70 animate-[pulseGlow_8s_ease-in-out_infinite_alternate-reverse]" />

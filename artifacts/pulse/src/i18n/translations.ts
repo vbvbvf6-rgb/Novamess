@@ -165,7 +165,7 @@ const translations = {
 
     // Settings — About
     "settings.about": "О приложении",
-    "settings.version": "Версия 2.0.0 · Сборка 2026",
+    "settings.version": "Версия 2.4.0 · Сборка 2026",
     "settings.accountInfo": "Аккаунт",
     "settings.statusInfo": "Статус",
     "settings.verified": "✅ Верифицирован",
@@ -392,7 +392,7 @@ const translations = {
 
     // Settings — About
     "settings.about": "About",
-    "settings.version": "Version 2.0.0 · Build 2026",
+    "settings.version": "Version 2.4.0 · Build 2026",
     "settings.accountInfo": "Account",
     "settings.statusInfo": "Status",
     "settings.verified": "✅ Verified",

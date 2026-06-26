@@ -356,7 +356,7 @@ function PwaUpdateBanner() {
                         onClick={handleUpdate}
                         className="flex-[2] py-3 bg-primary text-primary-foreground rounded-[16px] text-[15px] font-black hover:bg-primary/90 transition-all shadow-[0_4px_14px_rgba(234,88,12,0.4)] hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2"
                       >
-                        ⚡ Обновить сейчас
+                        ✨ Обновить сейчас
                       </button>
                     </div>
                   </>
@@ -665,12 +665,31 @@ function App() {
   };
 
   const handleLogout = () => {
+    const currentId = userId;
     sessionStorage.removeItem("pulse-user-id");
     sessionStorage.removeItem("pulse-user");
     sessionStorage.removeItem("pulse-token");
     sessionStorage.removeItem("pulse-tab-owned");
     queryClient.clear();
-    setUserId(null);
+
+    // If another saved account exists, switch to it instead of going to login
+    const remaining = getSavedAccounts().filter(a => a.userId !== currentId);
+    if (remaining.length > 0) {
+      const acc = remaining[0];
+      if (acc.token) sessionStorage.setItem("pulse-token", acc.token);
+      sessionStorage.setItem("pulse-user-id", String(acc.userId));
+      sessionStorage.setItem("pulse-user", JSON.stringify({
+        id: acc.userId,
+        displayName: acc.displayName,
+        username: acc.username,
+        avatarUrl: acc.avatarUrl,
+        avatarColor: acc.avatarColor,
+      }));
+      sessionStorage.setItem("pulse-tab-owned", "1");
+      setUserId(acc.userId);
+    } else {
+      setUserId(null);
+    }
   };
 
   const handleAccountAdded = (id: number) => {

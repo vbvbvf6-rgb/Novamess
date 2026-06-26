@@ -110,7 +110,7 @@ function ReferralSection() {
 
             {myCode.invited === 0 && (
               <p className="text-[11px] text-muted-foreground/70 text-center mt-3">
-                За каждого приглашённого друга вы получаете +50 монет
+                За каждого приглашённого друга вы получаете +50 ✨ Искры
               </p>
             )}
           </>

@@ -871,7 +871,7 @@ export default function Admin() {
       });
       const data = await res.json();
       if (!res.ok) { showToast(data.error || "Ошибка", "err"); return; }
-      showToast(`${amount > 0 ? "+" : ""}${amount} ⚡ → ${selectedUser.display_name}`, "ok");
+      showToast(`${amount > 0 ? "+" : ""}${amount} ✨ → ${selectedUser.display_name}`, "ok");
       setUsers(prev => prev.map(u => u.id === selectedUser.id ? { ...u, balance: data.newBalance } : u));
       setSelectedUser(prev => prev ? { ...prev, balance: data.newBalance } : null);
       if (stats) setStats(prev => prev ? { ...prev, totalSpark: prev.totalSpark + amount } : null);
@@ -982,7 +982,7 @@ export default function Admin() {
       });
       const data = await res.json();
       if (!res.ok) { showToast(data.error || "Ошибка", "err"); return; }
-      showToast(`⚡ ${n > 0 ? "+" : ""}${n} ИСКРА → ${data.usersAffected} пользователей`, "ok");
+      showToast(`${n > 0 ? "+" : ""}${n} ✨ ИСКРА → ${data.usersAffected} пользователей`, "ok");
       setMassAmount("");
       setShowMassConfirm(false);
       fetchData();
@@ -1473,7 +1473,7 @@ export default function Admin() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold truncate">@{r.username}</p>
-                        <p className="text-xs text-muted-foreground">{r.package_label} — {r.amount} ⚡ за {r.price_label}</p>
+                        <p className="text-xs text-muted-foreground">{r.package_label} — {r.amount} ✨ за {r.price_label}</p>
                         <p className="text-[10px] text-muted-foreground">{new Date(r.created_at).toLocaleString("ru-RU")}</p>
                       </div>
                       {r.status === "pending" ? (
@@ -2143,7 +2143,7 @@ export default function Admin() {
                     </div>
                     {eventKind === "giveaway" && (
                       <div className="w-28">
-                        <label className="text-[10px] text-muted-foreground mb-1 block">Стоимость (⚡)</label>
+                        <label className="text-[10px] text-muted-foreground mb-1 block">Стоимость (✨)</label>
                         <input type="number" inputMode="numeric" min={0} value={eventCost} onChange={e => setEventCost(Number(e.target.value))}
                           className="w-full bg-background border border-border rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:border-violet-500 transition-colors" />
                       </div>
@@ -2356,7 +2356,7 @@ export default function Admin() {
                               }`}>{currentRarity}</span>
                               {gift.prime_only && <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300">PRIME</span>}
                             </div>
-                            <p className="text-xs text-muted-foreground">⭐ {edits.stars ?? gift.stars} · {(edits.price ?? gift.price).toLocaleString()} ⚡ · отправлено: {gift.times_sent}×</p>
+                            <p className="text-xs text-muted-foreground">⭐ {edits.stars ?? gift.stars} · {(edits.price ?? gift.price).toLocaleString()} ✨ · отправлено: {gift.times_sent}×</p>
                           </div>
                           <button
                             onClick={() => {
@@ -2376,7 +2376,7 @@ export default function Admin() {
                           >
                             <div className="grid grid-cols-2 gap-2">
                               <div>
-                                <label className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">Цена (⚡)</label>
+                                <label className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">Цена (✨)</label>
                                 <input
                                   type="number"
                                   inputMode="numeric"
@@ -3169,7 +3169,7 @@ export default function Admin() {
                           <div className="bg-muted/30 rounded-xl p-3 text-xs text-muted-foreground space-y-1">
                             <div className="flex justify-between">
                               <span>Баланс</span>
-                              <span className="font-bold text-primary">{Number(selectedUser.balance).toLocaleString()} ⚡</span>
+                              <span className="font-bold text-primary">{Number(selectedUser.balance).toLocaleString()} ✨</span>
                             </div>
                             <div className="flex justify-between">
                               <span>Prime</span>

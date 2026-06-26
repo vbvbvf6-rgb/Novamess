@@ -34,7 +34,7 @@ const PRIME_FEATURES = [
   { icon: Star,         text: "Значок Prime ⭐ у вашего имени везде",              color: "text-yellow-400", bg: "bg-yellow-500/10" },
   { icon: Palette,      text: "Эксклюзивные темы: Obsidian, Midnight, Forest",    color: "text-yellow-400", bg: "bg-yellow-500/10" },
   { icon: TrendingUp,   text: "2× Spark за выполнение ежедневных заданий",        color: "text-green-400",  bg: "bg-green-500/10"  },
-  { icon: Zap,          text: "Ежедневный бонус 25 ✨ вместо 10 ⚡",              color: "text-green-400",  bg: "bg-green-500/10"  },
+  { icon: Zap,          text: "Ежедневный бонус 25 ✨ вместо 10 ✨",              color: "text-green-400",  bg: "bg-green-500/10"  },
   { icon: RefreshCw,    text: "Смена никнейма каждые 24ч вместо 7 дней",          color: "text-green-400",  bg: "bg-green-500/10"  },
   { icon: Image,        text: "Загрузка медиа без ограничений размера",            color: "text-green-400",  bg: "bg-green-500/10"  },
   { icon: InfinityIcon, text: "Хранение истории сообщений навсегда",              color: "text-green-400",  bg: "bg-green-500/10"  },
@@ -824,11 +824,11 @@ export default function Prime() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Стоимость</span>
-                    <span className="font-bold">{selectedPlan.spark} ⚡</span>
+                    <span className="font-bold">{selectedPlan.spark} ✨</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Бонус Spark</span>
-                    <span className="font-bold text-green-400">+{pendingTier === "prime_plus" ? 100 : 50} ⚡</span>
+                    <span className="font-bold text-green-400">+{pendingTier === "prime_plus" ? 100 : 50} ✨</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Ваш баланс</span>
@@ -837,7 +837,7 @@ export default function Prime() {
                   {canAfford && (
                     <div className="flex justify-between pt-1 border-t border-border">
                       <span className="text-muted-foreground">После оплаты</span>
-                      <span className="font-bold">{wallet - selectedPlan.spark + (pendingTier === "prime_plus" ? 100 : 50)} ⚡</span>
+                      <span className="font-bold">{wallet - selectedPlan.spark + (pendingTier === "prime_plus" ? 100 : 50)} ✨</span>
                     </div>
                   )}
                 </div>
@@ -896,7 +896,7 @@ export default function Prime() {
                         : "linear-gradient(135deg, #eab308, #f97316)"
                     }}
                   >
-                    {loading ? "Оформляем..." : `Подтвердить — ${selectedPlan.spark} ⚡`}
+                    {loading ? "Оформляем..." : `Подтвердить — ${selectedPlan.spark} ✨`}
                   </motion.button>
                 ) : (
                   <button onClick={() => { setShowModal(false); navigate("/wallet"); }}
