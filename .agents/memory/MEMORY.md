@@ -12,3 +12,4 @@
 - [Private group security](private-group-security.md) — Discover route filters private groups (only shows channels OR is_public=true OR user is member); join route rejects private groups with 403. Both in artifacts/api-server/src/routes/chats.ts.
 - [Prime+ Lounge visibility](prime-lounge.md) — After Prime+ subscribe, must invalidate both /api/users/me AND ["/api/chats"] query keys; otherwise the Lounge chat won't appear until page refresh.
 - [Settings dead code](settings-dead-code.md) — FeaturesSection, aiAvatarGenerating state, handleGenerateAIAvatar, emojiSize state all removed as dead code. Wand2 removed from lucide imports.
+- [WebRTC call signaling](webrtc-call-signaling.md) — pre-offer in startCall was the bug; peer-joined handler creates the offer; identity guard in onconnectionstatechange; relay fallback via createPeerRef.

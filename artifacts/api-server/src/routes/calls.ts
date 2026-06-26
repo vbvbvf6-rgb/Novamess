@@ -9,9 +9,10 @@ const router = Router();
 // ── ICE server config (served from backend so TURN creds stay server-side) ──
 
 // Metered.ca: generates per-request time-limited credentials (recommended, free tier available)
-// Embedded key works out of the box; override via METERED_API_KEY env var if needed
-const EMBEDDED_METERED_KEY = "c1849909a19114e1a7f4f5497847976a0b3b";
-const METERED_APP_URL = "https://pulse_messenger.metered.live";
+// Set METERED_API_KEY + METERED_APP_URL env vars to use your own metered.ca app.
+// Without env vars the fetch will fail gracefully and fall through to public TURN servers.
+const EMBEDDED_METERED_KEY = process.env.METERED_API_KEY ?? "";
+const METERED_APP_URL = process.env.METERED_APP_URL ?? "";
 
 async function fetchMeteredIce(): Promise<RTCIceServer[]> {
   const apiKey = process.env.METERED_API_KEY || EMBEDDED_METERED_KEY;
@@ -54,19 +55,22 @@ async function fetchXirsysIce(): Promise<RTCIceServer[]> {
 // Fallback public TURN servers — multiple providers for maximum coverage across networks
 // These are last-resort relays; dedicated credentials (METERED_API_KEY) are strongly preferred
 const FALLBACK_TURN_SERVERS: RTCIceServer[] = [
-  // Metered.ca Open Relay (public shared creds — rate limited but globally distributed)
+  // Metered.ca Open Relay (genuine public shared creds — globally distributed)
   { urls: "stun:stun.relay.metered.ca:80" },
-  { urls: "turn:global.relay.metered.ca:80",         username: "openrelayproject", credential: "openrelayproject" },
-  { urls: "turn:global.relay.metered.ca:443",        username: "openrelayproject", credential: "openrelayproject" },
-  { urls: "turn:global.relay.metered.ca:80?transport=tcp",  username: "openrelayproject", credential: "openrelayproject" },
-  { urls: "turns:global.relay.metered.ca:443",       username: "openrelayproject", credential: "openrelayproject" },
-  { urls: "turns:global.relay.metered.ca:443?transport=tcp", username: "openrelayproject", credential: "openrelayproject" },
-  // ExpressTurn — free public TURN relay (account key)
-  { urls: "turn:free.expressturn.com:3478", username: "efun", credential: "b211abe84d3263408ab0d6a0c46ed6e0a15f" },
+  { urls: "turn:global.relay.metered.ca:80",                  username: "openrelayproject", credential: "openrelayproject" },
+  { urls: "turn:global.relay.metered.ca:443",                 username: "openrelayproject", credential: "openrelayproject" },
+  { urls: "turn:global.relay.metered.ca:80?transport=tcp",    username: "openrelayproject", credential: "openrelayproject" },
+  { urls: "turns:global.relay.metered.ca:443",                username: "openrelayproject", credential: "openrelayproject" },
+  { urls: "turns:global.relay.metered.ca:443?transport=tcp",  username: "openrelayproject", credential: "openrelayproject" },
+  // Metered.ca additional relay endpoints
+  { urls: "turn:a.relay.metered.ca:80",   username: "openrelayproject", credential: "openrelayproject" },
+  { urls: "turn:a.relay.metered.ca:443",  username: "openrelayproject", credential: "openrelayproject" },
+  { urls: "turns:a.relay.metered.ca:443", username: "openrelayproject", credential: "openrelayproject" },
+  { urls: "turn:a.relay.metered.ca:80?transport=tcp",  username: "openrelayproject", credential: "openrelayproject" },
+  // ExpressTurn — free public TURN relay
+  { urls: "turn:free.expressturn.com:3478",             username: "efun", credential: "b211abe84d3263408ab0d6a0c46ed6e0a15f" },
   { urls: "turn:free.expressturn.com:3478?transport=tcp", username: "efun", credential: "b211abe84d3263408ab0d6a0c46ed6e0a15f" },
-  // Numb — secondary free TURN relay
-  { urls: "turn:numb.viagenie.ca", username: "webrtc@live.com", credential: "muazkh" },
-  { urls: "turns:numb.viagenie.ca", username: "webrtc@live.com", credential: "muazkh" },
+  // NOTE: numb.viagenie.ca was permanently shut down — removed.
 ];
 
 router.get("/calls/ice-servers", async (_req, res) => {

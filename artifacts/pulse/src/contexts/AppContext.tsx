@@ -116,6 +116,10 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
 
   const socketRef = useRef<Socket | null>(null);
 
+  // Stable ref to createPeer — lets createPeer call itself for relay fallback
+  // without introducing a circular useCallback dependency.
+  const createPeerRef = useRef<((targetUserId: number, roomId: number, policy?: RTCIceTransportPolicy) => RTCPeerConnection) | null>(null);
+
   // ── theme ─────────────────────────────────────────────────────────────────
   useEffect(() => {
     if (isDark) {
@@ -195,14 +199,18 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
   }, []);
 
   // ── peer factory ──────────────────────────────────────────────────────────
-  const createPeer = useCallback((targetUserId: number, roomId: number): RTCPeerConnection => {
+  // iceTransportPolicy: "all" = try direct + relay; "relay" = force TURN only
+  const createPeer = useCallback((
+    targetUserId: number,
+    roomId: number,
+    iceTransportPolicy: RTCIceTransportPolicy = "all",
+  ): RTCPeerConnection => {
     const pc = new RTCPeerConnection({
       iceServers: iceServersRef.current,
-      // balanced: try direct first, relay via TURN if needed — works across any NAT
-      bundlePolicy: "balanced",
+      // max-bundle: all media shares one transport — better cross-browser compat
+      bundlePolicy: "max-bundle",
       rtcpMuxPolicy: "require",
-      // "all" = use both direct + relay paths; browser picks fastest that works
-      iceTransportPolicy: "all",
+      iceTransportPolicy,
     });
 
     // Send ICE candidates as they trickle in — don't wait for gathering to finish
@@ -214,7 +222,6 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
           signal: { type: "ice", candidate: e.candidate.toJSON() },
         });
       }
-      // null candidate = gathering complete; log for diagnostics
       if (!e.candidate) {
         console.debug(`[WebRTC] ICE gathering complete for peer ${targetUserId}`);
       }
@@ -222,15 +229,13 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
 
     pc.ontrack = (e) => {
       if (e.streams?.[0]) {
-        // Browser provides the full combined stream — use it directly
         setRemoteStreams((prev) => {
           const next = new Map(prev);
           next.set(targetUserId, e.streams[0]);
           return next;
         });
       } else {
-        // Firefox / some bundlePolicy configs: tracks arrive one at a time
-        // Build stream incrementally so audio track isn't overwritten by video
+        // Firefox: tracks arrive one at a time, build stream incrementally
         setRemoteStreams((prev) => {
           const next = new Map(prev);
           const existing = prev.get(targetUserId);
@@ -241,28 +246,48 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
       }
     };
 
-    // ICE restart on disconnection — aggressive recovery for cross-network calls
     let iceRestartTimer: ReturnType<typeof setTimeout> | null = null;
     let iceRestartCount = 0;
     const MAX_ICE_RESTARTS = 3;
 
     pc.oniceconnectionstatechange = () => {
       const ice = pc.iceConnectionState;
-      console.debug(`[WebRTC] ICE state → ${ice} (peer ${targetUserId})`);
+      console.debug(`[WebRTC] ICE state → ${ice} (peer ${targetUserId}, policy=${iceTransportPolicy})`);
 
       if (ice === "failed") {
-        // Hard failure — restart ICE immediately (up to MAX_ICE_RESTARTS times)
-        if (iceRestartCount < MAX_ICE_RESTARTS) {
+        if (iceRestartCount < MAX_ICE_RESTARTS - 1) {
+          // Standard ICE restart — same peer, re-gather candidates
           iceRestartCount++;
           console.debug(`[WebRTC] ICE restart #${iceRestartCount}`);
           try { pc.restartIce(); } catch (_) {}
+        } else if (iceRestartCount === MAX_ICE_RESTARTS - 1 && iceTransportPolicy !== "relay") {
+          // Last resort: close this peer and recreate with TURN-relay-only.
+          // Use createPeerRef to avoid circular useCallback dep; relay peers
+          // won't enter this branch again (iceTransportPolicy === "relay").
+          iceRestartCount++;
+          console.debug("[WebRTC] ICE failed — switching to relay-only (TURN) transport");
+          pc.close(); // triggers onconnectionstatechange("closed") below
+          const relayPc = createPeerRef.current!(targetUserId, roomId, "relay");
+          peersRef.current.set(targetUserId, relayPc);
+          if (localStreamRef.current) {
+            localStreamRef.current.getTracks().forEach((t) => relayPc.addTrack(t, localStreamRef.current!));
+          }
+          relayPc.createOffer()
+            .then((offer) => relayPc.setLocalDescription(offer).then(() => {
+              socketRef.current?.emit("webrtc-signal", {
+                callId: roomId,
+                targetUserId,
+                signal: { type: "offer", sdp: offer.sdp },
+              });
+            }))
+            .catch(() => {});
         } else {
           window.dispatchEvent(new CustomEvent("pulse:call-error", {
             detail: { message: "Не удалось установить соединение. Проверьте интернет." },
           }));
         }
       } else if (ice === "disconnected") {
-        // Transient disconnect — give it 3 s then restart
+        // Transient disconnect — wait 4 s then trigger a standard ICE restart
         iceRestartTimer = setTimeout(() => {
           if (pc.iceConnectionState === "disconnected" || pc.iceConnectionState === "failed") {
             if (iceRestartCount < MAX_ICE_RESTARTS) {
@@ -270,12 +295,11 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
               try { pc.restartIce(); } catch (_) {}
             }
           }
-        }, 3000);
+        }, 4000);
       } else if (ice === "connected" || ice === "completed") {
-        // Successfully connected — reset restart counter and clear timer
         iceRestartCount = 0;
         if (iceRestartTimer) { clearTimeout(iceRestartTimer); iceRestartTimer = null; }
-        console.debug(`[WebRTC] Connected to peer ${targetUserId} ✓`);
+        console.debug(`[WebRTC] Connected to peer ${targetUserId} ✓ (${iceTransportPolicy})`);
       }
     };
 
@@ -284,24 +308,33 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
       console.debug(`[WebRTC] Connection state → ${state} (peer ${targetUserId})`);
       if (state === "failed" || state === "closed") {
         if (iceRestartTimer) { clearTimeout(iceRestartTimer); iceRestartTimer = null; }
-        peersRef.current.delete(targetUserId);
-        setRemoteStreams((prev) => {
-          const next = new Map(prev);
-          next.delete(targetUserId);
-          return next;
-        });
-        if (state === "failed") {
-          window.dispatchEvent(new CustomEvent("pulse:call-error", {
-            detail: { message: "Соединение разорвано. Попробуйте позвонить снова." },
-          }));
-        } else if (state === "closed" && peersRef.current.size === 0) {
-          cleanupCall();
+        // Identity guard: only clean up peersRef if this peer is still the active
+        // one. If a relay fallback peer was installed, pc.close() fires "closed"
+        // on the old peer — we must NOT delete the new relayPc from peersRef.
+        if (peersRef.current.get(targetUserId) === pc) {
+          peersRef.current.delete(targetUserId);
+          setRemoteStreams((prev) => {
+            const next = new Map(prev);
+            next.delete(targetUserId);
+            return next;
+          });
+          if (state === "failed") {
+            window.dispatchEvent(new CustomEvent("pulse:call-error", {
+              detail: { message: "Соединение разорвано. Попробуйте позвонить снова." },
+            }));
+          } else if (state === "closed" && peersRef.current.size === 0) {
+            cleanupCall();
+          }
         }
       }
     };
 
     return pc;
   }, [cleanupCall]);
+
+  // Keep the ref in sync so the relay-fallback inside createPeer can call itself
+  // without a circular useCallback dependency.
+  createPeerRef.current = createPeer;
 
   // ── helpers ───────────────────────────────────────────────────────────────
   // Flush any ICE candidates buffered while waiting for remote description.
@@ -509,19 +542,13 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
 
       const sock = getSocket();
       setupCallSocket(sock, call.id);
+      // Join the room — when the callee accepts and joins, the server fires
+      // "peer-joined" which triggers the offer in setupCallSocket's handler.
+      // DO NOT pre-create a peer or send an offer here: doing so would buffer
+      // the offer before the callee is ready, and the peer-joined guard
+      // (peersRef.has(calleeId)) would block the re-offer, leaving the call
+      // in a broken state if the buffer is missed.
       sock.emit("join-call", { callId: call.id });
-
-      const pc = createPeer(calleeId, call.id);
-      peersRef.current.set(calleeId, pc);
-      stream.getTracks().forEach((track) => pc.addTrack(track, stream));
-
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
-      sock.emit("webrtc-signal", {
-        callId: call.id,
-        targetUserId: calleeId,
-        signal: { type: "offer", sdp: offer.sdp },
-      });
     } catch (rtcErr) {
       console.warn("startCall: WebRTC setup failed (call UI still active):", rtcErr);
     }
