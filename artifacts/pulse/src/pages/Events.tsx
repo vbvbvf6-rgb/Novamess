@@ -201,7 +201,7 @@ export default function Events() {
       icon: <MessageCircle size={18} />,
       title: "Отправь 5 сообщений",
       desc: "Напиши что-нибудь в любом чате",
-      reward: 42, rewardIcon: "✨",
+      reward: 42, rewardIcon: "💎",
       progress: progress["q1"] ?? 0, total: 5,
       completed: completed.has("q1"),
       color: "from-sky-500 to-blue-600",
@@ -211,7 +211,7 @@ export default function Events() {
       icon: <Phone size={18} />,
       title: "Совершить звонок",
       desc: "Позвони любому контакту",
-      reward: 63, rewardIcon: "✨",
+      reward: 63, rewardIcon: "💎",
       progress: progress["q2"] ?? 0, total: 1,
       completed: completed.has("q2"),
       color: "from-green-500 to-emerald-600",
@@ -221,7 +221,7 @@ export default function Events() {
       icon: <Heart size={18} />,
       title: "Поставь 3 реакции",
       desc: "Отреагируй на сообщения друзей",
-      reward: 34, rewardIcon: "✨",
+      reward: 34, rewardIcon: "💎",
       progress: progress["q3"] ?? 0, total: 3,
       completed: completed.has("q3"),
       color: "from-rose-500 to-pink-600",
@@ -231,7 +231,7 @@ export default function Events() {
       icon: <UserPlus size={18} />,
       title: "Добавить 3 контакта",
       desc: "Расширь свою сеть за неделю",
-      reward: 170, rewardIcon: "✨",
+      reward: 170, rewardIcon: "💎",
       progress: progress["q5"] ?? 0, total: 3,
       completed: completed.has("q5"),
       color: "from-violet-500 to-indigo-600",
@@ -241,7 +241,7 @@ export default function Events() {
       icon: <Phone size={18} />,
       title: "5 звонков за неделю",
       desc: "Общайся голосом с разными людьми",
-      reward: 255, rewardIcon: "✨",
+      reward: 255, rewardIcon: "💎",
       progress: progress["q6"] ?? 0, total: 5,
       completed: completed.has("q6"),
       color: "from-teal-500 to-cyan-600",
@@ -251,7 +251,7 @@ export default function Events() {
       icon: <Trophy size={18} />,
       title: "Войти 7 дней подряд",
       desc: "Не прерывай серию заходов",
-      reward: 425, rewardIcon: "✨",
+      reward: 425, rewardIcon: "💎",
       progress: progress["q7"] ?? 0, total: 7,
       completed: completed.has("q7"),
       color: "from-yellow-500 to-amber-600",
@@ -261,7 +261,7 @@ export default function Events() {
       icon: <Swords size={18} />,
       title: "Принять участие в событии",
       desc: "Зарегистрируйся на любое событие",
-      reward: 340, rewardIcon: "✨",
+      reward: 340, rewardIcon: "💎",
       progress: joined.size > 0 ? 1 : 0, total: 1,
       completed: completed.has("q8") || joined.size > 0,
       color: "from-fuchsia-500 to-purple-600",
@@ -271,7 +271,7 @@ export default function Events() {
       icon: <Crown size={18} />,
       title: "Топ-10 таблицы лидеров",
       desc: "Попади в десятку лучших игроков",
-      reward: 850, rewardIcon: "✨",
+      reward: 850, rewardIcon: "💎",
       progress: progress["q9"] ?? 0, total: 1,
       completed: completed.has("q9"),
       color: "from-orange-400 to-red-600",
@@ -527,7 +527,7 @@ export default function Events() {
                                   <div className="flex items-center justify-between text-[10px] text-muted-foreground mb-1">
                                     <span>{quest.progress}/{quest.total}</span>
                                     <span className="flex items-center gap-0.5 text-amber-400 font-bold">
-                                      <Zap size={9} className="fill-amber-400" />+{quest.reward}
+                                      <Diamond size={9} className="fill-cyan-400 text-cyan-400" />+{quest.reward}
                                     </span>
                                   </div>
                                   <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
@@ -559,7 +559,7 @@ export default function Events() {
                           {quest.completed && (
                             <div className="flex items-center gap-1.5 mt-2 text-xs text-emerald-500 font-semibold">
                               <CheckCircle2 size={12} />
-                              <span>Выполнено · +{quest.reward} ✨ получено</span>
+                              <span>Выполнено · +{quest.reward} 💎 получено</span>
                             </div>
                           )}
                         </div>

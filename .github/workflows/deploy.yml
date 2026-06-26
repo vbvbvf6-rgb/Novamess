@@ -7,20 +7,43 @@ on:
 
 jobs:
   deploy:
-    name: Trigger Render Deploy
+    name: Build & Deploy to Render
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build frontend
+        run: PORT=5000 BASE_PATH=/ pnpm --filter @workspace/pulse run build
+
+      - name: Build API server
+        run: pnpm --filter @workspace/api-server run build
+
       - name: Trigger Render deploy hook
         run: |
-          curl -s -o /dev/null -w "%{http_code}" \
-            -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}" \
-            | grep -q "^2" && echo "Deploy triggered ✅" || echo "Deploy trigger failed ❌"
-
-      - name: Wait for deploy to start
-        run: sleep 10
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}")
+          echo "Render response: $STATUS"
+          if [[ "$STATUS" =~ ^2 ]]; then
+            echo "✅ Deploy triggered successfully"
+          else
+            echo "❌ Deploy trigger failed with status $STATUS"
+            exit 1
+          fi
 
       - name: Done
-        run: echo "New version ${{ github.sha }} deploying to Render 🚀"
+        run: echo "🚀 Version ${{ github.sha }} is deploying to Render"

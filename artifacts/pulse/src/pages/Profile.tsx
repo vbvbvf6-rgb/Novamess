@@ -110,7 +110,7 @@ function ReferralSection() {
 
             {myCode.invited === 0 && (
               <p className="text-[11px] text-muted-foreground/70 text-center mt-3">
-                За каждого приглашённого друга вы получаете +50 ✨ Искры
+                За каждого приглашённого друга вы получаете +50 💎 Кристаллов
               </p>
             )}
           </>
@@ -370,7 +370,7 @@ function IncomingBegRequests() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-bold text-sm truncate">{req.display_name}</p>
-              <p className="text-xs text-yellow-400">просит {req.amount > 0 ? `${req.amount} ✨` : "Искра ✨"}</p>
+              <p className="text-xs text-yellow-400">просит {req.amount > 0 ? `${req.amount} 💎` : "Кристаллы 💎"}</p>
             </div>
             <span className="text-2xl">🙏</span>
           </div>
@@ -488,7 +488,7 @@ function SparkActivityLog() {
           </div>
           {act.amount !== 0 && (
             <span className={`text-sm font-black shrink-0 ${Number(act.amount) > 0 ? "text-green-400" : "text-red-400"}`}>
-              {Number(act.amount) > 0 ? "+" : ""}{act.amount} ✨
+              {Number(act.amount) > 0 ? "+" : ""}{act.amount} 💎
             </span>
           )}
         </div>
@@ -695,7 +695,7 @@ export default function Profile() {
                   />
                   <StatCard
                     icon={<Zap className="text-yellow-400" />}
-                    label="Spark"
+                    label="Кристаллы"
                     value={(user as any)?.balance ? `${Number((user as any).balance).toLocaleString()} ✨` : "0 ✨"}
                     color="bg-yellow-500/10 border-yellow-500/20"
                   />
@@ -703,14 +703,14 @@ export default function Profile() {
               )}
             </div>
 
-            {/* Incoming Spark Beg Requests */}
+            {/* Incoming Crystal Beg Requests */}
             <div>
               <button
                 onClick={() => setShowBegRequests(v => !v)}
                 className="flex items-center gap-2 text-sm font-bold text-foreground mb-3 hover:text-primary transition-colors w-full"
               >
                 <span className="text-lg leading-none">🙏</span>
-                Запросы Spark
+                Запросы Кристаллов
                 <span className="ml-auto text-xs text-muted-foreground">{showBegRequests ? "Скрыть" : "Показать"}</span>
               </button>
               <AnimatePresence>
@@ -727,7 +727,7 @@ export default function Profile() {
               </AnimatePresence>
             </div>
 
-            {/* Detailed Spark Activity Log (Prime+) */}
+            {/* Detailed Crystal Activity Log (Prime+) */}
             {hasPrime && (
               <div>
                 <button
@@ -735,7 +735,7 @@ export default function Profile() {
                   className="flex items-center gap-2 text-sm font-bold text-foreground mb-3 hover:text-primary transition-colors"
                 >
                   <Activity size={16} className="text-primary" />
-                  {isPrimePlus ? "Подробный журнал Spark" : "Журнал Spark"}
+                  {isPrimePlus ? "Подробный журнал Кристаллов" : "Журнал Кристаллов"}
                   <span className="ml-auto text-xs text-muted-foreground">{showSparkLog ? "Скрыть" : "Показать"}</span>
                 </button>
                 <AnimatePresence>

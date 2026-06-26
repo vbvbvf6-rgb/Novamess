@@ -98,7 +98,7 @@ export function GiftShowcase({ userId: _userId }: { userId: number }) {
                 <span className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full border ${style.bg} ${style.text} ${style.border}`}>
                   {style.label}
                 </span>
-                <p className="text-[10px] text-muted-foreground font-semibold">{gift.price} ✨</p>
+                <p className="text-[10px] text-muted-foreground font-semibold">{gift.price} 💎</p>
                 {gift.timesGiven > 0 && (
                   <p className="text-[9px] text-muted-foreground/60">{gift.timesGiven}× подарено</p>
                 )}

@@ -106,7 +106,7 @@ router.post("/prime/subscribe", async (req, res) => {
     );
     if ((deductResult.rows as any[]).length === 0) {
       return res.status(400).json({
-        error: `Недостаточно Spark. Нужно ${plan.spark} ⚡, у вас ${balance} ⚡`,
+        error: `Недостаточно Кристаллов. Нужно ${plan.spark} 💎, у вас ${balance} 💎`,
         required: plan.spark,
         balance,
       });

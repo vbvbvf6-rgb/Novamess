@@ -204,7 +204,7 @@ function BegModal({
       if (!res.ok) {
         toast({ title: data.error || "Ошибка", variant: "destructive" });
       } else {
-        toast({ title: `Запрос отправлен ${user.displayName}!`, description: `Ты попросил ${finalAmount} ✨ Искры` });
+        toast({ title: `Запрос отправлен ${user.displayName}!`, description: `Ты попросил ${finalAmount} 💎 Кристаллов` });
         onClose();
       }
     } catch {
@@ -232,7 +232,7 @@ function BegModal({
         >
           <div className="flex items-center gap-3 px-6 py-5 border-b border-border">
             <div className="flex-1">
-              <h2 className="font-black text-lg">Попросить Искра ✨</h2>
+              <h2 className="font-black text-lg">Попросить Кристаллы 💎</h2>
               <p className="text-xs text-muted-foreground">у {user.displayName}</p>
             </div>
             <button onClick={onClose} className="p-2 -mr-2 rounded-xl hover:bg-secondary transition-colors text-muted-foreground">
@@ -250,7 +250,7 @@ function BegModal({
               >
                 🙏
               </motion.div>
-              <p className="text-sm text-muted-foreground text-center">Укажи сколько Spark хочешь попросить</p>
+              <p className="text-sm text-muted-foreground text-center">Укажи сколько Кристаллов хочешь попросить</p>
             </div>
 
             {/* Preset amounts */}
@@ -267,7 +267,7 @@ function BegModal({
                         : "bg-secondary border-border text-muted-foreground hover:bg-secondary/80"
                     }`}
                   >
-                    {p} ✨
+                    {p} 💎
                   </button>
                 ))}
                 <button
@@ -302,7 +302,7 @@ function BegModal({
               <textarea
                 value={message}
                 onChange={e => setMessage(e.target.value)}
-                placeholder="Объясни зачем тебе Spark… 😅"
+                placeholder="Объясни зачем тебе Кристаллы… 😅"
                 maxLength={200}
                 rows={2}
                 className="w-full rounded-xl bg-secondary border border-border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500/40 resize-none"
@@ -317,7 +317,7 @@ function BegModal({
               disabled={loading || finalAmount <= 0}
               className="w-full py-3.5 rounded-2xl font-black text-sm bg-gradient-to-r from-yellow-500 to-orange-500 text-black disabled:opacity-50 transition-all shadow-[0_0_20px_rgba(234,179,8,0.3)]"
             >
-              {loading ? "Отправка…" : `Попросить ${finalAmount > 0 ? finalAmount + " ✨" : "Spark"}`}
+              {loading ? "Отправка…" : `Попросить ${finalAmount > 0 ? finalAmount + " 💎" : "Spark"}`}
             </motion.button>
           </div>
         </motion.div>
@@ -642,7 +642,7 @@ export default function UserProfile() {
                       whileTap={{ scale: 0.95 }}
                       onClick={() => setShowBeg(true)}
                       className="w-11 h-11 rounded-full bg-yellow-500/10 flex items-center justify-center text-yellow-400 hover:bg-yellow-500/20 transition-colors border border-yellow-500/20"
-                      title="Попросить Spark"
+                      title="Попросить Кристаллы"
                     >
                       <HandCoins size={18} />
                     </motion.button>
@@ -729,7 +729,7 @@ export default function UserProfile() {
             {user.phoneNumber && <InfoRow label="Телефон" value={user.phoneNumber} />}
             {!isMe && <InfoRow label="Статус" value={statusCfg.label} />}
             {((user as any).popularity ?? 0) > 0 && (
-              <InfoRow label="✨ Популярность" value={`${(user as any).popularity.toLocaleString()} Spark`} />
+              <InfoRow label="💎 Популярность" value={`${(user as any).popularity.toLocaleString()} Кристаллов`} />
             )}
           </motion.div>
 

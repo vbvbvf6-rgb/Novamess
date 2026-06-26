@@ -61,7 +61,7 @@ const PLUS_EXCLUSIVE = [
   { icon: Music,        text: "Кастомные звуки и рингтоны уведомлений",               color: "text-purple-400", bg: "bg-purple-500/10" },
   { icon: Wand2,        text: "Эффекты отправки: конфетти, снег, огонь в чате",       color: "text-purple-400", bg: "bg-purple-500/10" },
   { icon: QrCode,       text: "QR-код профиля с кастомным дизайном Prime+",           color: "text-violet-400", bg: "bg-violet-500/10" },
-  { icon: BarChart3,    text: "Детальная статистика трат Spark и активности",          color: "text-violet-400", bg: "bg-violet-500/10" },
+  { icon: BarChart3,    text: "Детальная статистика трат Кристаллов и активности",          color: "text-violet-400", bg: "bg-violet-500/10" },
   { icon: Headphones,   text: "Эксклюзивный доступ к Prime+ Lounge — закрытому чату", color: "text-fuchsia-400",bg: "bg-fuchsia-500/10"},
 ];
 
@@ -70,9 +70,9 @@ const PLUS_EXCLUSIVE = [
 const COMPARISON_ROWS = [
   { label: "Значок у имени",           prime: "⭐ Prime",       plus: "💎 Prime+ градиент" },
   { label: "Кольцо аватара",           prime: "Золотое",         plus: "Алмазное анимированное" },
-  { label: "Ежедневный Spark бонус",   prime: "25 ✨",           plus: "50 ✨" },
+  { label: "Ежедневный Кристалл бонус",   prime: "25 💎",           plus: "50 💎" },
   { label: "Множитель заданий",        prime: "2×",              plus: "3×" },
-  { label: "Бонус при старте",         prime: "50 ✨",           plus: "100 ✨" },
+  { label: "Бонус при старте",         prime: "50 💎",           plus: "100 💎" },
   { label: "Темы оформления",          prime: "3 темы",          plus: "Все темы + анимация" },
   { label: "Цвет имени",              prime: "—",               plus: "Градиент на выбор" },
   { label: "Двойные реакции",          prime: "—",               plus: "✓" },
@@ -250,7 +250,7 @@ function PlanPicker({ plans, selected, onSelect, accentClass }: {
                 {p.badge && <span className="text-[10px] font-black uppercase px-1.5 py-0.5 rounded bg-green-500/20 text-green-400 border border-green-500/30">{p.badge}</span>}
                 {p.best  && <span className="text-[10px] font-black uppercase px-1.5 py-0.5 rounded bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">Популярный</span>}
               </div>
-              <div className="text-[11px] text-muted-foreground">{p.spark} ✨ всего</div>
+              <div className="text-[11px] text-muted-foreground">{p.spark} 💎 всего</div>
             </div>
           </div>
           <div className="text-right shrink-0">
@@ -381,7 +381,7 @@ export default function Prime() {
       setShowModal(false);
       toast({
         title: pendingTier === "prime_plus" ? "Aura Prime+ активирован! 💎" : "Aura Prime активирован! ⭐",
-        description: `Остаток: ${data.balance} ✨ Искра`,
+        description: `Остаток: ${data.balance} 💎 Кристаллы`,
       });
     } catch {
       toast({ variant: "destructive", title: "Ошибка соединения" });
@@ -483,7 +483,7 @@ export default function Prime() {
                 </p>
                 <div className="mt-3 inline-flex items-center gap-2 bg-yellow-500/10 border border-yellow-500/20 rounded-full px-4 py-1.5">
                   <Zap size={13} className="text-yellow-400" />
-                  <span className="text-xs font-semibold text-yellow-400">от 249 ✨ / месяц</span>
+                  <span className="text-xs font-semibold text-yellow-400">от 249 💎 / месяц</span>
                 </div>
               </div>
 
@@ -534,8 +534,8 @@ export default function Prime() {
               <div className="flex items-center justify-between text-sm px-1">
                 <span className="text-muted-foreground">Ваш баланс:</span>
                 <span className={`font-bold ${wallet >= currentPrimePlan.spark ? "text-foreground" : "text-destructive"}`}>
-                  {wallet} ✨
-                  {wallet < currentPrimePlan.spark && <span className="text-xs font-normal text-muted-foreground ml-1">(нужно ещё {currentPrimePlan.spark - wallet} ✨)</span>}
+                  {wallet} 💎
+                  {wallet < currentPrimePlan.spark && <span className="text-xs font-normal text-muted-foreground ml-1">(нужно ещё {currentPrimePlan.spark - wallet} 💎)</span>}
                 </span>
               </div>
 
@@ -565,7 +565,7 @@ export default function Prime() {
                   <motion.button key="cta" onClick={() => openModal("prime")} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                     className="w-full py-4 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-2xl text-black font-black text-base shadow-[0_0_30px_rgba(234,179,8,0.3)]"
                   >
-                    Оформить Prime — {currentPrimePlan.spark} ✨
+                    Оформить Prime — {currentPrimePlan.spark} 💎
                   </motion.button>
                 )}
               </AnimatePresence>
@@ -617,7 +617,7 @@ export default function Prime() {
                   style={{ background: "rgba(168,85,247,0.1)" }}
                 >
                   <Zap size={13} className="text-purple-400" />
-                  <span className="text-xs font-semibold text-purple-400">от 449 ✨ / месяц</span>
+                  <span className="text-xs font-semibold text-purple-400">от 449 💎 / месяц</span>
                 </div>
               </div>
 
@@ -724,7 +724,7 @@ export default function Prime() {
               <div className="flex items-center justify-between text-sm px-1">
                 <span className="text-muted-foreground">Ваш баланс:</span>
                 <span className={`font-bold ${wallet >= currentPlusPlan.spark ? "text-foreground" : "text-destructive"}`}>
-                  {wallet} ✨
+                  {wallet} 💎
                   {wallet < currentPlusPlan.spark && <span className="text-xs font-normal text-muted-foreground ml-1">(нужно ещё {currentPlusPlan.spark - wallet} ✨)</span>}
                 </span>
               </div>
@@ -754,7 +754,7 @@ export default function Prime() {
                     className="w-full py-4 rounded-2xl text-white font-black text-base"
                     style={{ background: "linear-gradient(135deg, #a855f7, #d946ef)", boxShadow: "0 0 30px rgba(168,85,247,0.35)" }}
                   >
-                    Оформить Prime+ — {currentPlusPlan.spark} ✨
+                    Оформить Prime+ — {currentPlusPlan.spark} 💎
                   </motion.button>
                 )}
               </AnimatePresence>
@@ -805,7 +805,7 @@ export default function Prime() {
                     <div>
                       <h3 className="font-black text-base">{pendingTier === "prime_plus" ? "Aura Prime+" : "Aura Prime"}</h3>
                       <p className={`text-xs font-semibold ${pendingTier === "prime_plus" ? "text-purple-400" : "text-yellow-400"}`}>
-                        {selectedPlan.name} — {selectedPlan.spark} ✨ Искра
+                        {selectedPlan.name} — {selectedPlan.spark} 💎 Кристаллы
                       </p>
                     </div>
                   </div>
@@ -827,12 +827,12 @@ export default function Prime() {
                     <span className="font-bold">{selectedPlan.spark} ✨</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Бонус Spark</span>
+                    <span className="text-muted-foreground">Бонус Кристалл</span>
                     <span className="font-bold text-green-400">+{pendingTier === "prime_plus" ? 100 : 50} ✨</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Ваш баланс</span>
-                    <span className={`font-bold ${canAfford ? "text-green-400" : "text-destructive"}`}>{wallet} ✨</span>
+                    <span className={`font-bold ${canAfford ? "text-green-400" : "text-destructive"}`}>{wallet} 💎</span>
                   </div>
                   {canAfford && (
                     <div className="flex justify-between pt-1 border-t border-border">
@@ -852,14 +852,14 @@ export default function Prime() {
                   {(pendingTier === "prime_plus" ? [
                     "Значок PRIME+ 💎 у вашего имени",
                     "Алмазное анимированное кольцо",
-                    "3× Spark за ежедневные задания",
-                    "Бонус 100 ✨ Искра к балансу",
+                    "3× Кристаллы за ежедневные задания",
+                    "Бонус 100 💎 Кристаллов к балансу",
                     "Все функции Prime включены",
                   ] : [
                     "Значок Prime ⭐ у вашего имени",
                     "Золотое кольцо вокруг аватара",
-                    "2× Spark за ежедневные задания",
-                    "Бонус 50 ✨ Искра к балансу",
+                    "2× Кристаллы за ежедневные задания",
+                    "Бонус 50 💎 Кристаллов к балансу",
                     "Смена ника каждые 24ч",
                   ]).map((item, i) => (
                     <div key={i} className="flex items-center gap-2 text-xs text-foreground">
@@ -874,7 +874,7 @@ export default function Prime() {
                   <div className="bg-destructive/10 border border-destructive/20 rounded-2xl p-3.5 flex items-start gap-3">
                     <AlertTriangle size={16} className="text-destructive shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-xs font-bold text-destructive">Недостаточно Spark</p>
+                      <p className="text-xs font-bold text-destructive">Недостаточно Кристаллов</p>
                       <p className="text-xs text-muted-foreground mt-0.5">Нужно ещё {selectedPlan.spark - wallet} ✨. Пополните баланс в Кошельке.</p>
                     </div>
                   </div>
@@ -902,7 +902,7 @@ export default function Prime() {
                   <button onClick={() => { setShowModal(false); navigate("/wallet"); }}
                     className="w-full py-3.5 bg-primary rounded-2xl text-white font-bold text-sm flex items-center justify-center gap-2"
                   >
-                    <ShoppingCart size={16} /> Купить Spark в Кошельке
+                    <ShoppingCart size={16} /> Купить Кристаллы в Кошельке
                   </button>
                 )}
 

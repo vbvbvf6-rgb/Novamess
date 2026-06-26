@@ -159,7 +159,7 @@ router.post("/gifts/send", async (req, res) => {
         const balanceRows = await db.execute(sql`SELECT balance FROM users WHERE id = ${uid}`);
         const balance = Number((balanceRows.rows[0] as any)?.balance ?? 0);
         return res.status(400).json({
-          error: `Недостаточно Spark. Нужно ${price} ⚡, у вас ${balance} ⚡`,
+          error: `Недостаточно Кристаллов. Нужно ${price} 💎, у вас ${balance} 💎`,
           required: price,
           balance,
         });

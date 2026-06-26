@@ -51,7 +51,7 @@ router.post("/wallet/spend", async (req, res) => {
     if ((result.rows as any[]).length === 0) {
       const balanceRows = await db.execute(sql`SELECT balance FROM users WHERE id = ${uid}`);
       const balance = Number((balanceRows.rows[0] as any)?.balance ?? 0);
-      return res.status(400).json({ error: `Недостаточно Spark. Ваш баланс: ${balance} ⚡`, balance });
+      return res.status(400).json({ error: `Недостаточно Кристаллов. Ваш баланс: ${balance} 💎`, balance });
     }
     const newBalance = Number((result.rows[0] as any)?.balance ?? 0);
     db.execute(sql`INSERT INTO spark_activity (user_id, type, amount, description) VALUES (${uid}, 'spent', ${-amount}, 'Покупка') ON CONFLICT DO NOTHING`).catch(() => {});
@@ -107,7 +107,7 @@ router.post("/wallet/send", async (req, res) => {
       // Re-fetch actual balance for accurate error message
       const senderRows = await db.execute(sql`SELECT balance FROM users WHERE id = ${uid}`);
       const senderBalance = Number((senderRows.rows[0] as any)?.balance ?? 0);
-      return res.status(400).json({ error: `Недостаточно Spark. Ваш баланс: ${senderBalance}` });
+      return res.status(400).json({ error: `Недостаточно Кристаллов. Ваш баланс: ${senderBalance} 💎` });
     }
 
     const newBalance = Number(row.new_sender_balance ?? 0);
@@ -299,7 +299,7 @@ router.post("/wallet/beg", async (req, res) => {
       return res.status(400).json({ error: "Укажите получателя" });
     }
     if (toUserId === uid) {
-      return res.status(400).json({ error: "Нельзя попросить Spark у самого себя" });
+      return res.status(400).json({ error: "Нельзя попросить Кристаллы у самого себя" });
     }
     const amt = typeof amount === "number" && amount > 0 ? Math.floor(amount) : 0;
     const msg = typeof message === "string" ? message.trim().slice(0, 200) : "";
@@ -399,7 +399,7 @@ router.post("/wallet/beg/:id/fulfill", async (req, res) => {
         await db.execute(sql`ROLLBACK`);
         const senderRows = await db.execute(sql`SELECT balance FROM users WHERE id = ${uid}`);
         const senderBalance = Number((senderRows.rows[0] as any)?.balance ?? 0);
-        return res.status(400).json({ error: `Недостаточно Spark. Ваш баланс: ${senderBalance} ⚡` });
+        return res.status(400).json({ error: `Недостаточно Кристаллов. Ваш баланс: ${senderBalance} 💎` });
       }
       const newBalance = Number((deductResult.rows[0] as any)?.balance ?? 0);
       await db.execute(sql`UPDATE users SET balance = balance + ${amount} WHERE id = ${beg.from_user_id}`);
@@ -409,7 +409,7 @@ router.post("/wallet/beg/:id/fulfill", async (req, res) => {
       const fromUser = await db.execute(sql`SELECT display_name FROM users WHERE id = ${beg.from_user_id}`);
       const fromName = (fromUser.rows[0] as any)?.display_name ?? "пользователь";
       db.execute(sql`INSERT INTO spark_activity (user_id, type, amount, description) VALUES (${uid}, 'sent', ${-amount}, ${"Отправлено по запросу: " + fromName})`).catch(() => {});
-      db.execute(sql`INSERT INTO spark_activity (user_id, type, amount, description) VALUES (${beg.from_user_id}, 'received', ${amount}, ${"Получено по запросу ⚡"})`).catch(() => {});
+      db.execute(sql`INSERT INTO spark_activity (user_id, type, amount, description) VALUES (${beg.from_user_id}, 'received', ${amount}, ${"Получено по запросу 💎"})`).catch(() => {});
 
       res.json({ success: true, balance: newBalance });
     } catch (txErr) {
