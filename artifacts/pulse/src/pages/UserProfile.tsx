@@ -232,7 +232,7 @@ function BegModal({
         >
           <div className="flex items-center gap-3 px-6 py-5 border-b border-border">
             <div className="flex-1">
-              <h2 className="font-black text-lg">Попросить Spark ⚡</h2>
+              <h2 className="font-black text-lg">Попросить Искра ✨</h2>
               <p className="text-xs text-muted-foreground">у {user.displayName}</p>
             </div>
             <button onClick={onClose} className="p-2 -mr-2 rounded-xl hover:bg-secondary transition-colors text-muted-foreground">
@@ -290,7 +290,7 @@ function BegModal({
                   min={1}
                   value={customAmount}
                   onChange={e => setCustomAmount(e.target.value)}
-                  placeholder="Сумма ⚡"
+                  placeholder="Сумма ✨"
                   className="mt-2 w-full rounded-xl bg-secondary border border-border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500/40"
                 />
               )}
@@ -729,7 +729,7 @@ export default function UserProfile() {
             {user.phoneNumber && <InfoRow label="Телефон" value={user.phoneNumber} />}
             {!isMe && <InfoRow label="Статус" value={statusCfg.label} />}
             {((user as any).popularity ?? 0) > 0 && (
-              <InfoRow label="⚡ Популярность" value={`${(user as any).popularity.toLocaleString()} Spark`} />
+              <InfoRow label="✨ Популярность" value={`${(user as any).popularity.toLocaleString()} Spark`} />
             )}
           </motion.div>
 

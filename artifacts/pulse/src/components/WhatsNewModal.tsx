@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, X, Zap, Shield, MessageSquare, Users, Bell, RefreshCw } from "lucide-react";
-
-const APP_VERSION = "2.4.0";
+import { APP_VERSION } from "@/lib/version";
 const PENDING_KEY = "aura-pending-changelog";
 const SEEN_KEY = "aura-changelog-seen-v";
 

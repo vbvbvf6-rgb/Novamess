@@ -89,7 +89,7 @@ export function GiftLeaderboard({ userId: _userId }: { userId: number }) {
               </div>
               <div className="text-right shrink-0">
                 <p className={`text-sm font-black ${idx < 3 ? RARITY_COLORS[idx] : "text-foreground"}`}>
-                  {entry.totalValue.toLocaleString()} ⚡
+                  {entry.totalValue.toLocaleString()} ✨
                 </p>
                 <p className="text-[10px] text-muted-foreground">{entry.giftCount} подарков</p>
               </div>

@@ -1,4 +1,4 @@
-name: Deploy to GitHub Pages
+name: Deploy
 
 on:
   push:
@@ -51,7 +51,7 @@ jobs:
         with:
           path: artifacts/pulse/dist/public
 
-  deploy:
+  deploy-pages:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -61,3 +61,19 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+  deploy-backend:
+    runs-on: ubuntu-latest
+    needs: build
+    # Only runs if the RENDER_DEPLOY_HOOK_URL secret is configured
+    if: ${{ vars.RENDER_AUTO_DEPLOY == 'true' || secrets.RENDER_DEPLOY_HOOK_URL != '' }}
+    steps:
+      - name: Trigger Render.com deploy
+        run: |
+          if [ -n "$RENDER_DEPLOY_HOOK_URL" ]; then
+            curl -s -o /dev/null -w "%{http_code}" "$RENDER_DEPLOY_HOOK_URL" | grep -q "^2" && echo "✅ Render deploy triggered" || echo "⚠️ Render deploy hook returned non-2xx"
+          else
+            echo "ℹ️ RENDER_DEPLOY_HOOK_URL not set — skipping backend deploy"
+          fi
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}

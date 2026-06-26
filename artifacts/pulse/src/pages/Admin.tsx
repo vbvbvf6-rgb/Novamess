@@ -739,7 +739,7 @@ export default function Admin() {
       const res = await fetch(`/api/admin/topup-requests/${id}/approve`, { method: "POST", headers: getHeader() });
       const data = await res.json();
       if (!res.ok) { showToast(data.error || "Ошибка", "err"); return; }
-      showToast(`✅ Одобрено +${data.amount} ⚡ пользователю`, "ok");
+      showToast(`✅ Одобрено +${data.amount} ✨ пользователю`, "ok");
       setTopupRequests(prev => prev.map(r => r.id === id ? { ...r, status: "approved" } : r));
     } catch { showToast("Ошибка соединения", "err"); }
     setTopupActionLoading(null);
@@ -982,7 +982,7 @@ export default function Admin() {
       });
       const data = await res.json();
       if (!res.ok) { showToast(data.error || "Ошибка", "err"); return; }
-      showToast(`⚡ ${n > 0 ? "+" : ""}${n} МОНЕТА → ${data.usersAffected} пользователей`, "ok");
+      showToast(`⚡ ${n > 0 ? "+" : ""}${n} ИСКРА → ${data.usersAffected} пользователей`, "ok");
       setMassAmount("");
       setShowMassConfirm(false);
       fetchData();
@@ -1207,12 +1207,12 @@ export default function Admin() {
                 <Zap size={20} className="text-yellow-400" />
               </div>
               <div>
-                <h3 className="font-bold">Массовая выдача МОНЕТА</h3>
+                <h3 className="font-bold">Массовая выдача ИСКРА</h3>
                 <p className="text-sm text-muted-foreground">Всем пользователям сразу</p>
               </div>
             </div>
             <p className="text-sm mb-5">
-              Выдать <span className="font-bold text-primary">{Number(massAmount) > 0 ? "+" : ""}{massAmount} ⚡ МОНЕТА</span> каждому из <span className="font-bold">{users.length}</span> пользователей?
+              Выдать <span className="font-bold text-primary">{Number(massAmount) > 0 ? "+" : ""}{massAmount} ✨ ИСКРА</span> каждому из <span className="font-bold">{users.length}</span> пользователей?
             </p>
             <div className="flex gap-3">
               <button onClick={() => setShowMassConfirm(false)} className="flex-1 py-2.5 rounded-xl border border-border text-sm font-medium text-muted-foreground hover:bg-secondary transition-colors">Отмена</button>
@@ -1243,7 +1243,7 @@ export default function Admin() {
         {stats && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <StatCard icon={<Users size={20} className="text-primary" />} label="Пользователей" value={stats.totalUsers} color="bg-primary/10" />
-            <StatCard icon={<Zap size={20} className="text-yellow-400" />} label="МОНЕТА в обороте" value={stats.totalSpark} color="bg-yellow-500/10" />
+            <StatCard icon={<Zap size={20} className="text-yellow-400" />} label="ИСКРА в обороте" value={stats.totalSpark} color="bg-yellow-500/10" />
             <StatCard icon={<Crown size={20} className="text-amber-400" />} label="Prime подписок" value={stats.primeUsers} color="bg-amber-500/10" />
             <StatCard icon={<MessageSquare size={20} className="text-blue-400" />} label="Сообщений" value={stats.totalMessages} color="bg-blue-500/10" />
             <StatCard icon={<Activity size={20} className="text-green-400" />} label="Чатов" value={stats.totalChats} color="bg-green-500/10" />
@@ -1263,7 +1263,7 @@ export default function Admin() {
                   <Zap size={18} className="text-yellow-400" />
                 </div>
                 <div>
-                  <p className="font-semibold text-sm">Массовая выдача МОНЕТА</p>
+                  <p className="font-semibold text-sm">Массовая выдача ИСКРА</p>
                   <p className="text-xs text-muted-foreground">Всем {users.length} пользователям сразу</p>
                 </div>
               </div>
@@ -2526,7 +2526,7 @@ export default function Admin() {
             {showLeaderboard && (
               <div className="border-t border-border p-4">
                 <div className="flex gap-1 mb-3 bg-secondary/50 rounded-xl p-1">
-                  {([["byBalance", "⚡ МОНЕТА"], ["byMessages", "💬 Сообщ."]] as const).map(([key, label]) => (
+                  {([["byBalance", "✨ ИСКРА"], ["byMessages", "💬 Сообщ."]] as const).map(([key, label]) => (
                     <button
                       key={key}
                       onClick={() => setLeaderTab(key)}
@@ -2923,7 +2923,7 @@ export default function Admin() {
                       onClick={() => setActiveTab(t)}
                       className={`flex-1 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors whitespace-nowrap px-2 ${activeTab === t ? "text-primary border-b-2 border-primary" : "text-muted-foreground hover:text-foreground"}`}
                     >
-                      {t === "balance" ? "⚡ Баланс" : t === "password" ? "🔐 Пароль" : t === "actions" ? "⚙️ Действия" : "📊 Статистика"}
+                      {t === "balance" ? "✨ Баланс" : t === "password" ? "🔐 Пароль" : t === "actions" ? "⚙️ Действия" : "📊 Статистика"}
                     </button>
                   ))}
                 </div>
@@ -2932,7 +2932,7 @@ export default function Admin() {
                   {/* Balance tab */}
                   {activeTab === "balance" && (
                     <>
-                      <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">Быстрая выдача ⚡ МОНЕТА</p>
+                      <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">Быстрая выдача ✨ ИСКРА</p>
                       <div className="grid grid-cols-3 gap-2 mb-4">
                         {[50, 100, 500, 1000, 5000, 10000].map(amt => (
                           <motion.button
@@ -2946,7 +2946,7 @@ export default function Admin() {
                           </motion.button>
                         ))}
                       </div>
-                      <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Снять МОНЕТА</p>
+                      <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Снять ИСКРА</p>
                       <div className="grid grid-cols-3 gap-2 mb-4">
                         {[50, 100, 500].map(amt => (
                           <motion.button

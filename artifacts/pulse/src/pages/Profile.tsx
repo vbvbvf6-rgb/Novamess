@@ -371,7 +371,7 @@ function IncomingBegRequests() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-bold text-sm truncate">{req.display_name}</p>
-              <p className="text-xs text-yellow-400">просит {req.amount > 0 ? `${req.amount} ⚡` : "Spark ⚡"}</p>
+              <p className="text-xs text-yellow-400">просит {req.amount > 0 ? `${req.amount} ✨` : "Искра ✨"}</p>
             </div>
             <span className="text-2xl">🙏</span>
           </div>
@@ -385,7 +385,7 @@ function IncomingBegRequests() {
               min={1}
               value={fulfillAmounts[req.id] ?? (req.amount > 0 ? String(req.amount) : "")}
               onChange={e => setFulfillAmounts(prev => ({ ...prev, [req.id]: e.target.value }))}
-              placeholder="Сумма ⚡"
+              placeholder="Сумма ✨"
               className="w-28 rounded-xl bg-secondary border border-border px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500/40"
             />
             <button
@@ -393,7 +393,7 @@ function IncomingBegRequests() {
               disabled={actionLoading[req.id]}
               className="flex-1 py-1.5 rounded-xl text-sm font-bold bg-yellow-500/20 text-yellow-300 hover:bg-yellow-500/30 transition-colors border border-yellow-500/30 disabled:opacity-50"
             >
-              {actionLoading[req.id] ? "…" : "Отправить ⚡"}
+              {actionLoading[req.id] ? "…" : "Отправить ✨"}
             </button>
             <button
               onClick={() => handleDecline(req.id)}
@@ -463,11 +463,11 @@ function SparkActivityLog() {
         <div className="grid grid-cols-2 gap-2 mb-4">
           <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-3 text-center">
             <p className="text-lg font-black text-green-400">+{Number(summary.total_earned).toLocaleString()}</p>
-            <p className="text-[11px] text-muted-foreground">Получено ⚡</p>
+            <p className="text-[11px] text-muted-foreground">Получено ✨</p>
           </div>
           <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 text-center">
             <p className="text-lg font-black text-red-400">-{Number(summary.total_spent).toLocaleString()}</p>
-            <p className="text-[11px] text-muted-foreground">Потрачено ⚡</p>
+            <p className="text-[11px] text-muted-foreground">Потрачено ✨</p>
           </div>
         </div>
       )}
@@ -481,7 +481,7 @@ function SparkActivityLog() {
              act.type === "subscription" ? "👑" :
              act.type === "sent" ? "📤" :
              act.type === "received" ? "📥" :
-             act.type === "message_sent" ? "💬" : "⚡"}
+             act.type === "message_sent" ? "💬" : "✨"}
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-[13px] font-bold text-foreground truncate">{typeLabel(act.type)}</p>
@@ -489,7 +489,7 @@ function SparkActivityLog() {
           </div>
           {act.amount !== 0 && (
             <span className={`text-sm font-black shrink-0 ${Number(act.amount) > 0 ? "text-green-400" : "text-red-400"}`}>
-              {Number(act.amount) > 0 ? "+" : ""}{act.amount} ⚡
+              {Number(act.amount) > 0 ? "+" : ""}{act.amount} ✨
             </span>
           )}
         </div>
@@ -697,7 +697,7 @@ export default function Profile() {
                   <StatCard
                     icon={<Zap className="text-yellow-400" />}
                     label="Spark"
-                    value={(user as any)?.balance ? `${Number((user as any).balance).toLocaleString()} ⚡` : "0 ⚡"}
+                    value={(user as any)?.balance ? `${Number((user as any).balance).toLocaleString()} ✨` : "0 ✨"}
                     color="bg-yellow-500/10 border-yellow-500/20"
                   />
                 </div>

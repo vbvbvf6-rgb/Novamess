@@ -207,7 +207,7 @@ export default function Wallet() {
         const updated = [newTx, ...txHistory].slice(0, 50);
         setTxHistory(updated);
         localStorage.setItem(txKey, JSON.stringify(updated));
-        toast({ title: `+${data.bonus} ⚡ Монета!`, description: "Ежедневный бонус зачислен. Возвращайся завтра!" });
+        toast({ title: `+${data.bonus} ✨ Искра!`, description: "Ежедневный бонус зачислен. Возвращайся завтра!" });
         setShowBonusModal(false);
       } else {
         toast({ title: "Бонус недоступен", description: data.error || "Попробуйте позже", variant: "destructive" });
@@ -239,7 +239,7 @@ export default function Wallet() {
       const res = await fetch("/api/wallet/buy", {
         method: "POST",
         headers: { "Content-Type": "application/json", ...getUserIdHeader() },
-        body: JSON.stringify({ amount: pkg.spark, packageLabel: `${pkg.label} (${pkg.spark} ⚡)`, priceLabel: pkg.price }),
+        body: JSON.stringify({ amount: pkg.spark, packageLabel: `${pkg.label} (${pkg.spark} ✨)`, priceLabel: pkg.price }),
       });
       const data = await res.json();
       if (res.ok && data.success) {
@@ -249,7 +249,7 @@ export default function Wallet() {
         const updated = [newTx, ...txHistory].slice(0, 50);
         setTxHistory(updated);
         localStorage.setItem(txKey, JSON.stringify(updated));
-        toast({ title: `+${pkg.spark.toLocaleString("ru")} ⚡ Монета!`, description: `Пакет «${pkg.label}» успешно зачислен` });
+        toast({ title: `+${pkg.spark.toLocaleString("ru")} ✨ Искра!`, description: `Пакет «${pkg.label}» успешно зачислен` });
         setTimeout(() => { setShowBuyModal(false); setBoughtPackage(null); }, 1800);
       } else {
         toast({ title: "Ошибка покупки", description: data.error || "Попробуйте позже", variant: "destructive" });
@@ -273,7 +273,7 @@ export default function Wallet() {
       return;
     }
     if (amount > balance) {
-      toast({ title: "Недостаточно Монета", description: `Ваш баланс: ${balance} ⚡`, variant: "destructive" });
+      toast({ title: "Недостаточно Искры", description: `Ваш баланс: ${balance} ✨`, variant: "destructive" });
       return;
     }
     setIsSending(true);
@@ -290,7 +290,7 @@ export default function Wallet() {
         const updated = [newTx, ...txHistory].slice(0, 50);
         setTxHistory(updated);
         localStorage.setItem(txKey, JSON.stringify(updated));
-        toast({ title: "Перевод выполнен!", description: `${amount} ⚡ отправлено ${data.recipient}` });
+        toast({ title: "Перевод выполнен!", description: `${amount} ✨ отправлено ${data.recipient}` });
         setShowSendModal(false);
         setSendAddress("");
         setSendAmount("");
@@ -327,7 +327,7 @@ export default function Wallet() {
           <h1 className="text-xl font-black text-foreground">Кошелёк</h1>
         </div>
         <div className="flex items-center gap-1.5 text-sm font-black relative z-10 px-3 py-1.5 rounded-2xl" style={{ background: "linear-gradient(135deg, rgba(234,179,8,0.15), rgba(249,115,22,0.1))", border: "1px solid rgba(234,179,8,0.25)", color: "#fbbf24" }}>
-          <Zap size={14} fill="currentColor" /> {Number(balance).toLocaleString()} ⚡
+          <span className="text-sm">✨</span> {Number(balance).toLocaleString()}
         </div>
       </header>
 
@@ -344,7 +344,7 @@ export default function Wallet() {
             <div className="absolute bottom-0 left-0 w-28 h-28 rounded-full opacity-20 pointer-events-none"
               style={{ background: "radial-gradient(circle, #0891b2, transparent)", transform: "translate(-35%, 35%)" }} />
 
-            <p className="text-xs text-foreground/50 uppercase tracking-widest mb-1 relative z-10">Баланс Монета</p>
+            <p className="text-xs text-foreground/50 uppercase tracking-widest mb-1 relative z-10">Баланс Искры</p>
             <div className="flex items-end gap-2 mb-4 relative z-10">
               <span className="text-5xl font-black tracking-tight">{Number(balance).toLocaleString("ru")}</span>
               <Zap size={32} className="text-yellow-400 mb-1 fill-yellow-400" />
@@ -423,7 +423,7 @@ export default function Wallet() {
                 {hasPrime && (
                   <div className="flex items-center gap-2 px-3 py-2 bg-yellow-500/10 border border-yellow-500/20 rounded-xl">
                     <Crown size={14} className="text-yellow-400 shrink-0" />
-                    <span className="text-xs text-yellow-300 font-semibold">Prime: 2× Монета за каждое задание</span>
+                    <span className="text-xs text-yellow-300 font-semibold">Prime: 2× Искры за каждое задание</span>
                     <span className="ml-auto text-[10px] bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 rounded-full px-2 py-0.5 font-bold">×2</span>
                   </div>
                 )}
@@ -474,7 +474,7 @@ export default function Wallet() {
                   <div className="text-center text-muted-foreground py-16">
                     <History size={44} className="mx-auto mb-3 opacity-20" />
                     <p className="font-semibold">Нет транзакций</p>
-                    <p className="text-sm opacity-60 mt-1">Выполни задания чтобы заработать ⚡ Монета</p>
+                    <p className="text-sm opacity-60 mt-1">Выполни задания чтобы заработать ✨ Искра</p>
                   </div>
                 ) : (
                   txHistory.map((tx, i) => {
@@ -490,7 +490,7 @@ export default function Wallet() {
                           <p className="text-xs text-muted-foreground">{timeAgo(tx.time)}</p>
                         </div>
                         <span className={`text-sm font-bold shrink-0 ${isPositive ? "text-green-400" : "text-red-400"}`}>
-                          {isPositive ? "+" : "-"}{Math.abs(tx.amount)} ⚡
+                          {isPositive ? "+" : "-"}{Math.abs(tx.amount)} ✨
                         </span>
                       </motion.div>
                     );
@@ -511,14 +511,14 @@ export default function Wallet() {
             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
               onClick={(e) => e.stopPropagation()} className="bg-card border border-border rounded-3xl p-6 w-full max-w-sm shadow-2xl">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-foreground">Получить Монета</h3>
+                <h3 className="text-lg font-bold text-foreground">Получить Искру</h3>
                 <button onClick={() => setShowReceiveModal(false)} className="text-muted-foreground hover:text-foreground transition-colors">
                   <X size={20} />
                 </button>
               </div>
               <div className="flex flex-col items-center gap-4">
                 <div className="w-20 h-20 rounded-2xl bg-primary/10 border border-primary/30 flex items-center justify-center">
-                  <span className="text-4xl">⚡</span>
+                  <span className="text-4xl">✨</span>
                 </div>
                 <div className="text-center">
                   <p className="text-sm text-muted-foreground mb-1">Ваш адрес кошелька</p>
@@ -526,7 +526,7 @@ export default function Wallet() {
                     {walletAddress || `PULSE-${uid ? uid.toString().padStart(6, "0") : "000000"}`}
                   </div>
                 </div>
-                <p className="text-xs text-muted-foreground text-center">Передайте этот адрес отправителю для получения Монета</p>
+                <p className="text-xs text-muted-foreground text-center">Передайте этот адрес отправителю для получения Искры</p>
                 <button onClick={() => {
                   const addr = walletAddress || `PULSE-${uid ? uid.toString().padStart(6, "0") : "000000"}`;
                   navigator.clipboard?.writeText(addr);
@@ -551,7 +551,7 @@ export default function Wallet() {
             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
               onClick={(e) => e.stopPropagation()} className="bg-card border border-border rounded-3xl p-6 w-full max-w-sm shadow-2xl max-h-[90dvh] overflow-y-auto">
               <div className="flex items-center justify-between mb-5">
-                <h3 className="text-lg font-bold text-foreground">Отправить Монета</h3>
+                <h3 className="text-lg font-bold text-foreground">Отправить Искру</h3>
                 <button onClick={() => setShowSendModal(false)} className="text-muted-foreground hover:text-foreground transition-colors"><X size={20} /></button>
               </div>
               <div className="space-y-4">
@@ -561,10 +561,10 @@ export default function Wallet() {
                     className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-primary transition-colors" autoCapitalize="characters" />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Сумма ⚡</label>
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Сумма ✨</label>
                   <input type="number" inputMode="numeric" value={sendAmount} onChange={e => setSendAmount(e.target.value)} onKeyDown={e => { if (["e", "E", "+", "-"].includes(e.key)) e.preventDefault(); }} placeholder="100" min={1} max={balance}
                     className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-primary transition-colors" />
-                  <p className="text-xs text-muted-foreground mt-1">Доступно: {balance.toLocaleString()} ⚡</p>
+                  <p className="text-xs text-muted-foreground mt-1">Доступно: {balance.toLocaleString()} ✨</p>
                 </div>
                 <button disabled={isSending || !sendAddress.trim() || !sendAmount} onClick={handleSend}
                   className="w-full py-3 rounded-xl font-bold text-white text-sm transition-all disabled:opacity-50"
@@ -587,7 +587,7 @@ export default function Wallet() {
               onClick={(e) => e.stopPropagation()} className="bg-card border border-border rounded-3xl p-5 w-full max-w-sm shadow-2xl max-h-[90dvh] overflow-y-auto">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h3 className="text-lg font-bold text-foreground">Купить Монета ⚡</h3>
+                  <h3 className="text-lg font-bold text-foreground">Купить Искра ✨</h3>
                   <p className="text-xs text-muted-foreground mt-0.5">Выберите пакет пополнения</p>
                 </div>
                 <button onClick={() => setShowBuyModal(false)} className="text-muted-foreground hover:text-foreground transition-colors"><X size={20} /></button>
@@ -600,7 +600,7 @@ export default function Wallet() {
                       <Check size={28} className="text-green-400" />
                     </motion.div>
                     <div className="text-center">
-                      <p className="font-bold text-foreground">Монета зачислена!</p>
+                      <p className="font-bold text-foreground">Искра зачислена!</p>
                       <p className="text-sm text-muted-foreground mt-1">Пакет «{boughtPackage}» успешно куплен</p>
                     </div>
                   </motion.div>
@@ -619,7 +619,7 @@ export default function Wallet() {
                             : <Zap size={15} className="text-white fill-white" />}
                         </div>
                         <p className="font-black text-base text-foreground leading-none mb-0.5">{pkg.spark.toLocaleString("ru")}</p>
-                        <p className="text-[10px] text-muted-foreground mb-2">⚡ Монета</p>
+                        <p className="text-[10px] text-muted-foreground mb-2">✨ Искра</p>
                         <div className={`w-full py-1.5 rounded-lg bg-gradient-to-r ${pkg.color} text-white text-xs font-bold text-center`}>
                           {buyingPackage === pkg.id ? "Покупка..." : pkg.price}
                         </div>
@@ -628,7 +628,7 @@ export default function Wallet() {
                   </motion.div>
                 )}
               </AnimatePresence>
-              <p className="text-[10px] text-muted-foreground text-center mt-3">Монета зачисляется мгновенно после нажатия кнопки</p>
+              <p className="text-[10px] text-muted-foreground text-center mt-3">Искра зачисляется мгновенно после нажатия кнопки</p>
             </motion.div>
           </motion.div>
         )}
@@ -650,10 +650,10 @@ export default function Wallet() {
                 <motion.div animate={bonusClaimed ? {} : { scale: [1, 1.08, 1] }} transition={{ repeat: Infinity, duration: 2 }}
                   className="w-24 h-24 rounded-3xl flex items-center justify-center"
                   style={{ background: "linear-gradient(135deg, #22d3ee22, #7c3aed22)", border: "2px solid #7c3aed44" }}>
-                  <span className="text-5xl">⚡</span>
+                  <span className="text-5xl">✨</span>
                 </motion.div>
                 <div className="text-center">
-                  <p className="text-3xl font-black text-foreground">+10 Монета</p>
+                  <p className="text-3xl font-black text-foreground">+10 Искры</p>
                   <p className="text-sm text-muted-foreground mt-1">Бесплатно каждый день, без покупок</p>
                 </div>
                 {bonusClaimed ? (
