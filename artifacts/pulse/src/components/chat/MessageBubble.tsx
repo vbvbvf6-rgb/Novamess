@@ -786,9 +786,17 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
         let albumUrls: string[] = [];
         let albumCaption = "";
         try {
-          const parsed = JSON.parse(message.text || "{}");
-          albumUrls = parsed.urls || [];
-          albumCaption = parsed.caption || "";
+          // New format: urls JSON in mediaUrl, caption in text
+          const parsedMedia = JSON.parse(message.mediaUrl || "{}");
+          if (Array.isArray(parsedMedia.urls)) {
+            albumUrls = parsedMedia.urls;
+            albumCaption = message.text || "";
+          } else {
+            // Legacy format: both in text field
+            const parsedText = JSON.parse(message.text || "{}");
+            albumUrls = parsedText.urls || [];
+            albumCaption = parsedText.caption || "";
+          }
         } catch { albumUrls = [message.mediaUrl || ""]; }
         const visibleCount = Math.min(albumUrls.length, 4);
         const extra = albumUrls.length - 4;

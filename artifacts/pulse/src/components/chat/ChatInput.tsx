@@ -390,8 +390,8 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
             const m = await xhrPost("/api/messages", {
               chatId,
               type: "album",
-              mediaUrl: imagePreviews[0],
-              text: JSON.stringify({ urls: imagePreviews, caption: text.trim() }),
+              mediaUrl: JSON.stringify({ urls: imagePreviews }),
+              text: text.trim() || undefined,
               replyToId: replyTo?.id,
             }, token, setUploadProgress);
             if (m?.id) p2p?.send(m);

@@ -403,13 +403,14 @@ router.post("/messages", async (req, res) => {
       }
     }
 
-    if (body.text && body.text.length > 4000) {
+    const isTextMessage = !body.type || body.type === "text";
+    if (isTextMessage && body.text && body.text.length > 4000) {
       return res.status(400).json({ error: "Сообщение слишком длинное (максимум 4000 символов)" });
     }
 
-    // Reject oversized media (base64 > 8MB string ≈ 6MB actual file)
-    if (body.mediaUrl && body.mediaUrl.length > 8 * 1024 * 1024) {
-      return res.status(413).json({ error: "Медиафайл слишком большой. Максимальный размер — 6 МБ." });
+    // Reject oversized media (base64 > 150MB string) — only for non-album single-file types
+    if (body.type !== "album" && body.mediaUrl && body.mediaUrl.length > 150 * 1024 * 1024) {
+      return res.status(413).json({ error: "Медиафайл слишком большой. Максимальный размер — 100 МБ." });
     }
 
     // Banword check
