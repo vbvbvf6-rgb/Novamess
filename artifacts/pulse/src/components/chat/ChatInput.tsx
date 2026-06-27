@@ -387,33 +387,69 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
         setAudioBlob(null);
         setRecordSeconds(0);
       } else if (imagePreviews.length > 0) {
-        if (imagePreviews.length >= 2) {
-          const token = sessionStorage.getItem("pulse-token");
-          setUploadProgress(0);
+        const token = sessionStorage.getItem("pulse-token");
+        const caption = text.trim() || undefined;
+        const capturedReplyId = replyTo?.id;
+        const BATCH = 4; // album grid shows max 4; keep each request small
+        // Snapshot the list so user edits during upload don't shift indices
+        const snapshot = [...imagePreviews];
+        const totalBatches = Math.ceil(snapshot.length / BATCH);
+        let captionUsed = false; // ensure caption/reply only go on the first successfully sent batch
+
+        for (let b = 0; b < totalBatches; b++) {
+          const batch = snapshot.slice(b * BATCH, (b + 1) * BATCH);
+          const attachMeta = !captionUsed;
+          setUploadProgress(Math.round((b / totalBatches) * 100));
           try {
-            const m = await xhrPost("/api/messages", {
-              chatId,
-              type: "album",
-              mediaUrl: JSON.stringify({ urls: imagePreviews }),
-              text: text.trim() || undefined,
-              replyToId: replyTo?.id,
-            }, token, setUploadProgress);
-            if (m?.id) p2p?.send(m);
-          } finally { setUploadProgress(null); }
-        } else {
-          const sent = await sendMessage.mutateAsync({
-            data: {
-              chatId,
-              type: "image",
-              mediaUrl: imagePreviews[0],
-              text: text.trim() || undefined,
-              replyToId: replyTo?.id,
+            if (batch.length === 1) {
+              // Single image — lighter mutation path
+              const sent = await sendMessage.mutateAsync({
+                data: {
+                  chatId,
+                  type: "image",
+                  mediaUrl: batch[0],
+                  text: attachMeta ? caption : undefined,
+                  replyToId: attachMeta ? capturedReplyId : undefined,
+                }
+              });
+              if (sent) p2p?.send(sent as Message);
+            } else {
+              // 2-4 images → album
+              const m = await xhrPost("/api/messages", {
+                chatId,
+                type: "album",
+                mediaUrl: JSON.stringify({ urls: batch }),
+                text: attachMeta ? caption : undefined,
+                replyToId: attachMeta ? capturedReplyId : undefined,
+              }, token, (pct) => {
+                const base = (b / totalBatches) * 100;
+                const step = (1 / totalBatches) * 100;
+                setUploadProgress(Math.round(base + (pct / 100) * step));
+              });
+              if (m?.id) p2p?.send(m);
             }
-          });
-          if (sent) p2p?.send(sent as Message);
+            captionUsed = true;
+            // Remove exactly the sent batch items from state, one-at-a-time by value
+            // so duplicate base64 strings don't cause over-removal
+            setImagePreviews(prev => {
+              const remaining = [...prev];
+              for (const img of batch) {
+                const idx = remaining.indexOf(img);
+                if (idx >= 0) remaining.splice(idx, 1);
+              }
+              return remaining;
+            });
+            // Clear caption/reply from input immediately after first batch lands
+            if (attachMeta) {
+              setText("");
+              onCancelReply?.();
+            }
+          } catch (batchErr) {
+            setUploadProgress(null);
+            throw batchErr; // outer catch will show error toast
+          }
         }
-        setImagePreviews([]);
-        setText("");
+        setUploadProgress(null);
       } else if (docPreviews.length > 0) {
         const token = sessionStorage.getItem("pulse-token");
         const totalDocs = docPreviews.length;
@@ -1027,15 +1063,19 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
                 <motion.div key={idx} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
                   className="relative rounded-2xl overflow-hidden border border-border shadow-sm shrink-0 group">
                   <img src={src} alt="" className="h-28 w-28 object-cover block" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
-                  <button onClick={() => removeImage(idx)} className="absolute top-1.5 right-1.5 w-7 h-7 bg-black/40 backdrop-blur-md text-white rounded-full flex items-center justify-center hover:bg-black/60 transition-colors opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100">
-                    <X size={14} />
-                  </button>
+                  {!isSending && (
+                    <button onClick={() => removeImage(idx)} className="absolute top-1.5 right-1.5 w-7 h-7 bg-black/40 backdrop-blur-md text-white rounded-full flex items-center justify-center hover:bg-black/60 transition-colors opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100">
+                      <X size={14} />
+                    </button>
+                  )}
                 </motion.div>
               ))}
-              <button onClick={() => fileInputRef.current?.click()}
-                className="h-28 w-28 rounded-2xl border-2 border-dashed border-border hover:border-primary hover:bg-primary/5 flex items-center justify-center text-muted-foreground hover:text-primary transition-all shrink-0">
-                <Images size={28} />
-              </button>
+              {!isSending && (
+                <button onClick={() => fileInputRef.current?.click()}
+                  className="h-28 w-28 rounded-2xl border-2 border-dashed border-border hover:border-primary hover:bg-primary/5 flex items-center justify-center text-muted-foreground hover:text-primary transition-all shrink-0">
+                  <Images size={28} />
+                </button>
+              )}
             </motion.div>
           )}
           {docPreviews.length > 0 && (
