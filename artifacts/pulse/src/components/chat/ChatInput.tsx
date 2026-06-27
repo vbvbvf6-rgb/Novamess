@@ -110,6 +110,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
   const [isRecording, setIsRecording] = useState(false);
   const [recordSeconds, setRecordSeconds] = useState(0);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
 
   const [showPollCreator, setShowPollCreator] = useState(false);
   const [pollQuestion, setPollQuestion] = useState("");
@@ -290,6 +291,27 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
     }
   };
 
+  const xhrPost = (url: string, body: object, token: string | null, onProgress?: (pct: number) => void): Promise<any> => {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", url);
+      xhr.setRequestHeader("Content-Type", "application/json");
+      if (token) xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+      if (onProgress) {
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100));
+        };
+      }
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try { resolve(JSON.parse(xhr.responseText)); } catch { resolve(null); }
+        } else { reject(new Error(`HTTP ${xhr.status}`)); }
+      };
+      xhr.onerror = () => reject(new Error("Network error"));
+      xhr.send(JSON.stringify(body));
+    });
+  };
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
@@ -363,20 +385,17 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
       } else if (imagePreviews.length > 0) {
         if (imagePreviews.length >= 2) {
           const token = sessionStorage.getItem("pulse-token");
-          const hdrs: Record<string, string> = { "Content-Type": "application/json" };
-          if (token) hdrs["Authorization"] = `Bearer ${token}`;
-          const res = await fetch("/api/messages", {
-            method: "POST",
-            headers: hdrs,
-            body: JSON.stringify({
+          setUploadProgress(0);
+          try {
+            const m = await xhrPost("/api/messages", {
               chatId,
               type: "album",
               mediaUrl: imagePreviews[0],
               text: JSON.stringify({ urls: imagePreviews, caption: text.trim() }),
               replyToId: replyTo?.id,
-            }),
-          });
-          if (res.ok) { const m = await res.json(); if (m?.id) p2p?.send(m); }
+            }, token, setUploadProgress);
+            if (m?.id) p2p?.send(m);
+          } finally { setUploadProgress(null); }
         } else {
           const sent = await sendMessage.mutateAsync({
             data: {
@@ -393,22 +412,26 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
         setText("");
       } else if (docPreviews.length > 0) {
         const token = sessionStorage.getItem("pulse-token");
-        const hdrs: Record<string, string> = { "Content-Type": "application/json" };
-        if (token) hdrs["Authorization"] = `Bearer ${token}`;
-        for (const doc of docPreviews) {
+        for (let i = 0; i < docPreviews.length; i++) {
+          const doc = docPreviews[i];
           const isVideo = doc.mime.startsWith("video/");
-          const res = await fetch("/api/messages", {
-            method: "POST",
-            headers: hdrs,
-            body: JSON.stringify({
+          setUploadProgress(0);
+          try {
+            const m = await xhrPost("/api/messages", {
               chatId,
               type: isVideo ? "video" : "document",
               mediaUrl: doc.data,
               text: JSON.stringify({ name: doc.name, size: doc.size, mime: doc.mime }),
               replyToId: replyTo?.id,
-            }),
-          });
-          if (res.ok) { const m = await res.json(); if (m?.id) p2p?.send(m); }
+            }, token, (pct) => {
+              const base = (i / docPreviews.length) * 100;
+              const step = (1 / docPreviews.length) * 100;
+              setUploadProgress(Math.round(base + (pct / 100) * step));
+            });
+            if (m?.id) p2p?.send(m);
+          } finally {
+            if (i === docPreviews.length - 1) setUploadProgress(null);
+          }
         }
         setDocPreviews([]);
         setText("");
@@ -1026,11 +1049,33 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
                     <p className="text-[13px] font-semibold truncate text-foreground">{doc.name}</p>
                     <p className="text-[11px] text-muted-foreground">{formatBytes(doc.size)}</p>
                   </div>
-                  <button onClick={() => removeDoc(idx)} className="w-7 h-7 rounded-full bg-destructive/10 text-destructive flex items-center justify-center hover:bg-destructive/20 transition-colors shrink-0">
+                  <button onClick={() => removeDoc(idx)} disabled={isSending} className="w-7 h-7 rounded-full bg-destructive/10 text-destructive flex items-center justify-center hover:bg-destructive/20 transition-colors shrink-0 disabled:opacity-40">
                     <X size={13} />
                   </button>
                 </motion.div>
               ))}
+            </motion.div>
+          )}
+
+          {/* Upload progress bar */}
+          {uploadProgress !== null && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mb-2"
+            >
+              <div className="flex items-center gap-2 px-1">
+                <div className="flex-1 h-1.5 bg-secondary rounded-full overflow-hidden">
+                  <motion.div
+                    className="h-full bg-primary rounded-full"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${uploadProgress}%` }}
+                    transition={{ ease: "linear", duration: 0.2 }}
+                  />
+                </div>
+                <span className="text-[11px] text-muted-foreground font-mono tabular-nums shrink-0">{uploadProgress}%</span>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>

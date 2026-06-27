@@ -455,7 +455,6 @@ export function ActiveCall() {
                     ref={remoteVideoRef}
                     autoPlay
                     playsInline
-                    muted
                     className="w-full h-full object-cover"
                   />
                 ) : (
