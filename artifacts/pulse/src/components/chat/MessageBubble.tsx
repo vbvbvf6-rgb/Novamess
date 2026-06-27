@@ -842,6 +842,59 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
           </div>
         );
       }
+      case "video": {
+        let videoName = "Видео";
+        try { const p = JSON.parse(message.text || "{}"); videoName = p.name || "Видео"; } catch {}
+        return (
+          <div className="rounded-xl overflow-hidden -mx-1 -mt-1 mb-1">
+            <video
+              src={message.mediaUrl || ""}
+              controls
+              playsInline
+              className="max-w-[280px] max-h-[320px] w-full block rounded-xl"
+              preload="metadata"
+            />
+            <p className="text-[11px] text-muted-foreground px-2 pb-1 pt-1 truncate">{videoName}</p>
+          </div>
+        );
+      }
+      case "document": {
+        let docMeta = { name: "Файл", size: 0, mime: "application/octet-stream" };
+        try { docMeta = { ...docMeta, ...JSON.parse(message.text || "{}") }; } catch {}
+        const ext = docMeta.name.split(".").pop()?.toLowerCase() ?? "";
+        const iconColor =
+          docMeta.mime === "application/pdf" ? "text-red-400 bg-red-500/10" :
+          ["zip","rar","7z","tar","gz"].includes(ext) ? "text-yellow-400 bg-yellow-500/10" :
+          ["js","ts","html","css","py","json","xml","php"].includes(ext) ? "text-green-400 bg-green-500/10" :
+          ["doc","docx","xls","xlsx","ppt","pptx"].includes(ext) ? "text-blue-400 bg-blue-500/10" :
+          "text-muted-foreground bg-secondary";
+        const formatBytes = (b: number) => b < 1024 ? `${b} Б` : b < 1048576 ? `${(b/1024).toFixed(1)} КБ` : `${(b/1048576).toFixed(1)} МБ`;
+        return (
+          <a
+            href={message.mediaUrl || ""}
+            download={docMeta.name}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 py-1 hover:opacity-80 transition-opacity"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${iconColor}`}>
+              {["zip","rar","7z","tar","gz"].includes(ext) ? <span className="text-lg">📦</span> :
+               ["js","ts","html","css","py","json","xml","php"].includes(ext) ? <span className="text-lg">💻</span> :
+               docMeta.mime === "application/pdf" ? <span className="text-lg">📄</span> :
+               ["doc","docx"].includes(ext) ? <span className="text-lg">📝</span> :
+               ["xls","xlsx"].includes(ext) ? <span className="text-lg">📊</span> :
+               <span className="text-lg">📎</span>}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[14px] font-semibold truncate max-w-[180px]">{docMeta.name}</p>
+              <p className={`text-[11px] ${isMine ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
+                {docMeta.size > 0 ? formatBytes(docMeta.size) : ext.toUpperCase() || "Файл"} · скачать
+              </p>
+            </div>
+          </a>
+        );
+      }
       case "call":
         return <p className="text-[15px] font-bold italic opacity-80">📞 Звонок завершён</p>;
       default:

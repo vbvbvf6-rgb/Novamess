@@ -3,7 +3,25 @@ import { emojiToTwemojiUrl } from "@/lib/twemoji";
 import { useSendMessage, useGetMe, getGetMessagesQueryKey, getGetChatsQueryKey, Message } from "@workspace/api-client-react";
 import type { P2PChannel } from "@/hooks/useP2PChannel";
 import { useQueryClient } from "@tanstack/react-query";
-import { Paperclip, Mic, SendHorizontal, X, Square, Trash2, Images, Reply, Pencil, Clock, BarChart2, Plus, Minus, CalendarClock, Hourglass, Smile, Package } from "lucide-react";
+import { Paperclip, Mic, SendHorizontal, X, Square, Trash2, Images, Reply, Pencil, Clock, BarChart2, Plus, Minus, CalendarClock, Hourglass, Smile, Package, FileText, FileCode, FileArchive, File as FileIcon, Video } from "lucide-react";
+
+interface DocPreview { name: string; size: number; mime: string; data: string; }
+
+function formatBytes(b: number) {
+  if (b < 1024) return `${b} Б`;
+  if (b < 1024 * 1024) return `${(b / 1024).toFixed(1)} КБ`;
+  return `${(b / (1024 * 1024)).toFixed(1)} МБ`;
+}
+
+function DocIcon({ mime, name }: { mime: string; name: string }) {
+  const ext = name.split(".").pop()?.toLowerCase() ?? "";
+  if (mime === "application/pdf") return <FileText size={22} className="text-red-400" />;
+  if (["zip","rar","7z","tar","gz","bz2"].includes(ext)) return <FileArchive size={22} className="text-yellow-400" />;
+  if (["js","ts","html","css","py","json","xml","java","cpp","c","go","rs","php"].includes(ext)) return <FileCode size={22} className="text-green-400" />;
+  if (["doc","docx","xls","xlsx","ppt","pptx","odt","ods"].includes(ext)) return <FileText size={22} className="text-blue-400" />;
+  if (mime.startsWith("video/")) return <Video size={22} className="text-purple-400" />;
+  return <FileIcon size={22} className="text-muted-foreground" />;
+}
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 
@@ -81,6 +99,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
   const [showEmoji, setShowEmoji] = useState(false);
   const [emojiCategory, setEmojiCategory] = useState(0);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [docPreviews, setDocPreviews] = useState<DocPreview[]>([]);
   const [isSending, setIsSending] = useState(false);
   const [scheduledAt, setScheduledAt] = useState<string>("");
   const [showScheduler, setShowScheduler] = useState(false);
@@ -274,20 +293,38 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
-    const MAX_FILE_MB = 30;
+    const MAX_FILE_MB = 6;
     const oversized = files.filter(f => f.size > MAX_FILE_MB * 1024 * 1024);
     if (oversized.length > 0) {
       toast({ title: "Файл слишком большой", description: `Максимальный размер — ${MAX_FILE_MB} МБ`, variant: "destructive" });
       if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
-    const results = await Promise.all(files.map(f => compressImage(f)));
-    setImagePreviews(prev => [...prev, ...results]);
+    const images: File[] = [];
+    const docs: File[] = [];
+    for (const f of files) {
+      if (f.type.startsWith("image/") && !f.type.startsWith("image/svg")) images.push(f);
+      else docs.push(f);
+    }
+    if (images.length > 0) {
+      const results = await Promise.all(images.map(f => compressImage(f)));
+      setImagePreviews(prev => [...prev, ...results]);
+      sendTypingEvent("photo");
+    }
+    if (docs.length > 0) {
+      const results = await Promise.all(docs.map(async f => ({
+        name: f.name,
+        size: f.size,
+        mime: f.type || "application/octet-stream",
+        data: await readFileAsDataUrl(f),
+      })));
+      setDocPreviews(prev => [...prev, ...results]);
+    }
     if (fileInputRef.current) fileInputRef.current.value = "";
-    sendTypingEvent("photo");
   };
 
   const removeImage = (idx: number) => setImagePreviews(prev => prev.filter((_, i) => i !== idx));
+  const removeDoc = (idx: number) => setDocPreviews(prev => prev.filter((_, i) => i !== idx));
 
   const handleSend = async (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -353,6 +390,27 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
           if (sent) p2p?.send(sent as Message);
         }
         setImagePreviews([]);
+        setText("");
+      } else if (docPreviews.length > 0) {
+        const token = sessionStorage.getItem("pulse-token");
+        const hdrs: Record<string, string> = { "Content-Type": "application/json" };
+        if (token) hdrs["Authorization"] = `Bearer ${token}`;
+        for (const doc of docPreviews) {
+          const isVideo = doc.mime.startsWith("video/");
+          const res = await fetch("/api/messages", {
+            method: "POST",
+            headers: hdrs,
+            body: JSON.stringify({
+              chatId,
+              type: isVideo ? "video" : "document",
+              mediaUrl: doc.data,
+              text: JSON.stringify({ name: doc.name, size: doc.size, mime: doc.mime }),
+              replyToId: replyTo?.id,
+            }),
+          });
+          if (res.ok) { const m = await res.json(); if (m?.id) p2p?.send(m); }
+        }
+        setDocPreviews([]);
         setText("");
       } else {
         const textToSend = text.trim();
@@ -544,7 +602,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
   const _pad = (n: number) => n.toString().padStart(2, "0");
   const minDatetime = `${_minDate.getFullYear()}-${_pad(_minDate.getMonth()+1)}-${_pad(_minDate.getDate())}T${_pad(_minDate.getHours())}:${_pad(_minDate.getMinutes())}`;
 
-  const hasContent = text.trim().length > 0 || imagePreviews.length > 0 || audioBlob;
+  const hasContent = text.trim().length > 0 || imagePreviews.length > 0 || docPreviews.length > 0 || !!audioBlob;
 
   if (isChannel && !isChannelAdmin) {
     if (!replyTo) {
@@ -952,6 +1010,29 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
               </button>
             </motion.div>
           )}
+          {docPreviews.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
+              className="mb-3 flex flex-col gap-2"
+            >
+              {docPreviews.map((doc, idx) => (
+                <motion.div key={idx} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
+                  className="flex items-center gap-3 bg-secondary/60 border border-border rounded-2xl px-3 py-2.5 group"
+                >
+                  <div className="w-9 h-9 rounded-xl bg-background border border-border flex items-center justify-center shrink-0">
+                    <DocIcon mime={doc.mime} name={doc.name} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-semibold truncate text-foreground">{doc.name}</p>
+                    <p className="text-[11px] text-muted-foreground">{formatBytes(doc.size)}</p>
+                  </div>
+                  <button onClick={() => removeDoc(idx)} className="w-7 h-7 rounded-full bg-destructive/10 text-destructive flex items-center justify-center hover:bg-destructive/20 transition-colors shrink-0">
+                    <X size={13} />
+                  </button>
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
         </AnimatePresence>
 
         {/* Mobile action sheet — only visible on small screens */}
@@ -1060,7 +1141,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
                 onSubmit={handleSend}
                 className="flex-1 flex items-center gap-1"
               >
-                <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleFileChange} className="hidden" />
+                <input ref={fileInputRef} type="file" accept="*/*" multiple onChange={handleFileChange} className="hidden" />
                 
                 {!editMessage && (
                   <>
