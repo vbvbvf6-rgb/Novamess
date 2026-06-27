@@ -1,14 +1,12 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, X, Zap, Shield, MessageSquare, RefreshCw, Diamond, Star, Gem, Rocket } from "lucide-react";
+import { Sparkles, X, MessageSquare, Diamond, Star, Gem, Rocket } from "lucide-react";
 import { APP_VERSION } from "@/lib/version";
 const PENDING_KEY = "aura-pending-changelog";
 const SEEN_KEY = "aura-changelog-seen-v";
 
 const CHANGELOG = [
   { icon: Diamond,      color: "text-cyan-400",   bg: "bg-cyan-500/10",   text: "Валюта переименована: Искра ✨ → Кристалл 💎 — красиво и премиально" },
-  { icon: RefreshCw,    color: "text-blue-400",   bg: "bg-blue-500/10",   text: "Автообновление из GitHub: новая версия деплоится без ручного вмешательства" },
-  { icon: Shield,       color: "text-green-400",  bg: "bg-green-500/10",  text: "Фоновый пинг — сервер на Render больше не засыпает" },
   { icon: Gem,          color: "text-purple-400", bg: "bg-purple-500/10", text: "Иконка валюты обновлена — 💎 вместо ⚡ по всему приложению" },
   { icon: MessageSquare,color: "text-orange-400", bg: "bg-orange-500/10", text: "Обновление находится в Настройках → «О приложении» после нажатия «Позже»" },
   { icon: Star,         color: "text-yellow-400", bg: "bg-yellow-500/10", text: "Версия теперь синхронизирована между приложением и журналом изменений" },

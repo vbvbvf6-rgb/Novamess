@@ -315,11 +315,12 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
+    // Always reset input so the same file can be selected again
+    if (fileInputRef.current) fileInputRef.current.value = "";
     const MAX_FILE_MB = 100;
     const oversized = files.filter(f => f.size > MAX_FILE_MB * 1024 * 1024);
     if (oversized.length > 0) {
       toast({ title: "Файл слишком большой", description: `Максимальный размер — ${MAX_FILE_MB} МБ`, variant: "destructive" });
-      if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
     const images: File[] = [];
@@ -328,21 +329,24 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
       if (f.type.startsWith("image/") && !f.type.startsWith("image/svg")) images.push(f);
       else docs.push(f);
     }
-    if (images.length > 0) {
-      const results = await Promise.all(images.map(f => compressImage(f)));
-      setImagePreviews(prev => [...prev, ...results]);
-      sendTypingEvent("photo");
+    try {
+      if (images.length > 0) {
+        const results = await Promise.all(images.map(f => compressImage(f)));
+        setImagePreviews(prev => [...prev, ...results]);
+        sendTypingEvent("photo");
+      }
+      if (docs.length > 0) {
+        const results = await Promise.all(docs.map(async f => ({
+          name: f.name,
+          size: f.size,
+          mime: f.type || "application/octet-stream",
+          data: await readFileAsDataUrl(f),
+        })));
+        setDocPreviews(prev => [...prev, ...results]);
+      }
+    } catch {
+      toast({ title: "Ошибка загрузки файла", description: "Не удалось прочитать файл", variant: "destructive" });
     }
-    if (docs.length > 0) {
-      const results = await Promise.all(docs.map(async f => ({
-        name: f.name,
-        size: f.size,
-        mime: f.type || "application/octet-stream",
-        data: await readFileAsDataUrl(f),
-      })));
-      setDocPreviews(prev => [...prev, ...results]);
-    }
-    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const removeImage = (idx: number) => setImagePreviews(prev => prev.filter((_, i) => i !== idx));
@@ -371,7 +375,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
       return;
     }
 
-    if (!text.trim() && imagePreviews.length === 0 && !audioBlob) return;
+    if (!text.trim() && imagePreviews.length === 0 && !audioBlob && docPreviews.length === 0) return;
     setIsSending(true);
     try {
       if (audioBlob) {
@@ -412,6 +416,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
         setText("");
       } else if (docPreviews.length > 0) {
         const token = sessionStorage.getItem("pulse-token");
+        const totalDocs = docPreviews.length;
         for (let i = 0; i < docPreviews.length; i++) {
           const doc = docPreviews[i];
           setUploadProgress(0);
@@ -423,16 +428,17 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
               text: JSON.stringify({ name: doc.name, size: doc.size, mime: doc.mime }),
               replyToId: replyTo?.id,
             }, token, (pct) => {
-              const base = (i / docPreviews.length) * 100;
-              const step = (1 / docPreviews.length) * 100;
+              const base = (i / totalDocs) * 100;
+              const step = (1 / totalDocs) * 100;
               setUploadProgress(Math.round(base + (pct / 100) * step));
             });
             if (m?.id) p2p?.send(m);
+            // Remove this doc from previews immediately after successful send
+            setDocPreviews(prev => prev.filter(d => d !== doc));
           } finally {
-            if (i === docPreviews.length - 1) setUploadProgress(null);
+            if (i === totalDocs - 1) setUploadProgress(null);
           }
         }
-        setDocPreviews([]);
         setText("");
       } else {
         const textToSend = text.trim();
