@@ -104,29 +104,45 @@ self.addEventListener("push", (e) => {
   if (!e.data) return;
   const data = e.data.json();
 
-  // Build a rich notification
-  const title = data.title || "Aura";
+  const title = data.title || "Pulse";
   const body = data.body || "";
   const icon = data.senderAvatar || data.icon || "/icon-192.png";
   const badge = "/icon-192.png";
-  const tag = data.tag || "aura-message";
+  const tag = data.tag || "pulse-message";
   const url = data.url || "/";
+  const isCall = data.chatType === "call";
 
-  const options = {
-    body,
-    icon,
-    badge,
-    image: data.image || undefined,
-    data: { url },
-    vibrate: [200, 100, 200],
-    tag,
-    renotify: true,
-    requireInteraction: false,
-    actions: [
-      { action: "reply", title: "Ответить" },
-      { action: "open", title: "Открыть" },
-    ],
-  };
+  const options = isCall
+    ? {
+        body,
+        icon,
+        badge,
+        data: { url, isCall: true },
+        vibrate: [300, 100, 300, 100, 300, 100, 300],
+        tag,
+        renotify: true,
+        requireInteraction: true,
+        silent: false,
+        actions: [
+          { action: "accept", title: "✅ Принять" },
+          { action: "decline", title: "❌ Отклонить" },
+        ],
+      }
+    : {
+        body,
+        icon,
+        badge,
+        image: data.image || undefined,
+        data: { url },
+        vibrate: [200, 100, 200],
+        tag,
+        renotify: true,
+        requireInteraction: false,
+        actions: [
+          { action: "reply", title: "Ответить" },
+          { action: "open", title: "Открыть" },
+        ],
+      };
 
   e.waitUntil(
     self.registration.showNotification(title, options)

@@ -3,6 +3,7 @@ import { db, callsTable, usersTable } from "@workspace/db";
 import { eq, or, desc } from "drizzle-orm";
 import { InitiateCallBody, UpdateCallStatusBody } from "@workspace/api-zod";
 import { broadcastToUser } from "../lib/sse";
+import { sendPushToUser } from "./push.js";
 
 const router = Router();
 
@@ -168,6 +169,18 @@ router.post("/calls", async (req, res) => {
 
     if (built.calleeId) {
       broadcastToUser(built.calleeId, "incoming-call", built);
+      const callerName = (built.caller as any)?.displayName || (built.caller as any)?.username || "Неизвестный";
+      const callerAvatar = (built.caller as any)?.avatarUrl || undefined;
+      const callerColor = (built.caller as any)?.avatarColor || "#3B82F6";
+      sendPushToUser(built.calleeId, {
+        title: `📞 Входящий ${call.type === "video" ? "видео" : "аудио"}звонок`,
+        body: `${callerName} ${call.type === "video" ? "вызывает на видеозвонок" : "звонит вам"}`,
+        url: "/",
+        tag: `call-${call.id}`,
+        senderAvatar: callerAvatar,
+        senderColor: callerColor,
+        chatType: "call",
+      });
     }
     res.status(201).json(built);
   } catch (err) {
@@ -291,6 +304,18 @@ router.post("/calls/:callId/invite", async (req, res) => {
 
     // Send incoming-call with groupRoomId so invitee knows which room to join
     broadcastToUser(Number(inviteeId), "incoming-call", { ...built, groupRoomId: callId });
+    const inviterName = (built.caller as any)?.displayName || (built.caller as any)?.username || "Неизвестный";
+    const inviterAvatar = (built.caller as any)?.avatarUrl || undefined;
+    const inviterColor = (built.caller as any)?.avatarColor || "#3B82F6";
+    sendPushToUser(Number(inviteeId), {
+      title: `📞 Входящий ${originalCall.type === "video" ? "видео" : "аудио"}звонок`,
+      body: `${inviterName} приглашает вас в звонок`,
+      url: "/",
+      tag: `call-${newCall.id}`,
+      senderAvatar: inviterAvatar,
+      senderColor: inviterColor,
+      chatType: "call",
+    });
 
     res.status(201).json({ ...built, groupRoomId: callId });
   } catch (err) {

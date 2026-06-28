@@ -185,6 +185,54 @@ interface UserResult {
   avatarColor?: string;
 }
 
+function AiChatEntry({ onOpen }: { onOpen: (id: number) => void }) {
+  const [loading, setLoading] = React.useState(false);
+
+  const open = async () => {
+    if (loading) return;
+    setLoading(true);
+    try {
+      const token = sessionStorage.getItem("pulse-token");
+      const botRes = await fetch("/api/ai/bot-user", { headers: { "Authorization": `Bearer ${token}` } });
+      if (!botRes.ok) return;
+      const bot = await botRes.json();
+
+      const res = await fetch("/api/chats/direct", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        body: JSON.stringify({ userId: bot.id }),
+      });
+      if (res.ok) {
+        const chat = await res.json();
+        onOpen(chat.id);
+      }
+    } catch {}
+    setLoading(false);
+  };
+
+  return (
+    <button
+      onClick={open}
+      disabled={loading}
+      className="w-full flex items-center gap-4 px-3 py-3 rounded-2xl transition-all text-left hover:bg-secondary border border-transparent hover:border-border/50"
+    >
+      <div className="w-12 h-12 rounded-[16px] overflow-hidden shrink-0 border border-indigo-500/30 relative">
+        <img src="/deepseek-avatar.jpg" alt="DeepSeek AI" className="w-full h-full object-cover" />
+        <div className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-green-500 border-2 border-card" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex justify-between items-baseline mb-0.5">
+          <h3 className="font-bold text-[15px] text-foreground flex items-center gap-1.5">
+            DeepSeek AI
+            <span className="text-[10px] font-bold text-indigo-400 bg-indigo-400/10 px-1.5 py-0.5 rounded-full uppercase tracking-wider">AI</span>
+          </h3>
+        </div>
+        <p className="text-[13px] text-muted-foreground truncate font-medium">Умный ИИ-ассистент · бесплатно</p>
+      </div>
+    </button>
+  );
+}
+
 function SavedMessagesEntry({ onOpen }: { onOpen: (id: number) => void }) {
   const [loading, setLoading] = React.useState(false);
   const [lastMsg, setLastMsg] = React.useState<string | null>(null);
@@ -546,6 +594,7 @@ export function ChatList() {
       <div className="chat-list-scroll flex-1 overflow-y-auto overflow-x-hidden scrollbar-none mt-2 px-2 pb-28 md:pb-4">
         {folder === "all" && (
           <div className="space-y-1 mb-2">
+            <AiChatEntry onOpen={(id) => setSelectedChatId(id)} />
             <SavedMessagesEntry onOpen={(id) => setSelectedChatId(id)} />
             <button
               onClick={() => navigate("/support")}

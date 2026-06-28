@@ -166,7 +166,17 @@ const GIFT_CATALOG = [
   { name: "Сапфировый Трон",   emoji: "💎",  animationType: "galaxy",    rarity: "cosmic",    stars: 85, price: 240000, description: "Трон из сапфира для истинных Prime-небожителей",       primeOnly: true },
 ];
 
-const SYSTEM_USERS = [
+const SYSTEM_USERS: Array<{
+  username: string;
+  displayName: string;
+  avatarColor: string;
+  avatarUrl?: string;
+  isBot?: boolean;
+  isVerified?: boolean;
+  isAdmin?: boolean;
+  status: string;
+  passwordHash: string;
+}> = [
   {
     username: "creater_messenger",
     displayName: "creater_messenger",
@@ -176,6 +186,17 @@ const SYSTEM_USERS = [
     isAdmin: true,
     status: "online",
     // bcrypt hash of "pulse2024" — never change this automatically
+    passwordHash: "$2b$12$ejJ4JyOdHbph7ETga8QpdeJTzN28FDCNZ3tw.1B1d/936/2ZDZ/fa",
+  },
+  {
+    username: "deepseek_ai",
+    displayName: "DeepSeek AI",
+    avatarColor: "#5B6CF9",
+    avatarUrl: "/deepseek-avatar.jpg",
+    isBot: true,
+    isVerified: true,
+    isAdmin: false,
+    status: "online",
     passwordHash: "$2b$12$ejJ4JyOdHbph7ETga8QpdeJTzN28FDCNZ3tw.1B1d/936/2ZDZ/fa",
   },
 ];
@@ -212,12 +233,17 @@ export async function runSeed() {
       await db.execute(sql`
         INSERT INTO users (username, display_name, avatar_color, avatar_url, status, is_bot, is_verified, is_admin, password_hash, balance)
         VALUES (
-          ${u.username}, ${u.displayName}, ${u.avatarColor}, ${null}, ${u.status},
+          ${u.username}, ${u.displayName}, ${u.avatarColor}, ${u.avatarUrl ?? null}, ${u.status},
           ${u.isBot ?? false}, ${u.isVerified ?? false}, ${u.isAdmin ?? false},
           ${u.passwordHash}, 0
         )
       `);
       console.log(`[seed] Created user: ${u.username}`);
+    } else if (u.avatarUrl) {
+      await db.execute(sql`
+        UPDATE users SET avatar_url = ${u.avatarUrl}, display_name = ${u.displayName}, avatar_color = ${u.avatarColor}
+        WHERE username = ${u.username}
+      `);
     }
   }
 
