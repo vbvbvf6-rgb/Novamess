@@ -694,28 +694,31 @@ ${inline_code}
             { role: "user", content: userContent },
           ];
 
-          const TIMEOUT_MS = 7000;
+          const TIMEOUT_MS = 15000;
           const MAX_TOKENS = 500;
 
           const callOpenRouter = async (model: string): Promise<string | undefined> => {
             if (!process.env.DEEP_SEEK) return undefined;
-            const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${process.env.DEEP_SEEK}`,
-                "HTTP-Referer": "https://pulse-messenger.replit.app",
-                "X-Title": "Pulse Messenger",
-              },
-              body: JSON.stringify({ model, messages: chatPayload, max_tokens: MAX_TOKENS, temperature: 0.7 }),
-              signal: AbortSignal.timeout(TIMEOUT_MS),
-            });
-            if (!r.ok) return undefined;
-            const data = await r.json() as any;
-            const txt = data.choices?.[0]?.message?.content as string | undefined;
-            return txt?.trim() || undefined;
+            try {
+              const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${process.env.DEEP_SEEK}`,
+                  "HTTP-Referer": "https://pulse-messenger.replit.app",
+                  "X-Title": "Pulse Messenger",
+                },
+                body: JSON.stringify({ model, messages: chatPayload, max_tokens: MAX_TOKENS, temperature: 0.7 }),
+                signal: AbortSignal.timeout(TIMEOUT_MS),
+              });
+              if (!r.ok) return undefined;
+              const data = await r.json() as any;
+              const txt = data.choices?.[0]?.message?.content as string | undefined;
+              return txt?.trim() || undefined;
+            } catch { return undefined; }
           };
 
+          // Pollinations: sequential with retry on 429 to avoid "queue full" per-IP limit
           const callPollinations = async (model: string): Promise<string | undefined> => {
             if (isImageMessage) return undefined;
             const conversationText = historyMessages
@@ -724,35 +727,50 @@ ${inline_code}
             const fullPrompt = conversationText
               ? `${conversationText}\nUser: ${body.text}\nAssistant:`
               : body.text;
-            const url = `https://text.pollinations.ai/${encodeURIComponent(fullPrompt || "")}?model=${model}&system=${encodeURIComponent(systemPrompt)}&seed=${Math.floor(Math.random() * 99999)}`;
-            const r = await fetch(url, { method: "GET", signal: AbortSignal.timeout(TIMEOUT_MS) });
-            if (!r.ok) return undefined;
-            const text = await r.text();
-            return text?.trim() || undefined;
-          };
-
-          // Race ALL providers simultaneously — fastest reply wins
-          const raceFirst = async (tasks: Promise<string | undefined>[]): Promise<string | undefined> => {
-            return new Promise((resolve) => {
-              let settled = 0;
-              for (const t of tasks) {
-                t.then(val => { if (val) resolve(val); else if (++settled === tasks.length) resolve(undefined); })
-                 .catch(() => { if (++settled === tasks.length) resolve(undefined); });
-              }
-            });
+            const url = `https://text.pollinations.ai/${encodeURIComponent(fullPrompt || "")}?model=${model}&seed=${Math.floor(Math.random() * 99999)}&system=${encodeURIComponent(systemPrompt)}`;
+            for (let attempt = 0; attempt < 3; attempt++) {
+              try {
+                if (attempt > 0) await new Promise(r => setTimeout(r, 3000 * attempt));
+                const r = await fetch(url, {
+                  method: "GET",
+                  headers: { "User-Agent": "Mozilla/5.0 (compatible; Pulse-AI/1.0)" },
+                  signal: AbortSignal.timeout(TIMEOUT_MS),
+                });
+                if (r.status === 429) continue;
+                if (!r.ok) return undefined;
+                const text = await r.text();
+                const trimmed = text?.trim();
+                if (trimmed) return trimmed;
+              } catch { continue; }
+            }
+            return undefined;
           };
 
           let reply: string | undefined;
           try {
-            reply = await raceFirst([
-              // Priority: fast non-thinking models via OpenRouter
-              callOpenRouter("deepseek/deepseek-chat"),
-              callOpenRouter("google/gemini-flash-1.5"),
-              callOpenRouter("openai/gpt-4o-mini"),
-              // Free fallbacks via Pollinations (no API key needed)
-              callPollinations("phi"),
-              callPollinations("mistral"),
-            ]);
+            // 1. If OpenRouter key is set, race those (they handle parallel fine)
+            if (process.env.DEEP_SEEK) {
+              const orPromise = new Promise<string | undefined>((resolve) => {
+                let settled = 0;
+                const models = ["deepseek/deepseek-chat", "google/gemini-flash-1.5", "openai/gpt-4o-mini"];
+                for (const m of models) {
+                  callOpenRouter(m).then(val => { if (val) resolve(val); else if (++settled === models.length) resolve(undefined); })
+                    .catch(() => { if (++settled === models.length) resolve(undefined); });
+                }
+              });
+              reply = await orPromise;
+            }
+
+            // 2. If no OpenRouter or it failed, try Pollinations sequentially
+            if (!reply) {
+              reply = await callPollinations("openai-fast");
+            }
+            if (!reply) {
+              reply = await callPollinations("mistral");
+            }
+            if (!reply) {
+              reply = await callPollinations("phi");
+            }
           } catch {}
 
           if (!reply || typeof reply !== "string" || !reply.trim()) return;
