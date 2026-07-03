@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search, X, MessageSquare, ChevronRight, Hash, Users, Radio,
-  UserPlus, Check, Loader2, User, ArrowLeft
+  UserPlus, Check, Loader2, User, ArrowLeft, Lock
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAppContext } from "@/contexts/AppContext";
@@ -117,6 +118,7 @@ export function GlobalSearch({ onClose, initialQuery = "" }: GlobalSearchProps) 
   const [loading, setLoading] = useState(false);
   const [joiningId, setJoiningId] = useState<number | null>(null);
   const [openingDmId, setOpeningDmId] = useState<number | null>(null);
+  const [previewChat, setPreviewChat] = useState<PublicChat | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -164,10 +166,11 @@ export function GlobalSearch({ onClose, initialQuery = "" }: GlobalSearchProps) 
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [query, runSearch]);
 
-  const handleJoin = async (chat: PublicChat) => {
+  const doJoin = async (chat: PublicChat) => {
     const isMember = chat.is_member === true || (chat.is_member as any) === "true" || (chat.is_member as any) === 1;
     if (isMember) {
       setSelectedChatId(chat.id);
+      setPreviewChat(null);
       onClose();
       return;
     }
@@ -183,10 +186,22 @@ export function GlobalSearch({ onClose, initialQuery = "" }: GlobalSearchProps) 
           c.id === chat.id ? { ...c, is_member: true, member_count: c.member_count + 1 } : c
         ));
         queryClient.invalidateQueries({ queryKey: getGetChatsQueryKey() });
-        setTimeout(() => { setSelectedChatId(chat.id); onClose(); }, 500);
+        setPreviewChat(null);
+        setTimeout(() => { setSelectedChatId(chat.id); onClose(); }, 400);
       }
     } catch {}
     setJoiningId(null);
+  };
+
+  const handleJoin = (chat: PublicChat) => {
+    const isMember = chat.is_member === true || (chat.is_member as any) === "true" || (chat.is_member as any) === 1;
+    if (isMember) {
+      setSelectedChatId(chat.id);
+      onClose();
+      return;
+    }
+    // Show preview modal centered in viewport
+    setPreviewChat(chat);
   };
 
   const handleOpenDm = async (user: UserResult) => {
@@ -231,6 +246,7 @@ export function GlobalSearch({ onClose, initialQuery = "" }: GlobalSearchProps) 
     msgResults.length > 0;
 
   return (
+    <>
     <motion.div
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
@@ -444,6 +460,78 @@ export function GlobalSearch({ onClose, initialQuery = "" }: GlobalSearchProps) 
         )}
       </div>
     </motion.div>
+
+    {/* Channel join preview — rendered via portal so it appears centered in full viewport */}
+      {createPortal(
+        <AnimatePresence>
+          {previewChat && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm"
+                onClick={() => setPreviewChat(null)}
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.92, y: 32 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                className="fixed inset-0 z-[10000] flex items-center justify-center p-6 pointer-events-none"
+              >
+                <div className="pointer-events-auto w-full max-w-sm bg-card rounded-3xl shadow-2xl overflow-hidden border border-border">
+                  {/* Avatar header */}
+                  <div className="flex flex-col items-center pt-8 pb-5 px-6 gap-3">
+                    <div
+                      className="w-20 h-20 rounded-[22px] flex items-center justify-center overflow-hidden shadow-lg"
+                      style={{ backgroundColor: previewChat.avatar_color || "#3B82F6" }}
+                    >
+                      {previewChat.avatar_url ? (
+                        <img src={previewChat.avatar_url} alt={previewChat.name} className="w-full h-full object-cover" />
+                      ) : previewChat.type === "channel" ? (
+                        <Radio size={34} className="text-white opacity-90" />
+                      ) : (
+                        <Users size={34} className="text-white opacity-90" />
+                      )}
+                    </div>
+                    <div className="text-center">
+                      <h2 className="text-xl font-black text-foreground">{previewChat.name}</h2>
+                      <p className="text-sm text-muted-foreground font-medium mt-0.5">
+                        {previewChat.type === "channel" ? "Канал" : "Группа"} · <MemberCount count={previewChat.member_count} />
+                      </p>
+                      {previewChat.description && (
+                        <p className="text-sm text-foreground/70 mt-2 leading-snug">{previewChat.description}</p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="px-5 pb-6 flex flex-col gap-2">
+                    <button
+                      onClick={() => doJoin(previewChat)}
+                      disabled={joiningId === previewChat.id}
+                      className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-black text-[15px] hover:bg-primary/90 transition-all shadow-[0_4px_20px_rgba(234,88,12,0.3)] hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-70 flex items-center justify-center gap-2"
+                    >
+                      {joiningId === previewChat.id ? (
+                        <Loader2 size={18} className="animate-spin" />
+                      ) : (
+                        <><UserPlus size={18} /> Вступить в {previewChat.type === "channel" ? "канал" : "группу"}</>
+                      )}
+                    </button>
+                    <button
+                      onClick={() => setPreviewChat(null)}
+                      className="w-full py-3 rounded-2xl text-muted-foreground font-semibold text-sm hover:text-foreground transition-colors"
+                    >
+                      Отмена
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
+    </>
   );
 }
 

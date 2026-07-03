@@ -728,9 +728,6 @@ export default function UserProfile() {
             <InfoRow label="Никнейм" value={`@${user.username}`} />
             {user.phoneNumber && <InfoRow label="Телефон" value={user.phoneNumber} />}
             {!isMe && <InfoRow label="Статус" value={statusCfg.label} />}
-            {((user as any).popularity ?? 0) > 0 && (
-              <InfoRow label="💎 Популярность" value={`${(user as any).popularity.toLocaleString()} Кристаллов`} />
-            )}
           </motion.div>
 
           {!isMe && commonChats.length > 0 && (

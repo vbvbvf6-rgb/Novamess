@@ -490,8 +490,7 @@ export function ActiveCall() {
           style={{ top: "max(0.5rem, env(safe-area-inset-top, 0px))", left: 0, right: 0, display: "flex", justifyContent: "center", cursor: "grab" }}
         >
           <div
-            className="flex items-center gap-3 px-4 py-2.5 rounded-full bg-card/95 backdrop-blur-md border border-border shadow-[0_4px_32px_rgba(0,0,0,0.18)] cursor-pointer active:cursor-grabbing"
-            onClick={() => { if (!didDragRef.current) expandCall(); }}
+            className="flex items-center gap-3 px-4 py-2.5 rounded-full bg-card/95 backdrop-blur-md border border-border shadow-[0_4px_32px_rgba(0,0,0,0.18)] cursor-grab active:cursor-grabbing"
           >
             <div className="flex items-center gap-1.5">
               <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />

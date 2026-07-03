@@ -332,7 +332,7 @@ export function ChatInfoPanel({
       animate={{ x: 0 }}
       exit={{ x: "100%" }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
-      className="absolute top-0 right-0 h-full w-full sm:w-[340px] bg-card border-l border-border flex flex-col z-20 shadow-xl"
+      className="absolute top-0 right-0 h-full w-full sm:w-[340px] bg-card border-l border-border flex flex-col z-[35] shadow-xl"
     >
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">

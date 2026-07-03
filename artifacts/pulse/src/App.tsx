@@ -33,6 +33,7 @@ import Wallet from "@/pages/Wallet";
 import Admin from "@/pages/Admin";
 import Prime from "@/pages/Prime";
 
+import Gifts from "@/pages/Gifts";
 import Leaderboard from "@/pages/Leaderboard";
 import Events from "@/pages/Events";
 import Support from "@/pages/Support";
@@ -388,6 +389,7 @@ function MainAppInner({ onLogout, onSwitchAccount, onRemoveAccount, onOpenAddAcc
               <Route path="/admin" component={Admin} />
               <Route path="/prime" component={Prime} />
 
+              <Route path="/gifts" component={Gifts} />
               <Route path="/leaderboard" component={Leaderboard} />
               <Route path="/events" component={Events} />
               <Route path="/support" component={Support} />
@@ -610,6 +612,8 @@ function App() {
     sessionStorage.removeItem("pulse-user");
     sessionStorage.removeItem("pulse-token");
     sessionStorage.removeItem("pulse-tab-owned");
+    // Remove from localStorage so the user isn't auto-restored on next page load
+    if (currentId !== null) removeAccount(currentId);
     queryClient.clear();
 
     // If another saved account exists, switch to it instead of going to login

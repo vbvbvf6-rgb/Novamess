@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Sidebar } from "./Sidebar";
 import { BottomNav } from "./BottomNav";
 import { useAppContext } from "@/contexts/AppContext";
@@ -13,6 +13,20 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
+  // Track call status transitions to show "call ended" / "connection lost" notifications
+  const prevCallRef = React.useRef<{ id?: number; status?: string } | null>(null);
+  useEffect(() => {
+    const prev = prevCallRef.current;
+    const cur = activeCall ? { id: activeCall.id, status: activeCall.status } : null;
+
+    if (prev && prev.status === "active" && !cur) {
+      // Call was active and is now gone — show neutral message regardless of who ended it
+      toast({ title: "📞 Звонок завершён" });
+    }
+
+    prevCallRef.current = cur;
+  }, [activeCall, toast]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {

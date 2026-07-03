@@ -1047,25 +1047,6 @@ export function ChatList() {
                     className="bg-secondary/50 border-transparent focus-visible:bg-card h-12 rounded-xl text-base font-bold"
                   />
                 </div>
-                <div>
-                  <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Иконка</label>
-                  <div className="grid grid-cols-10 gap-1.5">
-                    {FOLDER_ICONS.map(iconKey => (
-                      <button
-                        key={iconKey}
-                        onClick={() => setNewFolderIcon(iconKey)}
-                        className={cn(
-                          "w-9 h-9 rounded-xl flex items-center justify-center transition-all border",
-                          newFolderIcon === iconKey
-                            ? "bg-primary/20 border-primary/50 scale-110 text-primary"
-                            : "bg-secondary/50 border-transparent hover:bg-secondary text-foreground"
-                        )}
-                      >
-                        <FolderIcon icon={iconKey} size={17} />
-                      </button>
-                    ))}
-                  </div>
-                </div>
                 <button
                   onClick={createFolder}
                   disabled={!newFolderName.trim() || creatingFolder}

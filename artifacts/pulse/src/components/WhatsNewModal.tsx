@@ -1,16 +1,16 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, X, MessageSquare, Diamond, Star, Gem, Rocket } from "lucide-react";
+import { Sparkles, X, Gift, Shield, Bell, Phone, Star } from "lucide-react";
 import { APP_VERSION } from "@/lib/version";
 const PENDING_KEY = "aura-pending-changelog";
 const SEEN_KEY = "aura-changelog-seen-v";
 
 const CHANGELOG = [
-  { icon: Diamond,      color: "text-cyan-400",   bg: "bg-cyan-500/10",   text: "Валюта переименована: Искра ✨ → Кристалл 💎 — красиво и премиально" },
-  { icon: Gem,          color: "text-purple-400", bg: "bg-purple-500/10", text: "Иконка валюты обновлена — 💎 вместо ⚡ по всему приложению" },
-  { icon: MessageSquare,color: "text-orange-400", bg: "bg-orange-500/10", text: "Обновление находится в Настройках → «О приложении» после нажатия «Позже»" },
-  { icon: Star,         color: "text-yellow-400", bg: "bg-yellow-500/10", text: "Версия теперь синхронизирована между приложением и журналом изменений" },
-  { icon: Rocket,       color: "text-red-400",    bg: "bg-red-500/10",    text: "Иконка приложения и раздел «О приложении» обновлены" },
+  { icon: Gift,    color: "text-pink-400",   bg: "bg-pink-500/10",   text: "Новый раздел «Подарки» — отправляй красивые подарки друзьям прямо в мессенджере" },
+  { icon: Shield,  color: "text-green-400",  bg: "bg-green-500/10",  text: "Защита от брутфорс-атак: блокировка после 5 попыток с нарастающим временем ожидания" },
+  { icon: Bell,    color: "text-blue-400",   bg: "bg-blue-500/10",   text: "Улучшены push-уведомления: более красивый внешний вид, поддержка аватаров и цветов" },
+  { icon: Phone,   color: "text-emerald-400",bg: "bg-emerald-500/10",text: "Звонки: индикатор завершения звонка собеседником и потери соединения" },
+  { icon: Star,    color: "text-amber-400",  bg: "bg-amber-500/10",  text: "Исправлены мелкие баги интерфейса: темы, кнопки назад, настройки каналов" },
 ];
 
 export function WhatsNewModal() {
@@ -53,12 +53,12 @@ export function WhatsNewModal() {
             className="fixed inset-0 z-[301] flex items-center justify-center p-4 pointer-events-none"
           >
             <div className="pointer-events-auto w-full max-w-sm bg-card border border-border rounded-3xl shadow-2xl overflow-hidden">
-              <div className="h-1 bg-gradient-to-r from-primary via-orange-400 to-amber-500" />
+              <div className="h-1 bg-gradient-to-r from-primary via-pink-400 to-amber-500" />
 
               <div className="px-6 pt-6 pb-6">
                 <div className="flex items-start justify-between mb-5">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-orange-500 flex items-center justify-center shadow-lg shadow-primary/30 shrink-0">
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-pink-500 flex items-center justify-center shadow-lg shadow-primary/30 shrink-0">
                       <Sparkles size={22} className="text-white" />
                     </div>
                     <div>

@@ -25,6 +25,7 @@ import {
   Moon,
   Search,
   CalendarDays,
+  Gift,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAppContext } from "@/contexts/AppContext";
@@ -237,6 +238,7 @@ export function Sidebar({ mobileSidebarOpen, onMobileClose, onMobileOpen, onOpen
     { href: "/stories",      icon: History,        label: t("nav.stories") },
     ...(showEvents ? [{ href: "/events", icon: CalendarDays, label: t("nav.events") }] : []),
     { href: "/wallet",       icon: Wallet,         label: t("nav.wallet") },
+    { href: "/gifts",        icon: Gift,           label: "Подарки" },
     { href: "/leaderboard",  icon: Trophy,         label: t("nav.leaderboard") },
     { href: "/profile",      icon: UserCircle,     label: t("nav.profile") },
     { href: "/settings",     icon: Settings,       label: t("nav.settings") },
@@ -524,7 +526,7 @@ export function Sidebar({ mobileSidebarOpen, onMobileClose, onMobileOpen, onOpen
         onClick={onMobileClose}
       />
       <div
-        className={`mobile-sidebar-drawer fixed left-0 top-0 bottom-0 z-[91] md:hidden w-[280px] bg-[#0a0a0d] rounded-r-[28px] flex flex-col pt-6 shadow-[4px_0_32px_rgba(0,0,0,0.6)] transition-transform duration-300 overflow-y-auto overscroll-contain`}
+        className={`mobile-sidebar-drawer fixed left-0 top-0 bottom-0 z-[91] md:hidden w-[280px] bg-[#f2f3f5] dark:bg-[#0a0a0d] rounded-r-[28px] flex flex-col pt-6 shadow-[4px_0_32px_rgba(0,0,0,0.3)] dark:shadow-[4px_0_32px_rgba(0,0,0,0.6)] transition-transform duration-300 overflow-y-auto overscroll-contain`}
         style={{ transform: mobileSidebarOpen ? "translateX(0)" : "translateX(-100%)", paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
       >
         <div className="flex items-center gap-3 px-5 mb-6">
