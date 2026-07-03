@@ -964,7 +964,7 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
       <header className="border-b border-border flex items-center px-3 md:px-6 justify-between bg-card/95 backdrop-blur-md z-20 shrink-0 relative" style={{ minHeight: "calc(4rem + env(safe-area-inset-top, 0px))", paddingTop: "env(safe-area-inset-top, 0px)", boxShadow: "0 1px 0 0 hsl(var(--border)), 0 4px 20px -4px rgba(0,0,0,0.12)" }}>
         <div className="flex items-center gap-2 md:gap-3 min-w-0">
           <button
-            className="flex items-center justify-center w-11 h-11 -ml-2 rounded-2xl bg-secondary hover:bg-secondary/80 text-foreground transition-colors shrink-0 md:hidden"
+            className="flex items-center justify-center w-11 h-11 -ml-2 text-foreground active:opacity-60 transition-opacity shrink-0 md:hidden"
             onClick={() => setSelectedChatId(null)}
             aria-label="Назад к чатам"
           >

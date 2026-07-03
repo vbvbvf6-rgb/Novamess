@@ -5,7 +5,9 @@ import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
 import { Search, Pin, VolumeX, Users, Radio, Bot, HeadphonesIcon, Bug,
   SquarePen, X, ChevronRight, Check, CheckCheck, Clock, ArrowLeft, Crown, Bookmark,
-  FolderPlus, Folder, Trash2, FolderOpen, Plus } from "lucide-react";
+  FolderPlus, Folder, Trash2, FolderOpen, Plus, MessageCircle, Star, Flame, Briefcase,
+  Home, Gamepad2, BookOpen, Heart, Music, Globe, Dumbbell, Palette, Wallet, Handshake,
+  PawPrint, Newspaper, Plane, PartyPopper, type LucideIcon } from "lucide-react";
 import { useLocation } from "wouter";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -33,7 +35,20 @@ const SYSTEM_FOLDERS: { key: FolderKey; label: string }[] = [
   { key: "groups", label: "Группы" },
 ];
 
-const FOLDER_ICONS = ["📁","💬","⭐","🔥","👔","🏠","🎮","📚","💼","❤️","🎵","🌍","🏋️","🎨","💰","🤝","🐾","📰","✈️","🎉"];
+const FOLDER_ICON_MAP: Record<string, LucideIcon> = {
+  folder: Folder, chat: MessageCircle, star: Star, flame: Flame, briefcase: Briefcase,
+  home: Home, game: Gamepad2, book: BookOpen, heart: Heart, music: Music,
+  globe: Globe, fitness: Dumbbell, art: Palette, money: Wallet, deal: Handshake,
+  pet: PawPrint, news: Newspaper, travel: Plane, party: PartyPopper,
+};
+const FOLDER_ICONS = Object.keys(FOLDER_ICON_MAP);
+
+function FolderIcon({ icon, size = 18, className }: { icon: string; size?: number; className?: string }) {
+  const Icon = FOLDER_ICON_MAP[icon];
+  if (Icon) return <Icon size={size} className={className} />;
+  // Backward compatibility with folders created before the emoji → icon migration
+  return <span style={{ fontSize: size * 0.85 }}>{icon || "📁"}</span>;
+}
 
 function VerifiedBadge() {
   return (
@@ -291,7 +306,7 @@ export function ChatList() {
   const [folderChatIds, setFolderChatIds] = useState<Set<number>>(new Set());
   const [showFolderCreate, setShowFolderCreate] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
-  const [newFolderIcon, setNewFolderIcon] = useState("📁");
+  const [newFolderIcon, setNewFolderIcon] = useState("folder");
   const [creatingFolder, setCreatingFolder] = useState(false);
   const [contextMenuChat, setContextMenuChat] = useState<Chat | null>(null);
   const [showFolderPicker, setShowFolderPicker] = useState(false);
@@ -353,7 +368,7 @@ export function ChatList() {
         setUserFolders(prev => [...prev, f]);
         setShowFolderCreate(false);
         setNewFolderName("");
-        setNewFolderIcon("📁");
+        setNewFolderIcon("folder");
         toast({ title: "Папка создана", description: f.name });
       }
     } catch {}
@@ -571,14 +586,14 @@ export function ChatList() {
                     : "bg-card text-muted-foreground border-border hover:border-primary/30 hover:text-foreground"
                 )}
               >
-                <span>{f.icon}</span>
+                <FolderIcon icon={f.icon} size={16} />
                 <span>{f.name}</span>
               </button>
             );
           })}
 
           <button
-            onClick={() => { setNewFolderName(""); setNewFolderIcon("📁"); setShowFolderCreate(true); }}
+            onClick={() => { setNewFolderName(""); setNewFolderIcon("folder"); setShowFolderCreate(true); }}
             className="shrink-0 w-9 h-9 rounded-[14px] border border-dashed border-border flex items-center justify-center text-muted-foreground hover:border-primary/50 hover:text-primary transition-all"
             title="Новая папка"
           >
@@ -1035,18 +1050,18 @@ export function ChatList() {
                 <div>
                   <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Иконка</label>
                   <div className="grid grid-cols-10 gap-1.5">
-                    {FOLDER_ICONS.map(emoji => (
+                    {FOLDER_ICONS.map(iconKey => (
                       <button
-                        key={emoji}
-                        onClick={() => setNewFolderIcon(emoji)}
+                        key={iconKey}
+                        onClick={() => setNewFolderIcon(iconKey)}
                         className={cn(
-                          "w-9 h-9 rounded-xl text-xl flex items-center justify-center transition-all border",
-                          newFolderIcon === emoji
-                            ? "bg-primary/20 border-primary/50 scale-110"
-                            : "bg-secondary/50 border-transparent hover:bg-secondary"
+                          "w-9 h-9 rounded-xl flex items-center justify-center transition-all border",
+                          newFolderIcon === iconKey
+                            ? "bg-primary/20 border-primary/50 scale-110 text-primary"
+                            : "bg-secondary/50 border-transparent hover:bg-secondary text-foreground"
                         )}
                       >
-                        {emoji}
+                        <FolderIcon icon={iconKey} size={17} />
                       </button>
                     ))}
                   </div>
@@ -1056,7 +1071,7 @@ export function ChatList() {
                   disabled={!newFolderName.trim() || creatingFolder}
                   className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-black disabled:opacity-50 hover:bg-primary/90 transition-all shadow-[0_4px_14px_rgba(59,130,246,0.3)]"
                 >
-                  {creatingFolder ? "Создание..." : `Создать папку ${newFolderIcon}`}
+                  {creatingFolder ? "Создание..." : "Создать папку"}
                 </button>
               </div>
             </motion.div>
@@ -1137,7 +1152,7 @@ export function ChatList() {
                           onClick={() => addChatToFolder(f.id, contextMenuChat.id)}
                           className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-secondary transition-colors text-left"
                         >
-                          <span className="text-xl">{f.icon}</span>
+                          <FolderIcon icon={f.icon} size={20} />
                           <span className="font-bold text-[15px] text-foreground">{f.name}</span>
                         </button>
                       ))}
@@ -1182,7 +1197,7 @@ export function ChatList() {
                 return (
                   <>
                     <div className="px-6 py-5 border-b border-border flex items-center gap-3">
-                      <span className="text-2xl">{f.icon}</span>
+                      <FolderIcon icon={f.icon} size={24} />
                       <div>
                         <p className="font-black text-base text-foreground">{f.name}</p>
                         <p className="text-xs text-muted-foreground font-medium">Управление папкой</p>

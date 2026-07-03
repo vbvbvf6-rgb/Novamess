@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useCa
 import { io, Socket } from "socket.io-client";
 import { Call } from "@workspace/api-client-react";
 import { getSavedAccounts, SavedAccount, MAX_ACCOUNTS } from "@/lib/accounts";
+import { toast } from "@/hooks/use-toast";
 
 // ICE servers are fetched from the API at call-start time so that TURN
 // credentials live only on the server and are never baked into the JS bundle.
@@ -810,8 +811,16 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
         } catch {}
       });
 
-      es.addEventListener("call-declined", () => { cleanupCall(); });
-      es.addEventListener("call-ended", () => { cleanupCall(); });
+      // Distinguish a graceful end/decline (peer action) from a dropped
+      // connection (network failure, handled separately via "pulse:call-error").
+      es.addEventListener("call-declined", () => {
+        toast({ title: "Звонок отклонён", description: "Собеседник отклонил вызов" });
+        cleanupCall();
+      });
+      es.addEventListener("call-ended", () => {
+        toast({ title: "Звонок завершён", description: "Собеседник завершил звонок" });
+        cleanupCall();
+      });
 
       es.addEventListener("new-message", (e: MessageEvent) => {
         try {

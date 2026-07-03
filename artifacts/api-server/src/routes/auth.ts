@@ -23,25 +23,45 @@ function validatePassword(pass: string): { ok: boolean; error?: string } {
   return { ok: true };
 }
 
-// ── In-memory brute force tracker (per username, resets on success) ────────
-const loginFailures = new Map<string, { count: number; until: number }>();
-const MAX_LOGIN_FAILS = 10;
-const LOCKOUT_MS = 15 * 60 * 1000; // 15 min
+// ── In-memory brute force tracker (per username AND per IP, resets on success) ─
+// Tracks both the account being targeted and the source IP so an attacker can't
+// dodge the lockout by spraying many usernames from one IP, or many IPs at one
+// username. Lockout duration grows with repeated offenses (progressive backoff).
+const loginFailures = new Map<string, { count: number; until: number; strikes: number }>();
+const MAX_LOGIN_FAILS = 5;
+const BASE_LOCKOUT_MS = 60 * 1000; // 1 min for the first lockout
+const MAX_LOCKOUT_MS = 30 * 60 * 1000; // caps at 30 min after repeated offenses
 
 function isLockedOut(key: string): boolean {
   const entry = loginFailures.get(key);
   if (!entry) return false;
-  if (Date.now() > entry.until) { loginFailures.delete(key); return false; }
+  if (Date.now() > entry.until) return false;
   return entry.count >= MAX_LOGIN_FAILS;
 }
+function lockoutRemainingMs(key: string): number {
+  const entry = loginFailures.get(key);
+  if (!entry) return 0;
+  return Math.max(0, entry.until - Date.now());
+}
 function recordFailure(key: string): void {
-  const entry = loginFailures.get(key) ?? { count: 0, until: 0 };
+  const entry = loginFailures.get(key) ?? { count: 0, until: 0, strikes: 0 };
   entry.count += 1;
-  entry.until = Date.now() + LOCKOUT_MS;
+  if (entry.count >= MAX_LOGIN_FAILS) {
+    // Each additional lockout doubles the wait time (1m, 2m, 4m, ... capped at 30m)
+    const lockoutMs = Math.min(BASE_LOCKOUT_MS * Math.pow(2, entry.strikes), MAX_LOCKOUT_MS);
+    entry.until = Date.now() + lockoutMs;
+    entry.strikes += 1;
+    entry.count = 0;
+  }
   loginFailures.set(key, entry);
 }
 function clearFailures(key: string): void {
   loginFailures.delete(key);
+}
+// Small constant-time-ish delay slows down scripted brute-force attempts
+// without materially affecting legitimate logins.
+function bruteForceDelay(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 300 + Math.random() * 200));
 }
 
 function generateReferralCode(): string {
@@ -74,10 +94,13 @@ router.post("/auth/login", async (req, res) => {
     }
 
     const ukey = String(username).toLowerCase().trim();
+    const ipKey = `ip:${req.ip || "unknown"}`;
 
-    // ── Brute force: block after 10 failed attempts ────────────────────────
-    if (isLockedOut(ukey)) {
-      return res.status(429).json({ error: "Аккаунт временно заблокирован из-за многочисленных неудачных попыток. Подождите 15 минут." });
+    // ── Brute force: block after repeated failures, either by account or by IP ─
+    if (isLockedOut(ukey) || isLockedOut(ipKey)) {
+      await bruteForceDelay();
+      const waitMin = Math.max(1, Math.ceil(Math.max(lockoutRemainingMs(ukey), lockoutRemainingMs(ipKey)) / 60000));
+      return res.status(429).json({ error: `Слишком много неудачных попыток входа. Подождите ${waitMin} мин.` });
     }
 
     const rows = await db.execute(
@@ -94,6 +117,8 @@ router.post("/auth/login", async (req, res) => {
     const user = rows.rows[0] as any;
     if (!user) {
       recordFailure(ukey);
+      recordFailure(ipKey);
+      await bruteForceDelay();
       return res.status(401).json({ error: "Неверное имя или пароль" });
     }
 
@@ -118,11 +143,14 @@ router.post("/auth/login", async (req, res) => {
 
     if (!passwordValid) {
       recordFailure(ukey);
+      recordFailure(ipKey);
+      await bruteForceDelay();
       return res.status(401).json({ error: "Неверное имя или пароль" });
     }
 
-    // ── Successful login — clear failure counter ───────────────────────────
+    // ── Successful login — clear failure counters ──────────────────────────
     clearFailures(ukey);
+    clearFailures(ipKey);
 
     // ── Create session record ──────────────────────────────────────────────
     const sessionId = randomUUID();

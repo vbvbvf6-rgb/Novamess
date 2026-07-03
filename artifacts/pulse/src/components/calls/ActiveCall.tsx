@@ -221,6 +221,10 @@ export function ActiveCall() {
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const remoteAudioRef = useRef<HTMLAudioElement>(null);
+  // Tracks whether the minimized call pill was actually dragged during this
+  // gesture, so the click handler can ignore the synthetic click framer-motion
+  // fires on release and avoid re-expanding to fullscreen unintentionally.
+  const pillDragRef = useRef(false);
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -458,12 +462,27 @@ export function ActiveCall() {
 
   /* ── MINIMIZED FLOATING PILL ── */
   if (isCallMinimized && activeCall.status === "active") {
+    // Guard against the drag gesture also firing a click → re-expanding to
+    // fullscreen right after the user releases a drag. We track whether the
+    // pointer actually moved past a small threshold during this gesture and
+    // suppress the resulting click if so.
+    const didDragRef = pillDragRef;
     return (
       <>
         <motion.div
           drag
           dragMomentum={false}
           dragElastic={0.05}
+          onDragStart={() => { didDragRef.current = false; }}
+          onDrag={(_e, info) => {
+            if (Math.abs(info.offset.x) > 4 || Math.abs(info.offset.y) > 4) {
+              didDragRef.current = true;
+            }
+          }}
+          onDragEnd={() => {
+            // Clear the flag on the next tick, after the synthetic click (if any) fires
+            setTimeout(() => { didDragRef.current = false; }, 0);
+          }}
           initial={{ y: -80, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: -80, opacity: 0 }}
@@ -472,7 +491,7 @@ export function ActiveCall() {
         >
           <div
             className="flex items-center gap-3 px-4 py-2.5 rounded-full bg-card/95 backdrop-blur-md border border-border shadow-[0_4px_32px_rgba(0,0,0,0.18)] cursor-pointer active:cursor-grabbing"
-            onClick={expandCall}
+            onClick={() => { if (!didDragRef.current) expandCall(); }}
           >
             <div className="flex items-center gap-1.5">
               <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />

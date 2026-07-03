@@ -7,6 +7,7 @@ export const giftItemsTable = pgTable("gift_items", {
   id: serial("id").primaryKey(),
   name: text("name").notNull().unique(),
   emoji: text("emoji").notNull(),
+  imageUrl: text("image_url"),
   animationType: text("animation_type").notNull().default("sparkle"),
   rarity: text("rarity").notNull().default("common"),
   stars: integer("stars").notNull().default(1),
