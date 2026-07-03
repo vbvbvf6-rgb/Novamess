@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { useLocation } from "wouter";
 import { Message, useGetMe, useGetChats } from "@workspace/api-client-react";
 import { format } from "date-fns";
 import { useAppContext } from "@/contexts/AppContext";
@@ -406,6 +407,7 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
   const { data: me } = useGetMe();
   const { lang } = useLanguage();
   const queryClient = useQueryClient();
+  const [, navigate] = useLocation();
   const isMine = message.senderId === currentUserId;
   const viewerIsPrimePlus = !!(me as any)?.hasPrime && (me as any)?.primeTier === "prime_plus";
   const effect = (message as any).effect as string | null;
@@ -725,7 +727,27 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
 
           return segments.map((seg, i) => {
             if (seg.code) return <code key={i} className={cn("px-1 py-0.5 rounded text-[13px] font-mono", isMine ? "bg-white/10 text-white" : "bg-secondary text-foreground")}>{seg.text}</code>;
-            if (seg.url) return <a key={i} href={seg.url} target="_blank" rel="noopener noreferrer" className={cn("underline underline-offset-2", isMine ? "text-white/90" : "text-primary")} onClick={e => e.stopPropagation()}>{seg.text}</a>;
+            if (seg.url) {
+              // Detect invite links from the same origin and navigate internally
+              try {
+                const parsed = new URL(seg.url, window.location.origin);
+                const pathMatch = parsed.pathname.match(/^\/join\/([^/?#]+)$/);
+                if (pathMatch && parsed.origin === window.location.origin) {
+                  return (
+                    <button
+                      key={i}
+                      className={cn("underline underline-offset-2 cursor-pointer", isMine ? "text-white/90" : "text-primary")}
+                      onClick={e => { e.stopPropagation(); navigate(`/invite/${pathMatch[1]}`); }}
+                    >
+                      {seg.text}
+                    </button>
+                  );
+                }
+              } catch {
+                // invalid URL — fall through to normal anchor
+              }
+              return <a key={i} href={seg.url} target="_blank" rel="noopener noreferrer" className={cn("underline underline-offset-2", isMine ? "text-white/90" : "text-primary")} onClick={e => e.stopPropagation()}>{seg.text}</a>;
+            }
             if (seg.bold && seg.italic) return <strong key={i}><em>{seg.text}</em></strong>;
             if (seg.bold)   return <strong key={i}>{seg.text}</strong>;
             if (seg.italic) return <em key={i}>{seg.text}</em>;
