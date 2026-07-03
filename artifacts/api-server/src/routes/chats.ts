@@ -200,13 +200,6 @@ router.post("/chats/direct", async (req, res) => {
     const userId = Number(req.body.userId);
     if (!userId) return res.status(400).json({ error: "userId required" });
 
-    // Block DMs to admin/creator account
-    const targetUserRow = await db.execute(sql`SELECT is_admin FROM users WHERE id = ${userId}`);
-    const targetIsAdmin = !!(targetUserRow.rows[0] as any)?.is_admin;
-    if (targetIsAdmin) {
-      return res.status(403).json({ error: "Нельзя написать этому пользователю" });
-    }
-
     const myMemberships = await db
       .select({ chatId: chatMembersTable.chatId })
       .from(chatMembersTable)

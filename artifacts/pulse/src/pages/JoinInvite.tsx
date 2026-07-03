@@ -58,7 +58,7 @@ export default function JoinInvite() {
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="w-full max-w-sm"
+        className="w-full max-w-md"
       >
         <div className="bg-card border border-border rounded-3xl shadow-2xl overflow-hidden">
           {state === "loading" && (

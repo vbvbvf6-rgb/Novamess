@@ -78,6 +78,18 @@ db.execute(sql`ALTER TABLE calls ADD COLUMN IF NOT EXISTS hidden_for_caller BOOL
 db.execute(sql`ALTER TABLE calls ADD COLUMN IF NOT EXISTS hidden_for_callee BOOLEAN NOT NULL DEFAULT FALSE`)
   .catch(() => {/* table may not exist yet in fresh envs */});
 
+// ── Contact requests table ─────────────────────────────────────────────────
+db.execute(sql`
+  CREATE TABLE IF NOT EXISTS contact_requests (
+    id SERIAL PRIMARY KEY,
+    from_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    to_user_id   INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    status       TEXT NOT NULL DEFAULT 'pending',
+    created_at   TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    UNIQUE (from_user_id, to_user_id)
+  )
+`).catch(() => {/* table may not exist yet in fresh envs */});
+
 // ── Create user_sessions table if it doesn't exist ────────────────────────
 db.execute(sql`
   CREATE TABLE IF NOT EXISTS user_sessions (

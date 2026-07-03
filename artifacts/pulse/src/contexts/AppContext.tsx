@@ -841,6 +841,20 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
         } catch {}
       });
 
+      es.addEventListener("contact-request", (e: MessageEvent) => {
+        try {
+          const data = JSON.parse(e.data);
+          window.dispatchEvent(new CustomEvent("pulse:contact-request", { detail: data }));
+        } catch {}
+      });
+
+      es.addEventListener("contact-request-accepted", (e: MessageEvent) => {
+        try {
+          const data = JSON.parse(e.data);
+          window.dispatchEvent(new CustomEvent("pulse:contact-request-accepted", { detail: data }));
+        } catch {}
+      });
+
       es.addEventListener("open", () => { retryCount = 0; });
 
       es.onerror = () => {

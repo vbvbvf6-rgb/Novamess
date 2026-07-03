@@ -23,6 +23,7 @@ import translateRouter from "./translate";
 import referralRouter from "./referral";
 import foldersRouter from "./folders";
 import platformEventsRouter from "./platform-events";
+import contactRequestsRouter from "./contact-requests";
 
 const router: IRouter = Router();
 
@@ -50,5 +51,6 @@ router.use(translateRouter);
 router.use(referralRouter);
 router.use(foldersRouter);
 router.use(platformEventsRouter);
+router.use(contactRequestsRouter);
 
 export default router;

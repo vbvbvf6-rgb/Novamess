@@ -205,6 +205,30 @@ export function Sidebar({ mobileSidebarOpen, onMobileClose, onMobileOpen, onOpen
   const initial = me?.displayName?.[0]?.toUpperCase() || "U";
   const isPremium = (me as any)?.hasPrime ?? false;
 
+  // Pending contact requests badge
+  const [pendingRequests, setPendingRequests] = useState(0);
+  const fetchPending = () => {
+    const token = sessionStorage.getItem("pulse-token");
+    if (!token) return;
+    fetch("/api/contact-requests/incoming", { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.ok ? r.json() : [])
+      .then((rows: any[]) => setPendingRequests(rows.length))
+      .catch(() => {});
+  };
+  useEffect(() => { fetchPending(); }, [currentUserId]);
+  useEffect(() => {
+    const onNew = () => setPendingRequests(p => p + 1);
+    const onResolved = () => fetchPending(); // re-fetch after accept/decline
+    window.addEventListener("pulse:contact-request", onNew);
+    window.addEventListener("pulse:contact-request-accepted", onResolved);
+    window.addEventListener("pulse:contact-requests-resolved", onResolved);
+    return () => {
+      window.removeEventListener("pulse:contact-request", onNew);
+      window.removeEventListener("pulse:contact-request-accepted", onResolved);
+      window.removeEventListener("pulse:contact-requests-resolved", onResolved);
+    };
+  }, []);
+
   const NAV_ITEMS: Array<{ href: string; icon: any; label: string; soon?: boolean }> = [
     { href: "/",             icon: MessageCircle,  label: t("nav.chats") },
     { href: "/calls",        icon: Phone,          label: t("nav.calls") },
@@ -289,7 +313,8 @@ export function Sidebar({ mobileSidebarOpen, onMobileClose, onMobileOpen, onOpen
       <nav className="flex-1 flex flex-col gap-1 w-full px-4 overflow-y-auto scrollbar-none py-2">
         {NAV_ITEMS.map((item) => {
           const isActive = location === item.href || (item.href !== "/" && location.startsWith(item.href));
-          const showBadge = item.href === "/" && totalUnread > 0;
+          const showBadge = (item.href === "/" && totalUnread > 0) || (item.href === "/contacts" && pendingRequests > 0);
+          const badgeCount = item.href === "/" ? totalUnread : pendingRequests;
           return (
             <Link
               key={item.href}
@@ -315,7 +340,7 @@ export function Sidebar({ mobileSidebarOpen, onMobileClose, onMobileOpen, onOpen
                     "absolute -top-2 -right-2 text-[10px] font-black px-1.5 py-0.5 rounded-full min-w-[20px] text-center shadow-sm border-2",
                     isActive ? "bg-white text-primary border-primary" : "bg-primary text-white border-card"
                   )}>
-                    {totalUnread > 99 ? "99+" : totalUnread}
+                    {badgeCount > 99 ? "99+" : badgeCount}
                   </div>
                 )}
               </div>

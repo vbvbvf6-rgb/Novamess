@@ -50,7 +50,7 @@ function generateReferralCode(): string {
   for (let i = 0; i < 8; i++) code += chars[Math.floor(Math.random() * chars.length)];
   return code;
 }
-const TOKEN_TTL = "30d";
+const TOKEN_TTL = "90d";
 const PENDING_2FA_TTL = "5m";
 
 const sha256 = (pass: string) => createHash("sha256").update(pass).digest("hex");

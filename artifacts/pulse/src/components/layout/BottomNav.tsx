@@ -17,6 +17,28 @@ export function BottomNav({ onOpenPalette, onOpenSidebar }: BottomNavProps) {
   const { selectedChatId, activeCall } = useAppContext();
 
   const totalUnread = chats?.reduce((sum: number, c: any) => sum + (c.unreadCount || 0), 0) ?? 0;
+  const [pendingRequests, setPendingRequests] = useState(0);
+  const fetchPendingNav = () => {
+    const token = sessionStorage.getItem("pulse-token");
+    if (!token) return;
+    fetch("/api/contact-requests/incoming", { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.ok ? r.json() : [])
+      .then((rows: any[]) => setPendingRequests(rows.length))
+      .catch(() => {});
+  };
+  useEffect(() => { fetchPendingNav(); }, []);
+  useEffect(() => {
+    const onNew = () => setPendingRequests(p => p + 1);
+    const onResolved = () => fetchPendingNav();
+    window.addEventListener("pulse:contact-request", onNew);
+    window.addEventListener("pulse:contact-request-accepted", onResolved);
+    window.addEventListener("pulse:contact-requests-resolved", onResolved);
+    return () => {
+      window.removeEventListener("pulse:contact-request", onNew);
+      window.removeEventListener("pulse:contact-request-accepted", onResolved);
+      window.removeEventListener("pulse:contact-requests-resolved", onResolved);
+    };
+  }, []);
 
   const [visible, setVisible] = useState(true);
   const touchStartY = useRef(0);
@@ -85,7 +107,7 @@ export function BottomNav({ onOpenPalette, onOpenSidebar }: BottomNavProps) {
   const NAV_ITEMS = [
     { href: "/",         icon: MessageCircle, label: "Чаты",     badge: totalUnread },
     { href: "/calls",    icon: Phone,         label: "Звонки",   badge: 0 },
-    { href: "/contacts", icon: Users,         label: "Контакты", badge: 0 },
+    { href: "/contacts", icon: Users,         label: "Контакты", badge: pendingRequests },
     { href: "/feed",     icon: Rss,           label: "Лента",    badge: 0 },
   ];
 
