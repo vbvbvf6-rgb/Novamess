@@ -318,7 +318,13 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
     // Always reset input so the same file can be selected again
     if (fileInputRef.current) fileInputRef.current.value = "";
     const MAX_FILE_MB = 100;
-    const oversized = files.filter(f => f.size > MAX_FILE_MB * 1024 * 1024);
+    const MAX_VIDEO_MB = 25;
+    const oversizedVideo = files.filter(f => f.type.startsWith("video/") && f.size > MAX_VIDEO_MB * 1024 * 1024);
+    const oversized = files.filter(f => !f.type.startsWith("video/") && f.size > MAX_FILE_MB * 1024 * 1024);
+    if (oversizedVideo.length > 0) {
+      toast({ title: "Видео слишком большое", description: `Максимальный размер видео — ${MAX_VIDEO_MB} МБ. Сожмите видео перед отправкой.`, variant: "destructive" });
+      return;
+    }
     if (oversized.length > 0) {
       toast({ title: "Файл слишком большой", description: `Максимальный размер — ${MAX_FILE_MB} МБ`, variant: "destructive" });
       return;
@@ -451,8 +457,10 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
             });
             if (m?.id) p2p?.send(m);
             setDocPreviews(prev => prev.filter(d => d !== doc));
-          } catch (docErr) {
-            toast({ title: "Ошибка отправки", description: `Не удалось отправить «${doc.name}»`, variant: "destructive" });
+          } catch (docErr: any) {
+            const errMsg = docErr?.message || "";
+            const hint = errMsg.includes("413") ? " Файл слишком большой для сервера." : errMsg.includes("Network") ? " Ошибка сети." : "";
+            toast({ title: "Ошибка отправки", description: `Не удалось отправить «${doc.name}».${hint}`, variant: "destructive" });
           } finally {
             if (i === totalDocs - 1) setUploadProgress(null);
           }
@@ -678,9 +686,15 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
     e.preventDefault();
     setIsDragOver(false);
     const MAX_FILE_MB = 100;
+    const MAX_VIDEO_MB = 25;
     const files = Array.from(e.dataTransfer.files);
     if (!files.length) return;
-    const oversized = files.filter(f => f.size > MAX_FILE_MB * 1024 * 1024);
+    const oversizedVideo = files.filter(f => f.type.startsWith("video/") && f.size > MAX_VIDEO_MB * 1024 * 1024);
+    const oversized = files.filter(f => !f.type.startsWith("video/") && f.size > MAX_FILE_MB * 1024 * 1024);
+    if (oversizedVideo.length) {
+      toast({ title: "Видео слишком большое", description: `Максимальный размер видео — ${MAX_VIDEO_MB} МБ. Сожмите видео перед отправкой.`, variant: "destructive" });
+      return;
+    }
     if (oversized.length) {
       toast({ title: "Файл слишком большой", description: `Максимальный размер — ${MAX_FILE_MB} МБ`, variant: "destructive" });
       return;
