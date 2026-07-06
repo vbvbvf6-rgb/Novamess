@@ -15,6 +15,13 @@
       "when": 1782466079365,
       "tag": "0001_flimsy_kinsey_walden",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1783349953475,
+      "tag": "0002_workable_warpath",
+      "breakpoints": true
     }
   ]
 }

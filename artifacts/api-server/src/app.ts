@@ -19,9 +19,10 @@ declare global {
 }
 
 // ── JWT Secret ───────────────────────────────────────────────────────────────
-// Embedded secret — can be overridden via JWT_SECRET env var if needed.
-const EMBEDDED_JWT_SECRET = "2d59306a26c4fe258c0018ef1bb5b7ee9e61520bcdb8974f6cf9cf9cc3ecfd5dabc350bd67f1df491a0599c67e39c0f3";
-export const JWT_SECRET = process.env.JWT_SECRET || EMBEDDED_JWT_SECRET;
+if (!process.env.JWT_SECRET) {
+  throw new Error("JWT_SECRET environment variable is required but not set. Set it in Replit Secrets.");
+}
+export const JWT_SECRET = process.env.JWT_SECRET;
 export const EFFECTIVE_JWT_SECRET = JWT_SECRET;
 
 const app: Express = express();

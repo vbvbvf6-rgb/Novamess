@@ -1,0 +1,1 @@
+ALTER TABLE "gift_items" ADD COLUMN "image_url" text;
