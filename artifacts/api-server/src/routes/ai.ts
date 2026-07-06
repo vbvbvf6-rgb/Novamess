@@ -4,7 +4,7 @@ import { sql } from "drizzle-orm";
 
 const router = Router();
 
-const BOT_USERNAME = "deepseek_ai";
+const BOT_USERNAME = "nova_ai";
 const TIMEOUT_MS = 7000;
 const MAX_TOKENS = 500;
 
@@ -72,7 +72,7 @@ router.post("/ai/chat", async (req, res) => {
       return res.status(400).json({ error: "Сообщение обязательно" });
     }
 
-    const systemPrompt = "Ты — дружелюбный и умный ИИ-помощник в мессенджере Pulse. Отвечай кратко, по существу и преимущественно на русском языке, если пользователь пишет по-русски. Ты умеешь помогать с любыми вопросами.";
+    const systemPrompt = "Ты — дружелюбный и умный ИИ-помощник в мессенджере Nova. Отвечай кратко, по существу и преимущественно на русском языке, если пользователь пишет по-русски. Ты умеешь помогать с любыми вопросами.";
     const historySlice = Array.isArray(history) ? history.slice(-10) : [];
     const messages = [
       { role: "system", content: systemPrompt },

@@ -231,14 +231,14 @@ function AiChatEntry({ onOpen }: { onOpen: (id: number) => void }) {
       disabled={loading}
       className="w-full flex items-center gap-4 px-3 py-3 rounded-2xl transition-all text-left hover:bg-secondary border border-transparent hover:border-border/50"
     >
-      <div className="w-12 h-12 rounded-[16px] overflow-hidden shrink-0 border border-indigo-500/30 relative">
-        <img src="/deepseek-avatar.jpg" alt="DeepSeek AI" className="w-full h-full object-cover" />
+      <div className="w-12 h-12 rounded-[16px] overflow-hidden shrink-0 border border-indigo-500/30 relative bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center">
+        <span className="text-2xl">🤖</span>
         <div className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-green-500 border-2 border-card" />
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex justify-between items-baseline mb-0.5">
           <h3 className="font-bold text-[15px] text-foreground flex items-center gap-1.5">
-            DeepSeek AI
+            Nova AI
             <span className="text-[10px] font-bold text-indigo-400 bg-indigo-400/10 px-1.5 py-0.5 rounded-full uppercase tracking-wider">AI</span>
           </h3>
         </div>
@@ -516,7 +516,7 @@ export function ChatList() {
             <div className="w-8 h-8 rounded-[10px] flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg, #3b82f6, #60a5fa)", boxShadow: "0 2px 10px rgba(59,130,246,0.45)" }}>
               <Crown size={15} className="text-white" />
             </div>
-            <span className="text-[18px] font-black text-foreground tracking-tight">Aura</span>
+            <span className="text-[18px] font-black text-foreground tracking-tight">Nova</span>
           </div>
           <button
             onClick={openCreate}

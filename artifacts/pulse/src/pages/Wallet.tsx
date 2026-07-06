@@ -17,7 +17,7 @@ const TASK_CONFIGS: Record<string, { color: string; icon: React.ReactNode }> = {
 };
 
 const BASE_TASKS = [
-  { id: "daily_login",    title: "Ежедневный вход",    description: "Открой Aura сегодня",        reward: 5  },
+  { id: "daily_login",    title: "Ежедневный вход",    description: "Открой Nova сегодня",        reward: 5  },
   { id: "send_message",   title: "Отправь сообщение",  description: "Напиши кому-нибудь",           reward: 10 },
   { id: "make_call",      title: "Позвони другу",       description: "Соверши звонок",               reward: 15 },
   { id: "add_contact",    title: "Добавь контакт",      description: "Расширь сеть",                 reward: 10 },

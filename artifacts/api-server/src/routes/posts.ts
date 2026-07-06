@@ -65,7 +65,7 @@ router.get("/posts", async (req, res) => {
 
     const visible = posts.filter((p: any) => {
       if (isAdmin) return true;
-      if ((p as any).moderationStatus === 'rejected') return p.userId === uid;
+      if ((p as any).moderationStatus === 'rejected') return false;
       return true;
     });
 
@@ -410,6 +410,30 @@ router.get("/posts/:postId/appeal", async (req, res) => {
     const postId = Number(req.params.postId);
     const rows = await db.execute(sql`SELECT * FROM moderation_appeals WHERE post_id = ${postId} AND user_id = ${uid}`);
     res.json(rows.rows[0] || null);
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Ошибка сервера" });
+  }
+});
+
+// ── Post Reports ──────────────────────────────────────────────────────────────
+
+router.post("/posts/:postId/report", async (req, res) => {
+  try {
+    const uid = req.currentUserId;
+    const postId = Number(req.params.postId);
+    const { reason, details } = req.body;
+    if (!reason) return res.status(400).json({ error: "Укажите причину жалобы" });
+
+    const post = await db.query.postsTable.findFirst({ where: eq(postsTable.id, postId) });
+    if (!post) return res.status(404).json({ error: "Пост не найден" });
+    if (post.userId === uid) return res.status(400).json({ error: "Нельзя пожаловаться на собственный пост" });
+
+    await db.execute(sql`
+      INSERT INTO post_reports (post_id, reporter_id, reason, details)
+      VALUES (${postId}, ${uid}, ${reason}, ${details ?? null})
+    `);
+    res.json({ ok: true });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Ошибка сервера" });

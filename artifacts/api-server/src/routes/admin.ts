@@ -9,9 +9,26 @@ const router = Router();
 
 const ADMIN_USER_IDS = [4];
 
-// Run once at module load to ensure required columns exist
+// Run once at module load to ensure required columns/tables exist
 db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_banned BOOLEAN NOT NULL DEFAULT FALSE`).catch(() => {});
 db.execute(sql`ALTER TABLE posts ADD COLUMN IF NOT EXISTS moderation_scanned_at TIMESTAMP WITH TIME ZONE`).catch(() => {});
+db.execute(sql`CREATE TABLE IF NOT EXISTS user_reports (
+  id SERIAL PRIMARY KEY,
+  reporter_id INTEGER NOT NULL,
+  target_id INTEGER NOT NULL,
+  reason TEXT NOT NULL,
+  details TEXT,
+  status TEXT NOT NULL DEFAULT 'pending',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+)`).catch(() => {});
+db.execute(sql`CREATE TABLE IF NOT EXISTS post_reports (
+  id SERIAL PRIMARY KEY,
+  post_id INTEGER NOT NULL,
+  reporter_id INTEGER NOT NULL,
+  reason TEXT NOT NULL,
+  details TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+)`).catch(() => {});
 
 async function isAdminUser(userId: number): Promise<boolean> {
   if (ADMIN_USER_IDS.includes(userId)) return true;
@@ -108,6 +125,11 @@ router.delete("/admin/users/:userId", requireAdmin, async (req, res) => {
     if (!target) return res.status(404).json({ error: "Пользователь не найден" });
 
     // Delete in FK-safe order inside a transaction to prevent partial deletions
+    // Pre-clean optional tables that may or may not exist (outside transaction)
+    await db.execute(sql`DELETE FROM user_reports WHERE reporter_id = ${targetId} OR target_id = ${targetId}`).catch(() => {});
+    await db.execute(sql`DELETE FROM post_reports WHERE reporter_id = ${targetId}`).catch(() => {});
+    await db.execute(sql`DELETE FROM contact_requests WHERE sender_id = ${targetId} OR receiver_id = ${targetId}`).catch(() => {});
+
     await db.execute(sql`BEGIN`);
     try {
       await db.execute(sql`DELETE FROM reactions WHERE user_id = ${targetId}`);
@@ -247,7 +269,7 @@ router.post("/admin/broadcast", requireAdmin, async (req, res) => {
     if (!text || !String(text).trim()) return res.status(400).json({ error: "Укажите текст объявления" });
 
     // Find the bot by username (not hardcoded ID)
-    const botRow = await db.execute(sql`SELECT id FROM users WHERE username = 'deepseek_ai' LIMIT 1`);
+    const botRow = await db.execute(sql`SELECT id FROM users WHERE username = 'nova_ai' LIMIT 1`);
     const botId = (botRow.rows[0] as any)?.id;
     if (!botId) return res.status(404).json({ error: "Бот не найден. Перезапустите сервер для создания системных пользователей." });
 

@@ -124,7 +124,7 @@ export default function Home() {
                   </svg>
                 </div>
                 <div className="space-y-1.5">
-                  <h2 className="text-2xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-br from-foreground to-muted-foreground">Aura</h2>
+                  <h2 className="text-2xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-br from-foreground to-muted-foreground">Nova</h2>
                   <p className="text-[14px] text-muted-foreground leading-relaxed">
                     Выберите чат слева или начните новый
                   </p>

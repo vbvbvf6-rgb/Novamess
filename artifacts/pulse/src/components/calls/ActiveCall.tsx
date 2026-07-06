@@ -255,7 +255,7 @@ export function ActiveCall() {
       try {
         (navigator as any).mediaSession.metadata = new (window as any).MediaMetadata({
           title: "Звонок",
-          artist: "Aura Messenger",
+          artist: "Nova Messenger",
           album: "Активный звонок",
         });
         (navigator as any).mediaSession.playbackState = "playing";

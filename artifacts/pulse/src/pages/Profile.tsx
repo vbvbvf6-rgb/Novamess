@@ -37,7 +37,7 @@ function ReferralSection() {
   const handleShare = () => {
     if (!referralLink) return;
     if (navigator.share) {
-      navigator.share({ title: "Присоединяйся к Aura!", text: `Используй мой реферальный код: ${myCode.code}`, url: referralLink }).catch(() => {});
+      navigator.share({ title: "Присоединяйся к Nova!", text: `Используй мой реферальный код: ${myCode.code}`, url: referralLink }).catch(() => {});
     } else {
       navigator.clipboard.writeText(referralLink).then(() => {
         setCopiedLink(true);
@@ -60,7 +60,7 @@ function ReferralSection() {
           </div>
           <div>
             <h3 className="font-black text-base text-foreground">Реферальная программа</h3>
-            <p className="text-xs text-muted-foreground">Приглашайте друзей в Aura</p>
+            <p className="text-xs text-muted-foreground">Приглашайте друзей в Nova</p>
           </div>
           {!isLoading && myCode?.invited > 0 && (
             <span className="ml-auto text-[11px] font-black px-2.5 py-1 rounded-full bg-green-500/15 text-green-400 border border-green-500/25">
@@ -138,7 +138,7 @@ function QRCodeSection({ user }: { user: any }) {
 
   const handleShare = () => {
     if (navigator.share) {
-      navigator.share({ title: `Aura — ${user?.displayName}`, url: profileUrl }).catch(() => {});
+      navigator.share({ title: `Nova — ${user?.displayName}`, url: profileUrl }).catch(() => {});
     } else {
       navigator.clipboard.writeText(profileUrl).then(() => {
         setCopied(true);

@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useGetPosts, useGetMe, useLikePost, useCreatePostComment, useGetPostComments, Post } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Heart, MessageCircle, Send, Image, X, Plus, Trash2, MoreVertical, ZoomIn, ShieldAlert, AlertCircle, CheckCircle2, Clock, ChevronDown, ChevronUp, TrendingUp, Hash, Rss } from "lucide-react";
+import { Heart, MessageCircle, Send, Image, X, Plus, Trash2, MoreVertical, ZoomIn, ShieldAlert, AlertCircle, CheckCircle2, Clock, ChevronDown, ChevronUp, TrendingUp, Hash, Rss, Flag } from "lucide-react";
 import { formatDistanceToNow as fDTN } from "date-fns";
 import { ru } from "date-fns/locale";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -29,7 +29,7 @@ function VerifiedBadge() {
 function AdminBadge() {
   return (
     <span
-      title="Администратор Aura"
+      title="Администратор Nova"
       className="inline-flex items-center gap-0.5 text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-full shrink-0"
       style={{ background: "linear-gradient(135deg, rgba(245,158,11,0.2), rgba(220,38,38,0.15))", border: "1px solid rgba(245,158,11,0.45)", color: "#f59e0b", boxShadow: "0 0 8px rgba(245,158,11,0.22)" }}
     >
@@ -440,6 +440,11 @@ function PostCard({ post, onAppealSubmitted, onTopicClick }: { post: Post & { ap
   const [localCommentCount, setLocalCommentCount] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [lightboxImg, setLightboxImg] = useState<string | null>(null);
+  const [showReportPost, setShowReportPost] = useState(false);
+  const [reportReason, setReportReason] = useState("");
+  const [reportDetails, setReportDetails] = useState("");
+  const [reportLoading, setReportLoading] = useState(false);
+  const [reportDone, setReportDone] = useState(false);
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
   const likePost = useLikePost();
@@ -487,11 +492,85 @@ function PostCard({ post, onAppealSubmitted, onTopicClick }: { post: Post & { ap
   const isVerified = (post.author as any)?.isVerified;
   const isAdmin = (post.author as any)?.isAdmin === true;
 
+  const handleReportPost = async () => {
+    if (!reportReason || reportLoading) return;
+    setReportLoading(true);
+    try {
+      const token = sessionStorage.getItem("pulse-token");
+      const res = await fetch(`/api/posts/${post.id}/report`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...(token ? { "Authorization": `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ reason: reportReason, details: reportDetails }),
+      });
+      if (res.ok) { setReportDone(true); setTimeout(() => setShowReportPost(false), 1500); }
+    } catch {}
+    setReportLoading(false);
+  };
+
   return (
     <>
       <AnimatePresence>
         {lightboxImg && (
           <ImageLightbox src={lightboxImg} onClose={() => setLightboxImg(null)} />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showReportPost && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+            onClick={(e) => e.target === e.currentTarget && setShowReportPost(false)}
+          >
+            <motion.div
+              initial={{ y: 40, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 40, opacity: 0 }}
+              className="bg-card border border-border rounded-2xl w-full max-w-sm p-5 space-y-4"
+            >
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-base flex items-center gap-2"><Flag size={16} className="text-orange-400" />Жалоба на пост</h3>
+                <button onClick={() => setShowReportPost(false)} className="text-muted-foreground hover:text-foreground"><X size={18} /></button>
+              </div>
+              {reportDone ? (
+                <div className="text-center py-4">
+                  <p className="text-emerald-400 font-semibold">✓ Жалоба отправлена</p>
+                  <p className="text-xs text-muted-foreground mt-1">Мы рассмотрим её в ближайшее время</p>
+                </div>
+              ) : (
+                <>
+                  <div className="space-y-2">
+                    {["Спам", "Оскорбление", "Дезинформация", "Ненависть", "Другое"].map(r => (
+                      <button
+                        key={r}
+                        onClick={() => setReportReason(r)}
+                        className={`w-full text-left px-3 py-2 rounded-xl text-sm transition-colors border ${reportReason === r ? "border-orange-400/60 bg-orange-400/10 text-orange-300 font-semibold" : "border-border text-muted-foreground hover:text-foreground hover:bg-secondary"}`}
+                      >
+                        {r}
+                      </button>
+                    ))}
+                  </div>
+                  <textarea
+                    value={reportDetails}
+                    onChange={e => setReportDetails(e.target.value)}
+                    placeholder="Дополнительные детали (необязательно)"
+                    maxLength={500}
+                    rows={2}
+                    className="w-full bg-secondary border border-border rounded-xl px-3 py-2 text-sm resize-none focus:outline-none focus:border-orange-400/50 transition-colors"
+                  />
+                  <button
+                    onClick={handleReportPost}
+                    disabled={!reportReason || reportLoading}
+                    className="w-full py-2.5 rounded-xl font-bold text-sm bg-orange-500/20 text-orange-300 border border-orange-500/30 hover:bg-orange-500/30 transition-colors disabled:opacity-40"
+                  >
+                    {reportLoading ? "Отправка..." : "Отправить жалобу"}
+                  </button>
+                </>
+              )}
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
 
@@ -527,14 +606,14 @@ function PostCard({ post, onAppealSubmitted, onTopicClick }: { post: Post & { ap
               @{post.author?.username} · {fDTN(new Date(post.createdAt), { addSuffix: true, locale: ru })}
             </p>
           </div>
-          {canDelete && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="p-1.5 text-muted-foreground hover:text-foreground rounded-lg hover:bg-secondary transition-colors shrink-0">
-                  <MoreVertical size={16} />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="p-1.5 text-muted-foreground hover:text-foreground rounded-lg hover:bg-secondary transition-colors shrink-0">
+                <MoreVertical size={16} />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {canDelete && (
                 <DropdownMenuItem
                   onClick={handleDelete}
                   disabled={isDeleting}
@@ -543,9 +622,18 @@ function PostCard({ post, onAppealSubmitted, onTopicClick }: { post: Post & { ap
                   <Trash2 size={14} className="mr-2" />
                   {isDeleting ? "Удаление..." : "Удалить пост"}
                 </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
+              )}
+              {!isOwnPost && (
+                <DropdownMenuItem
+                  onClick={() => setShowReportPost(true)}
+                  className="text-orange-400 focus:text-orange-400"
+                >
+                  <Flag size={14} className="mr-2" />
+                  Пожаловаться
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         <div className="px-4 pb-3">

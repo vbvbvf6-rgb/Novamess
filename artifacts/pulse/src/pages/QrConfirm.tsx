@@ -164,7 +164,7 @@ export default function QrConfirm() {
               <div>
                 <h2 className="text-2xl font-black text-foreground mb-1">Подтвердить вход</h2>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  Новое устройство запрашивает доступ к вашему аккаунту Aura.
+                  Новое устройство запрашивает доступ к вашему аккаунту Nova.
                 </p>
               </div>
 
@@ -238,7 +238,7 @@ export default function QrConfirm() {
         </div>
 
         <p className="text-center text-[11px] text-muted-foreground/40 font-medium mt-5">
-          Aura Messenger · Ваши данные надёжно защищены
+          Nova Messenger · Ваши данные надёжно защищены
         </p>
       </motion.div>
     </div>

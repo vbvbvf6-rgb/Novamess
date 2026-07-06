@@ -439,7 +439,7 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
         if (last && last.senderId !== Number(sessionStorage.getItem("pulse-user-id") || "1")) {
           const chatData = queryClient.getQueryData<any>([`/api/chats/${chatId}`]) ?? null;
           const chatType = (chatData as any)?.type ?? "direct";
-          const chatName = (chatData as any)?.otherUser?.displayName ?? (chatData as any)?.name ?? "Aura";
+          const chatName = (chatData as any)?.otherUser?.displayName ?? (chatData as any)?.name ?? "Nova";
           const senderName = last.sender?.displayName || chatName;
           const body = last.type === "image" ? "📷 Фото" : last.type === "audio" ? "🎤 Голосовое" : last.type === "sticker" ? "🎨 Стикер" : last.text || "";
 
@@ -1339,7 +1339,18 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
             <div className="w-1 h-8 rounded-full bg-primary shrink-0" />
             <div
               className="flex-1 min-w-0 cursor-pointer"
-              onClick={() => visiblePinned.length > 1 && setPinnedMsgIndex(i => (i + 1) % visiblePinned.length)}
+              onClick={() => {
+                const el = messageRefs.current[pinnedMsg.id];
+                if (el) {
+                  el.scrollIntoView({ behavior: "smooth", block: "center" });
+                  el.style.transition = "background-color 0.3s ease";
+                  el.style.backgroundColor = "rgba(var(--primary-rgb, 59,130,246), 0.12)";
+                  setTimeout(() => { el.style.backgroundColor = ""; }, 1500);
+                }
+                if (visiblePinned.length > 1) {
+                  setPinnedMsgIndex(i => (i + 1) % visiblePinned.length);
+                }
+              }}
             >
               <p className="text-[11px] font-black uppercase tracking-wider text-primary mb-0.5 flex items-center gap-1.5">
                 Закреплено
@@ -1517,7 +1528,7 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
               )}
             </div>
             <p className="text-[13px] text-muted-foreground leading-relaxed bg-secondary/60 rounded-2xl px-5 py-3.5">
-              Это бот — автоматическая программа в Aura.<br />Нажми кнопку ниже, чтобы начать.
+              Это бот — автоматическая программа в Nova.<br />Нажми кнопку ниже, чтобы начать.
             </p>
             <motion.button
               whileHover={{ scale: 1.04 }}

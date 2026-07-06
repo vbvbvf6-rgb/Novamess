@@ -210,7 +210,7 @@ export function ScreenLock({ children }: ScreenLockProps) {
                     <Lock size={32} className="text-primary" />
                   </div>
                   <div className="text-center">
-                    <h2 className="text-xl font-bold text-foreground">Aura заблокирован</h2>
+                    <h2 className="text-xl font-bold text-foreground">Nova заблокирован</h2>
                     <p className="text-sm text-muted-foreground/60 mt-0.5">Введите PIN-код для доступа</p>
                   </div>
                 </motion.div>
@@ -281,7 +281,7 @@ export function ScreenLock({ children }: ScreenLockProps) {
 
           <div className="flex items-center gap-2 text-xs text-muted-foreground/50">
             <Zap size={10} className="text-primary/50" />
-            <span>Aura Messenger</span>
+            <span>Nova Messenger</span>
           </div>
         </div>
       </motion.div>

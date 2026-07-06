@@ -33,7 +33,6 @@ import Wallet from "@/pages/Wallet";
 import Admin from "@/pages/Admin";
 import Prime from "@/pages/Prime";
 
-import Gifts from "@/pages/Gifts";
 import Leaderboard from "@/pages/Leaderboard";
 import Events from "@/pages/Events";
 import Support from "@/pages/Support";
@@ -107,7 +106,7 @@ function LandscapeBlock() {
       </motion.div>
       <div className="text-center px-8">
         <p className="font-black text-xl mb-1">Поверните устройство</p>
-        <p className="text-muted-foreground text-sm">Aura работает только в портретной ориентации</p>
+        <p className="text-muted-foreground text-sm">Nova работает только в портретной ориентации</p>
       </div>
     </div>
   );
@@ -142,7 +141,7 @@ function VerificationPending({ onLogout }: { onLogout: () => void }) {
           </motion.div>
           <h1 className="text-2xl font-black text-foreground mb-2">Аккаунт на проверке</h1>
           <p className="text-muted-foreground text-sm leading-relaxed mb-6">
-            Ваш документ отправлен на проверку администратору. После подтверждения вы получите полный доступ к Aura.
+            Ваш документ отправлен на проверку администратору. После подтверждения вы получите полный доступ к Nova.
           </p>
           <div className="bg-primary/5 border border-primary/20 rounded-2xl p-4 mb-6 flex items-center gap-3 text-left">
             <Clock size={18} className="text-primary shrink-0" />
@@ -286,7 +285,7 @@ function PwaUpdateBanner() {
               {/* Text */}
               <div className="flex-1 min-w-0">
                 <p className="text-[13px] font-bold text-foreground leading-tight">
-                  {updating ? "Устанавливаю обновление…" : "Доступно обновление Aura"}
+                  {updating ? "Устанавливаю обновление…" : "Доступно обновление Nova"}
                 </p>
                 <p className="text-[11px] text-muted-foreground truncate">
                   {updating ? "Страница перезагрузится автоматически" : "Скачано и готово к установке"}
@@ -389,7 +388,6 @@ function MainAppInner({ onLogout, onSwitchAccount, onRemoveAccount, onOpenAddAcc
               <Route path="/admin" component={Admin} />
               <Route path="/prime" component={Prime} />
 
-              <Route path="/gifts" component={Gifts} />
               <Route path="/leaderboard" component={Leaderboard} />
               <Route path="/events" component={Events} />
               <Route path="/support" component={Support} />

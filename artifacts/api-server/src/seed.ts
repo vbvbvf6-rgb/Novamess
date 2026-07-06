@@ -189,10 +189,10 @@ const SYSTEM_USERS: Array<{
     passwordHash: "$2b$12$ejJ4JyOdHbph7ETga8QpdeJTzN28FDCNZ3tw.1B1d/936/2ZDZ/fa",
   },
   {
-    username: "deepseek_ai",
-    displayName: "DeepSeek AI",
+    username: "nova_ai",
+    displayName: "Nova AI",
     avatarColor: "#5B6CF9",
-    avatarUrl: "/deepseek-avatar.jpg",
+    avatarUrl: null,
     isBot: true,
     isVerified: true,
     isAdmin: false,

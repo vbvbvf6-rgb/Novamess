@@ -140,7 +140,7 @@ export function AddAccountDialog({ open, onClose, onAccountAdded }: AddAccountDi
             {mode === "login" ? "Добавить аккаунт" : "Создать аккаунт"}
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            {mode === "login" ? "Войдите в другой аккаунт Aura" : "Зарегистрируйте новый аккаунт"}
+            {mode === "login" ? "Войдите в другой аккаунт Nova" : "Зарегистрируйте новый аккаунт"}
           </p>
         </div>
 

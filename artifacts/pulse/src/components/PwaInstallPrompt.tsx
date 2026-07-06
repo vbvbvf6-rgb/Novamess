@@ -70,14 +70,14 @@ export function PwaInstallPrompt() {
                 {isIos ? <Smartphone size={22} className="text-primary" /> : <Monitor size={22} className="text-primary" />}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-bold text-sm text-foreground">Установить Aura</p>
+                <p className="font-bold text-sm text-foreground">Установить Nova</p>
                 {isIos ? (
                   <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
                     Нажмите <span className="font-semibold text-primary">«Поделиться»</span> → <span className="font-semibold text-primary">«На экран Домой»</span> чтобы установить приложение
                   </p>
                 ) : (
                   <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
-                    Установите Aura как приложение — работает как нативное
+                    Установите Nova как приложение — работает как нативное
                   </p>
                 )}
               </div>

@@ -25,7 +25,6 @@ import {
   Moon,
   Search,
   CalendarDays,
-  Gift,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAppContext } from "@/contexts/AppContext";
@@ -238,7 +237,6 @@ export function Sidebar({ mobileSidebarOpen, onMobileClose, onMobileOpen, onOpen
     { href: "/stories",      icon: History,        label: t("nav.stories") },
     ...(showEvents ? [{ href: "/events", icon: CalendarDays, label: t("nav.events") }] : []),
     { href: "/wallet",       icon: Wallet,         label: t("nav.wallet") },
-    { href: "/gifts",        icon: Gift,           label: "Подарки" },
     { href: "/leaderboard",  icon: Trophy,         label: t("nav.leaderboard") },
     { href: "/profile",      icon: UserCircle,     label: t("nav.profile") },
     { href: "/settings",     icon: Settings,       label: t("nav.settings") },
@@ -292,7 +290,7 @@ export function Sidebar({ mobileSidebarOpen, onMobileClose, onMobileOpen, onOpen
             backgroundClip: "text",
           }}
         >
-          Aura
+          Nova
         </span>
         <div className="flex gap-1">
           <button
@@ -541,7 +539,7 @@ export function Sidebar({ mobileSidebarOpen, onMobileClose, onMobileOpen, onOpen
               WebkitTextFillColor: "transparent",
               backgroundClip: "text",
             }}
-          >Aura</span>
+          >Nova</span>
           <button
             onClick={toggleTheme}
             title={isDark ? "Светлая тема" : "Тёмная тема"}

@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Link, useSearch, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { Eye, EyeOff, Camera, Gift, KeyRound, HelpCircle, ArrowLeft } from "lucide-react";
+import { Eye, EyeOff, Camera, KeyRound, HelpCircle, ArrowLeft } from "lucide-react";
 import PulseLogo from "@/components/PulseLogo";
 
 async function compressAvatar(file: File): Promise<string> {
@@ -48,7 +48,6 @@ interface RegisterProps {
 export default function Register({ onLogin }: RegisterProps) {
   const [, navigate] = useLocation();
   const [username, setUsername] = useState("");
-  const [displayName, setDisplayName] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -76,7 +75,7 @@ export default function Register({ onLogin }: RegisterProps) {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username.trim() || !displayName.trim() || !password) {
+    if (!username.trim() || !password) {
       setError("Заполните все поля");
       return;
     }
@@ -113,7 +112,7 @@ export default function Register({ onLogin }: RegisterProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           username: username.trim(),
-          displayName: displayName.trim(),
+          displayName: username.trim(),
           password,
           avatarUrl: avatarUrl || undefined,
           referralCode: referralCode.trim().toUpperCase() || undefined,
@@ -149,7 +148,7 @@ export default function Register({ onLogin }: RegisterProps) {
   };
 
   return (
-    <div className="h-[100dvh] bg-background flex flex-col items-center p-4 pt-8 pb-8 relative overflow-y-auto">
+    <div className="min-h-[100dvh] bg-background flex flex-col items-center p-4 pt-8 pb-8 relative overflow-y-auto">
       {/* Back to login */}
       <button
         onClick={() => navigate("/login")}
@@ -206,7 +205,7 @@ export default function Register({ onLogin }: RegisterProps) {
             transition={{ delay: 0.2 }}
             className="text-center"
           >
-            <h1 className="text-4xl font-black tracking-tight text-foreground mb-1.5">Aura</h1>
+            <h1 className="text-4xl font-black tracking-tight text-foreground mb-1.5">Nova</h1>
             <p className="text-[13px] font-semibold text-muted-foreground uppercase tracking-[0.2em]">
               Новый аккаунт
             </p>
@@ -265,18 +264,6 @@ export default function Register({ onLogin }: RegisterProps) {
                 placeholder="только_латиница_и_цифры"
                 autoComplete="username"
                 autoFocus={typeof window !== "undefined" && window.matchMedia("(hover: hover)").matches}
-                className="w-full bg-card/50 border border-border rounded-2xl px-5 py-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-base font-medium"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider pl-1">Имя</label>
-              <input
-                type="text"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="Как вас зовут?"
-                autoComplete="name"
                 className="w-full bg-card/50 border border-border rounded-2xl px-5 py-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-base font-medium"
               />
             </div>
@@ -371,7 +358,7 @@ export default function Register({ onLogin }: RegisterProps) {
                 <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-green-500/10 text-green-500 border border-green-500/20">необязательно</span>
               </div>
               <div className="relative">
-                <Gift size={18} className={`absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none ${referralApplied ? "text-green-500" : "text-muted-foreground"}`} />
+                <span className={`absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-lg ${referralApplied ? "text-green-500" : "text-muted-foreground"}`}>🎁</span>
                 <input
                   type="text"
                   value={referralCode}

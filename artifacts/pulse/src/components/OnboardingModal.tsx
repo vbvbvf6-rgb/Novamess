@@ -51,7 +51,7 @@ const STEPS: Step[] = [
     color: "text-yellow-400",
     gradient: "from-yellow-500/20 to-yellow-600/5",
     title: "Gem 💎 и Кошелёк",
-    description: "Gem — внутренняя валюта Aura. Получай ежедневный бонус 💎, выполняй задания в разделе «События».",
+    description: "Gem — внутренняя валюта Nova. Получай ежедневный бонус 💎, выполняй задания в разделе «События».",
     tip: "💡 Заходи ежедневно чтобы не потерять стрик!",
   },
   {
@@ -66,9 +66,9 @@ const STEPS: Step[] = [
     icon: <Star size={32} />,
     color: "text-amber-400",
     gradient: "from-amber-500/20 to-amber-600/5",
-    title: "Aura Prime",
+    title: "Nova Prime",
     description: "Подпишись на Prime чтобы получить золотое кольцо, эксклюзивные темы оформления и множитель Gem × 2 💎.",
-    tip: "💡 Раздел «Aura Prime» в левом меню",
+    tip: "💡 Раздел «Nova Prime» в левом меню",
   },
 ];
 

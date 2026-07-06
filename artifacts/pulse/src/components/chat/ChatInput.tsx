@@ -911,7 +911,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
                   <div>
                     <p className="text-[15px] font-black text-foreground">Стикеры появятся скоро</p>
                     <p className="text-[12px] text-muted-foreground mt-1 max-w-[220px] leading-relaxed">
-                      Мы готовим уникальный пак стикеров Aura — следите за обновлениями!
+                      Мы готовим уникальный пак стикеров Nova — следите за обновлениями!
                     </p>
                   </div>
                   <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20">
