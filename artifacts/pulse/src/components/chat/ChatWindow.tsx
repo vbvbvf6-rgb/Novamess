@@ -294,7 +294,7 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const { data: chat, isLoading: isChatLoading } = useGetChatById(chatId, { query: { enabled: !!chatId } as any });
+  const { data: chat, isLoading: isChatLoading, isError: isChatError, isFetching: isChatFetching, refetch: refetchChat } = useGetChatById(chatId, { query: { enabled: !!chatId, retry: (failureCount: number, err: any) => { if (err?.response?.status === 404) return false; return failureCount < 2; } } as any });
   const { data: messages, isLoading: isMessagesLoading } = useGetMessages({ chatId }, { query: { enabled: !!chatId } as any });
   const { data: me } = useGetMe();
   const [calling, setCalling] = useState(false);
@@ -916,12 +916,40 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
     return topLevel;
   }, [messages, _isChannel, adminUserIds]);
 
-  if (isChatLoading) {
+  if (isChatLoading || (isChatFetching && !chat)) {
     return (
       <div className="flex-1 h-full flex flex-col items-center justify-center bg-background gap-4">
         <Skeleton className="w-16 h-16 rounded-2xl" />
         <Skeleton className="h-5 w-40 rounded-xl" />
         <Skeleton className="h-3 w-24 rounded-lg" />
+      </div>
+    );
+  }
+
+  if (isChatError && !chat) {
+    return (
+      <div className="flex-1 h-full flex flex-col items-center justify-center bg-background gap-4 p-8">
+        <div className="w-16 h-16 rounded-2xl bg-secondary flex items-center justify-center text-muted-foreground">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <div className="text-center">
+          <p className="font-bold text-foreground">Не удалось загрузить чат</p>
+          <p className="text-sm text-muted-foreground mt-1">Проверьте соединение и попробуйте ещё раз</p>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={() => refetchChat()}
+            className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-semibold"
+          >
+            Повторить
+          </button>
+          <button
+            onClick={() => setSelectedChatId(null)}
+            className="px-4 py-2 rounded-xl bg-secondary text-foreground text-sm font-semibold"
+          >
+            Назад
+          </button>
+        </div>
       </div>
     );
   }
@@ -934,7 +962,7 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
         </div>
         <div className="text-center">
           <p className="font-bold text-foreground">Чат не найден</p>
-          <p className="text-sm text-muted-foreground mt-1">Не удалось загрузить чат</p>
+          <p className="text-sm text-muted-foreground mt-1">Чат был удалён или недоступен</p>
         </div>
         <button
           onClick={() => setSelectedChatId(null)}

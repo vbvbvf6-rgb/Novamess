@@ -151,19 +151,211 @@ async function buildChat(chatId: number, currentUserId: number) {
   };
 }
 
+// Optimised bulk loader – replaces N×buildChat(…) calls with ~5 parallel queries.
+// chatIds come from the DB (integer primary keys), so sql.raw interpolation is safe here.
+async function buildChatsForUser(uid: number) {
+  // 1. Membership rows for this user
+  const membershipRows = await db.execute(sql`
+    SELECT chat_id, is_pinned, is_muted, last_read_at, last_delivered_at
+    FROM chat_members WHERE user_id = ${uid}
+  `);
+  const memberships = membershipRows.rows as any[];
+  if (memberships.length === 0) return [];
+
+  const chatIds: number[] = memberships.map((m: any) => Number(m.chat_id));
+  // Integer IDs from DB – safe to interpolate directly
+  const idList = sql.raw(chatIds.join(","));
+
+  // 2-6 run in parallel
+  const [chatRows, lastMsgRows, unreadRows, memberRows, pinnedRows, readStatusRows] = await Promise.all([
+    // 2. All chat rows
+    db.execute(sql`SELECT * FROM chats WHERE id IN (${idList})`),
+
+    // 3. Last message per chat (with sender info and reactions count)
+    db.execute(sql`
+      SELECT DISTINCT ON (m.chat_id)
+        m.id, m.chat_id, m.sender_id, m.text, m.type, m.media_url,
+        m.created_at, m.is_deleted, m.reply_to_id,
+        u.display_name AS sender_name, u.avatar_color AS sender_color,
+        u.username AS sender_username,
+        COALESCE((SELECT json_agg(r.*) FROM reactions r WHERE r.message_id = m.id), '[]'::json) AS reactions
+      FROM messages m
+      LEFT JOIN users u ON u.id = m.sender_id
+      WHERE m.chat_id IN (${idList})
+      ORDER BY m.chat_id, m.created_at DESC
+    `),
+
+    // 4. Unread counts per chat
+    db.execute(sql`
+      SELECT m.chat_id, COUNT(*)::int AS unread
+      FROM messages m
+      JOIN chat_members cm ON cm.chat_id = m.chat_id AND cm.user_id = ${uid}
+      WHERE m.chat_id IN (${idList})
+        AND m.sender_id != ${uid}
+        AND (cm.last_read_at IS NULL OR m.created_at > cm.last_read_at)
+      GROUP BY m.chat_id
+    `),
+
+    // 5. All members for these chats (to find otherUser in direct chats)
+    db.execute(sql`
+      SELECT cm.chat_id, cm.user_id, cm.role, cm.last_read_at, cm.last_delivered_at,
+        u.display_name, u.avatar_color, u.avatar_url, u.username,
+        u.status, u.is_verified, u.is_bot, u.is_admin,
+        u.has_prime, u.prime_tier, u.prime_expires_at
+      FROM chat_members cm
+      JOIN users u ON u.id = cm.user_id
+      WHERE cm.chat_id IN (${idList})
+    `),
+
+    // 6. All pinned messages per chat (ordered newest first, so index 0 = latest)
+    db.execute(sql`
+      SELECT
+        pm.chat_id, pm.id AS pin_id, pm.pinned_at, pm.pinned_by,
+        m.id AS msg_id, m.sender_id, m.text, m.type, m.media_url,
+        m.created_at, m.is_deleted,
+        u.display_name, u.avatar_color
+      FROM pinned_messages pm
+      JOIN messages m ON m.id = pm.message_id
+      JOIN users u ON u.id = m.sender_id
+      WHERE pm.chat_id IN (${idList})
+      ORDER BY pm.pinned_at DESC
+    `).catch(() => ({ rows: [] })),
+
+    // 7. Read/delivery status of current user's own last message per chat
+    // (needed to compute isRead/isDelivered correctly on lastMessage)
+    db.execute(sql`
+      SELECT
+        lm.chat_id,
+        lm.created_at AS msg_time,
+        MAX(CASE WHEN cm.user_id != ${uid} THEN cm.last_read_at END) AS max_read_at,
+        MAX(CASE WHEN cm.user_id != ${uid} THEN cm.last_delivered_at END) AS max_delivered_at
+      FROM (
+        SELECT DISTINCT ON (chat_id) chat_id, sender_id, created_at
+        FROM messages
+        WHERE chat_id IN (${idList})
+        ORDER BY chat_id, created_at DESC
+      ) lm
+      JOIN chat_members cm ON cm.chat_id = lm.chat_id
+      WHERE lm.sender_id = ${uid}
+      GROUP BY lm.chat_id, lm.created_at
+    `),
+  ]);
+
+  const chatMap = new Map<number, any>((chatRows.rows as any[]).map((c: any) => [Number(c.id), c]));
+  const lastMsgMap = new Map<number, any>((lastMsgRows.rows as any[]).map((m: any) => [Number(m.chat_id), m]));
+  const unreadMap = new Map<number, number>((unreadRows.rows as any[]).map((r: any) => [Number(r.chat_id), Number(r.unread)]));
+  const readStatusMap = new Map<number, any>((readStatusRows.rows as any[]).map((r: any) => [Number(r.chat_id), r]));
+
+  // Group members by chat
+  const membersMap = new Map<number, any[]>();
+  for (const m of memberRows.rows as any[]) {
+    const cid = Number(m.chat_id);
+    if (!membersMap.has(cid)) membersMap.set(cid, []);
+    membersMap.get(cid)!.push(m);
+  }
+
+  // Group all pinned messages by chat
+  const pinnedListMap = new Map<number, any[]>();
+  for (const p of pinnedRows.rows as any[]) {
+    const cid = Number(p.chat_id);
+    if (!pinnedListMap.has(cid)) pinnedListMap.set(cid, []);
+    pinnedListMap.get(cid)!.push({
+      id: p.msg_id, pinId: p.pin_id, chatId: cid,
+      senderId: p.sender_id, text: p.text, type: p.type,
+      mediaUrl: p.media_url, createdAt: p.created_at,
+      isDeleted: p.is_deleted, pinnedAt: p.pinned_at,
+      sender: { displayName: p.display_name, avatarColor: p.avatar_color },
+    });
+  }
+
+  const result: any[] = [];
+  for (const mem of memberships) {
+    const chatId = Number(mem.chat_id);
+    const chat = chatMap.get(chatId);
+    if (!chat) continue; // orphan membership – skip
+
+    const lm = lastMsgMap.get(chatId);
+    let lastMessage: any = null;
+    if (lm) {
+      // Compute isRead/isDelivered only when current user sent the message
+      let isRead = true;
+      let isDelivered = true;
+      if (Number(lm.sender_id) === uid) {
+        const rs = readStatusMap.get(chatId);
+        const msgTime = new Date(lm.created_at).getTime();
+        isRead = rs?.max_read_at ? new Date(rs.max_read_at).getTime() >= msgTime : false;
+        isDelivered = rs?.max_delivered_at ? new Date(rs.max_delivered_at).getTime() >= msgTime : false;
+      }
+      lastMessage = {
+        id: lm.id, chatId: lm.chat_id, senderId: lm.sender_id,
+        text: lm.text, type: lm.type, mediaUrl: lm.media_url,
+        createdAt: lm.created_at, isDeleted: lm.is_deleted,
+        sender: lm.sender_id ? {
+          displayName: lm.sender_name, avatarColor: lm.sender_color, username: lm.sender_username,
+        } : null,
+        reactions: Array.isArray(lm.reactions) ? lm.reactions : [],
+        isRead,
+        isDelivered,
+      };
+    }
+
+    const chatMembers = membersMap.get(chatId) ?? [];
+
+    let otherUser = null;
+    if (chat.type === "direct") {
+      const other = chatMembers.find((m: any) => Number(m.user_id) !== uid);
+      if (other) {
+        const hasPrime = (other.has_prime === true || other.has_prime === "t") &&
+          other.prime_expires_at && new Date(other.prime_expires_at) > new Date();
+        otherUser = {
+          id: other.user_id,
+          displayName: other.display_name,
+          avatarColor: other.avatar_color,
+          avatarUrl: other.avatar_url,
+          username: other.username,
+          status: other.status,
+          isVerified: other.is_verified,
+          isBot: other.is_bot,
+          isAdmin: other.is_admin,
+          hasPrime: !!hasPrime,
+          primeTier: hasPrime ? other.prime_tier : null,
+        };
+      }
+    }
+
+    const pinnedMessages = pinnedListMap.get(chatId) ?? [];
+    const pinnedMessage = pinnedMessages[0] ?? null;
+
+    result.push({
+      ...chat,
+      avatarUrl: chat.avatar_url,
+      avatarColor: chat.avatar_color,
+      isPinned: mem.is_pinned ?? false,
+      isMuted: mem.is_muted ?? false,
+      unreadCount: unreadMap.get(chatId) ?? 0,
+      lastMessage,
+      members: chatMembers.map((m: any) => ({
+        chatId: m.chat_id, userId: m.user_id, role: m.role,
+        lastReadAt: m.last_read_at, lastDeliveredAt: m.last_delivered_at,
+        user: {
+          id: m.user_id, displayName: m.display_name, avatarColor: m.avatar_color,
+          avatarUrl: m.avatar_url, username: m.username, status: m.status,
+          isVerified: m.is_verified, isBot: m.is_bot, isAdmin: m.is_admin,
+        },
+      })),
+      otherUser,
+      pinnedMessage,
+      pinnedMessages,
+    });
+  }
+  return result;
+}
+
 router.get("/chats", async (req, res) => {
   try {
     const uid = req.currentUserId;
-    const myMemberships = await db
-      .select({ chatId: chatMembersTable.chatId })
-      .from(chatMembersTable)
-      .where(eq(chatMembersTable.userId, uid));
-
-    const chatIds = myMemberships.map(m => m.chatId);
-    if (chatIds.length === 0) return res.json([]);
-
-    const chats = await Promise.all(chatIds.map(id => buildChat(id, uid)));
-    res.json(chats.filter(Boolean));
+    const chats = await buildChatsForUser(uid);
+    res.json(chats);
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });
