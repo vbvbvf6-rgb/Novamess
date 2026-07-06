@@ -96,6 +96,8 @@ export default defineConfig({
       "/api": {
         target: "http://localhost:8080",
         changeOrigin: true,
+        proxyTimeout: 300000, // 5 minutes for large video uploads
+        timeout: 300000,
         configure: (proxy) => {
           proxy.on("error", () => {});
           proxy.on("proxyRes", (proxyRes) => {

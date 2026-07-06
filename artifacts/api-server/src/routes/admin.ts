@@ -129,6 +129,18 @@ router.delete("/admin/users/:userId", requireAdmin, async (req, res) => {
     await db.execute(sql`DELETE FROM user_reports WHERE reporter_id = ${targetId} OR target_id = ${targetId}`).catch(() => {});
     await db.execute(sql`DELETE FROM post_reports WHERE reporter_id = ${targetId}`).catch(() => {});
     await db.execute(sql`DELETE FROM contact_requests WHERE sender_id = ${targetId} OR receiver_id = ${targetId}`).catch(() => {});
+    // Bot-related tables (may not exist on all deployments)
+    await db.execute(sql`DELETE FROM bot_webhooks WHERE bot_user_id = ${targetId}`).catch(() => {});
+    await db.execute(sql`DELETE FROM bot_updates WHERE bot_user_id = ${targetId}`).catch(() => {});
+    await db.execute(sql`DELETE FROM bot_tokens WHERE bot_user_id = ${targetId} OR owner_user_id = ${targetId}`).catch(() => {});
+    // Chat folders
+    await db.execute(sql`DELETE FROM chat_folder_chats WHERE folder_id IN (SELECT id FROM chat_folders WHERE user_id = ${targetId})`).catch(() => {});
+    await db.execute(sql`DELETE FROM chat_folders WHERE user_id = ${targetId}`).catch(() => {});
+    // Referral/daily bonus/topup tables
+    await db.execute(sql`DELETE FROM user_daily_bonus WHERE user_id = ${targetId}`).catch(() => {});
+    await db.execute(sql`DELETE FROM topup_requests WHERE user_id = ${targetId}`).catch(() => {});
+    await db.execute(sql`DELETE FROM spark_beg_requests WHERE from_user_id = ${targetId} OR to_user_id = ${targetId}`).catch(() => {});
+    await db.execute(sql`DELETE FROM referrals WHERE referrer_id = ${targetId} OR referred_id = ${targetId}`).catch(() => {});
 
     await db.execute(sql`BEGIN`);
     try {

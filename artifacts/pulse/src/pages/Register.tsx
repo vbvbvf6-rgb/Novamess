@@ -148,7 +148,8 @@ export default function Register({ onLogin }: RegisterProps) {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-background flex flex-col items-center p-4 pt-8 pb-8 relative overflow-y-auto">
+    <div className="min-h-[100dvh] bg-background relative overflow-y-auto">
+      <div className="flex flex-col items-center p-4 pt-8 pb-8">
       {/* Back to login */}
       <button
         onClick={() => navigate("/login")}
@@ -160,7 +161,7 @@ export default function Register({ onLogin }: RegisterProps) {
         </div>
       </button>
 
-      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
         <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-primary/20 rounded-full blur-[120px] opacity-80 animate-[pulseGlow_6s_ease-in-out_infinite_alternate]" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[65%] h-[65%] bg-violet-500/15 rounded-full blur-[100px] opacity-70 animate-[pulseGlow_8s_ease-in-out_infinite_alternate-reverse]" />
         <div className="absolute top-[35%] left-[55%] w-[35%] h-[35%] bg-amber-500/12 rounded-full blur-[80px] opacity-60 animate-[pulseGlow_10s_ease-in-out_infinite_alternate]" />
@@ -264,7 +265,7 @@ export default function Register({ onLogin }: RegisterProps) {
                 placeholder="только_латиница_и_цифры"
                 autoComplete="username"
                 autoFocus={typeof window !== "undefined" && window.matchMedia("(hover: hover)").matches}
-                className="w-full bg-card/50 border border-border rounded-2xl px-5 py-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-base font-medium"
+                className="w-full bg-card/50 border border-border rounded-2xl px-5 py-3 sm:py-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-[15px] font-medium"
               />
             </div>
 
@@ -277,7 +278,7 @@ export default function Register({ onLogin }: RegisterProps) {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Минимум 8 символов"
                   autoComplete="new-password"
-                  className="w-full bg-card/50 border border-border rounded-2xl px-5 py-4 pr-14 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-base font-medium"
+                  className="w-full bg-card/50 border border-border rounded-2xl px-5 py-3 sm:py-4 pr-14 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-[15px] font-medium"
                 />
                 <button
                   type="button"
@@ -297,7 +298,7 @@ export default function Register({ onLogin }: RegisterProps) {
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="••••••••"
                 autoComplete="new-password"
-                className="w-full bg-card/50 border border-border rounded-2xl px-5 py-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-base font-medium"
+                className="w-full bg-card/50 border border-border rounded-2xl px-5 py-3 sm:py-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-[15px] font-medium"
               />
             </div>
 
@@ -397,7 +398,7 @@ export default function Register({ onLogin }: RegisterProps) {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-primary text-primary-foreground font-black py-4 rounded-2xl hover:bg-primary/90 transition-all disabled:opacity-50 hover:shadow-[0_0_30px_rgba(255,85,0,0.3)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-none text-base mt-2"
+              className="w-full bg-primary text-primary-foreground font-black py-3 sm:py-4 rounded-2xl hover:bg-primary/90 transition-all disabled:opacity-50 hover:shadow-[0_0_30px_rgba(255,85,0,0.3)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-none text-[15px] mt-2"
             >
               {loading ? "Создаём..." : "Создать аккаунт"}
             </button>
@@ -413,6 +414,7 @@ export default function Register({ onLogin }: RegisterProps) {
           </div>
         </motion.div>
       </motion.div>
+      </div>
     </div>
   );
 }

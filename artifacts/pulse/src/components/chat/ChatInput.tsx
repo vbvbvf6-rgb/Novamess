@@ -3,7 +3,7 @@ import { emojiToTwemojiUrl } from "@/lib/twemoji";
 import { useSendMessage, useGetMe, getGetMessagesQueryKey, getGetChatsQueryKey, Message } from "@workspace/api-client-react";
 import type { P2PChannel } from "@/hooks/useP2PChannel";
 import { useQueryClient } from "@tanstack/react-query";
-import { Paperclip, Mic, SendHorizontal, X, Square, Trash2, Images, Reply, Pencil, Clock, BarChart2, Plus, Minus, CalendarClock, Hourglass, Smile, Package, FileText, FileCode, FileArchive, File as FileIcon, Video } from "lucide-react";
+import { Paperclip, Mic, SendHorizontal, X, Square, Trash2, Images, Reply, Pencil, Clock, BarChart2, Plus, Minus, CalendarClock, Hourglass, Smile, Package, FileText, FileCode, FileArchive, File as FileIcon, Video, Camera } from "lucide-react";
 
 interface DocPreview { name: string; size: number; mime: string; data: string; }
 
@@ -706,10 +706,20 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
       onDrop={handleDrop}
     >
       {isDragOver && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center rounded-2xl bg-primary/10 border-2 border-dashed border-primary pointer-events-none">
-          <div className="flex flex-col items-center gap-2 text-primary">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-            <span className="text-sm font-bold">Перетащите файлы сюда</span>
+        <div className="absolute inset-0 z-50 flex flex-col pointer-events-none">
+          <div className="flex-1 flex items-center justify-center border-4 border-dashed border-blue-400/60 bg-blue-500/10 m-2 mb-1 rounded-2xl">
+            <div className="text-center">
+              <FileIcon size={32} className="mx-auto mb-2 text-blue-400 opacity-60" />
+              <p className="font-semibold text-sm text-blue-300">Отправка без сжатия</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Перетащите файлы сюда</p>
+            </div>
+          </div>
+          <div className="flex-1 flex items-center justify-center border-4 border-dashed border-primary/60 bg-primary/10 m-2 mt-1 rounded-2xl">
+            <div className="text-center">
+              <Camera size={32} className="mx-auto mb-2 text-primary opacity-60" />
+              <p className="font-semibold text-sm text-primary">Быстрая отправка</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Перетащите фото/видео сюда</p>
+            </div>
           </div>
         </div>
       )}

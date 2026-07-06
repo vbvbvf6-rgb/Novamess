@@ -11,7 +11,7 @@ import giftsRouter from "./gifts";
 import storiesRouter from "./stories";
 import postsRouter from "./posts";
 import adminRouter from "./admin";
-import aiRouter from "./ai";
+// import aiRouter from "./ai"; // AI feature disabled
 import eventsRouter from "./events";
 import walletRouter from "./wallet";
 import botsRouter from "./bots";
@@ -39,7 +39,7 @@ router.use(giftsRouter);
 router.use(storiesRouter);
 router.use(postsRouter);
 router.use(adminRouter);
-router.use(aiRouter);
+// router.use(aiRouter); // AI feature disabled
 router.use(eventsRouter);
 router.use(walletRouter);
 router.use(botsRouter);

@@ -188,17 +188,7 @@ const SYSTEM_USERS: Array<{
     // bcrypt hash of "pulse2024" — never change this automatically
     passwordHash: "$2b$12$ejJ4JyOdHbph7ETga8QpdeJTzN28FDCNZ3tw.1B1d/936/2ZDZ/fa",
   },
-  {
-    username: "nova_ai",
-    displayName: "Nova AI",
-    avatarColor: "#5B6CF9",
-    avatarUrl: null,
-    isBot: true,
-    isVerified: true,
-    isAdmin: false,
-    status: "online",
-    passwordHash: "$2b$12$ejJ4JyOdHbph7ETga8QpdeJTzN28FDCNZ3tw.1B1d/936/2ZDZ/fa",
-  },
+  // nova_ai bot user intentionally removed — AI feature is disabled
 ];
 
 export async function runSeed() {

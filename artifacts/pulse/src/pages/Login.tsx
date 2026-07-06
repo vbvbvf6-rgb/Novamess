@@ -9,6 +9,37 @@ interface LoginProps {
   onLogin: (userId: number) => void;
 }
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.12, delayChildren: 0.3 },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] as any },
+  },
+};
+
+const formCardVariants = {
+  hidden: { opacity: 0, y: 40 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      type: "spring" as const,
+      stiffness: 200,
+      damping: 24,
+      delay: 0.55,
+    },
+  },
+};
+
 export default function Login({ onLogin }: LoginProps) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -196,68 +227,142 @@ export default function Login({ onLogin }: LoginProps) {
   };
 
   return (
-    <div className="min-h-[100dvh] w-full flex flex-col bg-background relative overflow-y-auto p-4 sm:p-8 login-landscape">
-      {/* Dynamic Background */}
-      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-primary/20 rounded-full blur-[120px] opacity-80 animate-[pulseGlow_6s_ease-in-out_infinite_alternate]" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[65%] h-[65%] bg-violet-500/15 rounded-full blur-[100px] opacity-70 animate-[pulseGlow_8s_ease-in-out_infinite_alternate-reverse]" />
-        <div className="absolute top-[35%] left-[55%] w-[35%] h-[35%] bg-amber-500/12 rounded-full blur-[80px] opacity-60 animate-[pulseGlow_10s_ease-in-out_infinite_alternate]" />
-        <div className="absolute top-[60%] left-[10%] w-[25%] h-[25%] bg-blue-500/10 rounded-full blur-[60px] opacity-50 animate-[pulseGlow_12s_ease-in-out_infinite_alternate-reverse]" />
+    <div className="min-h-[100dvh] w-full bg-background relative overflow-y-auto">
+      {/* Dynamic Background — fixed so it stays behind scrollable content */}
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 0.8, scale: 1 }}
+          transition={{ duration: 2.5, ease: "easeOut" }}
+          className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-primary/20 rounded-full blur-[120px] animate-[pulseGlow_6s_ease-in-out_infinite_alternate]"
+        />
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 0.7, scale: 1 }}
+          transition={{ duration: 2.5, delay: 0.4, ease: "easeOut" }}
+          className="absolute bottom-[-10%] right-[-10%] w-[65%] h-[65%] bg-violet-500/15 rounded-full blur-[100px] animate-[pulseGlow_8s_ease-in-out_infinite_alternate-reverse]"
+        />
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 0.6 }}
+          transition={{ duration: 3, delay: 0.6, ease: "easeOut" }}
+          className="absolute top-[35%] left-[55%] w-[35%] h-[35%] bg-amber-500/12 rounded-full blur-[80px] animate-[pulseGlow_10s_ease-in-out_infinite_alternate]"
+        />
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 0.5 }}
+          transition={{ duration: 3, delay: 0.8, ease: "easeOut" }}
+          className="absolute top-[60%] left-[10%] w-[25%] h-[25%] bg-blue-500/10 rounded-full blur-[60px] animate-[pulseGlow_12s_ease-in-out_infinite_alternate-reverse]"
+        />
         {/* Floating particles */}
         {[...Array(12)].map((_, i) => (
-          <div
+          <motion.div
             key={i}
+            initial={{ opacity: 0, scale: 0 }}
+            animate={{
+              opacity: 0.4 + (i % 4) * 0.15,
+              scale: 1,
+              y: [0, -(8 + (i % 6) * 4), 0],
+              x: [0, (i % 2 === 0 ? 1 : -1) * (3 + (i % 4) * 2), 0],
+            }}
+            transition={{
+              opacity: { duration: 1.2, delay: 0.3 + i * 0.1 },
+              scale: { duration: 0.8, delay: 0.3 + i * 0.1 },
+              y: {
+                duration: 4 + (i % 5),
+                repeat: Infinity,
+                repeatType: "reverse",
+                ease: "easeInOut",
+                delay: i * 0.4,
+              },
+              x: {
+                duration: 5 + (i % 4),
+                repeat: Infinity,
+                repeatType: "reverse",
+                ease: "easeInOut",
+                delay: i * 0.3,
+              },
+            }}
             className="absolute rounded-full bg-primary/30"
             style={{
               width: `${2 + (i % 3)}px`,
               height: `${2 + (i % 3)}px`,
               left: `${8 + (i * 7.8) % 84}%`,
               top: `${5 + (i * 11.3) % 88}%`,
-              animation: `pulseGlow ${4 + (i % 5)}s ease-in-out infinite alternate`,
-              animationDelay: `${i * 0.4}s`,
-              opacity: 0.4 + (i % 4) * 0.15,
             }}
           />
         ))}
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background/20" />
       </div>
 
+      <div className="flex flex-col items-center p-4 pt-8 pb-8">
       <motion.div
-        initial={{ opacity: 0, y: 20, scale: 0.98 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-        className="w-full max-w-[420px] relative z-10 mx-auto my-auto"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="w-full max-w-[420px] relative z-10 mx-auto"
       >
+        {/* Logo + Title header */}
         <div className="flex flex-col items-center mb-10">
+          {/* Logo with glow ring */}
           <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ type: "spring", stiffness: 200, damping: 20, delay: 0.1 }}
-            className="w-24 h-24 rounded-3xl bg-gradient-to-br from-primary via-blue-500 to-blue-400 flex items-center justify-center shadow-2xl shadow-primary/40 mb-6 relative overflow-hidden"
+            initial={{ scale: 0, rotate: -10 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.1 }}
+            className="relative mb-6"
           >
-            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-white/10 pointer-events-none" />
-            <PulseLogo size={48} />
+            {/* Animated glow ring */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: [0, 0.6, 0], scale: [0.8, 1.4, 1.8] }}
+              transition={{ duration: 1.5, delay: 0.45, ease: "easeOut" }}
+              className="absolute inset-0 rounded-3xl bg-primary/40 blur-lg"
+            />
+            {/* Secondary softer glow ring */}
+            <motion.div
+              initial={{ opacity: 0, scale: 1 }}
+              animate={{ opacity: [0, 0.3, 0], scale: [1, 1.6, 2.2] }}
+              transition={{ duration: 2, delay: 0.55, ease: "easeOut" }}
+              className="absolute inset-0 rounded-3xl bg-blue-400/30 blur-xl"
+            />
+            {/* Logo box */}
+            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-gradient-to-br from-primary via-blue-500 to-blue-400 flex items-center justify-center shadow-2xl shadow-primary/40 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-white/10 pointer-events-none" />
+              {/* Shimmer sweep */}
+              <motion.div
+                initial={{ x: "-150%", skewX: -20 }}
+                animate={{ x: "250%" }}
+                transition={{ duration: 0.9, delay: 0.6, ease: "easeInOut" }}
+                className="absolute inset-0 w-1/2 bg-gradient-to-r from-transparent via-white/25 to-transparent pointer-events-none"
+              />
+              <PulseLogo size={48} />
+            </div>
           </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="text-center"
-          >
-            <h1 className="text-5xl sm:text-6xl font-black tracking-tight text-foreground mb-2">
+          {/* Title & subtitle with stagger */}
+          <motion.div variants={itemVariants} className="text-center">
+            <motion.h1
+              className="text-4xl sm:text-5xl font-black tracking-tight bg-gradient-to-r from-foreground via-primary/80 to-foreground bg-clip-text text-transparent mb-2"
+              style={{ backgroundSize: "200% auto" }}
+              animate={{ backgroundPosition: ["0% center", "200% center"] }}
+              transition={{ duration: 4, delay: 1.2, ease: "linear", repeat: Infinity, repeatType: "reverse" }}
+            >
               {getStepTitle()}
-            </h1>
-            <p className="text-[13px] font-semibold text-muted-foreground uppercase tracking-[0.2em]">
+            </motion.h1>
+            <motion.p
+              variants={itemVariants}
+              className="text-[13px] font-semibold text-muted-foreground uppercase tracking-[0.2em]"
+            >
               {getStepSubtitle()}
-            </p>
+            </motion.p>
           </motion.div>
         </div>
 
+        {/* Form card */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.5 }}
+          variants={formCardVariants}
+          initial="hidden"
+          animate="visible"
           className="bg-card/90 backdrop-blur-xl border border-border/50 rounded-3xl p-6 sm:p-8 shadow-[0_20px_60px_rgba(0,0,0,0.08)] dark:shadow-[0_20px_60px_rgba(0,0,0,0.4)]"
         >
           <AnimatePresence mode="wait">
@@ -269,8 +374,14 @@ export default function Login({ onLogin }: LoginProps) {
                 exit={{ opacity: 0, x: 20 }}
                 transition={{ duration: 0.3 }}
               >
-                <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-                  <div className="space-y-1.5">
+                <motion.form
+                  onSubmit={handleSubmit}
+                  className="flex flex-col gap-5"
+                  variants={containerVariants}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  <motion.div variants={itemVariants} className="space-y-1.5">
                     <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground ml-1">
                       Имя или никнейм
                     </label>
@@ -290,9 +401,9 @@ export default function Login({ onLogin }: LoginProps) {
                         className="w-full bg-transparent border-none outline-none px-4 py-3.5 text-[15px] font-medium text-foreground placeholder:text-muted-foreground/50"
                       />
                     </div>
-                  </div>
+                  </motion.div>
 
-                  <div className="space-y-1.5">
+                  <motion.div variants={itemVariants} className="space-y-1.5">
                     <div className="flex justify-between items-center ml-1">
                       <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                         Пароль
@@ -323,7 +434,7 @@ export default function Login({ onLogin }: LoginProps) {
                         {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                       </button>
                     </div>
-                  </div>
+                  </motion.div>
 
                   <AnimatePresence>
                     {error && (
@@ -338,24 +449,32 @@ export default function Login({ onLogin }: LoginProps) {
                     )}
                   </AnimatePresence>
 
-                  <motion.button
-                    type="submit"
-                    disabled={loading}
-                    whileHover={!loading ? { scale: 1.02 } : {}}
-                    whileTap={!loading ? { scale: 0.98 } : {}}
-                    className={cn(
-                      "w-full py-4 rounded-2xl font-bold text-[15px] shadow-lg transition-all relative overflow-hidden mt-2",
-                      loading 
-                        ? "bg-muted text-muted-foreground cursor-not-allowed shadow-none" 
-                        : "bg-primary text-primary-foreground shadow-primary/25 hover:shadow-primary/40 hover:shadow-xl"
-                    )}
-                  >
-                    {!loading && <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent pointer-events-none" />}
-                    <span className="relative z-10">{loading ? "Входим..." : "Войти"}</span>
-                  </motion.button>
-                </form>
+                  <motion.div variants={itemVariants}>
+                    <motion.button
+                      type="submit"
+                      disabled={loading}
+                      whileHover={!loading ? { scale: 1.02 } : {}}
+                      whileTap={!loading ? { scale: 0.98 } : {}}
+                      className={cn(
+                        "w-full py-3 sm:py-4 rounded-2xl font-bold text-[15px] shadow-lg transition-all relative overflow-hidden mt-2",
+                        loading
+                          ? "bg-muted text-muted-foreground cursor-not-allowed shadow-none"
+                          : "bg-primary text-primary-foreground shadow-primary/25 hover:shadow-primary/40 hover:shadow-xl"
+                      )}
+                    >
+                      {!loading && <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent pointer-events-none" />}
+                      <span className="relative z-10">{loading ? "Входим..." : "Войти"}</span>
+                    </motion.button>
+                  </motion.div>
+                </motion.form>
 
-                <div className="mt-6 pt-6 border-t border-border/50 space-y-3">
+                <motion.div
+                  variants={itemVariants}
+                  initial="hidden"
+                  animate="visible"
+                  transition={{ delay: 0.8 }}
+                  className="mt-6 pt-6 border-t border-border/50 space-y-3"
+                >
                   <motion.button
                     type="button"
                     onClick={startQrLogin}
@@ -372,7 +491,7 @@ export default function Login({ onLogin }: LoginProps) {
                   >
                     Зарегистрироваться
                   </Link>
-                </div>
+                </motion.div>
 
                 <p className="mt-5 text-center text-[11px] text-muted-foreground/50 leading-relaxed px-2">
                   Продолжая, вы принимаете{" "}
@@ -432,9 +551,9 @@ export default function Login({ onLogin }: LoginProps) {
                       whileHover={twoFaCode.length === 6 ? { scale: 1.02 } : {}}
                       whileTap={twoFaCode.length === 6 ? { scale: 0.98 } : {}}
                       className={cn(
-                        "w-full py-4 rounded-2xl font-bold text-[15px] shadow-lg transition-all relative overflow-hidden",
+                        "w-full py-3 sm:py-4 rounded-2xl font-bold text-[15px] shadow-lg transition-all relative overflow-hidden",
                         twoFaLoading || twoFaCode.length !== 6
-                          ? "bg-muted text-muted-foreground cursor-not-allowed shadow-none" 
+                          ? "bg-muted text-muted-foreground cursor-not-allowed shadow-none"
                           : "bg-primary text-primary-foreground shadow-primary/25"
                       )}
                     >
@@ -479,7 +598,7 @@ export default function Login({ onLogin }: LoginProps) {
                   </div>
                 ) : qrStatus === "confirmed" ? (
                   <div className="text-center py-6 flex flex-col items-center gap-4">
-                    <motion.div 
+                    <motion.div
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
                       transition={{ type: "spring", stiffness: 200, damping: 20 }}
@@ -499,7 +618,7 @@ export default function Login({ onLogin }: LoginProps) {
                         <div className="w-[200px] h-[200px] bg-secondary/50 rounded-2xl animate-pulse" />
                       )}
                     </div>
-                    
+
                     <div className="flex items-center gap-2 px-4 py-2 bg-secondary rounded-full mb-8 border border-border/50">
                       <Clock size={14} className="text-primary" />
                       <span className="text-sm font-bold font-mono text-foreground">{formatTime(qrTimeLeft)}</span>
@@ -519,6 +638,7 @@ export default function Login({ onLogin }: LoginProps) {
           </AnimatePresence>
         </motion.div>
       </motion.div>
+      </div>
     </div>
   );
 }
