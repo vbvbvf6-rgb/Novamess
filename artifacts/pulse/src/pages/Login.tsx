@@ -227,7 +227,7 @@ export default function Login({ onLogin }: LoginProps) {
   };
 
   return (
-    <div className="min-h-[100dvh] w-full bg-background relative overflow-y-auto">
+    <div className="min-h-[100dvh] w-full bg-background relative" style={{ overflowY: "scroll", WebkitOverflowScrolling: "touch" } as React.CSSProperties}>
       {/* Dynamic Background — fixed so it stays behind scrollable content */}
       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
         <motion.div

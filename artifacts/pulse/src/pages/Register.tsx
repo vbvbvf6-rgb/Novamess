@@ -148,7 +148,7 @@ export default function Register({ onLogin }: RegisterProps) {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-background relative overflow-y-auto">
+    <div className="min-h-[100dvh] bg-background relative" style={{ overflowY: "scroll", WebkitOverflowScrolling: "touch" } as React.CSSProperties}>
       <div className="flex flex-col items-center p-4 pt-8 pb-8">
       {/* Back to login */}
       <button

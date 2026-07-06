@@ -462,8 +462,9 @@ export function ChatList() {
           <GlobalSearch onClose={() => setShowGlobalSearch(false)} />
         )}
       </AnimatePresence>
-      <div className="px-4 pb-3" style={{ paddingTop: "max(16px, env(safe-area-inset-top, 16px))" }}>
-        <div className="flex items-center justify-between mb-3">
+      {/* ── Fixed top bar: Nova title + create button only ────────────────── */}
+      <div className="px-4 shrink-0" style={{ paddingTop: "max(16px, env(safe-area-inset-top, 16px))", paddingBottom: "12px" }}>
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-[10px] flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg, #3b82f6, #60a5fa)", boxShadow: "0 2px 10px rgba(59,130,246,0.45)" }}>
               <Crown size={15} className="text-white" />
@@ -478,19 +479,24 @@ export function ChatList() {
             <SquarePen size={18} className="text-primary" />
           </button>
         </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setShowGlobalSearch(true)}
-            className="relative flex-1 flex items-center h-11 bg-secondary/40 hover:bg-secondary/70 border border-border/50 hover:border-border rounded-2xl transition-all px-4 gap-3 text-left"
-          >
-            <Search className="text-muted-foreground w-4 h-4 shrink-0" />
-            <span className="text-[14px] font-medium text-muted-foreground/60 flex-1">
-              {t("chatlist.search")}
-            </span>
-          </button>
-        </div>
+      </div>
 
-        <div className="flex gap-2 mt-3 overflow-x-auto scrollbar-none pb-1 -mx-4 px-4" style={{ scrollPaddingInline: "16px" }}>
+      {/* ── Scrollable area: search + folders + stories + chat list ─────── */}
+      <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-none" style={{ WebkitOverflowScrolling: "touch" } as React.CSSProperties}>
+        <div className="px-4 pb-3">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setShowGlobalSearch(true)}
+              className="relative flex-1 flex items-center h-11 bg-secondary/40 hover:bg-secondary/70 border border-border/50 hover:border-border rounded-2xl transition-all px-4 gap-3 text-left"
+            >
+              <Search className="text-muted-foreground w-4 h-4 shrink-0" />
+              <span className="text-[14px] font-medium text-muted-foreground/60 flex-1">
+                {t("chatlist.search")}
+              </span>
+            </button>
+          </div>
+
+          <div className="flex gap-2 mt-3 overflow-x-auto scrollbar-none pb-1 -mx-4 px-4" style={{ scrollPaddingInline: "16px" }}>
           {SYSTEM_FOLDERS.map(f => {
             const isActive = folder === f.key;
             const count = f.key === "unread" && chats ? chats.filter((c: Chat) => (c.unreadCount ?? 0) > 0).length : 0;
@@ -554,11 +560,11 @@ export function ChatList() {
         </div>
       </div>
 
-      <div className="px-2">
-        <StoriesBar />
-      </div>
+        <div className="px-2">
+          <StoriesBar />
+        </div>
 
-      <div className="chat-list-scroll flex-1 overflow-y-auto overflow-x-hidden scrollbar-none mt-2 px-2 pb-28 md:pb-4">
+        <div className="px-2 pb-28 md:pb-4 mt-2">
         {folder === "all" && (
           <div className="space-y-1 mb-2">
             <SavedMessagesEntry onOpen={(id) => setSelectedChatId(id)} />
@@ -787,6 +793,7 @@ export function ChatList() {
             })
           )}
         </div>
+      </div>
       </div>
 
       {createPortal(

@@ -66,8 +66,8 @@ router.get("/posts", async (req, res) => {
     const visible = posts.filter((p: any) => {
       if (isAdmin) return true;
       if ((p as any).moderationStatus === 'rejected') {
-        // Show own rejected posts to the author so they can appeal
-        return (p as any).userId === uid;
+        // Rejected posts are hidden from everyone in the main feed
+        return false;
       }
       return true;
     });

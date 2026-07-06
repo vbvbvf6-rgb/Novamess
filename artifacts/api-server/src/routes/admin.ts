@@ -126,6 +126,7 @@ router.delete("/admin/users/:userId", requireAdmin, async (req, res) => {
 
     // Delete in FK-safe order inside a transaction to prevent partial deletions
     // Pre-clean optional tables that may or may not exist (outside transaction)
+    await db.execute(sql`DELETE FROM user_sessions WHERE user_id = ${targetId}`).catch(() => {});
     await db.execute(sql`DELETE FROM user_reports WHERE reporter_id = ${targetId} OR target_id = ${targetId}`).catch(() => {});
     await db.execute(sql`DELETE FROM post_reports WHERE reporter_id = ${targetId}`).catch(() => {});
     await db.execute(sql`DELETE FROM contact_requests WHERE sender_id = ${targetId} OR receiver_id = ${targetId}`).catch(() => {});

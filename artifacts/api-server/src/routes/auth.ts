@@ -386,13 +386,13 @@ router.post("/auth/verify-email", async (req, res) => {
 router.post("/auth/register", async (req, res) => {
   try {
     const { username, displayName, password, ageGroup, birthDate, email, avatarUrl, referralCode } = req.body;
-    if (!username || !displayName || !password) {
+    if (!username || !password) {
       return res.status(400).json({ error: "Заполните все поля" });
     }
 
     const rawUsername = String(username).trim().slice(0, 32);
-    // Sanitize display name — strip HTML/scripts
-    const rawDisplay = sanitizeString(displayName, 60);
+    // If displayName not provided, use username as display name
+    const rawDisplay = sanitizeString(displayName || username, 60);
     const rawPass = String(password);
 
     if (rawUsername.length < 3 || rawUsername.length > 32) {
@@ -400,9 +400,6 @@ router.post("/auth/register", async (req, res) => {
     }
     if (!/^[a-zA-Z0-9_]+$/.test(rawUsername)) {
       return res.status(400).json({ error: "Никнейм может содержать только буквы, цифры и _" });
-    }
-    if (rawDisplay.length < 1 || rawDisplay.length > 60) {
-      return res.status(400).json({ error: "Имя должно быть от 1 до 60 символов" });
     }
     const passCheck = validatePassword(rawPass);
     if (!passCheck.ok) {
