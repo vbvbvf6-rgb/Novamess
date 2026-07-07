@@ -500,16 +500,13 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
         window.dispatchEvent(new CustomEvent("pulse:call-error", { detail: { message: "Медиаустройства недоступны в этом браузере." } }));
       } else if (type === "video") {
         try {
-          stream = await getMedia({ width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" });
+          // Start with minimal constraints — avoids facingMode failures on mobile
+          stream = await getMedia(true);
         } catch {
-          // Video failed — try without constraints
-          try { stream = await getMedia(true); }
-          catch {
-            // Camera fully unavailable — fallback to audio only
-            try { stream = await getMedia(false); }
-            catch { stream = createSilentStream(); }
-            window.dispatchEvent(new CustomEvent("pulse:call-error", { detail: { message: "Камера недоступна. Продолжаем без видео." } }));
-          }
+          // Camera fully unavailable — fallback to audio only
+          try { stream = await getMedia(false); }
+          catch { stream = createSilentStream(); }
+          window.dispatchEvent(new CustomEvent("pulse:call-error", { detail: { message: "Камера недоступна. Продолжаем без видео." } }));
         }
       } else {
         try { stream = await getMedia(false); }
@@ -598,14 +595,12 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
         window.dispatchEvent(new CustomEvent("pulse:call-error", { detail: { message: "Медиаустройства недоступны в этом браузере." } }));
       } else if (call.type === "video") {
         try {
-          stream = await getMedia2({ width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" });
+          // Start with minimal constraints — avoids facingMode failures on mobile
+          stream = await getMedia2(true);
         } catch {
-          try { stream = await getMedia2(true); }
-          catch {
-            try { stream = await getMedia2(false); }
-            catch { stream = createSilentStream(); }
-            window.dispatchEvent(new CustomEvent("pulse:call-error", { detail: { message: "Камера недоступна. Продолжаем без видео." } }));
-          }
+          try { stream = await getMedia2(false); }
+          catch { stream = createSilentStream(); }
+          window.dispatchEvent(new CustomEvent("pulse:call-error", { detail: { message: "Камера недоступна. Продолжаем без видео." } }));
         }
       } else {
         try { stream = await getMedia2(false); }
@@ -861,6 +856,13 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
         try {
           const data = JSON.parse(e.data);
           window.dispatchEvent(new CustomEvent("pulse:contact-request-accepted", { detail: data }));
+        } catch {}
+      });
+
+      es.addEventListener("post-rejected", (e: MessageEvent) => {
+        try {
+          const data = JSON.parse(e.data);
+          window.dispatchEvent(new CustomEvent("pulse:post-rejected", { detail: data }));
         } catch {}
       });
 

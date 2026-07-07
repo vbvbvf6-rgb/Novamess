@@ -317,18 +317,6 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
     if (!files.length) return;
     // Always reset input so the same file can be selected again
     if (fileInputRef.current) fileInputRef.current.value = "";
-    const MAX_FILE_MB = 100;
-    const MAX_VIDEO_MB = 25;
-    const oversizedVideo = files.filter(f => f.type.startsWith("video/") && f.size > MAX_VIDEO_MB * 1024 * 1024);
-    const oversized = files.filter(f => !f.type.startsWith("video/") && f.size > MAX_FILE_MB * 1024 * 1024);
-    if (oversizedVideo.length > 0) {
-      toast({ title: "Видео слишком большое", description: `Максимальный размер видео — ${MAX_VIDEO_MB} МБ. Сожмите видео перед отправкой.`, variant: "destructive" });
-      return;
-    }
-    if (oversized.length > 0) {
-      toast({ title: "Файл слишком большой", description: `Максимальный размер — ${MAX_FILE_MB} МБ`, variant: "destructive" });
-      return;
-    }
     const MAX_IMAGES_PER_ALBUM = 20;
     const images: File[] = [];
     const docs: File[] = [];
@@ -685,20 +673,8 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
   const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragOver(false);
-    const MAX_FILE_MB = 100;
-    const MAX_VIDEO_MB = 25;
     const files = Array.from(e.dataTransfer.files);
     if (!files.length) return;
-    const oversizedVideo = files.filter(f => f.type.startsWith("video/") && f.size > MAX_VIDEO_MB * 1024 * 1024);
-    const oversized = files.filter(f => !f.type.startsWith("video/") && f.size > MAX_FILE_MB * 1024 * 1024);
-    if (oversizedVideo.length) {
-      toast({ title: "Видео слишком большое", description: `Максимальный размер видео — ${MAX_VIDEO_MB} МБ. Сожмите видео перед отправкой.`, variant: "destructive" });
-      return;
-    }
-    if (oversized.length) {
-      toast({ title: "Файл слишком большой", description: `Максимальный размер — ${MAX_FILE_MB} МБ`, variant: "destructive" });
-      return;
-    }
     const images = files.filter(f => f.type.startsWith("image/") && !f.type.includes("svg"));
     const docs = files.filter(f => !f.type.startsWith("image/") || f.type.includes("svg"));
     if (images.length) {

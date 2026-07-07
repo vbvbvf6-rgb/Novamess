@@ -3,7 +3,7 @@ import { db, postsTable, postLikesTable, postCommentsTable, usersTable } from "@
 import { eq, desc, and, sql } from "drizzle-orm";
 import { moderateContent, localModerationCheck, checkCustomBannedWords } from "../lib/moderation";
 import { getBanwords, findBanword } from "../lib/banwords";
-import { broadcastToUser } from "../lib/sse";
+import { broadcastToUser, broadcastToAll } from "../lib/sse";
 
 const router = Router();
 
@@ -210,6 +210,7 @@ router.post("/posts", async (req, res) => {
             WHERE id = ${post.id}
           `);
           broadcastToUser(uid, "moderation-removed", { postId: post.id });
+          broadcastToAll("post-rejected", { postId: post.id });
         }
       } catch {}
     });

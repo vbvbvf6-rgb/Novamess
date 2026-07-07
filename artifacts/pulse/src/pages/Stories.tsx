@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useGetStories, useCreateStory, getGetStoriesQueryKey } from "@workspace/api-client-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Play, Plus, X, Type, Image as ImageIcon, Upload, Eye } from "lucide-react";
+import { Play, Plus, X, Type, Image as ImageIcon, Upload, Eye, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useQueryClient } from "@tanstack/react-query";
@@ -157,6 +157,31 @@ export default function Stories() {
   const openViewer = (group: any, index = 0) => {
     setViewingGroup(group);
     setViewingIndex(index);
+  };
+
+  const handleDeleteStory = async (storyId: number) => {
+    const token = sessionStorage.getItem("pulse-token");
+    if (!token) return;
+    try {
+      const res = await fetch(`/api/stories/${storyId}`, {
+        method: "DELETE",
+        headers: { "Authorization": `Bearer ${token}` },
+      });
+      if (res.ok) {
+        queryClient.invalidateQueries({ queryKey: getGetStoriesQueryKey() });
+        // Close viewer if no more stories for this user
+        const remaining = viewingGroup?.stories?.filter((s: any) => s.id !== storyId) ?? [];
+        if (remaining.length === 0) {
+          setViewingGroup(null);
+        } else {
+          setViewingGroup((prev: any) => ({ ...prev, stories: remaining }));
+          setViewingIndex(Math.min(viewingIndex, remaining.length - 1));
+        }
+        toast({ title: "История удалена" });
+      }
+    } catch {
+      toast({ title: "Ошибка при удалении", variant: "destructive" });
+    }
   };
 
   const goNext = () => {
@@ -489,6 +514,17 @@ export default function Stories() {
                       )}
                     </div>
                   </div>
+
+                  {isOwnStory && story && (
+                    <button
+                      onClick={() => handleDeleteStory(story.id)}
+                      className="absolute z-10 w-10 h-10 rounded-full bg-black/40 flex items-center justify-center text-white hover:bg-red-500/80 transition-colors"
+                      style={{ top: "max(52px, calc(env(safe-area-inset-top, 0px) + 40px))", right: "60px" }}
+                      title="Удалить историю"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  )}
 
                   <button
                     onClick={() => setViewingGroup(null)}

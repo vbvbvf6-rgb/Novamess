@@ -178,7 +178,9 @@ export default function Contacts() {
     } catch {}
   };
 
-  const displayUsers = searchQuery.length > 0 ? searchResults : contacts;
+  const BOT_USERNAMES = ["nova_ai", "deepseek_ai"];
+  const rawUsers = searchQuery.length > 0 ? searchResults : contacts;
+  const displayUsers = (rawUsers as any[])?.filter((u: any) => !BOT_USERNAMES.includes(u.username));
   const isLoading = searchQuery.length > 0 ? searchLoading : contactsLoading;
   const incomingPending = incoming.length;
 

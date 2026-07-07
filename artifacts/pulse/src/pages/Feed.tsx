@@ -1136,6 +1136,13 @@ export default function Feed() {
     return () => window.removeEventListener("pulse:moderation-removed", handler);
   }, [queryClient]);
 
+  // Listen for async moderation rejections broadcast to all users via AppContext SSE
+  useEffect(() => {
+    const handler = () => queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
+    window.addEventListener("pulse:post-rejected", handler);
+    return () => window.removeEventListener("pulse:post-rejected", handler);
+  }, [queryClient]);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const currentUserId = getCurrentUserId();
   const { toast } = useToast();

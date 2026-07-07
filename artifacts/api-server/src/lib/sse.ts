@@ -79,6 +79,15 @@ export function getUserConnectionCount(userId: number): number {
   return userSubscribers.get(userId)?.size ?? 0;
 }
 
+export function broadcastToAll(event: string, data: unknown) {
+  const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
+  for (const [, subs] of userSubscribers) {
+    for (const res of subs) {
+      try { res.write(payload); } catch { subs.delete(res); }
+    }
+  }
+}
+
 export function broadcastToUser(userId: number, event: string, data: unknown) {
   const subs = userSubscribers.get(userId);
   if (!subs || subs.size === 0) {

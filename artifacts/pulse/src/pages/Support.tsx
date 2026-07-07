@@ -51,6 +51,8 @@ function BugReportForm({ onSuccess }: { onSuccess: () => void }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
+  const [screenshotUrl, setScreenshotUrl] = useState<string | null>(null);
+  const screenshotRef = useRef<HTMLInputElement>(null);
 
   const getPlatformInfo = () => {
     return JSON.stringify({
@@ -61,6 +63,31 @@ function BugReportForm({ onSuccess }: { onSuccess: () => void }) {
     });
   };
 
+  const handleScreenshotChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const dataUrl = ev.target?.result as string;
+      if (!dataUrl) return;
+      const img = new window.Image();
+      img.onload = () => {
+        const MAX = 800;
+        const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        const ctx = canvas.getContext("2d");
+        if (!ctx) { setScreenshotUrl(dataUrl); return; }
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        setScreenshotUrl(canvas.toDataURL("image/jpeg", 0.7));
+      };
+      img.src = dataUrl;
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !description.trim()) { setError("Заполните все поля"); return; }
@@ -69,7 +96,7 @@ function BugReportForm({ onSuccess }: { onSuccess: () => void }) {
       const res = await fetch("/api/support/bugs", {
         method: "POST",
         headers: getHeader(),
-        body: JSON.stringify({ title: title.trim(), description: description.trim(), category, platformInfo: getPlatformInfo() }),
+        body: JSON.stringify({ title: title.trim(), description: description.trim(), category, platformInfo: getPlatformInfo(), screenshotUrl }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error || "Ошибка"); setLoading(false); return; }
@@ -137,6 +164,32 @@ function BugReportForm({ onSuccess }: { onSuccess: () => void }) {
           className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-primary/50 transition-colors resize-none"
         />
         <p className="text-[10px] text-muted-foreground mt-1 text-right">{description.length}/5000</p>
+      </div>
+
+      <div>
+        <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">Скриншот (необязательно)</label>
+        {screenshotUrl ? (
+          <div className="relative inline-block">
+            <img src={screenshotUrl} alt="screenshot" className="max-h-40 rounded-xl border border-border object-contain" />
+            <button
+              type="button"
+              onClick={() => setScreenshotUrl(null)}
+              className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/60 flex items-center justify-center text-white hover:bg-black/80 transition-colors"
+            >
+              <X size={12} />
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => screenshotRef.current?.click()}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-dashed border-border text-sm text-muted-foreground hover:border-primary/50 hover:text-foreground transition-colors"
+          >
+            <Image size={16} />
+            Прикрепить скриншот
+          </button>
+        )}
+        <input ref={screenshotRef} type="file" accept="image/*" className="hidden" onChange={handleScreenshotChange} />
       </div>
 
       <div className="bg-secondary/30 border border-border rounded-xl px-3 py-2 flex items-start gap-2">

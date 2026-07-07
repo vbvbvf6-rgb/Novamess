@@ -340,16 +340,22 @@ router.delete("/users/me", async (req, res) => {
     if (!valid) return res.status(403).json({ error: "Неверный пароль" });
 
     // Delete all user data in order (respect FK constraints)
-    await db.execute(sql`DELETE FROM user_sessions WHERE user_id = ${uid}`);
-    await db.execute(sql`DELETE FROM message_reactions WHERE user_id = ${uid}`);
-    await db.execute(sql`DELETE FROM story_views WHERE viewer_id = ${uid}`);
-    await db.execute(sql`DELETE FROM stories WHERE user_id = ${uid}`);
-    await db.execute(sql`DELETE FROM gifts WHERE sender_id = ${uid} OR receiver_id = ${uid}`);
-    await db.execute(sql`DELETE FROM calls WHERE caller_id = ${uid} OR callee_id = ${uid}`);
-    await db.execute(sql`DELETE FROM contacts WHERE user_id = ${uid} OR contact_id = ${uid}`);
-    await db.execute(sql`DELETE FROM messages WHERE sender_id = ${uid}`);
-    await db.execute(sql`DELETE FROM chat_members WHERE user_id = ${uid}`);
-    await db.execute(sql`DELETE FROM referral_uses WHERE referrer_id = ${uid} OR referred_id = ${uid}`);
+    // Some tables may not exist yet — each wrapped in try/catch
+    await db.execute(sql`DELETE FROM user_sessions WHERE user_id = ${uid}`).catch(() => {});
+    await db.execute(sql`DELETE FROM message_reactions WHERE user_id = ${uid}`).catch(() => {});
+    await db.execute(sql`DELETE FROM story_views WHERE viewer_id = ${uid}`).catch(() => {});
+    await db.execute(sql`DELETE FROM stories WHERE user_id = ${uid}`).catch(() => {});
+    await db.execute(sql`DELETE FROM gifts WHERE sender_id = ${uid} OR receiver_id = ${uid}`).catch(() => {});
+    await db.execute(sql`DELETE FROM calls WHERE caller_id = ${uid} OR callee_id = ${uid}`).catch(() => {});
+    await db.execute(sql`DELETE FROM contacts WHERE user_id = ${uid} OR contact_id = ${uid}`).catch(() => {});
+    // Nullify reply references so DELETE doesn't fail FK constraints
+    await db.execute(sql`UPDATE messages SET reply_to_id = NULL WHERE reply_to_id IN (SELECT id FROM messages WHERE sender_id = ${uid})`).catch(() => {});
+    await db.execute(sql`DELETE FROM messages WHERE sender_id = ${uid}`).catch(() => {});
+    await db.execute(sql`DELETE FROM chat_members WHERE user_id = ${uid}`).catch(() => {});
+    await db.execute(sql`DELETE FROM referral_uses WHERE referrer_id = ${uid} OR referred_id = ${uid}`).catch(() => {});
+    await db.execute(sql`DELETE FROM user_reports WHERE reporter_id = ${uid} OR reported_id = ${uid}`).catch(() => {});
+    await db.execute(sql`DELETE FROM post_reports WHERE reporter_id = ${uid}`).catch(() => {});
+    await db.execute(sql`DELETE FROM contact_requests WHERE from_user_id = ${uid} OR to_user_id = ${uid}`).catch(() => {});
     // Soft-delete the user account (anonymize data)
     await db.execute(sql`
       UPDATE users SET

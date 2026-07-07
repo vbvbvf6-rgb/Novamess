@@ -407,7 +407,7 @@ export function ActiveCall() {
       setHasRemoteVideo(false);
       return;
     }
-  }, [remoteStream]);
+  }, [remoteStream, isCallMinimized]);
 
   // Speaker toggle — also retry play() when unmuting in case autoplay was blocked
   useEffect(() => {

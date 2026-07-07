@@ -7,7 +7,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getGetMessagesQueryKey, getGetChatsQueryKey } from "@workspace/api-client-react";
 import { cn } from "@/lib/utils";
-import { Check, CheckCheck, Clock, X, Info, Play, Pause, Mic, Reply, Pencil, Trash2, Copy, SmilePlus, Languages, Pin, PinOff, BarChart2, Eye, Crown, Wand2, MessageSquare, Shield, Sparkles, Forward, Search } from "lucide-react";
+import { Check, CheckCheck, Clock, X, Info, Play, Pause, Mic, Reply, Pencil, Trash2, Copy, SmilePlus, Languages, Pin, PinOff, BarChart2, Eye, Crown, Wand2, MessageSquare, Shield, Sparkles, Forward, Search, Download } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   AlertDialog,
@@ -797,7 +797,7 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
       }
       case "image":
         return (
-          <div className="rounded-xl overflow-hidden -mx-1 -mt-1 mb-1">
+          <div className="rounded-xl overflow-hidden -mx-1 -mt-1 mb-1 relative group">
             <img
               src={message.mediaUrl || ""}
               alt="photo"
@@ -805,6 +805,17 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
               onClick={() => setLightbox({ urls: [message.mediaUrl || ""], idx: 0 })}
               onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
             />
+            {message.mediaUrl && (
+              <a
+                href={message.mediaUrl}
+                download
+                onClick={e => e.stopPropagation()}
+                className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/60 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                title="Скачать фото"
+              >
+                <Download size={14} />
+              </a>
+            )}
             {message.text && <p className="text-[15px] mt-3 px-2 mb-1 font-medium">{message.text}</p>}
           </div>
         );
@@ -911,7 +922,7 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
         let videoName = "Видео";
         try { const p = JSON.parse(message.text || "{}"); videoName = p.name || "Видео"; } catch {}
         return (
-          <div className="rounded-xl overflow-hidden -mx-1 -mt-1 mb-1">
+          <div className="rounded-xl overflow-hidden -mx-1 -mt-1 mb-1 relative group">
             <video
               src={message.mediaUrl || ""}
               controls
@@ -919,7 +930,20 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
               className="max-w-[280px] max-h-[320px] w-full block rounded-xl"
               preload="metadata"
             />
-            <p className="text-[11px] text-muted-foreground px-2 pb-1 pt-1 truncate">{videoName}</p>
+            <div className="flex items-center gap-1 px-2 pb-1 pt-1">
+              <p className="text-[11px] text-muted-foreground truncate flex-1">{videoName}</p>
+              {message.mediaUrl && (
+                <a
+                  href={message.mediaUrl}
+                  download={videoName}
+                  onClick={e => e.stopPropagation()}
+                  className="text-muted-foreground hover:text-foreground transition-colors shrink-0"
+                  title="Скачать видео"
+                >
+                  <Download size={13} />
+                </a>
+              )}
+            </div>
           </div>
         );
       }
