@@ -126,17 +126,16 @@ app.use(
 
 // ── Body parsers — small limit for regular routes, large only for uploads ──
 // Prevents DoS via huge JSON payloads
-app.use("/api/upload", express.json({ limit: "100mb" }));
-app.use("/api/upload", express.urlencoded({ extended: true, limit: "100mb" }));
-app.use("/api/stories", express.json({ limit: "50mb" }));
-app.use("/api/stories", express.urlencoded({ extended: true, limit: "50mb" }));
-app.use("/api/users/me", express.json({ limit: "50mb" })); // avatar upload via base64
-// Messages can carry base64-encoded files (docs, video, audio) — allow up to 150mb
-app.use("/api/messages", express.json({ limit: "500mb" }));
-app.use("/api/messages", express.urlencoded({ extended: true, limit: "500mb" }));
-// Support messages can contain base64 photos
-app.use("/api/support", express.json({ limit: "25mb" }));
-app.use("/api/support", express.urlencoded({ extended: true, limit: "25mb" }));
+// Large body parsers for base64 media uploads (no hard client-side limits)
+app.use("/api/upload", express.json({ limit: "2gb" }));
+app.use("/api/upload", express.urlencoded({ extended: true, limit: "2gb" }));
+app.use("/api/stories", express.json({ limit: "2gb" }));
+app.use("/api/stories", express.urlencoded({ extended: true, limit: "2gb" }));
+app.use("/api/users/me", express.json({ limit: "2gb" })); // avatar upload via base64
+app.use("/api/messages", express.json({ limit: "2gb" }));
+app.use("/api/messages", express.urlencoded({ extended: true, limit: "2gb" }));
+app.use("/api/support", express.json({ limit: "2gb" }));
+app.use("/api/support", express.urlencoded({ extended: true, limit: "2gb" }));
 app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true, limit: "2mb" }));
 

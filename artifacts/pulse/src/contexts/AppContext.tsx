@@ -74,6 +74,7 @@ export interface AppState {
   inviteToCall: (inviteeId: number) => Promise<void>;
   startScreenShare: () => Promise<void>;
   stopScreenShare: () => void;
+  reacquireCamera: () => Promise<void>;
   localStream: MediaStream | null;
   remoteStream: MediaStream | null;
   remoteStreams: Map<number, MediaStream>;
@@ -488,11 +489,25 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
   const startCall = useCallback(async (calleeId: number, chatId: number | null, type: "audio" | "video") => {
     // 1. Get media — always falls back gracefully, never throws
     let stream: MediaStream;
-    const getMedia = async (video: boolean | MediaTrackConstraints): Promise<MediaStream> => {
+    const getAudio = async (): Promise<MediaStream> => {
       return navigator.mediaDevices.getUserMedia({
         audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
-        video,
+        video: false,
       });
+    };
+    const getVideo = async (): Promise<MediaStream> => {
+      // Try high-quality front camera first, then minimal, then audio-only
+      try {
+        return await navigator.mediaDevices.getUserMedia({
+          audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+          video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" },
+        });
+      } catch {
+        return await navigator.mediaDevices.getUserMedia({
+          audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+          video: true,
+        });
+      }
     };
     try {
       if (!navigator.mediaDevices?.getUserMedia) {
@@ -500,16 +515,15 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
         window.dispatchEvent(new CustomEvent("pulse:call-error", { detail: { message: "Медиаустройства недоступны в этом браузере." } }));
       } else if (type === "video") {
         try {
-          // Start with minimal constraints — avoids facingMode failures on mobile
-          stream = await getMedia(true);
+          stream = await getVideo();
         } catch {
           // Camera fully unavailable — fallback to audio only
-          try { stream = await getMedia(false); }
+          try { stream = await getAudio(); }
           catch { stream = createSilentStream(); }
           window.dispatchEvent(new CustomEvent("pulse:call-error", { detail: { message: "Камера недоступна. Продолжаем без видео." } }));
         }
       } else {
-        try { stream = await getMedia(false); }
+        try { stream = await getAudio(); }
         catch { stream = createSilentStream(); window.dispatchEvent(new CustomEvent("pulse:call-error", { detail: { message: "Доступ к микрофону запрещён." } })); }
       }
     } catch {
@@ -583,11 +597,24 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
 
     // 1. Get media — never throws
     let stream: MediaStream;
-    const getMedia2 = async (video: boolean | MediaTrackConstraints): Promise<MediaStream> => {
+    const getAudio2 = async (): Promise<MediaStream> => {
       return navigator.mediaDevices.getUserMedia({
         audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
-        video,
+        video: false,
       });
+    };
+    const getVideo2 = async (): Promise<MediaStream> => {
+      try {
+        return await navigator.mediaDevices.getUserMedia({
+          audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+          video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" },
+        });
+      } catch {
+        return await navigator.mediaDevices.getUserMedia({
+          audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+          video: true,
+        });
+      }
     };
     try {
       if (!navigator.mediaDevices?.getUserMedia) {
@@ -595,15 +622,14 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
         window.dispatchEvent(new CustomEvent("pulse:call-error", { detail: { message: "Медиаустройства недоступны в этом браузере." } }));
       } else if (call.type === "video") {
         try {
-          // Start with minimal constraints — avoids facingMode failures on mobile
-          stream = await getMedia2(true);
+          stream = await getVideo2();
         } catch {
-          try { stream = await getMedia2(false); }
+          try { stream = await getAudio2(); }
           catch { stream = createSilentStream(); }
           window.dispatchEvent(new CustomEvent("pulse:call-error", { detail: { message: "Камера недоступна. Продолжаем без видео." } }));
         }
       } else {
-        try { stream = await getMedia2(false); }
+        try { stream = await getAudio2(); }
         catch { stream = createSilentStream(); window.dispatchEvent(new CustomEvent("pulse:call-error", { detail: { message: "Доступ к микрофону запрещён." } })); }
       }
     } catch {
@@ -764,6 +790,49 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
     }
 
     setIsScreenSharing(false);
+  }, []);
+
+  // ── Re-acquire camera mid-call (e.g., user toggles video back on) ────────
+  const reacquireCamera = useCallback(async () => {
+    if (!navigator.mediaDevices?.getUserMedia) return;
+    try {
+      const videoStream = await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" },
+      });
+      const videoTrack = videoStream.getVideoTracks()[0];
+      if (!videoTrack) return;
+
+      // Stop any existing ended video track
+      localStreamRef.current?.getVideoTracks().forEach((t) => { try { t.stop(); } catch {} });
+
+      const audioTracks = localStreamRef.current?.getAudioTracks() ?? [];
+      const newStream = new MediaStream([videoTrack, ...audioTracks]);
+      localStreamRef.current = newStream;
+      setLocalStream(newStream);
+      cameraVideoTrackRef.current = videoTrack;
+
+      // Add/replace in all peer connections
+      peersRef.current.forEach((pc) => {
+        const sender = pc.getSenders().find((s) => s.track?.kind === "video");
+        if (sender) {
+          sender.replaceTrack(videoTrack).catch(() => {});
+        } else {
+          pc.addTrack(videoTrack, newStream);
+        }
+      });
+
+      // Mirror the facing mode on the track if supported (mobile front camera)
+      try {
+        const settings = videoTrack.getSettings();
+        if (!settings.facingMode) {
+          videoTrack.applyConstraints({ facingMode: "user" }).catch(() => {});
+        }
+      } catch {}
+    } catch (err) {
+      console.warn("reacquireCamera failed:", err);
+      window.dispatchEvent(new CustomEvent("pulse:call-error", { detail: { message: "Не удалось включить камеру" } }));
+    }
   }, []);
 
   // ── SSE for lifecycle events ──────────────────────────────────────────────
@@ -981,6 +1050,7 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
     inviteToCall,
     startScreenShare,
     stopScreenShare,
+    reacquireCamera,
     localStream,
     remoteStream,
     remoteStreams,

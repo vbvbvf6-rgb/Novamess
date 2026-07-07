@@ -996,14 +996,25 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
                 className="max-w-[280px] max-h-[320px] w-full block rounded-xl"
                 onClick={e => e.stopPropagation()}
               />
-              <a
-                href={message.mediaUrl}
-                download={docMeta.name}
-                className={`block px-2 pb-1 pt-1 text-[11px] ${isMine ? "text-primary-foreground/60" : "text-muted-foreground"} truncate hover:underline`}
-                onClick={e => e.stopPropagation()}
-              >
-                {docMeta.name} {docMeta.size > 0 ? `· ${formatBytes(docMeta.size)}` : ""}
-              </a>
+              <div className={`flex items-center gap-2 px-2 pb-1 pt-1 text-[11px] ${isMine ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
+                <a
+                  href={message.mediaUrl}
+                  download={docMeta.name}
+                  className="truncate hover:underline flex-1"
+                  onClick={e => e.stopPropagation()}
+                >
+                  {docMeta.name} {docMeta.size > 0 ? `· ${formatBytes(docMeta.size)}` : ""}
+                </a>
+                <a
+                  href={message.mediaUrl}
+                  download={docMeta.name}
+                  onClick={e => e.stopPropagation()}
+                  className="shrink-0 hover:text-foreground transition-colors"
+                  title="Скачать видео"
+                >
+                  <Download size={13} />
+                </a>
+              </div>
             </div>
           );
         }
@@ -1099,7 +1110,7 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
         >
         <div className={cn(
           "flex",
-          message.type === "audio" ? "max-w-[75%] md:max-w-[65%]" : (message.type === "album" ? "max-w-[72%] md:max-w-[60%]" : "max-w-[85%] md:max-w-[70%]"),
+          message.type === "audio" ? "max-w-[75%] md:max-w-[65%]" : "max-w-[85%] md:max-w-[70%]",
           isMine ? "flex-row-reverse" : "flex-row",
           "items-end gap-2.5"
         )}>

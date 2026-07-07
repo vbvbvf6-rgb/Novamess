@@ -422,10 +422,8 @@ router.post("/messages", async (req, res) => {
       return res.status(400).json({ error: "Сообщение слишком длинное (максимум 4000 символов)" });
     }
 
-    // Reject oversized media (base64 > 150MB string) — only for non-album single-file types
-    if (body.type !== "album" && body.mediaUrl && body.mediaUrl.length > 150 * 1024 * 1024) {
-      return res.status(413).json({ error: "Медиафайл слишком большой. Максимальный размер — 100 МБ." });
-    }
+    // No hard media size limit: base64 files of any reasonable size are accepted.
+    // Server timeout and body parser limit provide the real guardrails.
 
     // Banword check
     if (body.text) {

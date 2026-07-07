@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useGetContacts, useSearchUsers, useAddContact, useRemoveContact, getGetContactsQueryKey, getGetChatsQueryKey } from "@workspace/api-client-react";
 import type { User } from "@workspace/api-client-react";
-import { Search, UserPlus, UserMinus, MessageSquare, Users, Bell, Check, X, Clock } from "lucide-react";
+import { Search, UserPlus, UserMinus, MessageSquare, Users, Bell, Check, X, Clock, Radio } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAppContext } from "@/contexts/AppContext";
@@ -10,7 +10,7 @@ import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 
-type Tab = "contacts" | "incoming" | "outgoing";
+type Tab = "contacts" | "groups" | "incoming" | "outgoing";
 
 interface ContactRequest {
   id: number;
@@ -178,9 +178,10 @@ export default function Contacts() {
     } catch {}
   };
 
-  const BOT_USERNAMES = ["nova_ai", "deepseek_ai"];
+  const isBotUser = (u: any) => Boolean(u?.is_bot || u?.isBot || ["nova_ai", "deepseek_ai"].includes((u?.username || "").toLowerCase()));
   const rawUsers = searchQuery.length > 0 ? searchResults : contacts;
-  const displayUsers = (rawUsers as any[])?.filter((u: any) => !BOT_USERNAMES.includes(u.username));
+  const displayUsers = (rawUsers as any[])?.filter((u: any) => !isBotUser(u) && !u?.isGroup && !u?.isChannel && u?.type !== "group" && u?.type !== "channel");
+  const groupUsers = (rawUsers as any[])?.filter((u: any) => !isBotUser(u) && (u?.isGroup || u?.isChannel || u?.type === "group" || u?.type === "channel"));
   const isLoading = searchQuery.length > 0 ? searchLoading : contactsLoading;
   const incomingPending = incoming.length;
 
@@ -200,6 +201,7 @@ export default function Contacts() {
       <div className="flex gap-1 px-4 pt-3 pb-0 border-b border-border bg-background/95 backdrop-blur-sm z-10 shrink-0">
         {([
           { key: "contacts", label: "Контакты" },
+          { key: "groups", label: "Каналы / Группы" },
           { key: "incoming", label: "Входящие", badge: incomingPending },
           { key: "outgoing", label: "Исходящие" },
         ] as const).map((t) => (
@@ -209,7 +211,7 @@ export default function Contacts() {
             className={`flex items-center gap-1.5 px-3 py-2 rounded-t-xl text-[13px] font-bold transition-all relative border-b-2 ${tab === t.key ? "text-primary border-primary" : "text-muted-foreground border-transparent hover:text-foreground"}`}
           >
             {t.label}
-            {t.badge ? (
+            {"badge" in t && t.badge ? (
               <span className="min-w-[18px] h-4.5 px-1 bg-primary text-primary-foreground text-[10px] font-black rounded-full flex items-center justify-center">
                 {t.badge}
               </span>
@@ -218,13 +220,13 @@ export default function Contacts() {
         ))}
       </div>
 
-      {tab === "contacts" && (
+      {(tab === "contacts" || tab === "groups") && (
         <>
           <div className="px-4 py-3 border-b border-border bg-background/95 backdrop-blur-sm z-10 shrink-0">
             <div className="relative max-w-3xl mx-auto w-full">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
-                placeholder="Поиск контактов и пользователей..."
+                placeholder={tab === "contacts" ? "Поиск контактов и пользователей..." : "Поиск каналов и групп..."}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 bg-secondary/50 border-transparent focus-visible:ring-primary focus-visible:bg-card h-11 rounded-2xl font-medium"
@@ -245,19 +247,19 @@ export default function Contacts() {
                   </div>
                 ))}
               </div>
-            ) : displayUsers?.length === 0 ? (
+            ) : (tab === "contacts" ? displayUsers : groupUsers)?.length === 0 ? (
               <div className="text-center text-muted-foreground mt-20">
                 <div className="w-20 h-20 bg-secondary rounded-full flex items-center justify-center mx-auto mb-4">
                   <Search size={32} className="text-muted-foreground/50" />
                 </div>
                 <h2 className="text-lg font-semibold text-foreground mb-1">
-                  {searchQuery ? "Пользователи не найдены" : "Контакты отсутствуют"}
+                  {searchQuery ? (tab === "contacts" ? "Пользователи не найдены" : "Каналы и группы не найдены") : (tab === "contacts" ? "Контакты отсутствуют" : "Каналы и группы отсутствуют")}
                 </h2>
-                <p>{searchQuery ? "Попробуйте другой запрос" : "Введите имя или ник чтобы найти пользователей"}</p>
+                <p>{searchQuery ? "Попробуйте другой запрос" : tab === "contacts" ? "Введите имя или ник чтобы найти пользователей" : "Введите название канала или группы"}</p>
               </div>
             ) : (
               <div className="space-y-3">
-                {displayUsers?.map((user: User) => {
+                {(tab === "contacts" ? displayUsers : groupUsers)?.map((user: User) => {
                   const isContact = contacts?.some((c: { id: number }) => c.id === user.id) ?? false;
                   return (
                     <div key={user.id} className="flex items-center gap-4 p-4 rounded-2xl border border-border/60 bg-card/40 hover:bg-card hover:border-border hover:shadow-sm transition-all group">
@@ -270,7 +272,7 @@ export default function Contacts() {
                           <span className="absolute inset-0 flex items-center justify-center">{user.displayName[0].toUpperCase()}</span>
                           {user.avatarUrl && <img src={user.avatarUrl} alt={user.displayName} className="absolute inset-0 w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />}
                         </button>
-                        <span className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-card z-10 ${user.status === "online" ? "bg-green-500" : user.status === "away" ? "bg-yellow-500" : "bg-gray-500"}`} />
+                        {tab === "contacts" ? <span className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-card z-10 ${user.status === "online" ? "bg-green-500" : user.status === "away" ? "bg-yellow-500" : "bg-gray-500"}`} /> : null}
                       </div>
 
                       <button onClick={() => setLocation(`/user/${user.id}`)} className="flex-1 min-w-0 text-left">
@@ -279,10 +281,16 @@ export default function Contacts() {
                       </button>
 
                       <div className="flex items-center gap-2">
-                        <button onClick={() => handleMessage(user.id)} className="w-10 h-10 rounded-full flex items-center justify-center text-primary hover:bg-primary/10 transition-colors" title="Написать">
-                          <MessageSquare size={18} />
-                        </button>
-                        {searchQuery.length > 2 && !isContact ? (
+                        {tab === "contacts" ? (
+                          <button onClick={() => handleMessage(user.id)} className="w-10 h-10 rounded-full flex items-center justify-center text-primary hover:bg-primary/10 transition-colors" title="Написать">
+                            <MessageSquare size={18} />
+                          </button>
+                        ) : (
+                          <button onClick={() => handleMessage(user.id)} className="w-10 h-10 rounded-full flex items-center justify-center text-primary hover:bg-primary/10 transition-colors" title="Открыть">
+                            <Radio size={18} />
+                          </button>
+                        )}
+                        {tab === "contacts" && searchQuery.length > 2 && !isContact ? (
                           <button
                             onClick={() => handleSendRequest(user.id)}
                             className="w-10 h-10 rounded-full flex items-center justify-center text-muted-foreground hover:text-green-500 hover:bg-green-500/10 transition-colors"
@@ -290,7 +298,7 @@ export default function Contacts() {
                           >
                             <UserPlus size={18} />
                           </button>
-                        ) : isContact ? (
+                        ) : tab === "contacts" && isContact ? (
                           <button
                             onClick={() => handleRemoveContact(user.id)}
                             disabled={removeContact.isPending}

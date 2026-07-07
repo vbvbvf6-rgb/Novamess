@@ -30,6 +30,8 @@ import {
   AlertTriangle,
   ShieldBan,
   ShieldCheck,
+  Image,
+  Trash2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -60,7 +62,34 @@ function ReportUserDialog({ userId, displayName }: { userId: number; displayName
   const [details, setDetails] = React.useState("");
   const [loading, setLoading] = React.useState(false);
   const [sent, setSent] = React.useState(false);
+  const [imageUrl, setImageUrl] = React.useState<string | null>(null);
+  const imageRef = React.useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const dataUrl = ev.target?.result as string;
+      if (!dataUrl) return;
+      const img = new window.Image();
+      img.onload = () => {
+        const MAX = 800;
+        const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        const ctx = canvas.getContext("2d");
+        if (!ctx) { setImageUrl(dataUrl); return; }
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        setImageUrl(canvas.toDataURL("image/jpeg", 0.7));
+      };
+      img.src = dataUrl;
+    };
+    reader.readAsDataURL(file);
+  };
 
   async function submit() {
     if (!reason) return;
@@ -70,7 +99,7 @@ function ReportUserDialog({ userId, displayName }: { userId: number; displayName
       const res = await fetch(`/api/users/${userId}/report`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ reason, details }),
+        body: JSON.stringify({ reason, details, imageUrl }),
       });
       if (res.ok) {
         setSent(true);
@@ -86,7 +115,7 @@ function ReportUserDialog({ userId, displayName }: { userId: number; displayName
 
   function close() {
     setOpen(false);
-    setTimeout(() => { setSent(false); setReason(""); setDetails(""); }, 300);
+    setTimeout(() => { setSent(false); setReason(""); setDetails(""); setImageUrl(null); }, 300);
   }
 
   return (
@@ -153,6 +182,31 @@ function ReportUserDialog({ userId, displayName }: { userId: number; displayName
                       className="w-full rounded-xl px-3 py-2 text-sm bg-secondary border border-border resize-none outline-none focus:border-primary/50 mb-3"
                     />
                   )}
+
+                  {/* Photo attachment */}
+                  <div className="mb-3">
+                    <input type="file" accept="image/*" className="hidden" ref={imageRef} onChange={handleImageChange} />
+                    {imageUrl ? (
+                      <div className="relative rounded-xl overflow-hidden border border-border w-full max-h-40">
+                        <img src={imageUrl} alt="" className="w-full object-contain max-h-40" />
+                        <button
+                          onClick={() => setImageUrl(null)}
+                          className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-black/80 transition-colors"
+                          title="Удалить фото"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => imageRef.current?.click()}
+                        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-dashed border-border hover:bg-secondary transition-colors text-sm text-muted-foreground"
+                      >
+                        <Image size={16} /> Прикрепить фото
+                      </button>
+                    )}
+                  </div>
+
                   <button
                     onClick={submit}
                     disabled={!reason || loading}

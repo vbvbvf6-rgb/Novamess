@@ -440,13 +440,13 @@ export function ChatList() {
     if ((chat as any).type === "saved") return false;
     if (folder === "unread") return (chat.unreadCount ?? 0) > 0;
     if (folder === "groups") return chat.type === "group" || chat.type === "channel";
-    if (folder === "direct") return chat.type === "direct";
+    if (folder === "direct") return chat.type === "direct" && !(chat.otherUser as any)?.isBot && !(chat.otherUser as any)?.is_bot;
     if (folder.startsWith("folder:")) return folderChatIds.has(chat.id);
     return true;
   });
 
   const sorted = filtered
-    ?.filter((chat: Chat) => !(chat.otherUser as any)?.isBot)
+    ?.filter((chat: Chat) => chat.type !== "direct" || (!(chat.otherUser as any)?.isBot && !(chat.otherUser as any)?.is_bot))
     .slice().sort((a: Chat, b: Chat) => {
       if (a.isPinned && !b.isPinned) return -1;
       if (!a.isPinned && b.isPinned) return 1;

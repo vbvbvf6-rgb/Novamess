@@ -443,7 +443,16 @@ function PostCard({ post, onAppealSubmitted, onTopicClick }: { post: Post & { ap
   const [showReportPost, setShowReportPost] = useState(false);
   const [reportReason, setReportReason] = useState("");
   const [reportDetails, setReportDetails] = useState("");
+  const [reportImageUrl, setReportImageUrl] = useState("");
   const [reportLoading, setReportLoading] = useState(false);
+  const reportImageRef = useRef<HTMLInputElement>(null);
+  const handleReportImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+    const url = await compressImage(file);
+    if (url) setReportImageUrl(url);
+  };
   const [reportDone, setReportDone] = useState(false);
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
@@ -500,7 +509,7 @@ function PostCard({ post, onAppealSubmitted, onTopicClick }: { post: Post & { ap
       const res = await fetch(`/api/posts/${post.id}/report`, {
         method: "POST",
         headers: { "Content-Type": "application/json", ...(token ? { "Authorization": `Bearer ${token}` } : {}) },
-        body: JSON.stringify({ reason: reportReason, details: reportDetails }),
+        body: JSON.stringify({ reason: reportReason, details: reportDetails, imageUrl: reportImageUrl || undefined }),
       });
       if (res.ok) { setReportDone(true); setTimeout(() => setShowReportPost(false), 1500); }
     } catch {}
@@ -560,6 +569,11 @@ function PostCard({ post, onAppealSubmitted, onTopicClick }: { post: Post & { ap
                     rows={2}
                     className="w-full bg-secondary border border-border rounded-xl px-3 py-2 text-sm resize-none focus:outline-none focus:border-orange-400/50 transition-colors"
                   />
+                  <input ref={reportImageRef} type="file" accept="image/*" className="hidden" onChange={handleReportImage} />
+                  <button type="button" onClick={() => reportImageRef.current?.click()} className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-dashed border-border text-sm text-muted-foreground hover:text-foreground hover:border-orange-400/50 transition-colors">
+                    <Image size={16} /> Добавить фото
+                  </button>
+                  {reportImageUrl && <img src={reportImageUrl} alt="" className="rounded-xl max-h-32 object-cover border border-border" />}
                   <button
                     onClick={handleReportPost}
                     disabled={!reportReason || reportLoading}

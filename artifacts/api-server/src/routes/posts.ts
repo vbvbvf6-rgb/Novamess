@@ -110,6 +110,13 @@ router.post("/posts", async (req, res) => {
       const banwords = await getBanwords();
       const hit = findBanword(text, banwords);
       if (hit) {
+        await db.insert(postsTable).values({
+          userId: uid, text, imageUrl, topic: topic || null,
+          moderationStatus: "rejected",
+          moderationReason: `Запрещённое слово: ${hit}`,
+          moderationConfidence: 100,
+          moderationCategories: ["banned_word"],
+        } as any).returning();
         return res.status(422).json({
           error: "Пост содержит запрещённое слово и не может быть опубликован.",
           code: "MODERATION_BLOCKED",
@@ -426,7 +433,7 @@ router.post("/posts/:postId/report", async (req, res) => {
   try {
     const uid = req.currentUserId;
     const postId = Number(req.params.postId);
-    const { reason, details } = req.body;
+    const { reason, details, imageUrl } = req.body;
     if (!reason) return res.status(400).json({ error: "Укажите причину жалобы" });
 
     const post = await db.query.postsTable.findFirst({ where: eq(postsTable.id, postId) });
@@ -434,9 +441,21 @@ router.post("/posts/:postId/report", async (req, res) => {
     if (post.userId === uid) return res.status(400).json({ error: "Нельзя пожаловаться на собственный пост" });
 
     await db.execute(sql`
+      ALTER TABLE post_reports ADD COLUMN IF NOT EXISTS image_url TEXT
+    `).catch(() => {});
+    await db.execute(sql`
       INSERT INTO post_reports (post_id, reporter_id, reason, details)
       VALUES (${postId}, ${uid}, ${reason}, ${details ?? null})
     `);
+    if (imageUrl) {
+      await db.execute(sql`
+        UPDATE post_reports
+        SET image_url = ${imageUrl}
+        WHERE post_id = ${postId} AND reporter_id = ${uid} AND reason = ${reason}
+        ORDER BY created_at DESC
+        LIMIT 1
+      `).catch(() => {});
+    }
     res.json({ ok: true });
   } catch (err) {
     req.log.error(err);

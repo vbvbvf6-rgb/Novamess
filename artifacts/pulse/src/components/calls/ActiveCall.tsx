@@ -64,6 +64,11 @@ function InviteModal({ onClose }: { onClose: () => void }) {
   const [search, setSearch] = useState("");
   const [inviting, setInviting] = useState<number | null>(null);
 
+  function contactById(id: number | undefined) {
+    if (!id) return undefined;
+    return contacts?.find((c: any) => c.id === id);
+  }
+
   const filtered = contacts?.filter(
     (c: { id: number; displayName?: string | null; username?: string | null }) =>
       c.id !== currentUserId &&
@@ -166,19 +171,28 @@ function ParticipantTile({
   stream,
   user,
   muted,
+  label,
 }: {
   stream: MediaStream | null;
   user?: any;
   muted?: boolean;
+  label?: string;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
   useEffect(() => {
     if (videoRef.current && stream) {
       videoRef.current.srcObject = stream;
       videoRef.current.play().catch(() => {});
     }
-  }, [stream]);
+    if (audioRef.current && stream && !muted) {
+      audioRef.current.srcObject = stream;
+      audioRef.current.volume = 1;
+      audioRef.current.play().catch(() => {});
+    }
+  }, [stream, muted]);
 
+  const displayName = user?.displayName || label || "Участник";
   const bg = user?.avatarColor || "#333";
   return (
     <div className="relative rounded-2xl overflow-hidden bg-neutral-900 aspect-video flex items-center justify-center">
@@ -189,11 +203,10 @@ function ParticipantTile({
           <Avatar user={user} size={56} />
         </div>
       )}
-      {user && (
-        <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-sm px-2 py-0.5 rounded-full text-white text-xs font-medium">
-          {user.displayName}
-        </div>
-      )}
+      {!muted && stream && <audio ref={audioRef} autoPlay playsInline className="hidden" />}
+      <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-sm px-2 py-0.5 rounded-full text-white text-xs font-medium">
+        {displayName}
+      </div>
     </div>
   );
 }
@@ -202,7 +215,7 @@ export function ActiveCall() {
   const {
     activeCall, currentUserId, hangUp,
     localStream, remoteStream, remoteStreams,
-    isScreenSharing, startScreenShare, stopScreenShare,
+    isScreenSharing, startScreenShare, stopScreenShare, reacquireCamera,
     isCallMinimized, minimizeCall, expandCall,
   } = useAppContext();
 
@@ -434,8 +447,18 @@ export function ActiveCall() {
     setIsMuted((p) => !p);
   };
 
-  const handleToggleVideo = () => {
-    if (localStream) localStream.getVideoTracks().forEach((t) => { t.enabled = isVideoOff; });
+  const handleToggleVideo = async () => {
+    const turningOn = isVideoOff;
+    if (turningOn) {
+      // If we have no usable video track (camera was unavailable at start), re-acquire it
+      const hasVideoTrack = localStream && localStream.getVideoTracks().some((t) => t.readyState !== "ended");
+      if (!hasVideoTrack) {
+        await reacquireCamera();
+        setIsVideoOff(false);
+        return;
+      }
+    }
+    if (localStream) localStream.getVideoTracks().forEach((t) => { t.enabled = turningOn; });
     setIsVideoOff((p) => !p);
   };
 
@@ -471,17 +494,20 @@ export function ActiveCall() {
       <>
         {/*
           Keep both media elements in DOM while minimized so refs stay valid and
-          srcObject is never lost. The video element is positioned off-screen so
-          it plays in the background without flickering on-screen.
+          srcObject is never lost. For video calls, show a small thumbnail preview
+          so the remote person remains visible while using the app.
         */}
         <audio ref={remoteAudioRef} autoPlay playsInline style={{ display: "none" }} />
-        <video
-          ref={remoteVideoRef}
-          autoPlay
-          playsInline
-          muted
-          style={{ position: "fixed", top: -9999, left: -9999, width: 1, height: 1, opacity: 0, pointerEvents: "none" }}
-        />
+        {isVideo && (
+          <video
+            ref={remoteVideoRef}
+            autoPlay
+            playsInline
+            muted
+            className="rounded-xl object-cover border border-border shadow-lg"
+            style={{ width: 64, height: 48, background: "#000" }}
+          />
+        )}
         <motion.div
           drag
           dragMomentum={false}
@@ -645,9 +671,11 @@ export function ActiveCall() {
               {/* Remote video / group grid / placeholder */}
               <div className="absolute inset-0 bg-neutral-950">
                 {isGroup ? (
-                  <div className={`w-full h-full grid gap-1 p-1 ${remoteStreams.size === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
+                  <div className={`w-full h-full grid gap-1 p-1 ${remoteStreams.size === 0 ? "grid-cols-1" : remoteStreams.size === 1 ? "grid-cols-1 md:grid-cols-2" : "grid-cols-2"}`}>
+                    {/* Local tile first */}
+                    <ParticipantTile stream={localStream} muted label="Вы" />
                     {[...remoteStreams.entries()].map(([uid, stream]) => (
-                      <ParticipantTile key={uid} stream={stream} />
+                      <ParticipantTile key={uid} stream={stream} user={contactById(uid)} label={`User ${uid}`} />
                     ))}
                   </div>
                 ) : (
@@ -862,6 +890,11 @@ export function ActiveCall() {
               {/* Invite */}
               <ControlBtn active={false} activeColor="blue" isVideo={isVideo} onClick={() => setShowInvite(true)} label="Добавить участника" shortLabel="Добавить">
                 <UserPlus size={20} />
+              </ControlBtn>
+
+              {/* Exit to app (minimize) — lets user use the app while staying in the call */}
+              <ControlBtn active={false} activeColor="blue" isVideo={isVideo} onClick={minimizeCall} label="Выйти в приложение" shortLabel="В приложение">
+                <Minimize2 size={20} />
               </ControlBtn>
 
               {/* End call */}

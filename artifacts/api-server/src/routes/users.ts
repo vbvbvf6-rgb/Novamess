@@ -35,8 +35,22 @@ router.get("/users/me", async (req, res) => {
 router.put("/users/me", async (req, res) => {
   try {
     const uid = req.currentUserId;
+    const raw = req.body as Record<string, unknown>;
     const body = UpdateMeBody.parse(req.body);
-    const [updated] = await db.update(usersTable).set(body).where(eq(usersTable.id, uid)).returning();
+    const avatarUrl = typeof raw.avatarUrl === "string"
+      ? raw.avatarUrl
+      : typeof raw.avatar_url === "string"
+        ? raw.avatar_url
+        : body.avatarUrl;
+    const statusText = typeof raw.statusText === "string"
+      ? raw.statusText
+      : typeof raw.status_text === "string"
+        ? raw.status_text
+        : body.statusText;
+    const updateData: Record<string, unknown> = { ...body };
+    if (avatarUrl !== undefined) updateData.avatarUrl = avatarUrl;
+    if (statusText !== undefined) updateData.statusText = statusText;
+    const [updated] = await db.update(usersTable).set(updateData as any).where(eq(usersTable.id, uid)).returning();
     const rows = await db.execute(sql`SELECT balance, username_changed_at, has_prime, prime_tier, prime_expires_at FROM users WHERE id = ${uid}`);
     const row = rows.rows[0] as any;
     const balance = row ? Number(row.balance) : 0;
@@ -229,11 +243,12 @@ router.post("/users/:userId/report", async (req, res) => {
     if (!reporterId) return res.status(401).json({ error: "Unauthorized" });
     const targetId = Number(req.params.userId);
     if (!targetId || targetId === reporterId) return res.status(400).json({ error: "Invalid userId" });
-    const { reason, details } = req.body as { reason: string; details?: string };
+    const { reason, details, imageUrl } = req.body as { reason: string; details?: string; imageUrl?: string };
     if (!reason) return res.status(400).json({ error: "Reason is required" });
+    await db.execute(sql`ALTER TABLE user_reports ADD COLUMN IF NOT EXISTS image_url TEXT`).catch(() => {});
     await db.execute(sql`
-      INSERT INTO user_reports (reporter_id, target_id, reason, details, created_at)
-      VALUES (${reporterId}, ${targetId}, ${reason}, ${details ?? null}, NOW())
+      INSERT INTO user_reports (reporter_id, target_id, reason, details, image_url, created_at)
+      VALUES (${reporterId}, ${targetId}, ${reason}, ${details ?? null}, ${imageUrl ?? null}, NOW())
     `);
     res.json({ ok: true });
   } catch (err) {
@@ -339,23 +354,40 @@ router.delete("/users/me", async (req, res) => {
     const valid = await import("bcryptjs").then(b => b.default.compare(String(password), user.password_hash || ""));
     if (!valid) return res.status(403).json({ error: "Неверный пароль" });
 
-    // Delete all user data in order (respect FK constraints)
-    // Some tables may not exist yet — each wrapped in try/catch
-    await db.execute(sql`DELETE FROM user_sessions WHERE user_id = ${uid}`).catch(() => {});
-    await db.execute(sql`DELETE FROM message_reactions WHERE user_id = ${uid}`).catch(() => {});
-    await db.execute(sql`DELETE FROM story_views WHERE viewer_id = ${uid}`).catch(() => {});
-    await db.execute(sql`DELETE FROM stories WHERE user_id = ${uid}`).catch(() => {});
-    await db.execute(sql`DELETE FROM gifts WHERE sender_id = ${uid} OR receiver_id = ${uid}`).catch(() => {});
-    await db.execute(sql`DELETE FROM calls WHERE caller_id = ${uid} OR callee_id = ${uid}`).catch(() => {});
-    await db.execute(sql`DELETE FROM contacts WHERE user_id = ${uid} OR contact_id = ${uid}`).catch(() => {});
-    // Nullify reply references so DELETE doesn't fail FK constraints
-    await db.execute(sql`UPDATE messages SET reply_to_id = NULL WHERE reply_to_id IN (SELECT id FROM messages WHERE sender_id = ${uid})`).catch(() => {});
-    await db.execute(sql`DELETE FROM messages WHERE sender_id = ${uid}`).catch(() => {});
-    await db.execute(sql`DELETE FROM chat_members WHERE user_id = ${uid}`).catch(() => {});
-    await db.execute(sql`DELETE FROM referral_uses WHERE referrer_id = ${uid} OR referred_id = ${uid}`).catch(() => {});
-    await db.execute(sql`DELETE FROM user_reports WHERE reporter_id = ${uid} OR target_id = ${uid}`).catch(() => {});
-    await db.execute(sql`DELETE FROM post_reports WHERE reporter_id = ${uid}`).catch(() => {});
-    await db.execute(sql`DELETE FROM contact_requests WHERE from_user_id = ${uid} OR to_user_id = ${uid}`).catch(() => {});
+    // Purge all user data. Run each DELETE outside a transaction so a missing
+    // table or foreign-key edge case doesn't abort the entire cleanup.
+    const cleanupQueries = [
+      sql`DELETE FROM user_sessions WHERE user_id = ${uid}`,
+      sql`DELETE FROM message_reactions WHERE user_id = ${uid}`,
+      sql`DELETE FROM story_views WHERE viewer_id = ${uid}`,
+      sql`DELETE FROM stories WHERE user_id = ${uid}`,
+      sql`DELETE FROM gifts WHERE sender_id = ${uid} OR receiver_id = ${uid}`,
+      sql`DELETE FROM calls WHERE caller_id = ${uid} OR callee_id = ${uid}`,
+      sql`DELETE FROM contacts WHERE user_id = ${uid} OR contact_id = ${uid}`,
+      sql`DELETE FROM contact_requests WHERE from_user_id = ${uid} OR to_user_id = ${uid}`,
+      sql`DELETE FROM user_blocks WHERE blocker_id = ${uid} OR blocked_id = ${uid}`,
+      sql`DELETE FROM user_reports WHERE reporter_id = ${uid} OR target_id = ${uid}`,
+      sql`DELETE FROM post_reports WHERE reporter_id = ${uid}`,
+      sql`DELETE FROM referral_uses WHERE referrer_id = ${uid} OR referred_id = ${uid}`,
+      sql`DELETE FROM push_subscriptions WHERE user_id = ${uid}`,
+      sql`DELETE FROM chat_members WHERE user_id = ${uid}`,
+      sql`DELETE FROM chat_folder_chats WHERE chat_id IN (SELECT chat_id FROM chat_members WHERE user_id = ${uid})`,
+      sql`DELETE FROM chat_folders WHERE user_id = ${uid}`,
+      sql`DELETE FROM pinned_messages WHERE sender_id = ${uid}`,
+      sql`DELETE FROM poll_votes WHERE user_id = ${uid}`,
+      sql`DELETE FROM bug_reports WHERE user_id = ${uid}`,
+      sql`DELETE FROM support_messages WHERE user_id = ${uid}`,
+      sql`DELETE FROM support_tickets WHERE user_id = ${uid}`,
+      // Nullify reply references so messages can be deleted safely
+      sql`UPDATE messages SET reply_to_id = NULL WHERE reply_to_id IN (SELECT id FROM messages WHERE sender_id = ${uid})`,
+      sql`DELETE FROM messages WHERE sender_id = ${uid}`,
+      // Owned chats that have no other members left
+      sql`DELETE FROM chats WHERE owner_id = ${uid} AND NOT EXISTS (SELECT 1 FROM chat_members WHERE chat_id = chats.id AND user_id != ${uid})`,
+    ];
+    for (const q of cleanupQueries) {
+      await db.execute(q).catch((err) => req.log.warn({ err: String(err) }, "user deletion cleanup step warning"));
+    }
+
     // Soft-delete the user account (anonymize data)
     await db.execute(sql`
       UPDATE users SET
@@ -365,7 +397,17 @@ router.delete("/users/me", async (req, res) => {
         avatar_url = NULL,
         password_hash = '',
         is_banned = true,
-        status = 'offline'
+        status = 'offline',
+        phone_number = NULL,
+        email = NULL,
+        totp_secret = NULL,
+        totp_enabled = false,
+        security_question = NULL,
+        security_answer = NULL,
+        id_document_url = NULL,
+        last_monthly_gift_at = NULL,
+        prime_tier = NULL,
+        prime_expires_at = NULL
       WHERE id = ${uid}
     `);
 

@@ -1146,20 +1146,22 @@ export default function Settings() {
   const videoAvatarRef = useRef<HTMLInputElement>(null);
   const [cancelPrimeLoading, setCancelPrimeLoading] = useState(false);
 
-  const saveAvatarUrl = (compressed: string) => {
+  const saveAvatarUrl = async (compressed: string) => {
     setAvatarUrl(compressed);
     const token = sessionStorage.getItem("pulse-token");
-    fetch("/api/users/me", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json", ...(token ? { "Authorization": `Bearer ${token}` } : {}) },
-      body: JSON.stringify({ avatarUrl: compressed }),
-    })
-      .then((r) => r.ok ? r.json() : Promise.reject(r.status))
-      .then(() => {
-        queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
-        toast({ title: lang === "ru" ? "Фото обновлено" : "Photo updated" });
-      })
-      .catch(() => { toast({ title: t("settings.saveError"), variant: "destructive" }); });
+    try {
+      const res = await fetch("/api/users/me", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...(token ? { "Authorization": `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ avatarUrl: compressed }),
+      });
+      if (!res.ok) throw new Error(String(res.status));
+      await res.json();
+      queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
+      toast({ title: lang === "ru" ? "Фото обновлено" : "Photo updated" });
+    } catch {
+      toast({ title: t("settings.saveError"), variant: "destructive" });
+    }
   };
 
   const handleAvatarFile = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1170,16 +1172,17 @@ export default function Settings() {
     const objectUrl = URL.createObjectURL(file);
     img.onload = () => {
       URL.revokeObjectURL(objectUrl);
-      const MAX = 400;
+      const MAX = 512;
       const scale = Math.min(1, MAX / Math.max(img.width, img.height));
       const canvas = document.createElement("canvas");
-      canvas.width = Math.round(img.width * scale);
-      canvas.height = Math.round(img.height * scale);
+      canvas.width = Math.max(1, Math.round(img.width * scale));
+      canvas.height = Math.max(1, Math.round(img.height * scale));
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      saveAvatarUrl(canvas.toDataURL("image/jpeg", 0.75));
+      void saveAvatarUrl(canvas.toDataURL("image/jpeg", 0.85));
     };
+    img.onerror = () => URL.revokeObjectURL(objectUrl);
     img.src = objectUrl;
   };
 
@@ -1813,12 +1816,12 @@ export default function Settings() {
                 <div className="p-4 border-t border-border">
                   <Label className="text-sm font-medium mb-2 block">{t("settings.statusText")}</Label>
                   <Input value={statusText} onChange={e => setStatusText(e.target.value)} placeholder={t("settings.statusPlaceholder")} className="bg-background mb-3"/>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-nowrap overflow-x-auto scrollbar-none gap-2 pb-1">
                     {STATUS_PRESETS.map(preset => {
                       const presetText = `${preset.emoji} ${lang==="ru" ? preset.ru : preset.en}`;
                       return (
                         <button key={preset.ru} onClick={() => setStatusText(presetText)}
-                          className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${statusText===presetText ? "bg-primary/10 border-primary text-primary" : "border-border hover:border-primary/50 hover:bg-secondary"}`}>
+                      className={`text-xs px-3 py-1.5 rounded-full border transition-colors shrink-0 whitespace-nowrap ${statusText===presetText ? "bg-primary/10 border-primary text-primary" : "border-border hover:border-primary/50 hover:bg-secondary"}`}>
                           {presetText}
                         </button>
                       );

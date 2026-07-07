@@ -15,11 +15,14 @@ router.post("/support/bugs", async (req, res) => {
     if (description.length > 5000) return res.status(400).json({ error: "Описание слишком длинное" });
 
     const rows = await db.execute(sql`
+      ALTER TABLE bug_reports ADD COLUMN IF NOT EXISTS screenshot_url TEXT
+    `).catch(() => {});
+    const rows2 = await db.execute(sql`
       INSERT INTO bug_reports (user_id, title, description, category, platform_info, screenshot_url)
       VALUES (${uid}, ${title.trim()}, ${description.trim()}, ${category || 'other'}, ${platformInfo || null}, ${screenshotUrl || null})
       RETURNING id, title, category, status, created_at
     `);
-    res.status(201).json({ success: true, report: rows.rows[0] });
+    res.status(201).json({ success: true, report: rows2.rows[0] });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Ошибка сервера" });
@@ -59,7 +62,7 @@ router.delete("/support/bugs/:id", async (req, res) => {
 router.post("/support/tickets", async (req, res) => {
   try {
     const uid = req.currentUserId;
-    const { subject, firstMessage } = req.body;
+    const { subject, firstMessage, imageUrl } = req.body;
     if (!subject || !firstMessage) return res.status(400).json({ error: "subject и firstMessage обязательны" });
     if (subject.length > 200) return res.status(400).json({ error: "Тема слишком длинная" });
 
@@ -70,6 +73,9 @@ router.post("/support/tickets", async (req, res) => {
     `);
     const ticket = ticketRow.rows[0] as any;
 
+    await db.execute(sql`
+      ALTER TABLE support_messages ADD COLUMN IF NOT EXISTS image_url TEXT
+    `).catch(() => {});
     await db.execute(sql`
       INSERT INTO support_messages (ticket_id, user_id, is_admin, text)
       VALUES (${ticket.id}, ${uid}, false, ${firstMessage.trim()})

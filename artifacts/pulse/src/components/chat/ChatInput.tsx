@@ -317,7 +317,6 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
     if (!files.length) return;
     // Always reset input so the same file can be selected again
     if (fileInputRef.current) fileInputRef.current.value = "";
-    const MAX_IMAGES_PER_ALBUM = 20;
     const images: File[] = [];
     const docs: File[] = [];
     for (const f of files) {
@@ -432,7 +431,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
           setUploadProgress(0);
           try {
             const isVideo = doc.mime.startsWith("video/");
-            const m = await xhrPost("/api/messages", {
+          const m = await xhrPost("/api/messages", {
               chatId,
               type: isVideo ? "video" : "document",
               mediaUrl: doc.data,
