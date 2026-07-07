@@ -20,9 +20,16 @@ declare global {
 
 // ── JWT Secret ───────────────────────────────────────────────────────────────
 if (!process.env.JWT_SECRET) {
-  throw new Error("JWT_SECRET environment variable is required but not set. Set it in Replit Secrets.");
+  if (process.env.SESSION_SECRET) {
+    // Fallback: reuse SESSION_SECRET so the server starts without a separate JWT_SECRET.
+    // Set JWT_SECRET in Replit Secrets to use an independent signing key.
+    process.env.JWT_SECRET = process.env.SESSION_SECRET;
+    console.warn("[security] JWT_SECRET not set — using SESSION_SECRET as fallback. Add JWT_SECRET to Replit Secrets for production.");
+  } else {
+    throw new Error("JWT_SECRET environment variable is required but not set. Set it in Replit Secrets.");
+  }
 }
-export const JWT_SECRET = process.env.JWT_SECRET;
+export const JWT_SECRET = process.env.JWT_SECRET!;
 export const EFFECTIVE_JWT_SECRET = JWT_SECRET;
 
 const app: Express = express();

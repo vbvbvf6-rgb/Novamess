@@ -20,7 +20,7 @@ import { GlobalSearch } from "./GlobalSearch";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 
-type FolderKey = "all" | "unread" | "groups" | `folder:${number}`;
+type FolderKey = "all" | "unread" | "groups" | "direct" | `folder:${number}`;
 
 interface UserFolder {
   id: number;
@@ -32,9 +32,9 @@ interface UserFolder {
 const SYSTEM_FOLDERS: { key: FolderKey; label: string }[] = [
   { key: "all",    label: "Все" },
   { key: "unread", label: "Новые" },
-  { key: "direct" as FolderKey, label: "Контакты" },
+  { key: "direct", label: "Контакты" },
   { key: "groups", label: "Каналы/Группы" },
-] as { key: FolderKey; label: string }[];
+];
 
 const FOLDER_ICON_MAP: Record<string, LucideIcon> = {
   folder: Folder, chat: MessageCircle, star: Star, flame: Flame, briefcase: Briefcase,
@@ -440,7 +440,7 @@ export function ChatList() {
     if ((chat as any).type === "saved") return false;
     if (folder === "unread") return (chat.unreadCount ?? 0) > 0;
     if (folder === "groups") return chat.type === "group" || chat.type === "channel";
-    if ((folder as string) === "direct") return chat.type === "direct";
+    if (folder === "direct") return chat.type === "direct";
     if (folder.startsWith("folder:")) return folderChatIds.has(chat.id);
     return true;
   });
