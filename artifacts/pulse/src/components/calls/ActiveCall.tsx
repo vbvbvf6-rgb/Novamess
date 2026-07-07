@@ -469,6 +469,19 @@ export function ActiveCall() {
     const didDragRef = pillDragRef;
     return (
       <>
+        {/*
+          Keep both media elements in DOM while minimized so refs stay valid and
+          srcObject is never lost. The video element is positioned off-screen so
+          it plays in the background without flickering on-screen.
+        */}
+        <audio ref={remoteAudioRef} autoPlay playsInline style={{ display: "none" }} />
+        <video
+          ref={remoteVideoRef}
+          autoPlay
+          playsInline
+          muted
+          style={{ position: "fixed", top: -9999, left: -9999, width: 1, height: 1, opacity: 0, pointerEvents: "none" }}
+        />
         <motion.div
           drag
           dragMomentum={false}
@@ -520,7 +533,6 @@ export function ActiveCall() {
             </div>
           </div>
         </motion.div>
-        <audio ref={remoteAudioRef} autoPlay playsInline style={{ display: "none" }} />
       </>
     );
   }

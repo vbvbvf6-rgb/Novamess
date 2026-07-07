@@ -353,7 +353,7 @@ router.delete("/users/me", async (req, res) => {
     await db.execute(sql`DELETE FROM messages WHERE sender_id = ${uid}`).catch(() => {});
     await db.execute(sql`DELETE FROM chat_members WHERE user_id = ${uid}`).catch(() => {});
     await db.execute(sql`DELETE FROM referral_uses WHERE referrer_id = ${uid} OR referred_id = ${uid}`).catch(() => {});
-    await db.execute(sql`DELETE FROM user_reports WHERE reporter_id = ${uid} OR reported_id = ${uid}`).catch(() => {});
+    await db.execute(sql`DELETE FROM user_reports WHERE reporter_id = ${uid} OR target_id = ${uid}`).catch(() => {});
     await db.execute(sql`DELETE FROM post_reports WHERE reporter_id = ${uid}`).catch(() => {});
     await db.execute(sql`DELETE FROM contact_requests WHERE from_user_id = ${uid} OR to_user_id = ${uid}`).catch(() => {});
     // Soft-delete the user account (anonymize data)

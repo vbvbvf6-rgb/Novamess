@@ -32,8 +32,8 @@ interface UserFolder {
 const SYSTEM_FOLDERS: { key: FolderKey; label: string }[] = [
   { key: "all",    label: "Все" },
   { key: "unread", label: "Новые" },
-  { key: "groups", label: "Группы" },
-  { key: "direct" as FolderKey, label: "Личные" },
+  { key: "direct" as FolderKey, label: "Контакты" },
+  { key: "groups", label: "Каналы/Группы" },
 ] as { key: FolderKey; label: string }[];
 
 const FOLDER_ICON_MAP: Record<string, LucideIcon> = {

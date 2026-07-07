@@ -608,7 +608,7 @@ export default function UserProfile() {
                 </motion.div>
 
                 {!isMe && (
-                  <div className="flex items-center gap-2 pb-1 flex-wrap">
+                  <div className="flex items-center gap-2 pb-1 overflow-x-auto scrollbar-none flex-nowrap">
                     <motion.button
                       whileHover={{ scale: 1.08 }}
                       whileTap={{ scale: 0.95 }}
