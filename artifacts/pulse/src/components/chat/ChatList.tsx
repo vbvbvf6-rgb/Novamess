@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { useGetChats, Chat } from "@workspace/api-client-react";
+import { useGetChats, useGetContacts, Chat } from "@workspace/api-client-react";
 import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
 import { Search, Pin, VolumeX, Users, Radio, Bot, HeadphonesIcon, Bug,
@@ -249,6 +249,14 @@ export function ChatList() {
   const { t, lang } = useLanguage();
   const [, navigate] = useLocation();
   const { data: chats, isLoading } = useGetChats();
+  const { data: contactsList } = useGetContacts();
+  const contactNicknames = React.useMemo(() => {
+    const map = new Map<number, string>();
+    (contactsList as any[] | undefined)?.forEach((c) => {
+      if (c?.nickname) map.set(c.id, c.nickname);
+    });
+    return map;
+  }, [contactsList]);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [folder, setFolder] = useState<FolderKey>("all");
@@ -631,9 +639,10 @@ export function ChatList() {
               const isPrimePlus = hasPrime && (chat.otherUser as any)?.primeTier === "prime_plus";
               const isAdmin = chat.type === "direct" && (chat.otherUser as any)?.isAdmin;
 
+              const otherUserId = chat.type === "direct" ? (chat.otherUser as any)?.id : null;
               const displayName =
                 chat.type === "direct"
-                  ? ((chat.otherUser as any)?.displayName || chat.name || "Неизвестный")
+                  ? (contactNicknames.get(otherUserId) || (chat.otherUser as any)?.displayName || chat.name || "Неизвестный")
                   : (chat.name || (chat.type === "channel" ? "Канал" : "Группа"));
 
               const lastMsgText = lastMessage

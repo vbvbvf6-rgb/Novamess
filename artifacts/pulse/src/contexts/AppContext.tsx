@@ -75,6 +75,7 @@ export interface AppState {
   startScreenShare: () => Promise<void>;
   stopScreenShare: () => void;
   reacquireCamera: () => Promise<void>;
+  flipCamera: () => Promise<void>;
   localStream: MediaStream | null;
   remoteStream: MediaStream | null;
   remoteStreams: Map<number, MediaStream>;
@@ -224,6 +225,21 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
 
   // ── peer factory ──────────────────────────────────────────────────────────
   // iceTransportPolicy: "all" = try direct + relay; "relay" = force TURN only
+  // Video calls default to a very low WebRTC bitrate on some networks/browsers,
+  // producing blurry/pixelated video. Bump the encoder's target bitrate once a
+  // video sender exists on the peer connection.
+  const boostVideoBitrate = useCallback((pc: RTCPeerConnection) => {
+    const sender = pc.getSenders().find((s) => s.track?.kind === "video");
+    if (!sender) return;
+    const params = sender.getParameters();
+    if (!params.encodings || params.encodings.length === 0) params.encodings = [{}];
+    params.encodings.forEach((enc) => {
+      enc.maxBitrate = 2_500_000; // ~2.5 Mbps — sharp 720p video
+      enc.priority = "high";
+    });
+    sender.setParameters(params).catch(() => {});
+  }, []);
+
   const createPeer = useCallback((
     targetUserId: number,
     roomId: number,
@@ -295,6 +311,7 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
           peersRef.current.set(targetUserId, relayPc);
           if (localStreamRef.current) {
             localStreamRef.current.getTracks().forEach((t) => relayPc.addTrack(t, localStreamRef.current!));
+            boostVideoBitrate(relayPc);
           }
           relayPc.createOffer()
             .then((offer) => relayPc.setLocalDescription(offer).then(() => {
@@ -387,6 +404,8 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
         peersRef.current.set(fromUserId, pc);
         if (localStreamRef.current) {
           localStreamRef.current.getTracks().forEach((t) => pc!.addTrack(t, localStreamRef.current!));
+          boostVideoBitrate(pc!);
+          boostVideoBitrate(pc);
         }
         // Flush any earlier pending signals for this user
         const pending = pendingSignalsRef.current.get(fromUserId) || [];
@@ -448,6 +467,7 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
       peersRef.current.set(newUserId, pc);
       if (localStreamRef.current) {
         localStreamRef.current.getTracks().forEach((t) => pc.addTrack(t, localStreamRef.current!));
+        boostVideoBitrate(pc);
       }
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
@@ -468,6 +488,7 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
           peersRef.current.set(uid, pc);
           if (localStreamRef.current) {
             localStreamRef.current.getTracks().forEach((t) => pc.addTrack(t, localStreamRef.current!));
+            boostVideoBitrate(pc);
           }
         }
       }
@@ -792,6 +813,60 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
     setIsScreenSharing(false);
   }, []);
 
+  // ── Flip between front/back camera mid-call ──────────────────────────────
+  // `applyConstraints({ facingMode })` alone silently no-ops on many Android
+  // devices/browsers (esp. MIUI/Redmi) that don't map facingMode to a real
+  // constraint. Fall back to enumerating video input devices and swapping to
+  // a different physical camera via getUserMedia + replaceTrack.
+  const flipCamera = useCallback(async () => {
+    const vt = localStreamRef.current?.getVideoTracks()[0];
+    if (!vt) return;
+    const currentFacing = vt.getSettings().facingMode;
+    const targetFacing = currentFacing === "environment" ? "user" : "environment";
+
+    // Attempt 1: cheap in-place constraint switch (works on most desktop/iOS browsers)
+    try {
+      await vt.applyConstraints({ facingMode: { ideal: targetFacing } });
+      const applied = vt.getSettings().facingMode;
+      if (applied === targetFacing || (!currentFacing && applied)) return;
+    } catch {}
+
+    // Attempt 2: enumerate devices and pick a different physical camera
+    try {
+      if (!navigator.mediaDevices?.enumerateDevices) throw new Error("no enumerateDevices");
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const cams = devices.filter((d) => d.kind === "videoinput");
+      if (cams.length < 2) return; // only one camera — nothing to flip to
+      const currentDeviceId = vt.getSettings().deviceId;
+      const currentIndex = cams.findIndex((c) => c.deviceId === currentDeviceId);
+      const nextCam = cams[(currentIndex + 1) % cams.length];
+
+      const newStream = await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: { deviceId: { exact: nextCam.deviceId }, width: { ideal: 1280 }, height: { ideal: 720 } },
+      });
+      const newTrack = newStream.getVideoTracks()[0];
+      if (!newTrack) return;
+
+      // Swap into every peer connection sender
+      peersRef.current.forEach((pc) => {
+        const sender = pc.getSenders().find((s) => s.track?.kind === "video");
+        sender?.replaceTrack(newTrack).catch(() => {});
+      });
+
+      // Swap into the local stream shown to the user
+      const audioTracks = localStreamRef.current?.getAudioTracks() ?? [];
+      vt.stop();
+      const combined = new MediaStream([newTrack, ...audioTracks]);
+      localStreamRef.current = combined;
+      cameraVideoTrackRef.current = newTrack;
+      setLocalStream(combined);
+    } catch (err) {
+      console.warn("flipCamera fallback failed:", err);
+      window.dispatchEvent(new CustomEvent("pulse:call-error", { detail: { message: "Не удалось переключить камеру" } }));
+    }
+  }, []);
+
   // ── Re-acquire camera mid-call (e.g., user toggles video back on) ────────
   const reacquireCamera = useCallback(async () => {
     if (!navigator.mediaDevices?.getUserMedia) return;
@@ -1051,6 +1126,7 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
     startScreenShare,
     stopScreenShare,
     reacquireCamera,
+    flipCamera,
     localStream,
     remoteStream,
     remoteStreams,

@@ -5,7 +5,7 @@ import {
   Plus, Trash2, Key, BadgeCheck, X, ShieldCheck, ShieldOff, MessageSquare,
   PhoneCall, Gift, Crown, Megaphone, BarChart3, Activity, Star,
   Edit3, Save, ChevronDown, ChevronRight, ChevronLeft, Minus, Ban, FileText, Trophy, Image, Package,
-  ShieldAlert, Clock, CheckCircle2, Bug, Inbox, Send as SendIcon
+  ShieldAlert, Clock, CheckCircle2, Bug, Inbox, Send as SendIcon, Download
 } from "lucide-react";
 
 interface AdminUser {
@@ -244,6 +244,7 @@ export default function Admin() {
   interface AdminBugReport {
     id: number; title: string; description: string; category: string; status: string;
     platform_info: string | null; admin_note: string | null; created_at: string;
+    screenshot_url: string | null;
     username: string; display_name: string; avatar_color: string; avatar_url: string | null;
   }
   interface AdminSupportTicket {
@@ -1714,6 +1715,32 @@ export default function Admin() {
                         </div>
                         {bug.admin_note && (
                           <div className="pl-9 text-[10px] text-primary italic">Ответ: {bug.admin_note}</div>
+                        )}
+                        {bug.screenshot_url && (
+                          <div className="pl-9">
+                            <a
+                              href={bug.screenshot_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="block relative w-fit group"
+                            >
+                              <img
+                                src={bug.screenshot_url}
+                                alt="Скриншот бага"
+                                className="max-h-40 rounded-lg border border-border object-cover"
+                              />
+                              <span className="absolute inset-0 rounded-lg bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                <span className="text-[10px] font-bold text-white">Открыть</span>
+                              </span>
+                            </a>
+                            <a
+                              href={bug.screenshot_url}
+                              download={`bug-${bug.id}-screenshot.jpg`}
+                              className="mt-1 inline-flex items-center gap-1 text-[10px] text-primary hover:underline"
+                            >
+                              <Download size={11} /> Скачать фото
+                            </a>
+                          </div>
                         )}
                         <div className="pl-9 space-y-1.5">
                           {(bug.status !== 'resolved' && bug.status !== 'closed') && (

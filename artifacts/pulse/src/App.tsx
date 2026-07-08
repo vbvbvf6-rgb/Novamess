@@ -20,6 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { WhatsNewModal } from "@/components/WhatsNewModal";
 import { OnboardingModal } from "@/components/OnboardingModal";
+import { LoginSplash } from "@/components/LoginSplash";
 
 import Home from "@/pages/Home";
 import Calls from "@/pages/Calls";
@@ -546,6 +547,8 @@ function App() {
     return () => window.removeEventListener("pulse:unauthorized", handleUnauthorized);
   }, []);
 
+  const [showLoginSplash, setShowLoginSplash] = useState(false);
+
   const persistAndSwitch = (id: number) => {
     queryClient.clear();
     setUserId(id);
@@ -563,6 +566,7 @@ function App() {
       token: token || undefined,
     });
     sessionStorage.setItem("pulse-tab-owned", "1");
+    setShowLoginSplash(true);
     persistAndSwitch(id);
   };
 
@@ -682,6 +686,9 @@ function App() {
         </WouterRouter>
       </QueryClientProvider>
     </LanguageProvider>
+    <AnimatePresence>
+      {showLoginSplash && <LoginSplash onDone={() => setShowLoginSplash(false)} />}
+    </AnimatePresence>
     </ErrorBoundary>
     </div>
   );

@@ -1268,8 +1268,8 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
                     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
                     if (e.key === "Escape") { onCancelReply?.(); onCancelEdit?.(); setShowEmoji(false); }
                   }}
-                  placeholder={editMessage ? "Редактировать..." : imagePreviews.length > 0 ? "Подпись..." : "Написать сообщение..."}
-                  className="flex-1 bg-transparent border-none resize-none max-h-36 min-h-[44px] py-3 px-2 focus:outline-none text-[15px] font-medium placeholder:text-muted-foreground/60 leading-normal overflow-hidden"
+                  placeholder={editMessage ? "Редактировать..." : imagePreviews.length > 0 ? "Подпись..." : "Сообщение..."}
+                  className="flex-1 min-w-0 bg-transparent border-none resize-none max-h-36 min-h-[44px] py-3 px-2 focus:outline-none text-[15px] font-medium placeholder:text-muted-foreground/60 placeholder:whitespace-nowrap placeholder:overflow-hidden placeholder:text-ellipsis leading-normal overflow-hidden"
                   rows={1}
                   style={{ height: "44px" }}
                   onFocus={() => { setShowEmoji(false); }}

@@ -215,7 +215,7 @@ export function ActiveCall() {
   const {
     activeCall, currentUserId, hangUp,
     localStream, remoteStream, remoteStreams,
-    isScreenSharing, startScreenShare, stopScreenShare, reacquireCamera,
+    isScreenSharing, startScreenShare, stopScreenShare, reacquireCamera, flipCamera,
     isCallMinimized, minimizeCall, expandCall,
   } = useAppContext();
 
@@ -463,13 +463,7 @@ export function ActiveCall() {
   };
 
   const handleFlipCamera = () => {
-    if (localStream) {
-      const vt = localStream.getVideoTracks()[0];
-      if (vt) {
-        const current = vt.getSettings().facingMode;
-        vt.applyConstraints({ facingMode: current === "environment" ? "user" : "environment" }).catch(() => {});
-      }
-    }
+    void flipCamera();
   };
 
   const formatDuration = (s: number) =>

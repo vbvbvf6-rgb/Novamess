@@ -1146,7 +1146,7 @@ export default function Settings() {
   const videoAvatarRef = useRef<HTMLInputElement>(null);
   const [cancelPrimeLoading, setCancelPrimeLoading] = useState(false);
 
-  const saveAvatarUrl = async (compressed: string) => {
+  const saveAvatarUrl = async (compressed: string, attempt = 1): Promise<void> => {
     setAvatarUrl(compressed);
     const token = sessionStorage.getItem("pulse-token");
     try {
@@ -1155,11 +1155,23 @@ export default function Settings() {
         headers: { "Content-Type": "application/json", ...(token ? { "Authorization": `Bearer ${token}` } : {}) },
         body: JSON.stringify({ avatarUrl: compressed }),
       });
-      if (!res.ok) throw new Error(String(res.status));
+      if (!res.ok) {
+        // Cold-start / transient failures (server waking up, gateway timeout) — retry a couple of times
+        if ((res.status === 503 || res.status === 502 || res.status === 504) && attempt < 3) {
+          await new Promise((r) => setTimeout(r, 1500 * attempt));
+          return saveAvatarUrl(compressed, attempt + 1);
+        }
+        throw new Error(String(res.status));
+      }
       await res.json();
       queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
       toast({ title: lang === "ru" ? "Фото обновлено" : "Photo updated" });
-    } catch {
+    } catch (err) {
+      // Network error (e.g. server still waking up) — also worth a couple retries
+      if (attempt < 3 && err instanceof TypeError) {
+        await new Promise((r) => setTimeout(r, 1500 * attempt));
+        return saveAvatarUrl(compressed, attempt + 1);
+      }
       toast({ title: t("settings.saveError"), variant: "destructive" });
     }
   };

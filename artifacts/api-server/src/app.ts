@@ -98,7 +98,7 @@ app.use(cors({
 // Large file uploads (/api/messages) get 5min; all other routes get 60s
 app.use((req: Request, res: Response, next: NextFunction) => {
   if (req.path.endsWith("/events")) return next();
-  const isUpload = req.path.startsWith("/api/messages") || req.path.startsWith("/api/upload");
+  const isUpload = req.path.startsWith("/api/messages") || req.path.startsWith("/api/upload") || req.path.startsWith("/api/users/me") || req.path.startsWith("/api/stories");
   const timeoutMs = isUpload ? 5 * 60_000 : 60_000;
   const timer = setTimeout(() => {
     if (!res.headersSent) {

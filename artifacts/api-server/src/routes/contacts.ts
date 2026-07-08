@@ -19,11 +19,32 @@ router.get("/contacts", async (req, res) => {
   try {
     const uid = req.currentUserId;
     const contacts = await db
-      .select({ user: usersTable })
+      .select({ user: usersTable, nickname: contactsTable.nickname })
       .from(contactsTable)
       .innerJoin(usersTable, eq(contactsTable.contactId, usersTable.id))
       .where(eq(contactsTable.userId, uid));
-    res.json(contacts.map(c => c.user));
+    res.json(contacts.map(c => ({ ...c.user, nickname: c.nickname ?? null })));
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Set/clear a private nickname for a contact — visible only to the owner (req.currentUserId).
+router.put("/contacts/:contactId/nickname", async (req, res) => {
+  try {
+    const uid = req.currentUserId;
+    const contactId = Number(req.params.contactId);
+    if (!Number.isFinite(contactId)) return res.status(400).json({ error: "Invalid contact id" });
+    const raw = typeof req.body?.nickname === "string" ? req.body.nickname.trim() : "";
+    const nickname = raw.length > 0 ? raw.slice(0, 64) : null;
+    const [updated] = await db
+      .update(contactsTable)
+      .set({ nickname })
+      .where(and(eq(contactsTable.userId, uid), eq(contactsTable.contactId, contactId)))
+      .returning();
+    if (!updated) return res.status(404).json({ error: "Contact not found" });
+    res.json({ contactId, nickname });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });
