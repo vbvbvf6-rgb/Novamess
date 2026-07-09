@@ -21,6 +21,8 @@ export const pool = new Pool({
   max: 20,
   idleTimeoutMillis: 30_000,
   connectionTimeoutMillis: 10_000,
+  // Force IPv4 — Render free tier does not route IPv6
+  family: 4,
   ...sslConfig,
 });
 
