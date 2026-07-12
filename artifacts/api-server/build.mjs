@@ -60,7 +60,10 @@ async function buildAll() {
       "@mikro-orm/*",
       "@grpc/*",
       "@swc/*",
-      "@aws-sdk/*",
+      // @aws-sdk/client-s3 IS used (lib/objectStorage.ts) and is pure JS with no native
+      // bindings, so it's bundled rather than externalized. Externalizing it relies on
+      // node_modules being resolvable at runtime, which some hosts (e.g. Render) don't
+      // reliably preserve between the build and run stages for pnpm's symlinked layout.
       "@azure/*",
       "@opentelemetry/*",
       "@google-cloud/*",
