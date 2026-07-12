@@ -14,3 +14,4 @@ export * from "./spark_activity";
 export * from "./banwords";
 export * from "./platform_events";
 export * from "./system_announcements";
+export * from "./gifts";
