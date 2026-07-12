@@ -31,6 +31,18 @@ A Telegram-inspired messenger app called Pulse, featuring real-time-style chats,
 - `artifacts/api-server/src/routes/` — Express route handlers
 - `artifacts/pulse/src/` — React frontend (pages, components, contexts)
 
+## Media storage (object storage, optional)
+
+By default, uploaded media (message photos/videos/voice, avatars, chat/group avatars, stories, support screenshots) is stored inline in Postgres as base64 — simple, but it fills up the database fast (one video can weigh more in the DB than the file itself).
+
+Set these env vars to offload new uploads to any S3-compatible object storage (Cloudflare R2, Backblaze B2, Supabase Storage, AWS S3, etc.) instead — the DB then stores only a URL:
+
+- `S3_ENDPOINT`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_PUBLIC_URL_BASE` (required together; optional `S3_REGION`, defaults to `auto`)
+- If any is missing, the app automatically falls back to storing inline (current Replit dev environment has none set — this is expected in dev).
+- Logic lives in `artifacts/api-server/src/lib/objectStorage.ts` (`offloadDataUrl`), called from the message/story/avatar/chat-avatar/support-report write paths.
+- To move already-stored base64 files out of the DB after configuring storage: `pnpm --filter @workspace/scripts run migrate-media` (see `scripts/src/migrate-media-to-object-storage.ts`).
+- Switching Postgres providers later (Supabase → Neon → anywhere) needs no code changes — it's a plain `DATABASE_URL` connection string; use `pg_dump`/`pg_restore` to move data. See `DEPLOY.md` for step-by-step instructions (in Russian, matching the project's existing docs).
+
 ## Architecture decisions
 
 - **Auth**: Full JWT auth system. Tokens stored in `sessionStorage` (`pulse-token`). All frontend requests send `Authorization: Bearer <token>`. Account list stored in `localStorage` (`pulse-accounts`) for cross-tab account switching. Each browser tab owns its session independently (`pulse-tab-owned` in sessionStorage). Token TTL: 30 days, bcrypt SALT_ROUNDS=12.

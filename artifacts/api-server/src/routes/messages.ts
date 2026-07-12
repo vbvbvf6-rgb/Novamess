@@ -7,6 +7,7 @@ import { spawn } from "node:child_process";
 import { broadcastToChat, broadcastToUser } from "../lib/sse";
 import { sendPushToUser } from "./push";
 import { SendMessageBody, EditMessageBody, AddReactionBody } from "@workspace/api-zod";
+import { offloadDataUrl } from "../lib/objectStorage";
 
 // Global Pollinations rate limiter — max 1 concurrent request per server process
 let _pollinationsLocked = false;
@@ -452,12 +453,14 @@ router.post("/messages", async (req, res) => {
       if (isPrimePlus) allowedEffect = effect;
     }
 
+    const offloadedMediaUrl = await offloadDataUrl(body.mediaUrl, "messages");
+
     const [msg] = await db.insert(messagesTable).values({
       chatId: body.chatId,
       senderId: uid,
       text: body.text,
       type: body.type ?? "text",
-      mediaUrl: body.mediaUrl,
+      mediaUrl: offloadedMediaUrl,
       replyToId: body.replyToId,
       effect: allowedEffect,
     }).returning();

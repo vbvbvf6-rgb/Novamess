@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { db, usersTable } from "@workspace/db";
 import { eq, sql } from "drizzle-orm";
+import { offloadDataUrl } from "../lib/objectStorage";
 
 const router = Router();
 
@@ -14,12 +15,14 @@ router.post("/support/bugs", async (req, res) => {
     if (title.length > 200) return res.status(400).json({ error: "Заголовок слишком длинный" });
     if (description.length > 5000) return res.status(400).json({ error: "Описание слишком длинное" });
 
+    const offloadedScreenshotUrl = await offloadDataUrl(screenshotUrl, "support");
+
     const rows = await db.execute(sql`
       ALTER TABLE bug_reports ADD COLUMN IF NOT EXISTS screenshot_url TEXT
     `).catch(() => {});
     const rows2 = await db.execute(sql`
       INSERT INTO bug_reports (user_id, title, description, category, platform_info, screenshot_url)
-      VALUES (${uid}, ${title.trim()}, ${description.trim()}, ${category || 'other'}, ${platformInfo || null}, ${screenshotUrl || null})
+      VALUES (${uid}, ${title.trim()}, ${description.trim()}, ${category || 'other'}, ${platformInfo || null}, ${offloadedScreenshotUrl || null})
       RETURNING id, title, category, status, created_at
     `);
     res.status(201).json({ success: true, report: rows2.rows[0] });

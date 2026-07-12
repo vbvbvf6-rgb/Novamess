@@ -35,3 +35,21 @@ services:
         sync: false
       - key: TURN_CRED
         sync: false
+
+      # ── Объектное хранилище для медиа (фото/видео/голос/аватары/истории) ───
+      # Без этих переменных медиа хранится прямо в Postgres как base64 и база
+      # быстро заканчивается. С ними — файлы уходят в S3-совместимое хранилище
+      # (Cloudflare R2, Backblaze B2, Supabase Storage и т.п.), а в базе остаётся
+      # только ссылка. См. DEPLOY.md, раздел "Объектное хранилище".
+      - key: S3_ENDPOINT
+        sync: false
+      - key: S3_BUCKET
+        sync: false
+      - key: S3_ACCESS_KEY_ID
+        sync: false
+      - key: S3_SECRET_ACCESS_KEY
+        sync: false
+      - key: S3_PUBLIC_URL_BASE
+        sync: false
+      - key: S3_REGION
+        sync: false

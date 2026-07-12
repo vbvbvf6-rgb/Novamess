@@ -2,6 +2,7 @@ import { Router } from "express";
 import { db, usersTable } from "@workspace/db";
 import { eq, like, or, sql } from "drizzle-orm";
 import { UpdateMeBody } from "@workspace/api-zod";
+import { offloadDataUrl } from "../lib/objectStorage";
 
 const router = Router();
 
@@ -47,8 +48,9 @@ router.put("/users/me", async (req, res) => {
       : typeof raw.status_text === "string"
         ? raw.status_text
         : body.statusText;
+    const offloadedAvatarUrl = avatarUrl !== undefined ? await offloadDataUrl(avatarUrl, "avatars") : undefined;
     const updateData: Record<string, unknown> = { ...body };
-    if (avatarUrl !== undefined) updateData.avatarUrl = avatarUrl;
+    if (offloadedAvatarUrl !== undefined) updateData.avatarUrl = offloadedAvatarUrl;
     if (statusText !== undefined) updateData.statusText = statusText;
     const [updated] = await db.update(usersTable).set(updateData as any).where(eq(usersTable.id, uid)).returning();
     const rows = await db.execute(sql`SELECT balance, username_changed_at, has_prime, prime_tier, prime_expires_at FROM users WHERE id = ${uid}`);

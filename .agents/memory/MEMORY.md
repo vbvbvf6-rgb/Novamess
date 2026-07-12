@@ -1,3 +1,4 @@
+- [Object storage media offload](object-storage-media-offload.md) — media moved from inline Postgres base64 to S3-compatible storage via `offloadDataUrl()`; no free Postgres tier is "unlimited", so this is the real fix.
 - [App rebranding](rebrand-nova.md) — App renamed from "Pulse"/"Aether" → "Nova" → "Aura" → back to "Nova"; internal localStorage/sessionStorage keys intentionally keep "pulse-"/"nova-" prefix to avoid logging out existing users.
 - [PWA offline updates](pwa-update-flow.md) — SW no longer auto-calls skipWaiting(); instead waits for user to confirm via toast banner; hook in src/hooks/useServiceWorkerUpdate.ts + PwaUpdateBanner in App.tsx.
 - [Drizzle-kit push interactive hang](drizzle-prod-push.md) — drizzle-kit push is interactive and hangs when prompted; use direct SQL for schema additions. For fresh DB: run SQL files via psql: `psql "$DATABASE_URL" -f lib/db/drizzle/0000_*.sql` etc.

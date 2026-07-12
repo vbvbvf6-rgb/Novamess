@@ -3,6 +3,7 @@ import { db, storiesTable, storyViewsTable, usersTable, contactsTable } from "@w
 import { eq, and, gt, inArray, desc, count } from "drizzle-orm";
 import { CreateStoryBody } from "@workspace/api-zod";
 import { getBanwords, findBanword } from "../lib/banwords";
+import { offloadDataUrl } from "../lib/objectStorage";
 
 const router = Router();
 
@@ -67,10 +68,12 @@ router.post("/stories", async (req, res) => {
       }
     }
 
+    const offloadedMediaUrl = await offloadDataUrl(body.mediaUrl, "stories");
+
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
     const [story] = await db.insert(storiesTable).values({
       userId: uid,
-      mediaUrl: body.mediaUrl,
+      mediaUrl: offloadedMediaUrl,
       type: body.type,
       text: body.text,
       backgroundColor: body.backgroundColor,

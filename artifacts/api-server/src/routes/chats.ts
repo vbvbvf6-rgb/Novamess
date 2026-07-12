@@ -3,6 +3,7 @@ import { db, chatsTable, chatMembersTable, usersTable, messagesTable, reactionsT
 import { eq, and, desc, inArray, count, gt, ne, sql } from "drizzle-orm";
 import { CreateChatBody, UpdateChatBody, AddChatMemberBody } from "@workspace/api-zod";
 import { broadcastToChat, setTyping, stopTyping } from "../lib/sse";
+import { offloadDataUrl } from "../lib/objectStorage";
 
 const router = Router();
 
@@ -525,7 +526,10 @@ router.put("/chats/:chatId", async (req, res) => {
     if (hasChatUpdate) {
       if (body.name !== undefined) await db.execute(sql`UPDATE chats SET name = ${body.name} WHERE id = ${chatId}`);
       if (body.description !== undefined) await db.execute(sql`UPDATE chats SET description = ${body.description} WHERE id = ${chatId}`);
-      if (body.avatarUrl !== undefined) await db.execute(sql`UPDATE chats SET avatar_url = ${body.avatarUrl} WHERE id = ${chatId}`);
+      if (body.avatarUrl !== undefined) {
+        const offloadedAvatarUrl = await offloadDataUrl(body.avatarUrl, "chat-avatars");
+        await db.execute(sql`UPDATE chats SET avatar_url = ${offloadedAvatarUrl} WHERE id = ${chatId}`);
+      }
       if (rawSlowMode !== undefined) await db.execute(sql`UPDATE chats SET slow_mode = ${rawSlowMode as number} WHERE id = ${chatId}`);
       if (rawWhoCanSend !== undefined) await db.execute(sql`UPDATE chats SET who_can_send = ${rawWhoCanSend as string} WHERE id = ${chatId}`);
       if (rawIsPublic !== undefined) await db.execute(sql`UPDATE chats SET is_public = ${rawIsPublic as boolean} WHERE id = ${chatId}`);
