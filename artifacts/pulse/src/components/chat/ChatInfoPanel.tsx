@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useQueryClient } from "@tanstack/react-query";
 import { getGetChatsQueryKey } from "@workspace/api-client-react";
 import { useAppContext } from "@/contexts/AppContext";
+import { useLastSeen } from "@/hooks/useLastSeen";
 
 function compressAvatar(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -41,6 +42,8 @@ interface Member {
     avatarColor: string;
     avatarUrl?: string | null;
     hasPrime?: boolean;
+    status?: string | null;
+    lastSeen?: string | null;
   };
 }
 
@@ -85,19 +88,37 @@ const SLOW_MODE_OPTIONS = [
   { value: 3600, label: "1 час" },
 ];
 
-function AvatarCircle({ name, color, url, size = 20, type }: {
-  name: string; color?: string; url?: string | null; size?: number; type?: string;
+function AvatarCircle({ name, color, url, size = 20, type, isOnline }: {
+  name: string; color?: string; url?: string | null; size?: number; type?: string; isOnline?: boolean;
 }) {
   return (
-    <div
-      className="rounded-full flex items-center justify-center text-white font-bold overflow-hidden shrink-0 relative"
-      style={{ width: size, height: size, backgroundColor: color || "#3B82F6", fontSize: size * 0.35 }}
-    >
-      <span className="absolute inset-0 flex items-center justify-center">
-        {type === "channel" ? <Radio size={size * 0.45} /> : type === "group" ? <Users size={size * 0.45} /> : name?.[0]?.toUpperCase() || "?"}
-      </span>
-      {url && <img src={url} alt={name} className="absolute inset-0 w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />}
+    <div className="relative shrink-0" style={{ width: size, height: size }}>
+      <div
+        className="rounded-full flex items-center justify-center text-white font-bold overflow-hidden shrink-0 relative"
+        style={{ width: size, height: size, backgroundColor: color || "#3B82F6", fontSize: size * 0.35 }}
+      >
+        <span className="absolute inset-0 flex items-center justify-center">
+          {type === "channel" ? <Radio size={size * 0.45} /> : type === "group" ? <Users size={size * 0.45} /> : name?.[0]?.toUpperCase() || "?"}
+        </span>
+        {url && <img src={url} alt={name} className="absolute inset-0 w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />}
+      </div>
+      {isOnline && (
+        <span
+          className="absolute rounded-full bg-emerald-500 border-2 border-background"
+          style={{ width: Math.max(8, size * 0.28), height: Math.max(8, size * 0.28), right: -1, bottom: -1 }}
+        />
+      )}
     </div>
+  );
+}
+
+function MemberStatus({ status, lastSeen }: { status?: string | null; lastSeen?: string | null }) {
+  const label = useLastSeen(lastSeen, status || undefined);
+  const isOnline = status === "online";
+  return (
+    <p className={`text-[10px] truncate ${isOnline ? "text-emerald-500 font-medium" : "text-muted-foreground"}`}>
+      {label}
+    </p>
   );
 }
 
@@ -108,7 +129,7 @@ export function ChatInfoPanel({
   slowMode, whoCanSend, isPublic, isMuted, onClose, onNameChanged, onDeleteChat, onToggleMute,
 }: ChatInfoPanelProps) {
   const queryClient = useQueryClient();
-  const { currentUserId, setSelectedChatId } = useAppContext();
+  const { currentUserId, setSelectedChatId, userStatusMap } = useAppContext();
   const [tab, setTab] = useState<Tab>("basic");
 
   const [members, setMembers] = useState<Member[]>([]);
@@ -712,7 +733,11 @@ export function ChatInfoPanel({
                       const order = { owner: 0, admin: 1, member: 2 };
                       return (order[a.role as keyof typeof order] ?? 3) - (order[b.role as keyof typeof order] ?? 3);
                     })
-                    .map(m => (
+                    .map(m => {
+                      const liveStatus = userStatusMap[m.user.id];
+                      const status = m.userId === currentUserId ? "online" : (liveStatus ?? m.user.status);
+                      const isOnline = status === "online";
+                      return (
                       <div
                         key={m.userId}
                         className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl hover:bg-secondary/50 transition-colors group"
@@ -722,6 +747,7 @@ export function ChatInfoPanel({
                           color={m.user.avatarColor}
                           url={m.user.avatarUrl}
                           size={36}
+                          isOnline={isOnline}
                         />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5">
@@ -731,6 +757,7 @@ export function ChatInfoPanel({
                             )}
                           </div>
                           <p className="text-xs text-muted-foreground truncate">@{m.user.username}</p>
+                          <MemberStatus status={status} lastSeen={m.user.lastSeen} />
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
                           {m.role === "owner" && (
@@ -769,7 +796,8 @@ export function ChatInfoPanel({
                           )}
                         </div>
                       </div>
-                    ))}
+                      );
+                    })}
                 </div>
               )}
             </motion.div>

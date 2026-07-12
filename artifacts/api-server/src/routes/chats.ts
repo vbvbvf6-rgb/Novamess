@@ -568,22 +568,40 @@ router.delete("/chats/:chatId", async (req, res) => {
 
 router.get("/chats/:chatId/members", async (req, res) => {
   try {
+    const requesterId = req.currentUserId;
     const chatId = Number(req.params.chatId);
     const members = await db
-      .select({ member: chatMembersTable, user: usersTable })
+      .select({
+        member: chatMembersTable,
+        user: {
+          id: usersTable.id,
+          username: usersTable.username,
+          displayName: usersTable.displayName,
+          avatarColor: usersTable.avatarColor,
+          avatarUrl: usersTable.avatarUrl,
+          status: usersTable.status,
+          lastSeen: usersTable.lastSeen,
+          showOnlineStatus: usersTable.showOnlineStatus,
+        },
+      })
       .from(chatMembersTable)
       .innerJoin(usersTable, eq(chatMembersTable.userId, usersTable.id))
       .where(eq(chatMembersTable.chatId, chatId));
 
-    // Attach prime info to each member
+    // Attach prime info to each member, and hide precise online status for
+    // members who disabled it in privacy settings (except for themselves).
     const membersWithPrime = await Promise.all(members.map(async m => {
+      const { showOnlineStatus, ...user } = m.user;
+      const visibleStatus = user.id === requesterId || showOnlineStatus
+        ? { status: user.status, lastSeen: user.lastSeen }
+        : { status: "offline", lastSeen: null };
       try {
-        const primeRow = await db.execute(sql`SELECT has_prime, prime_tier, prime_expires_at FROM users WHERE id = ${m.user.id}`);
+        const primeRow = await db.execute(sql`SELECT has_prime, prime_tier, prime_expires_at FROM users WHERE id = ${user.id}`);
         const pu = primeRow.rows[0] as any;
         const hasPrime = (pu?.has_prime === true || pu?.has_prime === "t") && pu?.prime_expires_at && new Date(pu.prime_expires_at) > new Date();
-        return { ...m.member, user: { ...m.user, hasPrime: !!hasPrime, primeTier: hasPrime ? pu?.prime_tier : null } };
+        return { ...m.member, user: { ...user, ...visibleStatus, hasPrime: !!hasPrime, primeTier: hasPrime ? pu?.prime_tier : null } };
       } catch {
-        return { ...m.member, user: m.user };
+        return { ...m.member, user: { ...user, ...visibleStatus } };
       }
     }));
 
