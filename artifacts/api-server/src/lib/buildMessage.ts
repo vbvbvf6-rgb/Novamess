@@ -15,7 +15,7 @@ export async function buildMessage(msg: typeof messagesTable.$inferSelect) {
     const reply = await db.query.messagesTable.findFirst({ where: eq(messagesTable.id, msg.replyToId) });
     if (reply) {
       const replySender = await db.query.usersTable.findFirst({ where: eq(usersTable.id, reply.senderId) });
-      replyTo = { ...reply, sender: replySender, reactions: [], replyTo: null, giftData: null };
+      replyTo = { ...reply, sender: replySender, reactions: [], replyTo: null };
     }
   }
 
@@ -24,6 +24,5 @@ export async function buildMessage(msg: typeof messagesTable.$inferSelect) {
     sender,
     reactions: reactions.map(r => ({ ...r.reaction, user: r.user })),
     replyTo,
-    giftData: null,
   };
 }
