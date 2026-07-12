@@ -5,8 +5,8 @@ import app from "./app";
 import { logger } from "./lib/logger";
 import { initSocketIO } from "./lib/socket";
 import { runSeed } from "./seed";
-import { db, messagesTable } from "@workspace/db";
-import { sql, and, eq, lte } from "drizzle-orm";
+import { db, messagesTable, storiesTable } from "@workspace/db";
+import { sql, and, eq, lte, lt } from "drizzle-orm";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { broadcastToChat } from "./lib/sse";
 import { runWeeklyScan } from "./routes/admin";
@@ -142,6 +142,21 @@ setInterval(async () => {
     logger.warn({ err }, "Auto-delete cleanup error");
   }
 }, 10_000);
+
+// ── Expired stories cleanup ────────────────────────────────────────────────
+// Stories are only ever filtered out of query results by expiresAt — the
+// rows (and their inline base64 media, when object storage isn't configured)
+// stayed in the database forever. Actually delete them once expired so the
+// table doesn't grow without bound.
+setInterval(async () => {
+  try {
+    // story_views has no ON DELETE CASCADE to stories, so clear child rows first.
+    await db.execute(sql`DELETE FROM story_views WHERE story_id IN (SELECT id FROM stories WHERE expires_at < NOW())`);
+    await db.delete(storiesTable).where(lt(storiesTable.expiresAt, new Date()));
+  } catch (err) {
+    logger.warn({ err }, "Expired stories cleanup error");
+  }
+}, 15 * 60 * 1000);
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 

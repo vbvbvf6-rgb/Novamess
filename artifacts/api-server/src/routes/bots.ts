@@ -2,6 +2,7 @@ import { Router } from "express";
 import { db } from "@workspace/db";
 import { sql } from "drizzle-orm";
 import crypto from "node:crypto";
+import { offloadDataUrl } from "../lib/objectStorage";
 
 const router = Router();
 
@@ -103,7 +104,7 @@ router.patch("/bots/:botId", async (req, res) => {
       await db.execute(sql`UPDATE users SET bio = ${bio} WHERE id = ${botId}`);
     }
     if (avatarUrl !== undefined) {
-      const av = avatarUrl || null;
+      const av = avatarUrl ? await offloadDataUrl(avatarUrl, "avatars") : null;
       await db.execute(sql`UPDATE users SET avatar_url = ${av} WHERE id = ${botId}`);
     }
 
