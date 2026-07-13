@@ -32,9 +32,12 @@ async function sendViaElasticEmail(opts: {
 
   const json = await res.json().catch(() => ({})) as any;
   if (!res.ok || !json?.success) {
-    logger.error({ status: res.status, error: json?.error }, "Elastic Email API error");
+    // Log full detail so Render logs show the exact Elastic Email error
+    console.error(`[mailer] Elastic Email FAILED: status=${res.status} error="${json?.error}" from="${opts.from}"`);
+    logger.error({ status: res.status, error: json?.error, from: opts.from }, "Elastic Email API error");
     return false;
   }
+  console.log(`[mailer] Elastic Email OK → ${opts.to}`);
   return true;
 }
 
@@ -205,7 +208,12 @@ export function isMailerConfigured(): boolean {
 /** Call once at startup to log mailer status. */
 export async function testMailerConnection(): Promise<void> {
   if (process.env.ELASTICEMAIL_API_KEY) {
-    console.log(`[mailer] Elastic Email configured — HTTP API, sender: ${getSenderAddress()}`);
+    const from = getSenderAddress();
+    if (from === "noreply@nova.app") {
+      console.warn("[mailer] WARNING: MAIL_FROM is not set — will use 'noreply@nova.app' which is NOT verified on Elastic Email. Set MAIL_FROM to your Elastic Email registration address!");
+    } else {
+      console.log(`[mailer] Elastic Email configured — sender: ${from}`);
+    }
     return;
   }
   if (process.env.BREVO_API_KEY) {
