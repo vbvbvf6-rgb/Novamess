@@ -1,7 +1,42 @@
 import nodemailer from "nodemailer";
 import { logger } from "./logger";
 
-// ── Resend (HTTP API — works on Render free tier) ──────────────────────────
+// ── Brevo (HTTP API — free 300/day, no domain needed, works on Render) ─────
+async function sendViaBrevo(opts: {
+  from: string;
+  fromName: string;
+  to: string;
+  subject: string;
+  text: string;
+  html: string;
+}): Promise<boolean> {
+  const apiKey = process.env.BREVO_API_KEY;
+  if (!apiKey) return false;
+
+  const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+    method: "POST",
+    headers: {
+      "api-key": apiKey,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      sender: { name: opts.fromName, email: opts.from },
+      to: [{ email: opts.to }],
+      subject: opts.subject,
+      textContent: opts.text,
+      htmlContent: opts.html,
+    }),
+  });
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    logger.error({ status: res.status, body }, "Brevo API error");
+    return false;
+  }
+  return true;
+}
+
+// ── Resend (HTTP API — works on Render, needs domain for mass sending) ──────
 async function sendViaResend(opts: {
   from: string;
   to: string;
@@ -35,7 +70,7 @@ async function sendViaResend(opts: {
   return true;
 }
 
-// ── SMTP fallback (Yandex / Gmail — blocked on Render free tier) ───────────
+// ── SMTP fallback (blocked on Render free tier) ────────────────────────────
 function createSmtpTransporter() {
   const smtpHost = process.env.SMTP_HOST;
   const smtpUser = process.env.SMTP_USER;
@@ -66,7 +101,6 @@ function createSmtpTransporter() {
 }
 
 function getSenderAddress(): string {
-  // Resend requires sending from a verified domain address
   return (
     process.env.MAIL_FROM ||
     process.env.SMTP_USER ||
@@ -75,25 +109,34 @@ function getSenderAddress(): string {
   );
 }
 
+function getSenderName(): string {
+  return process.env.MAIL_FROM_NAME || "Nova";
+}
+
 export function isMailerConfigured(): boolean {
+  const hasBrevo = !!process.env.BREVO_API_KEY;
   const hasResend = !!process.env.RESEND_API_KEY;
   const hasSmtp = !!(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
   const hasGmail = !!(process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD);
-  return hasResend || hasSmtp || hasGmail;
+  return hasBrevo || hasResend || hasSmtp || hasGmail;
 }
 
 /** Call once at startup to log mailer status. */
 export async function testMailerConnection(): Promise<void> {
+  if (process.env.BREVO_API_KEY) {
+    console.log(`[mailer] Brevo configured — HTTP API, sender: ${getSenderAddress()}`);
+    return;
+  }
   if (process.env.RESEND_API_KEY) {
-    console.log(`[mailer] Resend configured — HTTP API (works on Render free tier)`);
+    console.log(`[mailer] Resend configured — HTTP API, sender: ${getSenderAddress()}`);
     return;
   }
 
   const t = createSmtpTransporter();
   if (!t) {
     console.warn(
-      "[mailer] NOT configured — set RESEND_API_KEY (recommended for Render) " +
-      "or SMTP_HOST+SMTP_USER+SMTP_PASS / GMAIL_USER+GMAIL_APP_PASSWORD. Emails will not be sent."
+      "[mailer] NOT configured — set BREVO_API_KEY (recommended for Render free tier) " +
+      "or RESEND_API_KEY / SMTP_HOST+SMTP_USER+SMTP_PASS / GMAIL_USER+GMAIL_APP_PASSWORD"
     );
     return;
   }
@@ -116,29 +159,43 @@ async function sendMail(opts: {
   text: string;
   html: string;
 }): Promise<boolean> {
-  const from = `"Nova" <${getSenderAddress()}>`;
+  const from = getSenderAddress();
+  const fromName = getSenderName();
 
-  // 1. Try Resend first (HTTP — not blocked by Render)
+  // 1. Brevo — HTTP, free 300/day, no domain needed (recommended for Render)
+  if (process.env.BREVO_API_KEY) {
+    try {
+      const ok = await sendViaBrevo({ from, fromName, ...opts });
+      if (ok) {
+        logger.info({ to: opts.to }, "Email sent via Brevo");
+        return true;
+      }
+    } catch (err: any) {
+      logger.error({ errMessage: err?.message }, "Brevo send failed");
+    }
+  }
+
+  // 2. Resend — HTTP, needs domain for sending to arbitrary addresses
   if (process.env.RESEND_API_KEY) {
     try {
-      const ok = await sendViaResend({ from, ...opts });
+      const ok = await sendViaResend({ from: `${fromName} <${from}>`, ...opts });
       if (ok) {
         logger.info({ to: opts.to }, "Email sent via Resend");
         return true;
       }
     } catch (err: any) {
-      logger.error({ errMessage: err?.message }, "Resend send failed, falling back to SMTP");
+      logger.error({ errMessage: err?.message }, "Resend send failed");
     }
   }
 
-  // 2. SMTP fallback
+  // 3. SMTP fallback (not available on Render free tier)
   const t = createSmtpTransporter();
   if (!t) {
-    logger.warn("Mailer not configured — set RESEND_API_KEY or SMTP_HOST+SMTP_USER+SMTP_PASS or GMAIL_USER+GMAIL_APP_PASSWORD");
+    logger.warn("Mailer not configured — set BREVO_API_KEY or RESEND_API_KEY");
     return false;
   }
   try {
-    await t.sendMail({ from, ...opts });
+    await t.sendMail({ from: `"${fromName}" <${from}>`, ...opts });
     logger.info({ to: opts.to }, "Email sent via SMTP");
     return true;
   } catch (err: any) {
