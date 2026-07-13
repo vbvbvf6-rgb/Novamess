@@ -24,6 +24,12 @@ function DocIcon({ mime, name }: { mime: string; name: string }) {
 }
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
+import { prepareVideoForUpload } from "@/lib/mediaCompression";
+
+// No external object storage is configured — attachments are stored inline
+// in the database — so we reject absurdly large raw uploads outright
+// rather than let them bloat storage (compression handles the normal case).
+const MAX_RAW_FILE_BYTES = 200 * 1024 * 1024; // 200MB
 
 
 const EMOJI_CATEGORIES: { label: string; icon: string; emojis: string[] }[] = [
@@ -319,9 +325,14 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
     if (fileInputRef.current) fileInputRef.current.value = "";
     const images: File[] = [];
     const docs: File[] = [];
+    const oversized: File[] = [];
     for (const f of files) {
+      if (f.size > MAX_RAW_FILE_BYTES) { oversized.push(f); continue; }
       if (f.type.startsWith("image/") && !f.type.startsWith("image/svg")) images.push(f);
       else docs.push(f);
+    }
+    if (oversized.length > 0) {
+      toast({ title: "Файл слишком большой", description: `${oversized.map(f => f.name).join(", ")} — максимум 200 МБ.`, variant: "destructive" });
     }
     try {
       if (images.length > 0) {
@@ -334,7 +345,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
           name: f.name,
           size: f.size,
           mime: f.type || "application/octet-stream",
-          data: await readFileAsDataUrl(f),
+          data: f.type.startsWith("video/") ? await prepareVideoForUpload(f) : await readFileAsDataUrl(f),
         })));
         setDocPreviews(prev => [...prev, ...results]);
       }
@@ -674,14 +685,19 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
     setIsDragOver(false);
     const files = Array.from(e.dataTransfer.files);
     if (!files.length) return;
-    const images = files.filter(f => f.type.startsWith("image/") && !f.type.includes("svg"));
-    const docs = files.filter(f => !f.type.startsWith("image/") || f.type.includes("svg"));
+    const oversized = files.filter(f => f.size > MAX_RAW_FILE_BYTES);
+    const usable = files.filter(f => f.size <= MAX_RAW_FILE_BYTES);
+    if (oversized.length) {
+      toast({ title: "Файл слишком большой", description: `${oversized.map(f => f.name).join(", ")} — максимум 200 МБ.`, variant: "destructive" });
+    }
+    const images = usable.filter(f => f.type.startsWith("image/") && !f.type.includes("svg"));
+    const docs = usable.filter(f => !f.type.startsWith("image/") || f.type.includes("svg"));
     if (images.length) {
       const compressed = await Promise.all(images.map(f => compressImage(f)));
       setImagePreviews(prev => [...prev, ...compressed]);
     }
     for (const file of docs) {
-      const data = await readFileAsDataUrl(file);
+      const data = file.type.startsWith("video/") ? await prepareVideoForUpload(file) : await readFileAsDataUrl(file);
       setDocPreviews(prev => [...prev, { name: file.name, size: file.size, mime: file.type || "application/octet-stream", data }]);
     }
   };

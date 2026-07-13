@@ -29,3 +29,5 @@
 - [Account deletion column name](account-deletion-column.md) — user_reports table uses `target_id` (not `reported_id`); DELETE in users.ts must reference `target_id`.
 - [Body size limits](body-size-limits.md) — messages: 500MB, upload: 100MB, stories: 50MB, users/me: 50MB, support: 25MB. Large limits needed for base64-encoded file transfers. Limits apply before auth middleware (DoS note).
 - [Profile action buttons mobile](profile-action-buttons.md) — UserProfile.tsx action buttons use `flex-nowrap overflow-x-auto scrollbar-none` so they scroll horizontally on small screens instead of wrapping/squishing.
+- [No-card object storage options](no-card-object-storage.md) — Cloudflare R2 and Backblaze B2 both demand a card/billing verification despite advertised free tiers; Supabase Storage is the only S3-compatible option confirmed card-free (but only 1GB free).
+- [Client-side video compression](client-video-compression.md) — no external object storage in this app, so raw video uploads bloated Postgres; added canvas+MediaRecorder re-encode before upload with graceful fallback to raw file if unsupported/not smaller.
