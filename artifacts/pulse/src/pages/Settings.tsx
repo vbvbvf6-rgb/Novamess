@@ -13,7 +13,7 @@ import {
   Gift, PhoneCall, Monitor, Zap, AlertTriangle, X, Flame, Upload, Camera, Crown,
   ShieldCheck, QrCode, Fingerprint, LogIn, HelpCircle, RefreshCw,
   Battery, FolderOpen, ArrowLeft, Mic, Headphones, Bot,
-  SlidersHorizontal, Layers, Calendar, Play, FileText, MapPin
+  SlidersHorizontal, Layers, Calendar, Play, FileText, MapPin, Mail, SendHorizonal
 } from "lucide-react";
 import { APP_VERSION } from "@/lib/version";
 import { useLocation } from "wouter";
@@ -605,6 +605,212 @@ function SecurityQuestionSection({ lang, toast }: { lang: string; toast: any }) 
               ? (lang === "ru" ? "Сохраняем..." : "Saving...")
               : (lang === "ru" ? "Сохранить вопрос" : "Save question")}
           </button>
+        </div>
+      )}
+    </>
+  );
+}
+
+function EmailVerificationSection({ user, toast, lang, onVerified }: { user: any; toast: any; lang: string; onVerified?: () => void }) {
+  const email: string = user?.email ?? "";
+  const verified: boolean = user?.emailVerified === true || user?.email_verified === true;
+  const userId: number = user?.id;
+
+  const [mode, setMode] = React.useState<"idle" | "change" | "verify">("idle");
+  const [newEmail, setNewEmail] = React.useState("");
+  const [code, setCode] = React.useState("");
+  const [loading, setLoading] = React.useState(false);
+  const [err, setErr] = React.useState("");
+  const [cooldown, setCooldown] = React.useState(0);
+  const [success, setSuccess] = React.useState("");
+
+  React.useEffect(() => {
+    if (cooldown <= 0) return;
+    const t = setTimeout(() => setCooldown(c => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [cooldown]);
+
+  const token = () => sessionStorage.getItem("pulse-token") ?? "";
+  const authHdr = () => ({ "Authorization": `Bearer ${token()}`, "Content-Type": "application/json" });
+
+  // Change/set email
+  const handleSetEmail = async () => {
+    const raw = newEmail.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(raw)) { setErr(lang === "ru" ? "Некорректный email" : "Invalid email"); return; }
+    setLoading(true); setErr(""); setSuccess("");
+    try {
+      const res = await fetch("/api/users/me/email", { method: "PUT", headers: authHdr(), body: JSON.stringify({ email: raw }) });
+      const data = await res.json();
+      if (!res.ok) { setErr(data.error || "Ошибка"); return; }
+      if (data.codeSent) { setCooldown(60); setMode("verify"); setSuccess(""); }
+      else { toast({ title: lang === "ru" ? "Email сохранён" : "Email saved" }); setMode("idle"); onVerified?.(); }
+    } catch { setErr(lang === "ru" ? "Ошибка подключения" : "Connection error"); }
+    finally { setLoading(false); }
+  };
+
+  // Resend code (authenticated)
+  const handleResend = async () => {
+    if (cooldown > 0) return;
+    setLoading(true); setErr(""); setSuccess("");
+    try {
+      const res = await fetch("/api/users/me/email/resend", { method: "POST", headers: authHdr() });
+      const data = await res.json();
+      if (!res.ok) { setErr(data.error || "Ошибка"); return; }
+      setCooldown(60);
+      setSuccess(lang === "ru" ? "Код отправлен повторно" : "Code resent");
+    } catch { setErr(lang === "ru" ? "Ошибка подключения" : "Connection error"); }
+    finally { setLoading(false); }
+  };
+
+  // Verify code (uses public endpoint with userId)
+  const handleVerify = async () => {
+    if (code.trim().length !== 6) { setErr(lang === "ru" ? "Введите 6-значный код" : "Enter the 6-digit code"); return; }
+    setLoading(true); setErr(""); setSuccess("");
+    try {
+      const res = await fetch("/api/auth/verify-email", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, code: code.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setErr(data.error || "Неверный код"); return; }
+      toast({ title: lang === "ru" ? "✅ Email подтверждён!" : "✅ Email verified!" });
+      setMode("idle"); setCode(""); onVerified?.();
+    } catch { setErr(lang === "ru" ? "Ошибка подключения" : "Connection error"); }
+    finally { setLoading(false); }
+  };
+
+  // Open verify mode for already-saved-but-unverified email
+  const openVerify = async () => {
+    setErr(""); setSuccess(""); setCode("");
+    // Send a fresh code
+    setLoading(true);
+    try {
+      const res = await fetch("/api/users/me/email/resend", { method: "POST", headers: authHdr() });
+      const data = await res.json();
+      if (res.ok) { setCooldown(60); setSuccess(lang === "ru" ? "Код отправлен" : "Code sent"); }
+      else { setErr(data.error || "Ошибка"); }
+    } catch { setErr(lang === "ru" ? "Ошибка подключения" : "Connection error"); }
+    finally { setLoading(false); }
+    setMode("verify");
+  };
+
+  const statusBadge = email
+    ? verified
+      ? <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-500/15 text-green-400 border border-green-500/30"><CheckCircle size={9}/>{lang==="ru"?"Подтверждён":"Verified"}</span>
+      : <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30"><AlertTriangle size={9}/>{lang==="ru"?"Не подтверждён":"Unverified"}</span>
+    : null;
+
+  const headerDesc = email
+    ? verified
+      ? email
+      : `${email} · ${lang==="ru"?"нажмите для подтверждения":"tap to verify"}`
+    : lang==="ru" ? "Не указан · Нужен для сброса пароля" : "Not set · Needed for password reset";
+
+  return (
+    <>
+      <div className="p-4 flex items-center justify-between cursor-pointer hover:bg-secondary transition-colors border-t border-border/50"
+        onClick={() => { setErr(""); setSuccess(""); setNewEmail(email); setCode(""); setMode(m => m === "idle" ? (email && !verified ? "verify-menu" as any : "change") : "idle"); }}>
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-blue-500/10 text-blue-500 rounded-xl"><Mail size={18}/></div>
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <p className="text-sm font-medium">{lang==="ru"?"Email-адрес":"Email address"}</p>
+              {statusBadge}
+            </div>
+            <p className="text-xs text-muted-foreground truncate max-w-[200px]">{headerDesc}</p>
+          </div>
+        </div>
+        {mode !== "idle" ? <ChevronDown size={18} className="text-muted-foreground"/> : <ChevronRight size={18} className="text-muted-foreground"/>}
+      </div>
+
+      {mode !== "idle" && (
+        <div className="p-4 space-y-3 bg-background/50">
+          {/* Unverified email — choose: verify or change */}
+          {(mode as string) === "verify-menu" && (
+            <>
+              <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-xs text-amber-600 dark:text-amber-400 font-medium">
+                {lang==="ru"?"Ваш email ещё не подтверждён.":"Your email is not verified yet."}
+              </div>
+              <button onClick={openVerify} disabled={loading}
+                className="w-full py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50">
+                {loading ? "..." : lang==="ru"?"Подтвердить email":"Verify email"}
+              </button>
+              <button onClick={() => { setMode("change"); setNewEmail(email); }}
+                className="w-full py-2.5 bg-secondary text-foreground rounded-xl text-sm font-medium hover:bg-secondary/80 transition-colors">
+                {lang==="ru"?"Изменить email":"Change email"}
+              </button>
+            </>
+          )}
+
+          {/* Set / change email */}
+          {mode === "change" && (
+            <>
+              {email && !verified && (
+                <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-xs text-amber-600 dark:text-amber-400 font-medium">
+                  {lang==="ru"?"Текущий email не подтверждён:":"Current unverified email:"} <b>{email}</b>
+                </div>
+              )}
+              <div>
+                <Label className="text-sm mb-1 block">{lang==="ru"?"Новый email":"New email"}</Label>
+                <input
+                  type="email" value={newEmail}
+                  onChange={e => { setNewEmail(e.target.value); setErr(""); }}
+                  onKeyDown={e => e.key === "Enter" && handleSetEmail()}
+                  placeholder="you@example.com"
+                  className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
+                />
+              </div>
+              {err && <p className="text-xs text-destructive flex items-center gap-1"><AlertTriangle size={11}/>{err}</p>}
+              <button onClick={handleSetEmail} disabled={loading || !newEmail.trim()}
+                className="w-full py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+                <SendHorizonal size={15}/>
+                {loading ? (lang==="ru"?"Отправляем...":"Sending...") : lang==="ru"?"Отправить код":"Send code"}
+              </button>
+              {email && !verified && (
+                <button onClick={openVerify} className="w-full text-xs text-primary hover:text-primary/80 transition-colors">
+                  {lang==="ru"?"← Уже есть код? Ввести его":"← Already have a code? Enter it"}
+                </button>
+              )}
+            </>
+          )}
+
+          {/* Enter verification code */}
+          {mode === "verify" && (
+            <>
+              <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl text-xs text-blue-600 dark:text-blue-400 font-medium">
+                {lang==="ru"
+                  ? `Код отправлен на ${email}. Введите его ниже — он действует 30 минут.`
+                  : `Code sent to ${email}. Enter it below — valid for 30 minutes.`}
+              </div>
+              <div>
+                <Label className="text-sm mb-1 block">{lang==="ru"?"6-значный код":"6-digit code"}</Label>
+                <input
+                  type="text" inputMode="numeric" maxLength={6}
+                  value={code} onChange={e => { setCode(e.target.value.replace(/\D/g,"").slice(0,6)); setErr(""); }}
+                  onKeyDown={e => e.key === "Enter" && handleVerify()}
+                  placeholder="000000" autoFocus
+                  className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-center text-xl font-black tracking-[0.4em] text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary transition-colors"
+                />
+              </div>
+              {err && <p className="text-xs text-destructive flex items-center gap-1"><AlertTriangle size={11}/>{err}</p>}
+              {success && !err && <p className="text-xs text-green-500 font-semibold">{success}</p>}
+              <button onClick={handleVerify} disabled={loading || code.length !== 6}
+                className="w-full py-2.5 bg-green-600 text-white rounded-xl text-sm font-semibold hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+                <CheckCircle size={15}/>
+                {loading ? (lang==="ru"?"Проверяем...":"Checking...") : lang==="ru"?"Подтвердить email":"Verify email"}
+              </button>
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <button onClick={handleResend} disabled={cooldown > 0 || loading}
+                  className="text-xs text-primary hover:text-primary/80 transition-colors disabled:text-muted-foreground disabled:cursor-not-allowed">
+                  {cooldown > 0 ? (lang==="ru"?`Отправить ещё раз (${cooldown}с)`:`Resend (${cooldown}s)`) : lang==="ru"?"Отправить код ещё раз":"Resend code"}
+                </button>
+                <button onClick={() => { setMode("change"); setNewEmail(email); setCode(""); setErr(""); }}
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+                  {lang==="ru"?"Изменить email →":"Change email →"}
+                </button>
+              </div>
+            </>
+          )}
         </div>
       )}
     </>
@@ -2217,6 +2423,12 @@ export default function Settings() {
                 <TwoFaSection user={user} toast={toast} lang={lang}/>
                 <ScreenLockSection lang={lang} toast={toast}/>
                 <SecurityQuestionSection lang={lang} toast={toast}/>
+                <EmailVerificationSection
+                  user={user}
+                  toast={toast}
+                  lang={lang}
+                  onVerified={() => queryClient.invalidateQueries({ queryKey: ["/api/users/me"] })}
+                />
               </Section>
 
               {/* Data & Privacy section */}

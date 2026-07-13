@@ -3,6 +3,7 @@ import { db, usersTable } from "@workspace/db";
 import { eq, like, or, sql } from "drizzle-orm";
 import { UpdateMeBody } from "@workspace/api-zod";
 import { offloadDataUrl } from "../lib/objectStorage";
+import { sendVerificationEmail, isMailerConfigured } from "../lib/mailer";
 
 const router = Router();
 
@@ -339,6 +340,83 @@ router.get("/users/:userId/block", async (req, res) => {
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// ── Email management from settings ────────────────────────────────────────
+
+// In-memory cooldown: userId → last send timestamp
+const emailChangeCooldowns = new Map<number, number>();
+const EMAIL_CHANGE_COOLDOWN_MS = 60 * 1000;
+
+// Set or change email — marks as unverified and sends OTP
+router.put("/users/me/email", async (req, res) => {
+  try {
+    const uid = req.currentUserId;
+    const rawEmail = typeof req.body.email === "string" ? req.body.email.trim().toLowerCase() : "";
+    if (!rawEmail) return res.status(400).json({ error: "Email обязателен" });
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rawEmail)) {
+      return res.status(400).json({ error: "Некорректный email" });
+    }
+
+    // Check email not taken by another user
+    const taken = await db.execute(sql`SELECT id FROM users WHERE lower(email) = ${rawEmail} AND id != ${uid} LIMIT 1`);
+    if (taken.rows.length > 0) return res.status(409).json({ error: "Этот email уже используется другим аккаунтом" });
+
+    // Cooldown
+    const lastSent = emailChangeCooldowns.get(uid) ?? 0;
+    const waitMs = EMAIL_CHANGE_COOLDOWN_MS - (Date.now() - lastSent);
+    if (waitMs > 0) return res.status(429).json({ error: `Подождите ${Math.ceil(waitMs / 1000)} сек` });
+
+    if (!isMailerConfigured()) {
+      // Save email without verification (mailer not set up)
+      await db.execute(sql`UPDATE users SET email = ${rawEmail}, email_verified = false WHERE id = ${uid}`);
+      return res.json({ success: true, codeSent: false, message: "Email сохранён (подтверждение недоступно)" });
+    }
+
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    const expiry = new Date(Date.now() + 30 * 60 * 1000);
+    await db.execute(sql`
+      UPDATE users
+      SET email = ${rawEmail},
+          email_verified = false,
+          email_verification_code = ${code},
+          email_verification_expires_at = ${expiry.toISOString()}
+      WHERE id = ${uid}
+    `);
+    emailChangeCooldowns.set(uid, Date.now());
+    sendVerificationEmail(rawEmail, code).catch(() => {});
+    res.json({ success: true, codeSent: true });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Ошибка сервера" });
+  }
+});
+
+// Resend email verification code (from settings, user is authenticated)
+router.post("/users/me/email/resend", async (req, res) => {
+  try {
+    const uid = req.currentUserId;
+    const lastSent = emailChangeCooldowns.get(uid) ?? 0;
+    const waitMs = EMAIL_CHANGE_COOLDOWN_MS - (Date.now() - lastSent);
+    if (waitMs > 0) return res.status(429).json({ error: `Подождите ${Math.ceil(waitMs / 1000)} сек` });
+
+    const rows = await db.execute(sql`SELECT email, email_verified FROM users WHERE id = ${uid} LIMIT 1`);
+    const user = rows.rows[0] as any;
+    if (!user?.email) return res.status(400).json({ error: "Email не указан" });
+    if (user.email_verified === true || user.email_verified === "t") return res.status(400).json({ error: "Email уже подтверждён" });
+    if (!isMailerConfigured()) return res.status(503).json({ error: "Отправка писем временно недоступна" });
+
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    const expiry = new Date(Date.now() + 30 * 60 * 1000);
+    await db.execute(sql`UPDATE users SET email_verification_code = ${code}, email_verification_expires_at = ${expiry.toISOString()} WHERE id = ${uid}`);
+    emailChangeCooldowns.set(uid, Date.now());
+    const sent = await sendVerificationEmail(String(user.email), code);
+    if (!sent) return res.status(502).json({ error: "Не удалось отправить письмо" });
+    res.json({ success: true });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Ошибка сервера" });
   }
 });
 
