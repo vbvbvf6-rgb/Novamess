@@ -1,6 +1,85 @@
 import nodemailer from "nodemailer";
 import { logger } from "./logger";
 
+// ── Elastic Email (HTTP API — free 100/day, email-only signup, works from Russia) ─
+async function sendViaElasticEmail(opts: {
+  from: string;
+  fromName: string;
+  to: string;
+  subject: string;
+  text: string;
+  html: string;
+}): Promise<boolean> {
+  const apiKey = process.env.ELASTICEMAIL_API_KEY;
+  if (!apiKey) return false;
+
+  const params = new URLSearchParams({
+    apikey: apiKey,
+    from: opts.from,
+    fromName: opts.fromName,
+    to: opts.to,
+    subject: opts.subject,
+    bodyHtml: opts.html,
+    bodyText: opts.text,
+    isTransactional: "true",
+  });
+
+  const res = await fetch("https://api.elasticemail.com/v2/email/send", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: params.toString(),
+  });
+
+  const json = await res.json().catch(() => ({})) as any;
+  if (!res.ok || !json?.success) {
+    logger.error({ status: res.status, error: json?.error }, "Elastic Email API error");
+    return false;
+  }
+  return true;
+}
+
+// ── Mailjet (HTTP API — free 200/day, EU, no phone needed, works on Render) ─
+async function sendViaMailjet(opts: {
+  from: string;
+  fromName: string;
+  to: string;
+  subject: string;
+  text: string;
+  html: string;
+}): Promise<boolean> {
+  const apiKey = process.env.MAILJET_API_KEY;
+  const apiSecret = process.env.MAILJET_API_SECRET;
+  if (!apiKey || !apiSecret) return false;
+
+  const credentials = Buffer.from(`${apiKey}:${apiSecret}`).toString("base64");
+
+  const res = await fetch("https://api.mailjet.com/v3.1/send", {
+    method: "POST",
+    headers: {
+      Authorization: `Basic ${credentials}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      Messages: [
+        {
+          From: { Email: opts.from, Name: opts.fromName },
+          To: [{ Email: opts.to }],
+          Subject: opts.subject,
+          TextPart: opts.text,
+          HTMLPart: opts.html,
+        },
+      ],
+    }),
+  });
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    logger.error({ status: res.status, body }, "Mailjet API error");
+    return false;
+  }
+  return true;
+}
+
 // ── Brevo (HTTP API — free 300/day, no domain needed, works on Render) ─────
 async function sendViaBrevo(opts: {
   from: string;
@@ -114,15 +193,21 @@ function getSenderName(): string {
 }
 
 export function isMailerConfigured(): boolean {
+  const hasElastic = !!process.env.ELASTICEMAIL_API_KEY;
+  const hasMailjet = !!(process.env.MAILJET_API_KEY && process.env.MAILJET_API_SECRET);
   const hasBrevo = !!process.env.BREVO_API_KEY;
   const hasResend = !!process.env.RESEND_API_KEY;
   const hasSmtp = !!(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
   const hasGmail = !!(process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD);
-  return hasBrevo || hasResend || hasSmtp || hasGmail;
+  return hasElastic || hasMailjet || hasBrevo || hasResend || hasSmtp || hasGmail;
 }
 
 /** Call once at startup to log mailer status. */
 export async function testMailerConnection(): Promise<void> {
+  if (process.env.ELASTICEMAIL_API_KEY) {
+    console.log(`[mailer] Elastic Email configured — HTTP API, sender: ${getSenderAddress()}`);
+    return;
+  }
   if (process.env.BREVO_API_KEY) {
     console.log(`[mailer] Brevo configured — HTTP API, sender: ${getSenderAddress()}`);
     return;
@@ -135,8 +220,8 @@ export async function testMailerConnection(): Promise<void> {
   const t = createSmtpTransporter();
   if (!t) {
     console.warn(
-      "[mailer] NOT configured — set BREVO_API_KEY (recommended for Render free tier) " +
-      "or RESEND_API_KEY / SMTP_HOST+SMTP_USER+SMTP_PASS / GMAIL_USER+GMAIL_APP_PASSWORD"
+      "[mailer] NOT configured — set ELASTICEMAIL_API_KEY (recommended, no phone needed) " +
+      "or BREVO_API_KEY / RESEND_API_KEY / SMTP_HOST+SMTP_USER+SMTP_PASS"
     );
     return;
   }
@@ -162,7 +247,20 @@ async function sendMail(opts: {
   const from = getSenderAddress();
   const fromName = getSenderName();
 
-  // 1. Brevo — HTTP, free 300/day, no domain needed (recommended for Render)
+  // 1. Elastic Email — HTTP, free 100/day, email-only signup (no phone), works from Russia
+  if (process.env.ELASTICEMAIL_API_KEY) {
+    try {
+      const ok = await sendViaElasticEmail({ from, fromName, ...opts });
+      if (ok) {
+        logger.info({ to: opts.to }, "Email sent via Elastic Email");
+        return true;
+      }
+    } catch (err: any) {
+      logger.error({ errMessage: err?.message }, "Elastic Email send failed");
+    }
+  }
+
+  // 2. Brevo — HTTP, free 300/day, no domain needed
   if (process.env.BREVO_API_KEY) {
     try {
       const ok = await sendViaBrevo({ from, fromName, ...opts });
@@ -175,7 +273,7 @@ async function sendMail(opts: {
     }
   }
 
-  // 2. Resend — HTTP, needs domain for sending to arbitrary addresses
+  // 3. Resend — HTTP, needs domain for sending to arbitrary addresses
   if (process.env.RESEND_API_KEY) {
     try {
       const ok = await sendViaResend({ from: `${fromName} <${from}>`, ...opts });
@@ -188,10 +286,10 @@ async function sendMail(opts: {
     }
   }
 
-  // 3. SMTP fallback (not available on Render free tier)
+  // 4. SMTP fallback (not available on Render free tier)
   const t = createSmtpTransporter();
   if (!t) {
-    logger.warn("Mailer not configured — set BREVO_API_KEY or RESEND_API_KEY");
+    logger.warn("Mailer not configured — set ELASTICEMAIL_API_KEY or BREVO_API_KEY");
     return false;
   }
   try {
