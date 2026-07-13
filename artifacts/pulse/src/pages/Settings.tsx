@@ -2058,6 +2058,15 @@ export default function Settings() {
                 </div>
               </Section>
 
+              <Section title={lang==="ru"?"Email-адрес":"Email address"} icon={<Mail size={13}/>}>
+                <EmailVerificationSection
+                  user={user}
+                  toast={toast}
+                  lang={lang}
+                  onVerified={() => queryClient.invalidateQueries({ queryKey: ["/api/users/me"] })}
+                />
+              </Section>
+
               <Section title={t("settings.onlineStatus")} icon={<Radio size={13}/>}>
                 <div className="p-4">
                   <div className="grid grid-cols-3 gap-2">
@@ -2423,12 +2432,6 @@ export default function Settings() {
                 <TwoFaSection user={user} toast={toast} lang={lang}/>
                 <ScreenLockSection lang={lang} toast={toast}/>
                 <SecurityQuestionSection lang={lang} toast={toast}/>
-                <EmailVerificationSection
-                  user={user}
-                  toast={toast}
-                  lang={lang}
-                  onVerified={() => queryClient.invalidateQueries({ queryKey: ["/api/users/me"] })}
-                />
               </Section>
 
               {/* Data & Privacy section */}
