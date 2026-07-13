@@ -2,48 +2,91 @@ import nodemailer from "nodemailer";
 import { logger } from "./logger";
 
 function createTransporter() {
-  const user = process.env.GMAIL_USER;
-  const pass = process.env.GMAIL_APP_PASSWORD;
-  if (!user || !pass) return null;
-  return nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 465,
-    secure: true,
-    auth: { user, pass },
-  });
+  const smtpHost = process.env.SMTP_HOST;
+  const smtpUser = process.env.SMTP_USER;
+  const smtpPass = process.env.SMTP_PASS;
+  const smtpPort = parseInt(process.env.SMTP_PORT || "465", 10);
+
+  if (smtpHost && smtpUser && smtpPass) {
+    return nodemailer.createTransport({
+      host: smtpHost,
+      port: smtpPort,
+      secure: smtpPort === 465,
+      auth: { user: smtpUser, pass: smtpPass },
+    });
+  }
+
+  const gmailUser = process.env.GMAIL_USER;
+  const gmailPass = process.env.GMAIL_APP_PASSWORD;
+  if (gmailUser && gmailPass) {
+    return nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 465,
+      secure: true,
+      auth: { user: gmailUser, pass: gmailPass },
+    });
+  }
+
+  return null;
+}
+
+function getSenderAddress(): string {
+  return (
+    process.env.SMTP_USER ||
+    process.env.GMAIL_USER ||
+    "noreply@nova.app"
+  );
 }
 
 export function isMailerConfigured(): boolean {
-  return !!(process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD);
+  const hasSmtp = !!(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
+  const hasGmail = !!(process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD);
+  return hasSmtp || hasGmail;
 }
 
 /** Call once at startup to verify SMTP credentials — logs result clearly. */
 export async function testMailerConnection(): Promise<void> {
   const t = createTransporter();
   if (!t) {
-    console.warn("[mailer] NOT configured — GMAIL_USER / GMAIL_APP_PASSWORD missing. Emails will not be sent.");
+    console.warn(
+      "[mailer] NOT configured — set SMTP_HOST+SMTP_USER+SMTP_PASS (Yandex/any SMTP) " +
+      "or GMAIL_USER+GMAIL_APP_PASSWORD. Emails will not be sent."
+    );
     return;
   }
+  const provider = process.env.SMTP_HOST || "smtp.gmail.com";
+  const user = getSenderAddress();
   try {
     await t.verify();
-    console.log(`[mailer] SMTP connection OK — using Gmail (${process.env.GMAIL_USER})`);
+    console.log(`[mailer] SMTP connection OK — ${provider} (${user})`);
   } catch (err: any) {
-    console.error(`[mailer] SMTP connection FAILED: ${err?.message}. Code: ${err?.code}. Response: ${err?.response}`);
+    console.error(
+      `[mailer] SMTP connection FAILED: ${err?.message}. Code: ${err?.code}. Response: ${err?.response}`
+    );
   }
 }
 
-async function sendMail(opts: { to: string; subject: string; text: string; html: string }): Promise<boolean> {
+async function sendMail(opts: {
+  to: string;
+  subject: string;
+  text: string;
+  html: string;
+}): Promise<boolean> {
   const t = createTransporter();
   if (!t) {
-    logger.warn("Mailer not configured — set GMAIL_USER and GMAIL_APP_PASSWORD");
+    logger.warn("Mailer not configured — set SMTP_HOST+SMTP_USER+SMTP_PASS or GMAIL_USER+GMAIL_APP_PASSWORD");
     return false;
   }
+  const from = `"Nova" <${getSenderAddress()}>`;
   try {
-    await t.sendMail({ from: `"Nova" <${process.env.GMAIL_USER}>`, ...opts });
+    await t.sendMail({ from, ...opts });
     logger.info({ to: opts.to }, "Email sent");
     return true;
   } catch (err: any) {
-    logger.error({ errCode: err?.code, errResponse: err?.response, errMessage: err?.message }, "Failed to send email");
+    logger.error(
+      { errCode: err?.code, errResponse: err?.response, errMessage: err?.message },
+      "Failed to send email"
+    );
     return false;
   }
 }
