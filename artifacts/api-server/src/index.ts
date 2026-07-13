@@ -26,20 +26,33 @@ if (Number.isNaN(port) || port <= 0) {
 }
 
 // ── Auto-migrate on startup (production / Docker only) ────────────────────
-// In production the Dockerfile copies lib/db/drizzle/ → /app/migrations/.
-// In dev (Replit) the DB is managed by drizzle-kit push, so we skip this.
+// Strategy:
+//   • Fresh DB  → run migrate() to create all tables from scratch.
+//   • Existing DB → skip migrate() entirely; schema drift is handled by
+//     the ALTER TABLE IF NOT EXISTS block below, which runs every startup.
+//   This avoids the "relation already exists" error when Drizzle tries to
+//   re-apply CREATE TABLE statements that don't use IF NOT EXISTS.
 if (process.env.NODE_ENV === "production") {
-  // Docker mode: migrations/ is at /app/migrations (copied from lib/db/drizzle)
-  // Render Node.js mode: migrations live at lib/db/drizzle relative to project root
   const dockerPath = path.join(process.cwd(), "migrations");
   const nativePath = path.join(process.cwd(), "lib/db/drizzle");
   const migrationsFolder = fs.existsSync(dockerPath) ? dockerPath : nativePath;
   try {
-    logger.info({ migrationsFolder }, "Running DB migrations…");
-    await migrate(db, { migrationsFolder });
-    logger.info("DB migrations complete ✓");
+    // Check whether the DB is already initialised (users table exists)
+    const tableCheck = await db.execute(sql`
+      SELECT 1 FROM information_schema.tables
+      WHERE table_schema = 'public' AND table_name = 'users' LIMIT 1
+    `);
+    const dbAlreadyInitialised = tableCheck.rows.length > 0;
+
+    if (dbAlreadyInitialised) {
+      logger.info("DB already initialised — skipping migrate(), relying on ALTER TABLE drift fixes");
+    } else {
+      logger.info({ migrationsFolder }, "Fresh DB detected — running full migrations…");
+      await migrate(db, { migrationsFolder });
+      logger.info("DB migrations complete ✓");
+    }
   } catch (migErr) {
-    logger.warn({ err: migErr }, "DB migration warning (non-fatal) — server will continue");
+    logger.warn({ err: migErr }, "DB migration check warning (non-fatal) — server will continue");
   }
 }
 
