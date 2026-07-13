@@ -1,7 +1,42 @@
 import nodemailer from "nodemailer";
 import { logger } from "./logger";
 
-function createTransporter() {
+// ── Resend (HTTP API — works on Render free tier) ──────────────────────────
+async function sendViaResend(opts: {
+  from: string;
+  to: string;
+  subject: string;
+  text: string;
+  html: string;
+}): Promise<boolean> {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return false;
+
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: opts.from,
+      to: [opts.to],
+      subject: opts.subject,
+      text: opts.text,
+      html: opts.html,
+    }),
+  });
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    logger.error({ status: res.status, body }, "Resend API error");
+    return false;
+  }
+  return true;
+}
+
+// ── SMTP fallback (Yandex / Gmail — blocked on Render free tier) ───────────
+function createSmtpTransporter() {
   const smtpHost = process.env.SMTP_HOST;
   const smtpUser = process.env.SMTP_USER;
   const smtpPass = process.env.SMTP_PASS;
@@ -31,7 +66,9 @@ function createTransporter() {
 }
 
 function getSenderAddress(): string {
+  // Resend requires sending from a verified domain address
   return (
+    process.env.MAIL_FROM ||
     process.env.SMTP_USER ||
     process.env.GMAIL_USER ||
     "noreply@nova.app"
@@ -39,21 +76,28 @@ function getSenderAddress(): string {
 }
 
 export function isMailerConfigured(): boolean {
+  const hasResend = !!process.env.RESEND_API_KEY;
   const hasSmtp = !!(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
   const hasGmail = !!(process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD);
-  return hasSmtp || hasGmail;
+  return hasResend || hasSmtp || hasGmail;
 }
 
-/** Call once at startup to verify SMTP credentials — logs result clearly. */
+/** Call once at startup to log mailer status. */
 export async function testMailerConnection(): Promise<void> {
-  const t = createTransporter();
+  if (process.env.RESEND_API_KEY) {
+    console.log(`[mailer] Resend configured — HTTP API (works on Render free tier)`);
+    return;
+  }
+
+  const t = createSmtpTransporter();
   if (!t) {
     console.warn(
-      "[mailer] NOT configured — set SMTP_HOST+SMTP_USER+SMTP_PASS (Yandex/any SMTP) " +
-      "or GMAIL_USER+GMAIL_APP_PASSWORD. Emails will not be sent."
+      "[mailer] NOT configured — set RESEND_API_KEY (recommended for Render) " +
+      "or SMTP_HOST+SMTP_USER+SMTP_PASS / GMAIL_USER+GMAIL_APP_PASSWORD. Emails will not be sent."
     );
     return;
   }
+
   const provider = process.env.SMTP_HOST || "smtp.gmail.com";
   const user = getSenderAddress();
   try {
@@ -72,20 +116,35 @@ async function sendMail(opts: {
   text: string;
   html: string;
 }): Promise<boolean> {
-  const t = createTransporter();
+  const from = `"Nova" <${getSenderAddress()}>`;
+
+  // 1. Try Resend first (HTTP — not blocked by Render)
+  if (process.env.RESEND_API_KEY) {
+    try {
+      const ok = await sendViaResend({ from, ...opts });
+      if (ok) {
+        logger.info({ to: opts.to }, "Email sent via Resend");
+        return true;
+      }
+    } catch (err: any) {
+      logger.error({ errMessage: err?.message }, "Resend send failed, falling back to SMTP");
+    }
+  }
+
+  // 2. SMTP fallback
+  const t = createSmtpTransporter();
   if (!t) {
-    logger.warn("Mailer not configured — set SMTP_HOST+SMTP_USER+SMTP_PASS or GMAIL_USER+GMAIL_APP_PASSWORD");
+    logger.warn("Mailer not configured — set RESEND_API_KEY or SMTP_HOST+SMTP_USER+SMTP_PASS or GMAIL_USER+GMAIL_APP_PASSWORD");
     return false;
   }
-  const from = `"Nova" <${getSenderAddress()}>`;
   try {
     await t.sendMail({ from, ...opts });
-    logger.info({ to: opts.to }, "Email sent");
+    logger.info({ to: opts.to }, "Email sent via SMTP");
     return true;
   } catch (err: any) {
     logger.error(
       { errCode: err?.code, errResponse: err?.response, errMessage: err?.message },
-      "Failed to send email"
+      "Failed to send email via SMTP"
     );
     return false;
   }

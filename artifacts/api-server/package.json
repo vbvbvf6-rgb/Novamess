@@ -30,6 +30,7 @@
     "nodemailer": "^8.0.7",
     "pino": "^9",
     "pino-http": "^10",
+    "resend": "^6.17.2",
     "socket.io": "^4.8.3",
     "web-push": "^3.6.7"
   },
