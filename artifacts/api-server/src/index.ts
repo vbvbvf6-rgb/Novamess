@@ -72,11 +72,28 @@ process.on("SIGINT", () => shutdown("SIGINT"));
 
 runSeed().catch((err) => logger.error({ err }, "Seed failed"));
 
-// ── Add per-user soft-delete columns to calls table ───────────────────────
-db.execute(sql`ALTER TABLE calls ADD COLUMN IF NOT EXISTS hidden_for_caller BOOLEAN NOT NULL DEFAULT FALSE`)
-  .catch(() => {/* table may not exist yet in fresh envs */});
-db.execute(sql`ALTER TABLE calls ADD COLUMN IF NOT EXISTS hidden_for_callee BOOLEAN NOT NULL DEFAULT FALSE`)
-  .catch(() => {/* table may not exist yet in fresh envs */});
+// ── Schema drift fixes — run on every startup so production stays in sync ──
+const _schemaMigrations = (async () => {
+  const run = (q: ReturnType<typeof sql>) =>
+    db.execute(q).catch((e: any) => logger.warn({ msg: e?.message }, "migration skipped"));
+
+  // calls soft-delete
+  await run(sql`ALTER TABLE calls ADD COLUMN IF NOT EXISTS hidden_for_caller BOOLEAN NOT NULL DEFAULT FALSE`);
+  await run(sql`ALTER TABLE calls ADD COLUMN IF NOT EXISTS hidden_for_callee BOOLEAN NOT NULL DEFAULT FALSE`);
+
+  // contacts private nickname
+  await run(sql`ALTER TABLE contacts ADD COLUMN IF NOT EXISTS nickname TEXT`);
+
+  // email verification (registration OTP)
+  await run(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verification_code TEXT`);
+  await run(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verification_expires_at TIMESTAMP WITH TIME ZONE`);
+  await run(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAULT FALSE`);
+
+  // password reset via email
+  await run(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS password_reset_code TEXT`);
+  await run(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS password_reset_expires_at TIMESTAMP WITH TIME ZONE`);
+})();
+_schemaMigrations.catch((e) => logger.error({ err: e }, "Schema migration block failed"));
 
 // ── Contact requests table ─────────────────────────────────────────────────
 db.execute(sql`
