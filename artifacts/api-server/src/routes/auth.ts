@@ -6,7 +6,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { EFFECTIVE_JWT_SECRET, sanitizeString, invalidateSessionCache } from "../app";
 import { generateTotpSecret, verifyTotp, buildTotpUri } from "../lib/totp";
-import { sendVerificationEmail, isMailerConfigured } from "../lib/mailer";
+import { sendVerificationEmail, sendPasswordResetEmail, isMailerConfigured } from "../lib/mailer";
 
 const router = Router();
 const SALT_ROUNDS = 12;
@@ -671,6 +671,204 @@ router.post("/auth/reset-password", async (req, res) => {
 
     const newToken = signToken(user.id);
     res.json({ success: true, token: newToken });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Ошибка сервера" });
+  }
+});
+
+// ── Email-based password reset ─────────────────────────────────────────────
+// In-memory cooldown so users can't spam the reset code endpoint
+const resetCooldowns = new Map<number, number>();
+const RESET_COOLDOWN_MS = 60 * 1000;
+
+function signPasswordResetToken(userId: number): string {
+  return jwt.sign({ userId, passwordReset: true }, EFFECTIVE_JWT_SECRET, { expiresIn: "15m" });
+}
+
+// Step 1: look up user, return recovery options, send email code if possible
+router.post("/auth/forgot-password", async (req, res) => {
+  try {
+    const raw = String(req.body.username || "").trim().replace(/^@/, "");
+    if (!raw) return res.status(400).json({ error: "Укажите никнейм" });
+
+    const rows = await db.execute(
+      sql`SELECT id, email, email_verified, security_question
+          FROM users WHERE lower(username) = lower(${raw}) LIMIT 1`
+    );
+    const user = rows.rows[0] as any;
+    if (!user) return res.status(404).json({ error: "Пользователь не найден" });
+
+    const hasEmail = !!user.email;
+    const hasSecurityQuestion = !!user.security_question;
+
+    // Send reset code via email (fire-and-forget, non-blocking)
+    let codeSent = false;
+    if (hasEmail && isMailerConfigured()) {
+      const lastSent = resetCooldowns.get(user.id) ?? 0;
+      if (Date.now() - lastSent >= RESET_COOLDOWN_MS) {
+        const code = String(Math.floor(100000 + Math.random() * 900000));
+        const expiry = new Date(Date.now() + 15 * 60 * 1000);
+        await db.execute(
+          sql`UPDATE users SET password_reset_code = ${code}, password_reset_expires_at = ${expiry.toISOString()} WHERE id = ${user.id}`
+        );
+        resetCooldowns.set(user.id, Date.now());
+        sendPasswordResetEmail(String(user.email), code).catch(() => {});
+        codeSent = true;
+      }
+    }
+
+    const maskedEmail = hasEmail
+      ? (() => {
+          const [local, domain] = String(user.email).split("@");
+          const visible = local.length > 2 ? local.slice(0, 2) : local.slice(0, 1);
+          return `${visible}${"*".repeat(Math.max(2, local.length - 2))}@${domain}`;
+        })()
+      : null;
+
+    res.json({
+      userId: user.id,
+      hasEmail,
+      maskedEmail,
+      hasSecurityQuestion,
+      securityQuestion: user.security_question ?? null,
+      codeSent,
+    });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Ошибка сервера" });
+  }
+});
+
+// Resend password reset code
+router.post("/auth/forgot-password/resend", async (req, res) => {
+  try {
+    const uid = Number(req.body.userId);
+    if (!uid) return res.status(400).json({ error: "userId обязателен" });
+
+    const lastSent = resetCooldowns.get(uid) ?? 0;
+    const waitMs = RESET_COOLDOWN_MS - (Date.now() - lastSent);
+    if (waitMs > 0) {
+      return res.status(429).json({ error: `Подождите ${Math.ceil(waitMs / 1000)} сек` });
+    }
+
+    const rows = await db.execute(sql`SELECT id, email FROM users WHERE id = ${uid} LIMIT 1`);
+    const user = rows.rows[0] as any;
+    if (!user || !user.email) return res.status(404).json({ error: "Пользователь не найден или email не указан" });
+
+    if (!isMailerConfigured()) return res.status(503).json({ error: "Отправка писем временно недоступна" });
+
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    const expiry = new Date(Date.now() + 15 * 60 * 1000);
+    await db.execute(
+      sql`UPDATE users SET password_reset_code = ${code}, password_reset_expires_at = ${expiry.toISOString()} WHERE id = ${uid}`
+    );
+    resetCooldowns.set(uid, Date.now());
+    const sent = await sendPasswordResetEmail(String(user.email), code);
+    if (!sent) return res.status(502).json({ error: "Не удалось отправить письмо" });
+    res.json({ success: true });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Ошибка сервера" });
+  }
+});
+
+// Step 2a: verify email code → return short-lived resetToken
+router.post("/auth/reset-password-via-email/verify", async (req, res) => {
+  try {
+    const { userId, code } = req.body;
+    if (!userId || !code) return res.status(400).json({ error: "userId и code обязательны" });
+
+    const rows = await db.execute(
+      sql`SELECT id, password_reset_code, password_reset_expires_at FROM users WHERE id = ${Number(userId)} LIMIT 1`
+    );
+    const user = rows.rows[0] as any;
+    if (!user) return res.status(404).json({ error: "Пользователь не найден" });
+    if (!user.password_reset_code) return res.status(400).json({ error: "Код не запрашивался. Вернитесь и попробуйте снова." });
+    if (new Date(user.password_reset_expires_at) < new Date()) return res.status(400).json({ error: "Код истёк. Запросите новый." });
+    if (String(user.password_reset_code) !== String(code).trim()) return res.status(401).json({ error: "Неверный код" });
+
+    // Invalidate code after use
+    await db.execute(sql`UPDATE users SET password_reset_code = NULL, password_reset_expires_at = NULL WHERE id = ${Number(userId)}`);
+
+    res.json({ resetToken: signPasswordResetToken(Number(userId)) });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Ошибка сервера" });
+  }
+});
+
+// Step 2b: verify security question → return short-lived resetToken
+router.post("/auth/reset-password/verify-question", async (req, res) => {
+  try {
+    const { userId, answer } = req.body;
+    if (!userId || !answer) return res.status(400).json({ error: "userId и answer обязательны" });
+
+    const rows = await db.execute(
+      sql`SELECT id, security_answer FROM users WHERE id = ${Number(userId)} LIMIT 1`
+    );
+    const user = rows.rows[0] as any;
+    if (!user || !user.security_answer) return res.status(404).json({ error: "Контрольный вопрос не задан" });
+
+    const valid = await bcrypt.compare(String(answer).toLowerCase().trim(), user.security_answer);
+    if (!valid) return res.status(401).json({ error: "Неверный ответ на контрольный вопрос" });
+
+    res.json({ resetToken: signPasswordResetToken(Number(userId)) });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Ошибка сервера" });
+  }
+});
+
+// Step 3: set new password using resetToken
+router.post("/auth/reset-password-final", async (req, res) => {
+  try {
+    const { resetToken, newPassword } = req.body;
+    if (!resetToken || !newPassword) return res.status(400).json({ error: "Все поля обязательны" });
+
+    let payload: any;
+    try {
+      payload = jwt.verify(resetToken, EFFECTIVE_JWT_SECRET) as any;
+    } catch {
+      return res.status(401).json({ error: "Ссылка для сброса устарела. Начните заново." });
+    }
+    if (!payload.passwordReset) return res.status(400).json({ error: "Неверный токен" });
+
+    const passCheck = validatePassword(String(newPassword));
+    if (!passCheck.ok) return res.status(400).json({ error: passCheck.error });
+
+    const newHash = await bcrypt.hash(String(newPassword), SALT_ROUNDS);
+    await db.execute(sql`UPDATE users SET password_hash = ${newHash} WHERE id = ${payload.userId}`);
+
+    const rows = await db.execute(
+      sql`SELECT id, username, display_name, avatar_color, avatar_url, status FROM users WHERE id = ${payload.userId} LIMIT 1`
+    );
+    const user = rows.rows[0] as any;
+
+    const sessionId = randomUUID();
+    try {
+      const ua = req.headers["user-agent"] || "Unknown";
+      const ip = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.ip || "unknown";
+      await db.execute(sql`
+        INSERT INTO user_sessions (id, user_id, device, ip_address, created_at, last_active_at)
+        VALUES (${sessionId}, ${payload.userId}, ${ua.slice(0, 200)}, ${ip}, NOW(), NOW())
+      `);
+    } catch { /* non-fatal */ }
+
+    const token = signToken(payload.userId, sessionId);
+    res.json({
+      success: true,
+      token,
+      userId: payload.userId,
+      user: user ? {
+        id: user.id,
+        username: user.username,
+        displayName: user.display_name,
+        avatarColor: user.avatar_color,
+        avatarUrl: user.avatar_url,
+        status: user.status,
+      } : null,
+    });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Ошибка сервера" });

@@ -29,6 +29,31 @@ export function isMailerConfigured(): boolean {
   return !!(process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD);
 }
 
+export async function sendPasswordResetEmail(to: string, code: string): Promise<boolean> {
+  const t = getTransporter();
+  if (!t) return false;
+  try {
+    await t.sendMail({
+      from: `"Nova" <${process.env.GMAIL_USER}>`,
+      to,
+      subject: `${code} — сброс пароля Nova`,
+      text: `Код для сброса пароля: ${code}\n\nКод действителен 15 минут. Если вы не запрашивали сброс пароля — просто проигнорируйте это письмо.`,
+      html: `
+        <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px;">
+          <h2 style="color:#2563eb;">Сброс пароля</h2>
+          <p>Код для сброса пароля в Nova:</p>
+          <div style="font-size:32px;font-weight:bold;letter-spacing:6px;background:#f1f5f9;padding:16px 24px;border-radius:8px;text-align:center;margin:16px 0;">${code}</div>
+          <p style="color:#64748b;font-size:14px;">Код действителен 15 минут. Если вы не запрашивали сброс пароля — просто проигнорируйте это письмо.</p>
+        </div>
+      `,
+    });
+    return true;
+  } catch (err) {
+    logger.error({ err }, "Failed to send password reset email");
+    return false;
+  }
+}
+
 export async function sendVerificationEmail(to: string, code: string): Promise<boolean> {
   const t = getTransporter();
   if (!t) return false;

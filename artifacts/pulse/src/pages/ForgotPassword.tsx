@@ -1,28 +1,64 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Zap, Shield, HelpCircle, Eye, EyeOff, CheckCircle2, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, CheckCircle2, Mail, KeyRound, HelpCircle, ShieldCheck } from "lucide-react";
 import PulseLogo from "@/components/PulseLogo";
 
-type Step = "username" | "question" | "success" | "no-question";
+type Step = "username" | "choose" | "email-code" | "question" | "new-password" | "success";
+type Method = "email" | "question";
+
+function maskEmail(email: string): string {
+  const [local, domain] = email.split("@");
+  if (!domain) return email;
+  const visible = local.length > 2 ? local.slice(0, 2) : local.slice(0, 1);
+  return `${visible}${"*".repeat(Math.max(2, local.length - 2))}@${domain}`;
+}
 
 export default function ForgotPassword() {
   const [, navigate] = useLocation();
   const [step, setStep] = useState<Step>("username");
+  const [method, setMethod] = useState<Method>("email");
 
+  // username step
   const [username, setUsername] = useState("");
   const [usernameLoading, setUsernameLoading] = useState(false);
   const [usernameError, setUsernameError] = useState("");
 
+  // user info from lookup
+  const [userId, setUserId] = useState<number | null>(null);
+  const [maskedEmail, setMaskedEmail] = useState<string | null>(null);
+  const [hasEmail, setHasEmail] = useState(false);
+  const [hasQuestion, setHasQuestion] = useState(false);
   const [question, setQuestion] = useState("");
+
+  // email code step
+  const [code, setCode] = useState("");
+  const [codeError, setCcodeError] = useState("");
+  const [codeLoading, setCodeLoading] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [resendMsg, setResendMsg] = useState("");
+
+  // question step
   const [answer, setAnswer] = useState("");
+  const [questionError, setQuestionError] = useState("");
+  const [questionLoading, setQuestionLoading] = useState(false);
+
+  // new-password step (shared)
+  const [resetToken, setResetToken] = useState<string | null>(null);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [resetLoading, setResetLoading] = useState(false);
-  const [resetError, setResetError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordLoading, setPasswordLoading] = useState(false);
 
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const t = setTimeout(() => setResendCooldown(c => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [resendCooldown]);
+
+  // Step 1 — look up user and send email code if they have one
   const handleUsernameSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const raw = username.trim().replace(/^@/, "");
@@ -30,18 +66,32 @@ export default function ForgotPassword() {
     setUsernameLoading(true);
     setUsernameError("");
     try {
-      const res = await fetch(`/api/auth/security-question?username=${encodeURIComponent(raw)}`);
+      const res = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: raw }),
+      });
       const data = await res.json();
-      if (!res.ok) {
-        if (res.status === 404) {
-          setStep("no-question");
-        } else {
-          setUsernameError(data.error || "Пользователь не найден");
-        }
-        return;
+      if (!res.ok) { setUsernameError(data.error || "Пользователь не найден"); return; }
+
+      setUserId(data.userId);
+      setHasEmail(data.hasEmail);
+      setMaskedEmail(data.maskedEmail ?? null);
+      setHasQuestion(data.hasSecurityQuestion);
+      setQuestion(data.securityQuestion ?? "");
+
+      if (data.hasEmail && data.hasSecurityQuestion) {
+        setStep("choose");
+      } else if (data.hasEmail) {
+        setMethod("email");
+        setResendCooldown(60);
+        setStep("email-code");
+      } else if (data.hasSecurityQuestion) {
+        setMethod("question");
+        setStep("question");
+      } else {
+        setUsernameError("У этого аккаунта не указан email и не задан контрольный вопрос. Восстановление невозможно.");
       }
-      setQuestion(data.question);
-      setStep("question");
     } catch {
       setUsernameError("Ошибка подключения к серверу");
     } finally {
@@ -49,419 +99,349 @@ export default function ForgotPassword() {
     }
   };
 
-  const handleReset = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!answer.trim()) { setResetError("Введите ответ на контрольный вопрос"); return; }
-    if (newPassword.length < 6) { setResetError("Пароль должен быть не менее 6 символов"); return; }
-    if (newPassword !== confirmPassword) { setResetError("Пароли не совпадают"); return; }
-    setResetLoading(true);
-    setResetError("");
+  const chooseEmail = async () => {
+    setMethod("email");
+    setResendCooldown(60);
+    setStep("email-code");
+  };
+
+  const chooseQuestion = () => {
+    setMethod("question");
+    setStep("question");
+  };
+
+  // Resend email code
+  const handleResend = async () => {
+    if (resendCooldown > 0 || !userId) return;
+    setResendMsg("");
+    setCcodeError("");
     try {
-      const res = await fetch("/api/auth/reset-password", {
+      const res = await fetch("/api/auth/forgot-password/resend", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username: username.trim().replace(/^@/, ""),
-          answer: answer.trim(),
-          newPassword,
-        }),
+        body: JSON.stringify({ userId }),
       });
       const data = await res.json();
-      if (!res.ok) { setResetError(data.error || "Ошибка сброса пароля"); return; }
-      if (data.token) {
-        sessionStorage.setItem("pulse-token", data.token);
-        if (data.userId) {
-          sessionStorage.setItem("pulse-user-id", String(data.userId));
-          if (data.user) sessionStorage.setItem("pulse-user", JSON.stringify(data.user));
-          sessionStorage.setItem("pulse-tab-owned", "1");
-        }
-      }
-      setStep("success");
+      if (!res.ok) { setCcodeError(data.error || "Не удалось отправить"); return; }
+      setResendMsg("Код отправлен повторно");
+      setResendCooldown(60);
     } catch {
-      setResetError("Ошибка подключения к серверу");
-    } finally {
-      setResetLoading(false);
+      setCcodeError("Ошибка подключения");
     }
   };
 
+  // Step 3a — verify email code
+  const handleCodeSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (code.trim().length !== 6) { setCcodeError("Введите 6-значный код"); return; }
+    setCodeLoading(true);
+    setCcodeError("");
+    try {
+      const res = await fetch("/api/auth/reset-password-via-email/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, code: code.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setCcodeError(data.error || "Неверный код"); return; }
+      setResetToken(data.resetToken);
+      setStep("new-password");
+    } catch {
+      setCcodeError("Ошибка подключения");
+    } finally {
+      setCodeLoading(false);
+    }
+  };
+
+  // Step 3b — verify security question answer
+  const handleQuestionSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!answer.trim()) { setQuestionError("Введите ответ"); return; }
+    setQuestionLoading(true);
+    setQuestionError("");
+    try {
+      const res = await fetch("/api/auth/reset-password/verify-question", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, answer: answer.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setQuestionError(data.error || "Неверный ответ"); return; }
+      setResetToken(data.resetToken);
+      setStep("new-password");
+    } catch {
+      setQuestionError("Ошибка подключения");
+    } finally {
+      setQuestionLoading(false);
+    }
+  };
+
+  // Step 4 — set new password
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword.length < 8) { setPasswordError("Пароль должен быть не менее 8 символов"); return; }
+    if (newPassword !== confirmPassword) { setPasswordError("Пароли не совпадают"); return; }
+    setPasswordLoading(true);
+    setPasswordError("");
+    try {
+      const res = await fetch("/api/auth/reset-password-final", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resetToken, newPassword }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setPasswordError(data.error || "Ошибка сброса пароля"); return; }
+      if (data.token) {
+        sessionStorage.setItem("pulse-token", data.token);
+        if (data.userId) sessionStorage.setItem("pulse-user-id", String(data.userId));
+        if (data.user) sessionStorage.setItem("pulse-user", JSON.stringify(data.user));
+        sessionStorage.setItem("pulse-tab-owned", "1");
+      }
+      setStep("success");
+    } catch {
+      setPasswordError("Ошибка подключения");
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
+  const bg = (
+    <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+      <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] rounded-full blur-[120px] opacity-75 animate-[pulseGlow_7s_ease-in-out_infinite_alternate]"
+        style={{ background: "radial-gradient(circle, hsl(16 100% 50% / 0.22), transparent 70%)" }} />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full blur-[100px] opacity-65 animate-[pulseGlow_9s_ease-in-out_infinite_alternate-reverse]"
+        style={{ background: "radial-gradient(circle, hsl(262 80% 55% / 0.18), transparent 70%)" }} />
+    </div>
+  );
+
+  const cardClass = "w-full max-w-sm relative z-10";
+  const inputClass = "w-full bg-card/50 border border-border rounded-2xl px-5 py-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-[15px] font-medium";
+  const btnClass = "w-full text-primary-foreground font-black py-4 rounded-2xl transition-all text-[15px] disabled:opacity-50";
+
+  const ErrorBox = ({ msg }: { msg: string }) => msg ? (
+    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
+      className="bg-destructive/10 border border-destructive/20 text-destructive rounded-xl px-4 py-3 text-sm font-semibold text-center">
+      {msg}
+    </motion.div>
+  ) : null;
+
   return (
     <div className="min-h-[100dvh] bg-background flex items-center justify-center p-4 relative overflow-y-auto">
-      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] rounded-full blur-[120px] opacity-75 animate-[pulseGlow_7s_ease-in-out_infinite_alternate]"
-          style={{ background: "radial-gradient(circle, hsl(16 100% 50% / 0.22), transparent 70%)" }}
-        />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full blur-[100px] opacity-65 animate-[pulseGlow_9s_ease-in-out_infinite_alternate-reverse]"
-          style={{ background: "radial-gradient(circle, hsl(280 80% 60% / 0.16), transparent 70%)" }}
-        />
-        <div className="absolute top-[40%] left-[60%] w-[35%] h-[35%] rounded-full blur-[80px] opacity-50 animate-[pulseGlow_11s_ease-in-out_infinite_alternate]"
-          style={{ background: "radial-gradient(circle, hsl(45 100% 55% / 0.12), transparent 70%)" }}
-        />
-        {[...Array(8)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute rounded-full bg-primary/30"
-            style={{
-              width: `${2 + (i % 3)}px`,
-              height: `${2 + (i % 3)}px`,
-              left: `${10 + (i * 10.5) % 80}%`,
-              top: `${8 + (i * 11.3) % 82}%`,
-              animation: `pulseGlow ${4 + (i % 4)}s ease-in-out infinite alternate`,
-              animationDelay: `${i * 0.55}s`,
-              opacity: 0.3 + (i % 3) * 0.15,
-            }}
-          />
-        ))}
-      </div>
+      {bg}
 
-      <motion.div
-        initial={{ opacity: 0, y: 24, scale: 0.97 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-        className="w-full max-w-[380px] relative z-10"
-      >
-        <div className="flex flex-col items-center mb-10">
-          <motion.div
-            initial={{ scale: 0.7, opacity: 0, rotate: -10 }}
-            animate={{ scale: 1, opacity: 1, rotate: 0 }}
-            transition={{ type: "spring", stiffness: 200, damping: 18, delay: 0.15 }}
-            className="w-16 h-16 sm:w-24 sm:h-24 rounded-[20px] sm:rounded-[28px] flex items-center justify-center mb-4 sm:mb-6 relative"
-            style={{
-              background: "linear-gradient(135deg, hsl(16 100% 50% / 0.15) 0%, hsl(16 100% 50% / 0.05) 100%)",
-              border: "1px solid hsl(16 100% 50% / 0.2)",
-              boxShadow: "0 0 40px hsl(16 100% 50% / 0.15), inset 0 1px 0 rgba(255,255,255,0.06)",
-            }}
-          >
-            {step === "success" ? (
-              <CheckCircle2 className="text-green-400 w-10 h-10" />
-            ) : step === "question" ? (
-              <HelpCircle className="text-primary w-10 h-10" />
-            ) : (
-              <PulseLogo size={48} />
-            )}
-          </motion.div>
+      <motion.div className={cardClass} initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}>
 
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.25, duration: 0.5 }}
-            className="text-center"
-          >
-            <h1 className="text-4xl font-black text-foreground tracking-tight leading-none mb-2">
-              {step === "success" ? "Готово!" : step === "question" ? "Проверка" : "Nova"}
-            </h1>
-            <p className="text-muted-foreground text-[15px] font-medium">
-              {step === "success"
-                ? "Пароль успешно изменён"
-                : step === "question"
-                ? "Ответьте на контрольный вопрос"
-                : "Восстановление доступа"}
-            </p>
-          </motion.div>
+        {/* Logo */}
+        <div className="flex flex-col items-center mb-8">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary via-blue-500 to-blue-400 flex items-center justify-center shadow-xl shadow-primary/30 mb-4">
+            <PulseLogo size={30} />
+          </div>
+          <h1 className="text-2xl font-black text-foreground">Восстановление пароля</h1>
         </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.5 }}
-          className="rounded-[28px] p-6"
-          style={{
-            background: "hsl(var(--card) / 0.7)",
-            backdropFilter: "blur(24px)",
-            WebkitBackdropFilter: "blur(24px)",
-            border: "1px solid hsl(var(--border) / 0.8)",
-            boxShadow: "0 24px 64px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04)",
-          }}
-        >
-          <AnimatePresence mode="wait">
+        <AnimatePresence mode="wait">
 
-            {/* ── STEP 1: enter username ── */}
-            {step === "username" && (
-              <motion.div
-                key="username"
-                initial={{ opacity: 0, x: -16 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 16 }}
-                transition={{ duration: 0.25 }}
-              >
-                <div className="flex items-center gap-3 mb-5 p-3 bg-secondary/50 rounded-2xl">
-                  <div className="p-2 bg-orange-500/10 rounded-xl shrink-0">
-                    <Shield size={18} className="text-orange-400" />
-                  </div>
-                  <p className="text-sm text-muted-foreground leading-snug">
-                    Введите никнейм — мы найдём ваш контрольный вопрос для сброса пароля.
-                  </p>
+          {/* ── Step 1: username ── */}
+          {step === "username" && (
+            <motion.div key="username" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+              <form onSubmit={handleUsernameSubmit} className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider pl-1">Никнейм</label>
+                  <input
+                    type="text" value={username}
+                    onChange={e => setUsername(e.target.value.replace(/^@/, ""))}
+                    placeholder="@nickname" autoFocus
+                    className={inputClass}
+                  />
                 </div>
-
-                <form onSubmit={handleUsernameSubmit} className="space-y-4">
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-black text-muted-foreground uppercase tracking-widest pl-1">
-                      Никнейм
-                    </label>
-                    <input
-                      type="text"
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
-                      placeholder="@ваш_никнейм"
-                      autoComplete="username"
-                      autoFocus={typeof window !== "undefined" && window.matchMedia("(hover: hover)").matches}
-                      className="w-full bg-secondary/60 border border-border rounded-2xl px-4 py-3.5 text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all text-[15px] font-medium"
-                    />
-                  </div>
-
-                  <AnimatePresence>
-                    {usernameError && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="bg-destructive/10 border border-destructive/20 text-destructive rounded-xl px-4 py-3 text-sm font-semibold flex items-center gap-2"
-                      >
-                        <AlertTriangle size={14} className="shrink-0" /> {usernameError}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
-                  <motion.button
-                    type="submit"
-                    disabled={usernameLoading || !username.trim()}
-                    whileHover={{ scale: usernameLoading ? 1 : 1.01 }}
-                    whileTap={{ scale: usernameLoading ? 1 : 0.98 }}
-                    className="w-full text-primary-foreground font-black py-4 rounded-2xl transition-all disabled:opacity-50 text-[15px] mt-2"
-                    style={{
-                      background: usernameLoading
-                        ? "hsl(var(--primary) / 0.7)"
-                        : "linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(16 100% 42%) 100%)",
-                      boxShadow: usernameLoading ? "none" : "0 8px 28px hsl(var(--primary) / 0.35)",
-                    }}
-                  >
-                    {usernameLoading ? "Ищем аккаунт..." : "Продолжить"}
-                  </motion.button>
-                </form>
-              </motion.div>
-            )}
-
-            {/* ── STEP 2: security question ── */}
-            {step === "question" && (
-              <motion.div
-                key="question"
-                initial={{ opacity: 0, x: 16 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -16 }}
-                transition={{ duration: 0.25 }}
-              >
-                <div className="mb-5 p-3 bg-secondary/50 rounded-2xl">
-                  <p className="text-[11px] font-black text-muted-foreground uppercase tracking-widest mb-1">
-                    Контрольный вопрос для @{username.trim().replace(/^@/, "")}
-                  </p>
-                  <p className="text-sm font-semibold text-foreground leading-snug">{question}</p>
-                </div>
-
-                <form onSubmit={handleReset} className="space-y-4">
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-black text-muted-foreground uppercase tracking-widest pl-1">
-                      Ваш ответ
-                    </label>
-                    <input
-                      type="text"
-                      value={answer}
-                      onChange={(e) => setAnswer(e.target.value)}
-                      placeholder="Введите ответ"
-                      autoFocus={typeof window !== "undefined" && window.matchMedia("(hover: hover)").matches}
-                      className="w-full bg-secondary/60 border border-border rounded-2xl px-4 py-3.5 text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all text-[15px] font-medium"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-black text-muted-foreground uppercase tracking-widest pl-1">
-                      Новый пароль
-                    </label>
-                    <div className="relative">
-                      <input
-                        type={showNew ? "text" : "password"}
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        placeholder="Минимум 6 символов"
-                        autoComplete="new-password"
-                        className="w-full bg-secondary/60 border border-border rounded-2xl px-4 py-3.5 pr-12 text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all text-[15px] font-medium"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowNew(!showNew)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        {showNew ? <EyeOff size={18} /> : <Eye size={18} />}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-black text-muted-foreground uppercase tracking-widest pl-1">
-                      Повторите пароль
-                    </label>
-                    <div className="relative">
-                      <input
-                        type={showConfirm ? "text" : "password"}
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        placeholder="Повторите пароль"
-                        autoComplete="new-password"
-                        className="w-full bg-secondary/60 border border-border rounded-2xl px-4 py-3.5 pr-12 text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all text-[15px] font-medium"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowConfirm(!showConfirm)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
-                      </button>
-                    </div>
-                    {newPassword && confirmPassword && newPassword !== confirmPassword && (
-                      <p className="text-xs text-destructive flex items-center gap-1 pl-1">
-                        <AlertTriangle size={11} /> Пароли не совпадают
-                      </p>
-                    )}
-                  </div>
-
-                  <AnimatePresence>
-                    {resetError && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="bg-destructive/10 border border-destructive/20 text-destructive rounded-xl px-4 py-3 text-sm font-semibold flex items-center gap-2"
-                      >
-                        <AlertTriangle size={14} className="shrink-0" /> {resetError}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
-                  <motion.button
-                    type="submit"
-                    disabled={resetLoading}
-                    whileHover={{ scale: resetLoading ? 1 : 1.01 }}
-                    whileTap={{ scale: resetLoading ? 1 : 0.98 }}
-                    className="w-full text-primary-foreground font-black py-4 rounded-2xl transition-all disabled:opacity-50 text-[15px]"
-                    style={{
-                      background: resetLoading
-                        ? "hsl(var(--primary) / 0.7)"
-                        : "linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(16 100% 42%) 100%)",
-                      boxShadow: resetLoading ? "none" : "0 8px 28px hsl(var(--primary) / 0.35)",
-                    }}
-                  >
-                    {resetLoading ? "Сбрасываем..." : "Сбросить пароль"}
-                  </motion.button>
-
-                  <button
-                    type="button"
-                    onClick={() => { setStep("username"); setAnswer(""); setNewPassword(""); setConfirmPassword(""); setResetError(""); }}
-                    className="w-full text-sm font-bold text-muted-foreground hover:text-foreground transition-colors py-2"
-                  >
-                    ← Назад
-                  </button>
-                </form>
-              </motion.div>
-            )}
-
-            {/* ── STEP: no security question set ── */}
-            {step === "no-question" && (
-              <motion.div
-                key="no-question"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.25 }}
-                className="text-center py-2"
-              >
-                <div className="w-16 h-16 rounded-2xl bg-orange-500/10 flex items-center justify-center mx-auto mb-4">
-                  <Shield size={30} className="text-orange-400" />
-                </div>
-                <h2 className="font-bold text-base mb-2">Нужна помощь с доступом?</h2>
-                <p className="text-sm text-muted-foreground mb-5 leading-relaxed">
-                  Для аккаунта <span className="text-foreground font-semibold">@{username.trim().replace(/^@/, "")}</span> не установлен контрольный вопрос. Обратитесь к администратору — он сбросит пароль вручную.
-                </p>
-                <div className="bg-secondary/50 rounded-2xl p-4 text-left mb-5 space-y-3">
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-                      <span className="text-base">1</span>
-                    </div>
-                    <p className="text-sm text-muted-foreground leading-snug pt-1">
-                      Напишите администратору свой никнейм и попросите сбросить пароль.
-                    </p>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-                      <span className="text-base">2</span>
-                    </div>
-                    <p className="text-sm text-muted-foreground leading-snug pt-1">
-                      После сброса войдите с новым паролем и установите контрольный вопрос в{" "}
-                      <span className="text-foreground font-semibold">Настройки → Безопасность</span>.
-                    </p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => { setStep("username"); setUsernameError(""); }}
-                  className="w-full text-sm font-bold text-muted-foreground hover:text-foreground transition-colors py-2"
-                >
-                  ← Попробовать другой никнейм
+                <AnimatePresence><ErrorBox msg={usernameError} /></AnimatePresence>
+                <button type="submit" disabled={usernameLoading || !username.trim()} className={btnClass}
+                  style={{ background: "linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(16 100% 42%) 100%)", boxShadow: "0 8px 28px hsl(var(--primary) / 0.35)" }}>
+                  {usernameLoading ? "Проверяем..." : "Продолжить →"}
                 </button>
-              </motion.div>
-            )}
-
-            {/* ── STEP: success ── */}
-            {step === "success" && (
-              <motion.div
-                key="success"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.3 }}
-                className="text-center py-2"
-              >
-                <div className="w-16 h-16 rounded-2xl bg-green-500/10 flex items-center justify-center mx-auto mb-4">
-                  <CheckCircle2 size={32} className="text-green-400" />
-                </div>
-                <h2 className="font-bold text-base mb-2">Пароль изменён</h2>
-                <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
-                  Пароль для аккаунта <span className="text-foreground font-semibold">@{username.trim().replace(/^@/, "")}</span> успешно сброшен. Теперь вы можете войти с новым паролем.
-                </p>
-                <motion.button
-                  whileHover={{ scale: 1.01 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => navigate("/")}
-                  className="w-full text-primary-foreground font-black py-4 rounded-2xl transition-all text-[15px]"
-                  style={{
-                    background: "linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(16 100% 42%) 100%)",
-                    boxShadow: "0 8px 28px hsl(var(--primary) / 0.35)",
-                  }}
-                >
-                  Войти в аккаунт
-                </motion.button>
-              </motion.div>
-            )}
-
-          </AnimatePresence>
-
-          {step !== "success" && (
-            <div className="mt-5 pt-5 border-t border-border text-center">
-              <Link
-                href="/"
-                className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors font-medium"
-              >
-                <ArrowLeft size={14} /> Вернуться к входу
-              </Link>
-            </div>
+              </form>
+            </motion.div>
           )}
-        </motion.div>
 
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.6 }}
-          className="text-center text-[11px] text-muted-foreground/40 font-medium mt-6"
-        >
+          {/* ── Step 2: choose method ── */}
+          {step === "choose" && (
+            <motion.div key="choose" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-3">
+              <p className="text-sm text-muted-foreground text-center mb-2">Как хотите восстановить доступ?</p>
+
+              <button onClick={chooseEmail}
+                className="w-full bg-primary/10 border border-primary/30 hover:bg-primary/20 rounded-2xl p-4 text-left transition-all group">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
+                    <Mail size={18} className="text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-foreground text-sm">Код на почту</p>
+                    <p className="text-xs text-muted-foreground">{maskedEmail}</p>
+                  </div>
+                </div>
+              </button>
+
+              <button onClick={chooseQuestion}
+                className="w-full bg-card/50 border border-border hover:bg-card/80 rounded-2xl p-4 text-left transition-all group">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-muted/50 flex items-center justify-center shrink-0">
+                    <HelpCircle size={18} className="text-muted-foreground" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-foreground text-sm">Контрольный вопрос</p>
+                    <p className="text-xs text-muted-foreground truncate max-w-[200px]">{question}</p>
+                  </div>
+                </div>
+              </button>
+            </motion.div>
+          )}
+
+          {/* ── Step 3a: email code ── */}
+          {step === "email-code" && (
+            <motion.div key="email-code" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+              <div className="flex flex-col items-center mb-6">
+                <div className="w-14 h-14 rounded-2xl bg-primary/15 flex items-center justify-center mb-3">
+                  <Mail size={24} className="text-primary" />
+                </div>
+                <p className="text-sm text-muted-foreground text-center">
+                  Код отправлен на <span className="font-semibold text-foreground">{maskedEmail}</span>
+                </p>
+              </div>
+              <form onSubmit={handleCodeSubmit} className="space-y-4">
+                <input
+                  type="text" inputMode="numeric" maxLength={6}
+                  value={code} onChange={e => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  placeholder="000000" autoFocus
+                  className="w-full bg-card/50 border border-border rounded-2xl px-5 py-4 text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-center text-2xl font-black tracking-[0.5em]"
+                />
+                <AnimatePresence><ErrorBox msg={codeError} /></AnimatePresence>
+                {resendMsg && !codeError && <p className="text-sm text-green-500 text-center font-semibold">{resendMsg}</p>}
+                <button type="submit" disabled={codeLoading || code.length !== 6} className={btnClass}
+                  style={{ background: "linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(16 100% 42%) 100%)", boxShadow: "0 8px 28px hsl(var(--primary) / 0.35)" }}>
+                  <span className="flex items-center justify-center gap-2">
+                    <ShieldCheck size={18} />
+                    {codeLoading ? "Проверяем..." : "Подтвердить"}
+                  </span>
+                </button>
+              </form>
+              <div className="mt-4 flex flex-col items-center gap-2">
+                <button onClick={handleResend} disabled={resendCooldown > 0}
+                  className="text-sm text-primary hover:text-primary/80 transition-colors disabled:text-muted-foreground disabled:cursor-not-allowed">
+                  {resendCooldown > 0 ? `Отправить ещё раз (${resendCooldown}с)` : "Отправить код ещё раз"}
+                </button>
+                {hasQuestion && (
+                  <button onClick={chooseQuestion} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+                    Использовать контрольный вопрос →
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          )}
+
+          {/* ── Step 3b: security question ── */}
+          {step === "question" && (
+            <motion.div key="question" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+              <div className="flex flex-col items-center mb-6">
+                <div className="w-14 h-14 rounded-2xl bg-muted/50 flex items-center justify-center mb-3">
+                  <HelpCircle size={24} className="text-muted-foreground" />
+                </div>
+              </div>
+              <form onSubmit={handleQuestionSubmit} className="space-y-4">
+                <div className="bg-muted/30 rounded-2xl p-4">
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">Контрольный вопрос</p>
+                  <p className="text-sm font-semibold text-foreground">{question}</p>
+                </div>
+                <div className="relative">
+                  <KeyRound size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <input type="text" value={answer} onChange={e => setAnswer(e.target.value)}
+                    placeholder="Ваш ответ..." autoFocus
+                    className="w-full bg-card/50 border border-border rounded-2xl pl-11 pr-5 py-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-[15px] font-medium" />
+                </div>
+                <AnimatePresence><ErrorBox msg={questionError} /></AnimatePresence>
+                <button type="submit" disabled={questionLoading || !answer.trim()} className={btnClass}
+                  style={{ background: "linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(16 100% 42%) 100%)", boxShadow: "0 8px 28px hsl(var(--primary) / 0.35)" }}>
+                  {questionLoading ? "Проверяем..." : "Продолжить →"}
+                </button>
+              </form>
+              {hasEmail && (
+                <div className="mt-4 text-center">
+                  <button onClick={chooseEmail} className="text-xs text-primary hover:text-primary/80 transition-colors">
+                    ← Получить код на {maskedEmail}
+                  </button>
+                </div>
+              )}
+            </motion.div>
+          )}
+
+          {/* ── Step 4: new password ── */}
+          {step === "new-password" && (
+            <motion.div key="new-password" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+              <div className="flex flex-col items-center mb-6">
+                <div className="w-14 h-14 rounded-2xl bg-primary/15 flex items-center justify-center mb-3">
+                  <ShieldCheck size={24} className="text-primary" />
+                </div>
+                <p className="text-sm text-muted-foreground text-center">Придумайте новый пароль</p>
+              </div>
+              <form onSubmit={handlePasswordSubmit} className="space-y-4">
+                <div className="relative">
+                  <input type={showNew ? "text" : "password"} value={newPassword}
+                    onChange={e => setNewPassword(e.target.value)}
+                    placeholder="Новый пароль (мин. 8 символов)" autoFocus
+                    className={inputClass + " pr-14"} />
+                  <button type="button" onClick={() => setShowNew(v => !v)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
+                    {showNew ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+                <div className="relative">
+                  <input type={showConfirm ? "text" : "password"} value={confirmPassword}
+                    onChange={e => setConfirmPassword(e.target.value)}
+                    placeholder="Повторите пароль"
+                    className={inputClass + " pr-14"} />
+                  <button type="button" onClick={() => setShowConfirm(v => !v)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
+                    {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+                <AnimatePresence><ErrorBox msg={passwordError} /></AnimatePresence>
+                <button type="submit" disabled={passwordLoading || !newPassword || !confirmPassword} className={btnClass}
+                  style={{ background: "linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(16 100% 42%) 100%)", boxShadow: "0 8px 28px hsl(var(--primary) / 0.35)" }}>
+                  {passwordLoading ? "Сохраняем..." : "Сохранить новый пароль"}
+                </button>
+              </form>
+            </motion.div>
+          )}
+
+          {/* ── Step 5: success ── */}
+          {step === "success" && (
+            <motion.div key="success" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center py-2">
+              <div className="w-16 h-16 rounded-2xl bg-green-500/10 flex items-center justify-center mx-auto mb-4">
+                <CheckCircle2 size={32} className="text-green-400" />
+              </div>
+              <h2 className="font-bold text-lg mb-2">Пароль изменён!</h2>
+              <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
+                Пароль для <span className="text-foreground font-semibold">@{username.trim().replace(/^@/, "")}</span> успешно сброшен.
+              </p>
+              <button onClick={() => navigate("/")} className={btnClass}
+                style={{ background: "linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(16 100% 42%) 100%)", boxShadow: "0 8px 28px hsl(var(--primary) / 0.35)" }}>
+                Войти в аккаунт
+              </button>
+            </motion.div>
+          )}
+
+        </AnimatePresence>
+
+        {step !== "success" && (
+          <div className="mt-6 pt-5 border-t border-border text-center">
+            <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors font-medium">
+              <ArrowLeft size={14} /> Вернуться к входу
+            </Link>
+          </div>
+        )}
+
+        <p className="text-center text-[11px] text-muted-foreground/40 font-medium mt-6">
           Nova Messenger · Ваши данные надёжно защищены
-        </motion.p>
+        </p>
       </motion.div>
     </div>
   );
