@@ -17,6 +17,21 @@ export function isMailerConfigured(): boolean {
   return !!(process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD);
 }
 
+/** Call once at startup to verify SMTP credentials — logs result clearly. */
+export async function testMailerConnection(): Promise<void> {
+  const t = createTransporter();
+  if (!t) {
+    console.warn("[mailer] NOT configured — GMAIL_USER / GMAIL_APP_PASSWORD missing. Emails will not be sent.");
+    return;
+  }
+  try {
+    await t.verify();
+    console.log(`[mailer] SMTP connection OK — using Gmail (${process.env.GMAIL_USER})`);
+  } catch (err: any) {
+    console.error(`[mailer] SMTP connection FAILED: ${err?.message}. Code: ${err?.code}. Response: ${err?.response}`);
+  }
+}
+
 async function sendMail(opts: { to: string; subject: string; text: string; html: string }): Promise<boolean> {
   const t = createTransporter();
   if (!t) {

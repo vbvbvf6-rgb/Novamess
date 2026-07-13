@@ -10,6 +10,7 @@ import { sql, and, eq, lte, lt } from "drizzle-orm";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { broadcastToChat } from "./lib/sse";
 import { runWeeklyScan } from "./routes/admin";
+import { testMailerConnection } from "./lib/mailer";
 
 const rawPort = process.env["PORT"];
 
@@ -84,6 +85,9 @@ process.on("SIGTERM", () => shutdown("SIGTERM"));
 process.on("SIGINT", () => shutdown("SIGINT"));
 
 runSeed().catch((err) => logger.error({ err }, "Seed failed"));
+
+// Test SMTP connection on startup so Render logs show immediately if email is broken
+testMailerConnection().catch(() => {});
 
 // ── Schema drift fixes — run on every startup so production stays in sync ──
 const _schemaMigrations = (async () => {

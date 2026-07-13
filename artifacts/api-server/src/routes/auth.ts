@@ -531,9 +531,11 @@ router.post("/auth/register", async (req, res) => {
     const token = signToken(newUser.id);
 
     if (rawEmail && verificationCode) {
-      // Fire-and-forget: don't block registration on email delivery. If Gmail
-      // isn't configured, the user can still request a resend once it's set up.
-      sendVerificationEmail(rawEmail, verificationCode).catch(() => {});
+      // Fire-and-forget — don't block registration on email delivery.
+      // Log failures explicitly so they appear in Render / production logs.
+      sendVerificationEmail(rawEmail, verificationCode).catch((err: any) => {
+        console.error("[mailer] Registration verification email failed:", err?.message ?? err);
+      });
     }
 
     res.status(201).json({
