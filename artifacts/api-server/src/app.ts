@@ -326,6 +326,40 @@ app.get("/api/ping", (_req: Request, res: Response) => {
   res.json({ ok: true, ts: Date.now() });
 });
 
+// Mail diagnostics — open /api/mail-test?to=your@email.com in browser
+app.get("/api/mail-test", async (req: Request, res: Response) => {
+  const apiKey = process.env.ELASTICEMAIL_API_KEY;
+  const from   = process.env.MAIL_FROM || "(not set)";
+
+  if (!apiKey) {
+    return res.json({ ok: false, reason: "ELASTICEMAIL_API_KEY not set", from });
+  }
+
+  const to = (req.query.to as string) || from;
+  const params = new URLSearchParams({
+    apikey: apiKey,
+    from,
+    fromName: process.env.MAIL_FROM_NAME || "Nova",
+    to,
+    subject: "Nova mail test",
+    bodyText: "If you see this, email is working!",
+    bodyHtml: "<p>If you see this, <b>email is working!</b></p>",
+    isTransactional: "true",
+  });
+
+  try {
+    const r = await fetch("https://api.elasticemail.com/v2/email/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: params.toString(),
+    });
+    const json = await r.json().catch(() => ({}));
+    return res.json({ ok: (json as any)?.success === true, status: r.status, elasticResponse: json, from, to });
+  } catch (err: any) {
+    return res.json({ ok: false, error: err?.message, from, to });
+  }
+});
+
 app.get("/api/health", async (_req: Request, res: Response) => {
   let dbOk = false;
   let dbError: string | null = null;
