@@ -3,25 +3,41 @@ import { logger } from "./logger";
 
 // ── Email transport ─────────────────────────────────────────────────────────
 //
-// Priority 1 — Generic SMTP (recommended for cloud deployments like Render):
-//   Works with Brevo (ex-Sendinblue), Mailgun, SendGrid, SMTP2Go, etc.
-//   These providers allow connections from cloud-hosting IPs, unlike Gmail.
-//   Set these 4 env vars in Render → Environment:
-//     SMTP_HOST   e.g. smtp-relay.brevo.com
-//     SMTP_PORT   e.g. 587
-//     SMTP_USER   your SMTP login (e.g. your Brevo account email)
-//     SMTP_PASS   your SMTP password / API key
-//     SMTP_FROM   sender address shown to recipients (e.g. noreply@yourdomain.com)
+// Priority 1 — Gmail OAuth2 (HTTPS-based, never blocked by cloud IPs like Render):
+//   GMAIL_USER             your Gmail address
+//   GOOGLE_CLIENT_ID       from Google Cloud Console
+//   GOOGLE_CLIENT_SECRET   from Google Cloud Console
+//   GMAIL_REFRESH_TOKEN    long-lived refresh token from OAuth2 Playground
 //
-// Priority 2 — Gmail (fallback, often blocked by cloud hosting IPs):
-//     GMAIL_USER          your Gmail address
-//     GMAIL_APP_PASSWORD  a Google App Password (not your main password)
+// Priority 2 — Generic SMTP (Brevo, Mailgun, SendGrid, etc.):
+//   SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM
 //
-// If neither is configured, email sending is silently skipped and a warning
-// is logged. The app continues to work — email features are simply unavailable.
+// Priority 3 — Gmail plain SMTP (fallback; often blocked by cloud hosting IPs):
+//   GMAIL_USER, GMAIL_APP_PASSWORD
 
 function createTransporter() {
-  // 1. Generic SMTP — preferred for cloud deployments
+  const gmailUser = process.env.GMAIL_USER;
+
+  // 1. Gmail OAuth2 — best for cloud deployments (Render, Railway, Fly.io, etc.)
+  if (
+    gmailUser &&
+    process.env.GOOGLE_CLIENT_ID &&
+    process.env.GOOGLE_CLIENT_SECRET &&
+    process.env.GMAIL_REFRESH_TOKEN
+  ) {
+    return nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        type: "OAuth2",
+        user: gmailUser,
+        clientId: process.env.GOOGLE_CLIENT_ID,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        refreshToken: process.env.GMAIL_REFRESH_TOKEN,
+      },
+    } as any);
+  }
+
+  // 2. Generic SMTP
   const smtpHost = process.env.SMTP_HOST;
   const smtpPort = Number(process.env.SMTP_PORT) || 587;
   const smtpUser = process.env.SMTP_USER;
@@ -36,10 +52,8 @@ function createTransporter() {
     });
   }
 
-  // 2. Gmail fallback
-  const gmailUser = process.env.GMAIL_USER;
+  // 3. Gmail plain SMTP (fallback — may be blocked by cloud IPs)
   const gmailPass = process.env.GMAIL_APP_PASSWORD;
-
   if (gmailUser && gmailPass) {
     return nodemailer.createTransport({
       host: "smtp.gmail.com",
@@ -53,44 +67,52 @@ function createTransporter() {
 }
 
 function getSenderAddress(): string {
+  if (process.env.GMAIL_USER) return process.env.GMAIL_USER;
   if (process.env.SMTP_FROM) return process.env.SMTP_FROM;
   if (process.env.SMTP_USER) return process.env.SMTP_USER;
-  if (process.env.GMAIL_USER) return process.env.GMAIL_USER;
   return "noreply@nova.app";
 }
 
 export function isMailerConfigured(): boolean {
+  const hasOAuth2 = !!(
+    process.env.GMAIL_USER &&
+    process.env.GOOGLE_CLIENT_ID &&
+    process.env.GOOGLE_CLIENT_SECRET &&
+    process.env.GMAIL_REFRESH_TOKEN
+  );
   const hasSmtp = !!(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
   const hasGmail = !!(process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD);
-  return hasSmtp || hasGmail;
+  return hasOAuth2 || hasSmtp || hasGmail;
 }
 
 async function sendMail(opts: { to: string; subject: string; text: string; html: string }): Promise<boolean> {
   const t = createTransporter();
   if (!t) {
     logger.warn(
-      "Mailer not configured — set SMTP_HOST/SMTP_USER/SMTP_PASS (e.g. Brevo) " +
-      "or GMAIL_USER/GMAIL_APP_PASSWORD in environment variables."
+      "Mailer not configured. For Gmail on Render: set GMAIL_USER + GOOGLE_CLIENT_ID + GOOGLE_CLIENT_SECRET + GMAIL_REFRESH_TOKEN"
     );
     return false;
   }
 
   const from = `"Nova" <${getSenderAddress()}>`;
+  const provider = process.env.GMAIL_REFRESH_TOKEN ? "Gmail-OAuth2"
+    : process.env.SMTP_HOST ? `SMTP(${process.env.SMTP_HOST})`
+    : "Gmail-SMTP";
 
   try {
     await t.sendMail({ from, ...opts });
-    logger.info({ to: opts.to, subject: opts.subject }, "Email sent");
+    logger.info({ to: opts.to, subject: opts.subject, provider }, "Email sent");
     return true;
   } catch (err: any) {
     logger.error(
       {
-        provider: process.env.SMTP_HOST ? `SMTP(${process.env.SMTP_HOST})` : "Gmail",
+        provider,
         errCode: err?.code,
         errCommand: err?.command,
         errResponse: err?.response,
         errMessage: err?.message,
       },
-      "Failed to send email — check SMTP credentials and that your provider allows connections from cloud IPs"
+      "Failed to send email"
     );
     return false;
   }
