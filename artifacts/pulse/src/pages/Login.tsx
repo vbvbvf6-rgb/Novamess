@@ -234,28 +234,28 @@ export default function Login({ onLogin }: LoginProps) {
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 0.8, scale: 1 }}
           transition={{ duration: 2.5, ease: "easeOut" }}
-          className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-primary/20 rounded-full blur-[120px] animate-[pulseGlow_6s_ease-in-out_infinite_alternate]"
+          className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-primary/20 rounded-full blur-[60px] motion-reduce:animate-none [@media(pointer:coarse)]:animate-none animate-[pulseGlow_6s_ease-in-out_infinite_alternate]"
         />
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 0.7, scale: 1 }}
           transition={{ duration: 2.5, delay: 0.4, ease: "easeOut" }}
-          className="absolute bottom-[-10%] right-[-10%] w-[65%] h-[65%] bg-violet-500/15 rounded-full blur-[100px] animate-[pulseGlow_8s_ease-in-out_infinite_alternate-reverse]"
+          className="absolute bottom-[-10%] right-[-10%] w-[65%] h-[65%] bg-violet-500/15 rounded-full blur-[50px] motion-reduce:animate-none [@media(pointer:coarse)]:animate-none animate-[pulseGlow_8s_ease-in-out_infinite_alternate-reverse]"
         />
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 0.6 }}
           transition={{ duration: 3, delay: 0.6, ease: "easeOut" }}
-          className="absolute top-[35%] left-[55%] w-[35%] h-[35%] bg-amber-500/12 rounded-full blur-[80px] animate-[pulseGlow_10s_ease-in-out_infinite_alternate]"
+          className="absolute top-[35%] left-[55%] w-[35%] h-[35%] bg-amber-500/12 rounded-full blur-[40px] motion-reduce:animate-none [@media(pointer:coarse)]:animate-none animate-[pulseGlow_10s_ease-in-out_infinite_alternate]"
         />
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 0.5 }}
           transition={{ duration: 3, delay: 0.8, ease: "easeOut" }}
-          className="absolute top-[60%] left-[10%] w-[25%] h-[25%] bg-blue-500/10 rounded-full blur-[60px] animate-[pulseGlow_12s_ease-in-out_infinite_alternate-reverse]"
+          className="absolute top-[60%] left-[10%] w-[25%] h-[25%] bg-blue-500/10 rounded-full blur-[30px] motion-reduce:animate-none [@media(pointer:coarse)]:animate-none animate-[pulseGlow_12s_ease-in-out_infinite_alternate-reverse]"
         />
         {/* Floating particles */}
-        {[...Array(12)].map((_, i) => (
+        {[...Array(typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches ? 5 : 12)].map((_, i) => (
           <motion.div
             key={i}
             initial={{ opacity: 0, scale: 0 }}

@@ -1190,11 +1190,21 @@ export default function Settings() {
       canvas.width = Math.max(1, Math.round(img.width * scale));
       canvas.height = Math.max(1, Math.round(img.height * scale));
       const ctx = canvas.getContext("2d");
-      if (!ctx) return;
+      if (!ctx) {
+        toast({ title: t("settings.saveError"), variant: "destructive" });
+        return;
+      }
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       void saveAvatarUrl(canvas.toDataURL("image/jpeg", 0.85));
     };
-    img.onerror = () => URL.revokeObjectURL(objectUrl);
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      toast({
+        title: lang === "ru" ? "Не удалось загрузить фото" : "Failed to load photo",
+        description: lang === "ru" ? "Файл повреждён или не является изображением" : "The file is corrupted or not an image",
+        variant: "destructive",
+      });
+    };
     img.src = objectUrl;
   };
 

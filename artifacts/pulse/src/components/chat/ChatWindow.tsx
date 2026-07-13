@@ -373,13 +373,28 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
   const sseRef = useRef<EventSource | null>(null);
   const prevBotTypingRef = useRef(false);
 
-  // Scroll to bottom when switching chats
+  // Scroll to bottom when switching chats — wait for messages to actually
+  // be loaded and rendered before measuring scrollHeight, otherwise we snap
+  // to the top of an empty/skeleton container and never correct it.
   useEffect(() => {
     const el = scrollRef.current;
     if (!el || !chatId) return;
-    const t = setTimeout(() => { el.scrollTop = el.scrollHeight; }, 60);
-    return () => clearTimeout(t);
-  }, [chatId]);
+    if (isMessagesLoading) return;
+    el.scrollTop = el.scrollHeight;
+    // Run again on the next couple of frames to catch late layout shifts
+    // from images/attachments finishing their intrinsic-size calculation.
+    const raf1 = requestAnimationFrame(() => {
+      if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      const raf2 = requestAnimationFrame(() => {
+        if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      });
+      (el as any).__raf2 = raf2;
+    });
+    return () => {
+      cancelAnimationFrame(raf1);
+      if ((el as any).__raf2) cancelAnimationFrame((el as any).__raf2);
+    };
+  }, [chatId, isMessagesLoading, messages?.length]);
 
   // Auto-scroll on new messages when near the bottom
   useEffect(() => {

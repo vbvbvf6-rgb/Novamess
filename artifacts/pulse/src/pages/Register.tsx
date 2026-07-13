@@ -162,11 +162,11 @@ export default function Register({ onLogin }: RegisterProps) {
       </button>
 
       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-primary/20 rounded-full blur-[120px] opacity-80 animate-[pulseGlow_6s_ease-in-out_infinite_alternate]" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[65%] h-[65%] bg-violet-500/15 rounded-full blur-[100px] opacity-70 animate-[pulseGlow_8s_ease-in-out_infinite_alternate-reverse]" />
-        <div className="absolute top-[35%] left-[55%] w-[35%] h-[35%] bg-amber-500/12 rounded-full blur-[80px] opacity-60 animate-[pulseGlow_10s_ease-in-out_infinite_alternate]" />
-        <div className="absolute top-[65%] left-[5%] w-[25%] h-[25%] bg-blue-500/10 rounded-full blur-[60px] opacity-50 animate-[pulseGlow_12s_ease-in-out_infinite_alternate-reverse]" />
-        {[...Array(10)].map((_, i) => (
+        <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-primary/20 rounded-full blur-[60px] motion-reduce:animate-none [@media(pointer:coarse)]:animate-none opacity-80 animate-[pulseGlow_6s_ease-in-out_infinite_alternate]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[65%] h-[65%] bg-violet-500/15 rounded-full blur-[50px] motion-reduce:animate-none [@media(pointer:coarse)]:animate-none opacity-70 animate-[pulseGlow_8s_ease-in-out_infinite_alternate-reverse]" />
+        <div className="absolute top-[35%] left-[55%] w-[35%] h-[35%] bg-amber-500/12 rounded-full blur-[40px] motion-reduce:animate-none [@media(pointer:coarse)]:animate-none opacity-60 animate-[pulseGlow_10s_ease-in-out_infinite_alternate]" />
+        <div className="absolute top-[65%] left-[5%] w-[25%] h-[25%] bg-blue-500/10 rounded-full blur-[30px] motion-reduce:animate-none [@media(pointer:coarse)]:animate-none opacity-50 animate-[pulseGlow_12s_ease-in-out_infinite_alternate-reverse]" />
+        {[...Array(typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches ? 5 : 10)].map((_, i) => (
           <div
             key={i}
             className="absolute rounded-full bg-primary/25"
@@ -232,7 +232,9 @@ export default function Register({ onLogin }: RegisterProps) {
                 try {
                   const compressed = await compressAvatar(file);
                   setAvatarUrl(compressed);
-                } catch {}
+                } catch {
+                  setError("Не удалось загрузить фото. Попробуйте другой файл.");
+                }
               }}
             />
             <button

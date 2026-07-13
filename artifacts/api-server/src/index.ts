@@ -158,6 +158,25 @@ setInterval(async () => {
   }
 }, 15 * 60 * 1000);
 
+// ── Long-term log retention cleanup ────────────────────────────────────────
+// These tables are pure audit/log data (no user-facing history screen reads
+// them past a few weeks) and would otherwise grow forever. Trim old rows
+// daily so the database stays small over years of operation.
+const DAY_MS = 24 * 60 * 60 * 1000;
+setInterval(async () => {
+  try {
+    // Moderation scan run logs — keep 90 days.
+    await db.execute(sql`DELETE FROM moderation_scan_runs WHERE started_at < NOW() - INTERVAL '90 days'`).catch(() => {});
+    // Currency ledger entries — keep 2 years (balances themselves are unaffected, this is just the activity log).
+    await db.execute(sql`DELETE FROM spark_activity WHERE created_at < NOW() - INTERVAL '2 years'`).catch(() => {});
+    // Resolved moderation reports — keep 1 year, then purge (unresolved ones are kept indefinitely).
+    await db.execute(sql`DELETE FROM user_reports WHERE created_at < NOW() - INTERVAL '1 year' AND status != 'pending'`).catch(() => {});
+    await db.execute(sql`DELETE FROM post_reports WHERE created_at < NOW() - INTERVAL '1 year' AND status != 'pending'`).catch(() => {});
+  } catch (err) {
+    logger.warn({ err }, "Log retention cleanup error");
+  }
+}, DAY_MS);
+
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
 async function maybeRunWeeklyScan() {
