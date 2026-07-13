@@ -188,24 +188,100 @@ setInterval(async () => {
   }
 }, 15 * 60 * 1000);
 
-// ── Long-term log retention cleanup ────────────────────────────────────────
-// These tables are pure audit/log data (no user-facing history screen reads
-// them past a few weeks) and would otherwise grow forever. Trim old rows
-// daily so the database stays small over years of operation.
+// ── Long-term log retention + media cleanup ────────────────────────────────
+// Runs once per day. Strips inline base64 media from old messages (the single
+// biggest DB space hog), purges audit logs, and reclaims disk via VACUUM.
 const DAY_MS = 24 * 60 * 60 * 1000;
+
+async function runDailyCleanup() {
+  const skip = (q: ReturnType<typeof sql>) => db.execute(q).catch(() => {});
+
+  // ── 1. Strip inline base64 media from messages older than 90 days ──────
+  // Text and metadata are preserved; only the bulky media_url blob is removed.
+  // If object storage (S3) is configured the url is an https:// link, not a
+  // data: URL, so we only target actual base64 blobs.
+  try {
+    const result = await db.execute(sql`
+      UPDATE messages
+      SET media_url = NULL
+      WHERE media_url IS NOT NULL
+        AND media_url LIKE 'data:%'
+        AND created_at < NOW() - INTERVAL '90 days'
+    `);
+    const count = (result as any).rowCount ?? 0;
+    if (count > 0) logger.info({ count }, "[cleanup] Stripped base64 media from old messages");
+  } catch (err) {
+    logger.warn({ err }, "[cleanup] Media strip error");
+  }
+
+  // ── 2. Strip base64 media from soft-deleted messages immediately ────────
+  try {
+    await db.execute(sql`
+      UPDATE messages SET media_url = NULL
+      WHERE is_deleted = TRUE AND media_url IS NOT NULL AND media_url LIKE 'data:%'
+    `);
+  } catch { /* non-fatal */ }
+
+  // ── 3. Audit / log tables retention ────────────────────────────────────
+  await skip(sql`DELETE FROM moderation_scan_runs WHERE started_at < NOW() - INTERVAL '90 days'`);
+  await skip(sql`DELETE FROM spark_activity WHERE created_at < NOW() - INTERVAL '2 years'`);
+  await skip(sql`DELETE FROM user_reports WHERE created_at < NOW() - INTERVAL '1 year' AND status != 'pending'`);
+  await skip(sql`DELETE FROM post_reports WHERE created_at < NOW() - INTERVAL '1 year' AND status != 'pending'`);
+
+  // ── 4. Stale user sessions — keep last 30 days ─────────────────────────
+  await skip(sql`DELETE FROM user_sessions WHERE last_active_at < NOW() - INTERVAL '30 days'`);
+
+  // ── 5. Old story_views rows (stories themselves already deleted) ────────
+  await skip(sql`DELETE FROM story_views WHERE viewed_at < NOW() - INTERVAL '7 days'`);
+
+  // ── 6. VACUUM — actually reclaim disk space freed by the deletes above ──
+  // Must run outside a transaction; pg driver allows it via pool.query().
+  try {
+    const { pool } = await import("@workspace/db");
+    const client = await pool.connect();
+    try {
+      await client.query("VACUUM (ANALYZE) messages");
+      await client.query("VACUUM (ANALYZE) stories");
+      await client.query("VACUUM (ANALYZE) story_views");
+      await client.query("VACUUM (ANALYZE) user_sessions");
+      logger.info("[cleanup] VACUUM ANALYZE complete");
+    } finally {
+      client.release();
+    }
+  } catch (err) {
+    logger.warn({ err }, "[cleanup] VACUUM error (non-fatal)");
+  }
+}
+
+// Run once 5 min after startup (so DB is warm), then every 24 h.
+setTimeout(() => runDailyCleanup(), 5 * 60 * 1000);
+setInterval(() => runDailyCleanup(), DAY_MS);
+
+// ── DB size monitor ────────────────────────────────────────────────────────
+// Logs the current database size every hour. Warns at 70 %, critical at 90 %.
+// The numbers help you decide when to configure object storage or upgrade.
 setInterval(async () => {
   try {
-    // Moderation scan run logs — keep 90 days.
-    await db.execute(sql`DELETE FROM moderation_scan_runs WHERE started_at < NOW() - INTERVAL '90 days'`).catch(() => {});
-    // Currency ledger entries — keep 2 years (balances themselves are unaffected, this is just the activity log).
-    await db.execute(sql`DELETE FROM spark_activity WHERE created_at < NOW() - INTERVAL '2 years'`).catch(() => {});
-    // Resolved moderation reports — keep 1 year, then purge (unresolved ones are kept indefinitely).
-    await db.execute(sql`DELETE FROM user_reports WHERE created_at < NOW() - INTERVAL '1 year' AND status != 'pending'`).catch(() => {});
-    await db.execute(sql`DELETE FROM post_reports WHERE created_at < NOW() - INTERVAL '1 year' AND status != 'pending'`).catch(() => {});
+    const row = await db.execute(sql`
+      SELECT
+        pg_database_size(current_database()) AS used_bytes,
+        -- Replit free PostgreSQL hard limit is 1 GiB = 1073741824 bytes
+        1073741824 AS limit_bytes
+    `);
+    const r = row.rows[0] as any;
+    const usedMB = Math.round(Number(r.used_bytes) / 1024 / 1024);
+    const pct = Math.round((Number(r.used_bytes) / Number(r.limit_bytes)) * 100);
+    if (pct >= 90) {
+      logger.error({ usedMB, pct }, "[db-monitor] CRITICAL: database is almost full — new writes may fail!");
+    } else if (pct >= 70) {
+      logger.warn({ usedMB, pct }, "[db-monitor] WARNING: database is filling up");
+    } else {
+      logger.info({ usedMB, pct }, "[db-monitor] Database size OK");
+    }
   } catch (err) {
-    logger.warn({ err }, "Log retention cleanup error");
+    logger.warn({ err }, "[db-monitor] Could not check DB size");
   }
-}, DAY_MS);
+}, 60 * 60 * 1000);
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 

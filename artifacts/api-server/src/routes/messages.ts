@@ -423,8 +423,22 @@ router.post("/messages", async (req, res) => {
       return res.status(400).json({ error: "Сообщение слишком длинное (максимум 4000 символов)" });
     }
 
-    // No hard media size limit: base64 files of any reasonable size are accepted.
-    // Server timeout and body parser limit provide the real guardrails.
+    // ── Server-side media size limits ──────────────────────────────────────
+    // Base64 inflates file size by ~33%, so 1 MB file ≈ 1.37 MB base64 string.
+    // Images: 3 MB base64 (~2.2 MB actual). Videos: 15 MB base64 (~11 MB actual).
+    if (body.mediaUrl && body.mediaUrl.startsWith("data:")) {
+      const byteLen = body.mediaUrl.length;
+      const isVideo = body.mediaUrl.startsWith("data:video");
+      const isAudio = body.mediaUrl.startsWith("data:audio");
+      const MAX_IMAGE = 3 * 1024 * 1024;   // 3 MB base64
+      const MAX_VIDEO = 15 * 1024 * 1024;  // 15 MB base64
+      const MAX_AUDIO = 4 * 1024 * 1024;   // 4 MB base64
+      const limit = isVideo ? MAX_VIDEO : isAudio ? MAX_AUDIO : MAX_IMAGE;
+      if (byteLen > limit) {
+        const limitMB = Math.round(limit / 1024 / 1024);
+        return res.status(413).json({ error: `Файл слишком большой. Максимум ${limitMB} МБ.` });
+      }
+    }
 
     // Banword check
     if (body.text) {
