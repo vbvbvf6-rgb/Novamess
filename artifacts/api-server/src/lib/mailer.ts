@@ -1,28 +1,20 @@
 import nodemailer from "nodemailer";
 import { logger } from "./logger";
 
-// Sends real emails via the user's own Gmail account using an "App Password"
-// (free, no third-party email service needed). If GMAIL_USER/GMAIL_APP_PASSWORD
-// aren't configured, mail sending is a no-op — callers should treat send
-// failures as non-fatal since verification codes are also usable manually.
+// Sends real emails via the user's own Gmail account using an "App Password".
+// Transporter is created fresh on each call so env vars are always read at
+// send time (no "initialized" singleton that could cache a null on startup).
 
-let transporter: ReturnType<typeof nodemailer.createTransport> | null = null;
-let initialized = false;
-
-function getTransporter() {
-  if (initialized) return transporter;
-  initialized = true;
+function createTransporter() {
   const user = process.env.GMAIL_USER;
   const pass = process.env.GMAIL_APP_PASSWORD;
-  if (!user || !pass) {
-    logger.warn("GMAIL_USER/GMAIL_APP_PASSWORD not configured — email sending disabled, verification codes will not be emailed");
-    return null;
-  }
-  transporter = nodemailer.createTransport({
-    service: "gmail",
+  if (!user || !pass) return null;
+  return nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,          // SSL — more reliable from cloud IPs than STARTTLS
     auth: { user, pass },
   });
-  return transporter;
 }
 
 export function isMailerConfigured(): boolean {
@@ -30,8 +22,11 @@ export function isMailerConfigured(): boolean {
 }
 
 export async function sendPasswordResetEmail(to: string, code: string): Promise<boolean> {
-  const t = getTransporter();
-  if (!t) return false;
+  const t = createTransporter();
+  if (!t) {
+    logger.warn("sendPasswordResetEmail: mailer not configured (GMAIL_USER/GMAIL_APP_PASSWORD missing)");
+    return false;
+  }
   try {
     await t.sendMail({
       from: `"Nova" <${process.env.GMAIL_USER}>`,
@@ -47,16 +42,20 @@ export async function sendPasswordResetEmail(to: string, code: string): Promise<
         </div>
       `,
     });
+    logger.info({ to }, "Password reset email sent");
     return true;
-  } catch (err) {
-    logger.error({ err }, "Failed to send password reset email");
+  } catch (err: any) {
+    logger.error({ err, code: err?.code, command: err?.command, response: err?.response }, "Failed to send password reset email");
     return false;
   }
 }
 
 export async function sendVerificationEmail(to: string, code: string): Promise<boolean> {
-  const t = getTransporter();
-  if (!t) return false;
+  const t = createTransporter();
+  if (!t) {
+    logger.warn("sendVerificationEmail: mailer not configured (GMAIL_USER/GMAIL_APP_PASSWORD missing)");
+    return false;
+  }
   try {
     await t.sendMail({
       from: `"Nova" <${process.env.GMAIL_USER}>`,
@@ -72,9 +71,10 @@ export async function sendVerificationEmail(to: string, code: string): Promise<b
         </div>
       `,
     });
+    logger.info({ to }, "Verification email sent");
     return true;
-  } catch (err) {
-    logger.error({ err }, "Failed to send verification email");
+  } catch (err: any) {
+    logger.error({ err, code: err?.code, command: err?.command, response: err?.response }, "Failed to send verification email");
     return false;
   }
 }
