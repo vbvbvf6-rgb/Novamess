@@ -236,6 +236,14 @@ const PUBLIC_API_PATHS = [
   "/auth/qr",
   "/health",
   "/invite",
+  // Email verification (registration OTP — user has no token yet)
+  "/auth/verify-email",
+  "/auth/resend-verification",
+  // Email-based password reset (multi-step, no token at any step)
+  "/auth/forgot-password",
+  "/auth/reset-password-via-email/verify",
+  "/auth/reset-password/verify-question",
+  "/auth/reset-password-final",
 ];
 
 // ── Session validity cache — avoids DB hit on every request ──────────────
