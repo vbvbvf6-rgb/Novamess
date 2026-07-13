@@ -350,6 +350,14 @@ app.get("/api/health", async (_req: Request, res: Response) => {
     nodeEnv: process.env.NODE_ENV,
     hasDatabaseUrl: !!process.env.DATABASE_URL,
     hasJwtSecret: !!process.env.JWT_SECRET,
+    mail: {
+      hasElasticEmail: !!process.env.ELASTICEMAIL_API_KEY,
+      hasBrevo: !!process.env.BREVO_API_KEY,
+      hasResend: !!process.env.RESEND_API_KEY,
+      hasSmtp: !!(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS),
+      hasGmail: !!(process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD),
+      from: process.env.MAIL_FROM || process.env.SMTP_USER || process.env.GMAIL_USER || "(not set)",
+    },
     ts: Date.now(),
   });
 });
