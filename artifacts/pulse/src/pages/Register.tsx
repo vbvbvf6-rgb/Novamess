@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Link, useSearch, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { Eye, EyeOff, Camera, KeyRound, HelpCircle, ArrowLeft } from "lucide-react";
+import { Eye, EyeOff, Camera, KeyRound, HelpCircle, ArrowLeft, Mail, ShieldCheck } from "lucide-react";
 import PulseLogo from "@/components/PulseLogo";
 
 async function compressAvatar(file: File): Promise<string> {
@@ -48,6 +48,7 @@ interface RegisterProps {
 export default function Register({ onLogin }: RegisterProps) {
   const [, navigate] = useLocation();
   const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -57,6 +58,21 @@ export default function Register({ onLogin }: RegisterProps) {
   const [useCustomQuestion, setUseCustomQuestion] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const [step, setStep] = useState<"form" | "verify">("form");
+  const [pendingUserId, setPendingUserId] = useState<number | null>(null);
+  const [pendingLoginPayload, setPendingLoginPayload] = useState<{ token: string; userId: number; user: any } | null>(null);
+  const [verifyCode, setVerifyCode] = useState("");
+  const [verifyError, setVerifyError] = useState("");
+  const [verifyLoading, setVerifyLoading] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [resendMessage, setResendMessage] = useState("");
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const t = setTimeout(() => setResendCooldown(c => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [resendCooldown]);
 
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
@@ -104,6 +120,13 @@ export default function Register({ onLogin }: RegisterProps) {
       setError("Введите ответ на контрольный вопрос");
       return;
     }
+    if (email.trim()) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email.trim())) {
+        setError("Неверный формат email");
+        return;
+      }
+    }
     setLoading(true);
     setError("");
     try {
@@ -114,6 +137,7 @@ export default function Register({ onLogin }: RegisterProps) {
           username: username.trim(),
           displayName: username.trim(),
           password,
+          email: email.trim() || undefined,
           avatarUrl: avatarUrl || undefined,
           referralCode: referralCode.trim().toUpperCase() || undefined,
           securityQuestion: finalQuestion,
@@ -123,6 +147,15 @@ export default function Register({ onLogin }: RegisterProps) {
       const data = await res.json();
       if (!res.ok) {
         setError(data.error || "Ошибка регистрации");
+        return;
+      }
+      if (data.requiresEmailVerification) {
+        // Account is created; hold off on entering the app until the user
+        // confirms the code sent to their inbox (or skips for now).
+        setPendingUserId(data.userId);
+        setPendingLoginPayload({ token: data.token, userId: data.userId, user: data.user });
+        setResendCooldown(60);
+        setStep("verify");
         return;
       }
       if (data.token) sessionStorage.setItem("pulse-token", data.token);
@@ -146,6 +179,143 @@ export default function Register({ onLogin }: RegisterProps) {
       setLoading(false);
     }
   };
+
+  const completeLogin = () => {
+    if (!pendingLoginPayload) return;
+    if (pendingLoginPayload.token) sessionStorage.setItem("pulse-token", pendingLoginPayload.token);
+    sessionStorage.setItem("pulse-user-id", String(pendingLoginPayload.userId));
+    sessionStorage.setItem("pulse-user", JSON.stringify(pendingLoginPayload.user));
+    sessionStorage.setItem("pulse-tab-owned", "1");
+    onLogin(pendingLoginPayload.userId);
+  };
+
+  const handleVerifyCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!pendingUserId || verifyCode.trim().length !== 6) {
+      setVerifyError("Введите 6-значный код");
+      return;
+    }
+    setVerifyLoading(true);
+    setVerifyError("");
+    try {
+      const res = await fetch("/api/auth/verify-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: pendingUserId, code: verifyCode.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setVerifyError(data.error || "Неверный код");
+        return;
+      }
+      completeLogin();
+    } catch {
+      setVerifyError("Ошибка подключения к серверу");
+    } finally {
+      setVerifyLoading(false);
+    }
+  };
+
+  const handleResendCode = async () => {
+    if (!pendingUserId || resendCooldown > 0) return;
+    setResendMessage("");
+    setVerifyError("");
+    try {
+      const res = await fetch("/api/auth/resend-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: pendingUserId }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setVerifyError(data.error || "Не удалось отправить код повторно");
+        return;
+      }
+      setResendMessage("Код отправлен повторно");
+      setResendCooldown(60);
+    } catch {
+      setVerifyError("Ошибка подключения к серверу");
+    }
+  };
+
+  if (step === "verify") {
+    return (
+      <div className="min-h-[100dvh] bg-background relative flex items-center justify-center p-4" style={{ overflowY: "scroll", WebkitOverflowScrolling: "touch" } as React.CSSProperties}>
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          className="w-full max-w-sm relative z-10"
+        >
+          <div className="flex flex-col items-center mb-6">
+            <div className="w-16 h-16 rounded-2xl bg-primary/15 flex items-center justify-center mb-4">
+              <Mail size={28} className="text-primary" />
+            </div>
+            <h1 className="text-2xl font-black text-foreground mb-1.5 text-center">Подтвердите email</h1>
+            <p className="text-sm text-muted-foreground text-center px-2">
+              Мы отправили 6-значный код на <span className="font-semibold text-foreground">{email.trim()}</span>
+            </p>
+          </div>
+
+          <form onSubmit={handleVerifyCode} className="space-y-4">
+            <input
+              type="text"
+              inputMode="numeric"
+              maxLength={6}
+              value={verifyCode}
+              onChange={(e) => setVerifyCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              placeholder="000000"
+              autoFocus
+              className="w-full bg-card/50 border border-border rounded-2xl px-5 py-4 text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-center text-2xl font-black tracking-[0.5em]"
+            />
+
+            <AnimatePresence>
+              {verifyError && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="bg-destructive/10 border border-destructive/20 text-destructive rounded-xl px-4 py-3 text-sm font-semibold text-center"
+                >
+                  {verifyError}
+                </motion.div>
+              )}
+            </AnimatePresence>
+            {resendMessage && !verifyError && (
+              <p className="text-sm text-green-500 text-center font-semibold">{resendMessage}</p>
+            )}
+
+            <button
+              type="submit"
+              disabled={verifyLoading || verifyCode.length !== 6}
+              className="w-full bg-primary text-primary-foreground font-black py-4 rounded-2xl hover:bg-primary/90 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              <ShieldCheck size={18} />
+              {verifyLoading ? "Проверяем..." : "Подтвердить"}
+            </button>
+          </form>
+
+          <div className="mt-5 flex flex-col items-center gap-3">
+            <button
+              type="button"
+              onClick={handleResendCode}
+              disabled={resendCooldown > 0}
+              className="text-sm text-primary hover:text-primary/80 transition-colors disabled:text-muted-foreground disabled:cursor-not-allowed"
+            >
+              {resendCooldown > 0 ? `Отправить код ещё раз (${resendCooldown}с)` : "Отправить код ещё раз"}
+            </button>
+            <button
+              type="button"
+              onClick={completeLogin}
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Подтвердить позже →
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[100dvh] bg-background relative" style={{ overflowY: "scroll", WebkitOverflowScrolling: "touch" } as React.CSSProperties}>
@@ -269,6 +439,25 @@ export default function Register({ onLogin }: RegisterProps) {
                 autoFocus={typeof window !== "undefined" && window.matchMedia("(hover: hover)").matches}
                 className="w-full bg-card/50 border border-border rounded-2xl px-5 py-3 sm:py-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-[15px] font-medium"
               />
+            </div>
+
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2 pl-1">
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Email</label>
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-green-500/10 text-green-500 border border-green-500/20">необязательно</span>
+              </div>
+              <div className="relative">
+                <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  autoComplete="email"
+                  className="w-full bg-card/50 border border-border rounded-2xl pl-11 pr-5 py-3 sm:py-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-[15px] font-medium"
+                />
+              </div>
+              <p className="text-[11px] text-muted-foreground/70 pl-1">Понадобится код подтверждения — используем для защиты аккаунта</p>
             </div>
 
             <div className="space-y-1.5">

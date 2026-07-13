@@ -6,6 +6,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { EFFECTIVE_JWT_SECRET, sanitizeString, invalidateSessionCache } from "../app";
 import { generateTotpSecret, verifyTotp, buildTotpUri } from "../lib/totp";
+import { sendVerificationEmail, isMailerConfigured } from "../lib/mailer";
 
 const router = Router();
 const SALT_ROUNDS = 12;
@@ -383,6 +384,53 @@ router.post("/auth/verify-email", async (req, res) => {
   }
 });
 
+// In-memory cooldown so a user can't spam themselves (or someone else's
+// inbox) with resend requests.
+const resendCooldowns = new Map<number, number>();
+const RESEND_COOLDOWN_MS = 60 * 1000;
+
+router.post("/auth/resend-verification", async (req, res) => {
+  try {
+    const { userId } = req.body;
+    if (!userId) return res.status(400).json({ error: "userId обязателен" });
+    const uid = Number(userId);
+
+    const lastSent = resendCooldowns.get(uid) ?? 0;
+    const waitMs = RESEND_COOLDOWN_MS - (Date.now() - lastSent);
+    if (waitMs > 0) {
+      return res.status(429).json({ error: `Подождите ${Math.ceil(waitMs / 1000)} сек перед повторной отправкой` });
+    }
+
+    const rows = await db.execute(
+      sql`SELECT id, email, email_verified FROM users WHERE id = ${uid} LIMIT 1`
+    );
+    const user = rows.rows[0] as any;
+    if (!user) return res.status(404).json({ error: "Пользователь не найден" });
+    if (!user.email) return res.status(400).json({ error: "У аккаунта не указан email" });
+    if (user.email_verified) return res.status(400).json({ error: "Email уже подтверждён" });
+
+    if (!isMailerConfigured()) {
+      return res.status(503).json({ error: "Отправка писем временно недоступна. Попробуйте позже." });
+    }
+
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    const expiry = new Date(Date.now() + 30 * 60 * 1000);
+    await db.execute(
+      sql`UPDATE users SET email_verification_code = ${code}, email_verification_expires_at = ${expiry.toISOString()} WHERE id = ${uid}`
+    );
+
+    resendCooldowns.set(uid, Date.now());
+    const sent = await sendVerificationEmail(String(user.email), code);
+    if (!sent) {
+      return res.status(502).json({ error: "Не удалось отправить письмо. Попробуйте позже." });
+    }
+    res.json({ success: true, message: "Код отправлен повторно" });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Ошибка сервера" });
+  }
+});
+
 router.post("/auth/register", async (req, res) => {
   try {
     const { username, displayName, password, ageGroup, birthDate, email, avatarUrl, referralCode } = req.body;
@@ -482,12 +530,17 @@ router.post("/auth/register", async (req, res) => {
 
     const token = signToken(newUser.id);
 
+    if (rawEmail && verificationCode) {
+      // Fire-and-forget: don't block registration on email delivery. If Gmail
+      // isn't configured, the user can still request a resend once it's set up.
+      sendVerificationEmail(rawEmail, verificationCode).catch(() => {});
+    }
+
     res.status(201).json({
       userId: newUser.id,
       token,
       ageVerified: false,
       requiresEmailVerification: !!rawEmail,
-      emailVerificationCode: verificationCode,
       user: {
         id: newUser.id,
         username: newUser.username,
