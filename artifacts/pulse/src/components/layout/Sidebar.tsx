@@ -25,6 +25,7 @@ import {
   Moon,
   Search,
   CalendarDays,
+  Swords,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAppContext } from "@/contexts/AppContext";
@@ -236,6 +237,7 @@ export function Sidebar({ mobileSidebarOpen, onMobileClose, onMobileOpen, onOpen
     { href: "/contacts",     icon: Users,          label: t("nav.contacts") },
     { href: "/stories",      icon: History,        label: t("nav.stories") },
     ...(showEvents ? [{ href: "/events", icon: CalendarDays, label: t("nav.events") }] : []),
+    { href: "/clans",        icon: Swords,         label: "Кланы" },
     { href: "/wallet",       icon: Wallet,         label: t("nav.wallet") },
     { href: "/leaderboard",  icon: Trophy,         label: t("nav.leaderboard") },
     { href: "/profile",      icon: UserCircle,     label: t("nav.profile") },

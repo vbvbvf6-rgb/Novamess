@@ -4,6 +4,7 @@ import { eq, sql, ne } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { moderateContent, localModerationCheck } from "../lib/moderation";
 import { invalidateBanwordsCache, getBanwords, findBanword } from "../lib/banwords";
+import { broadcastToAll } from "../lib/sse";
 
 const router = Router();
 
@@ -1287,6 +1288,9 @@ router.post("/admin/maintenance", requireAdmin, async (req, res) => {
       VALUES ('maintenance', ${json}, NOW())
       ON CONFLICT (key) DO UPDATE SET value = ${json}, updated_at = NOW()
     `);
+    // Broadcast to all connected clients so the overlay appears immediately
+    // without waiting for the 15-second poll. Admins handle it on the frontend.
+    broadcastToAll("maintenance", data);
     return res.json({ ok: true, data });
   } catch (err) { req.log.error(err); res.status(500).json({ error: "Ошибка сервера" }); }
 });

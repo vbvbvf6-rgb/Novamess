@@ -35,6 +35,7 @@ import Wallet from "@/pages/Wallet";
 import Admin from "@/pages/Admin";
 import Prime from "@/pages/Prime";
 
+import Clans from "@/pages/Clans";
 import Leaderboard from "@/pages/Leaderboard";
 import Events from "@/pages/Events";
 import Support from "@/pages/Support";
@@ -344,6 +345,7 @@ function MainAppInner({ onLogout, onSwitchAccount, onRemoveAccount, onOpenAddAcc
               <Route path="/admin" component={Admin} />
               <Route path="/prime" component={Prime} />
 
+              <Route path="/clans" component={Clans} />
               <Route path="/leaderboard" component={Leaderboard} />
               <Route path="/events" component={Events} />
               <Route path="/support" component={Support} />
@@ -492,21 +494,38 @@ function App() {
   const [isAdminUser, setIsAdminUser] = useState(false);
 
   useEffect(() => {
+    // Initial fetch
     fetch("/api/maintenance")
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d) setMaintenanceData(d); })
       .catch(() => {});
-    // Re-check every 15 seconds so already-open tabs get kicked to the
-    // maintenance screen quickly (the API itself also rejects requests
-    // from non-admins in real time — this poll just drives the UI overlay).
+    // Fallback poll every 60s (SSE handles real-time updates below)
     const id = setInterval(() => {
       fetch("/api/maintenance")
         .then(r => r.ok ? r.json() : null)
         .then(d => { if (d) setMaintenanceData(d); })
         .catch(() => {});
-    }, 15_000);
+    }, 60_000);
     return () => clearInterval(id);
   }, []);
+
+  // Real-time maintenance toggle via SSE — shows overlay to all users instantly
+  // when admin enables/disables maintenance, without requiring a page refresh.
+  useEffect(() => {
+    if (!userId) return;
+    const token = sessionStorage.getItem("pulse-token");
+    if (!token) return;
+    const url = `/api/users/me/events?_token=${encodeURIComponent(token)}`;
+    const es = new EventSource(url);
+    const handleMaintenance = (e: MessageEvent) => {
+      try {
+        const data = JSON.parse(e.data) as MaintenanceData;
+        setMaintenanceData(data);
+      } catch {}
+    };
+    es.addEventListener("maintenance", handleMaintenance);
+    return () => { es.removeEventListener("maintenance", handleMaintenance); es.close(); };
+  }, [userId]);
 
   useEffect(() => {
     if (!userId) { setIsAdminUser(false); return; }
