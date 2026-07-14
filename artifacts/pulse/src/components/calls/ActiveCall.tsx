@@ -398,6 +398,9 @@ export function ActiveCall() {
 
   // Remote video — always keep the <video> element in the DOM so srcObject persists.
   // Update hasRemoteVideo when tracks are added/ended (handles Firefox per-track delivery).
+  // NOTE: In Chrome, addtrack fires on the MediaStream BEFORE ontrack fires on the PC,
+  // so by the time we subscribe to addtrack the event is already gone. We add timed
+  // retries (100 ms / 500 ms / 1500 ms) to catch those late-arriving video tracks.
   useEffect(() => {
     const video = remoteVideoRef.current;
     if (!video) return;
@@ -405,15 +408,19 @@ export function ActiveCall() {
       video.srcObject = remoteStream;
       video.play().catch(() => {});
       const checkVideo = () => {
-        const hasCam = remoteStream.getVideoTracks().some((t) => t.readyState !== "ended" && t.enabled);
+        // Only check readyState — t.enabled is always true on the receiver side
+        const hasCam = remoteStream.getVideoTracks().some((t) => t.readyState !== "ended");
         setHasRemoteVideo(hasCam);
       };
       checkVideo();
       remoteStream.addEventListener("addtrack", checkVideo);
       remoteStream.addEventListener("removetrack", checkVideo);
+      // Retry to catch tracks that were added just before we subscribed
+      const retries = [100, 500, 1500, 3000].map((ms) => setTimeout(checkVideo, ms));
       return () => {
         remoteStream.removeEventListener("addtrack", checkVideo);
         remoteStream.removeEventListener("removetrack", checkVideo);
+        retries.forEach(clearTimeout);
       };
     } else {
       video.srcObject = null;

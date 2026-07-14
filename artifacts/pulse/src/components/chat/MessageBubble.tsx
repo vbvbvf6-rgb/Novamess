@@ -709,7 +709,8 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
 
         function renderMarkdown(text: string): React.ReactNode[] {
           const segments: { text: string; bold?: boolean; italic?: boolean; code?: boolean; strike?: boolean; url?: string }[] = [];
-          const combined = /(\*\*[^*]+\*\*|(?<!\*)\*(?!\*)[^*]+(?<!\*)\*(?!\*)|`[^`]+`|~~[^~]+~~|https?:\/\/[^\s<>"']+)/g;
+          // NOTE: no lookbehind assertions — iOS Safari < 16.4 throws on (?<!...)
+          const combined = /(\*\*[^*]+\*\*|\*(?!\*)[^*]+\*(?!\*)|`[^`]+`|~~[^~]+~~|https?:\/\/[^\s<>"']+)/g;
           let last = 0;
           let m: RegExpExecArray | null;
           combined.lastIndex = 0;
