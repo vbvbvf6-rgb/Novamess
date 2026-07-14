@@ -23,10 +23,13 @@ services:
 
       # ── По желанию ───────────────────────────────────────────────────────
       - key: VAPID_PUBLIC_KEY
-        value: BMYTPQMepM0IUhvdnCp9EEZCX787iklvM032FY1m7vq6PheB6OUr-ZxocSlQE2tdmUBNULyvc_vfA5kyu9vVf7I
+        sync: false   # задай вручную в Render Dashboard — должен совпадать с VAPID_PRIVATE_KEY
+
+      - key: VAPID_PRIVATE_KEY
+        sync: false   # секрет — только через Render Dashboard, никогда не в render.yaml
 
       - key: VAPID_EMAIL
-        value: mailto:admin@nova.app
+        sync: false   # например: mailto:admin@nova.app
 
       # TURN для звонков — если не заданы, используется встроенный openrelay (бесплатно, без регистрации)
       - key: TURN_URL
