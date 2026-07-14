@@ -549,6 +549,8 @@ router.post("/messages", async (req, res) => {
             senderName,
             body: msgBody,
           });
+          // Don't push to the sender themselves
+          if (member.id === uid) continue;
           sendPushToUser(member.id, {
             title: notifTitle,
             body: notifBody,

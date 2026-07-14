@@ -112,6 +112,19 @@ const _schemaMigrations = (async () => {
 })();
 _schemaMigrations.catch((e) => logger.error({ err: e }, "Schema migration block failed"));
 
+// ── Push subscriptions table ───────────────────────────────────────────────
+db.execute(sql`
+  CREATE TABLE IF NOT EXISTS push_subscriptions (
+    id         SERIAL PRIMARY KEY,
+    user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    endpoint   TEXT NOT NULL,
+    p256dh     TEXT NOT NULL,
+    auth       TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    CONSTRAINT push_subscriptions_endpoint_unique UNIQUE(endpoint)
+  )
+`).catch(() => {});
+
 // ── Contact requests table ─────────────────────────────────────────────────
 db.execute(sql`
   CREATE TABLE IF NOT EXISTS contact_requests (

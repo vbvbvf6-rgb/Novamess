@@ -16,7 +16,14 @@ async function registerPushSubscription(): Promise<void> {
     const { key } = await keyRes.json();
     if (!key) return;
 
+    // Force re-subscribe if the VAPID key changed (e.g. after initial setup)
+    const storedKey = localStorage.getItem("push-vapid-key");
     let subscription = await reg.pushManager.getSubscription();
+    if (subscription && storedKey !== key) {
+      await subscription.unsubscribe();
+      subscription = null;
+    }
+
     if (!subscription) {
       subscription = await reg.pushManager.subscribe({
         userVisibleOnly: true,
@@ -25,11 +32,14 @@ async function registerPushSubscription(): Promise<void> {
     }
 
     const { endpoint, keys } = subscription.toJSON() as any;
-    await fetch("/api/push/subscribe", {
+    const res = await fetch("/api/push/subscribe", {
       method: "POST",
       headers: getAuthHeaders(),
       body: JSON.stringify({ endpoint, keys }),
     });
+    if (res.ok) {
+      localStorage.setItem("push-vapid-key", key);
+    }
   } catch (err) {
     console.warn("[push] registration failed", err);
   }
