@@ -62,7 +62,7 @@ async function requireAdmin(req: any, res: any, next: any) {
 router.get("/admin/users", requireAdmin, async (req, res) => {
   try {
     const rows = await db.execute(
-      sql`SELECT id, username, display_name, avatar_color, avatar_url, status, balance, created_at, is_verified, is_admin, is_bot, has_prime FROM users ORDER BY id`
+      sql`SELECT id, username, display_name, avatar_color, avatar_url, status, balance, created_at, is_verified, is_admin, is_bot, has_prime, is_banned, ban_reason, ban_expires_at FROM users ORDER BY id`
     );
     res.json(rows.rows);
   } catch (err) {
@@ -426,6 +426,14 @@ router.post("/admin/users/:userId/ban", requireAdmin, async (req, res) => {
     }
     const target = await db.execute(sql`SELECT username, is_banned, ban_reason, ban_expires_at FROM users WHERE id = ${targetId}`);
     const row = target.rows[0] as any;
+    // Kick the user in real-time via SSE if they are currently logged in
+    if (ban) {
+      broadcastToAll("banned", {
+        userId: targetId,
+        banReason: reason?.trim() || null,
+        banExpiresAt: durationHours ? new Date(Date.now() + Number(durationHours) * 3600_000).toISOString() : null,
+      });
+    }
     res.json({
       success: true,
       isBanned: row?.is_banned ?? !!ban,

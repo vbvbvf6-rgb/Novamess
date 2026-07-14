@@ -68,6 +68,15 @@ export default function Login({ onLogin }: LoginProps) {
   };
 
   useEffect(() => {
+    // If user was banned while logged in, App.tsx stored ban info in sessionStorage — show it immediately
+    const banInfoRaw = sessionStorage.getItem("pulse-banned-info");
+    if (banInfoRaw) {
+      try {
+        const banInfo = JSON.parse(banInfoRaw) as { banReason: string; banExpiresAt: string | null };
+        setAccountNotice({ kind: "banned", reason: banInfo.banReason, expiresAt: banInfo.banExpiresAt });
+      } catch {}
+      sessionStorage.removeItem("pulse-banned-info");
+    }
     return () => clearQrIntervals();
   }, []);
 
@@ -670,21 +679,34 @@ export default function Login({ onLogin }: LoginProps) {
               )}>
                 <span className="text-2xl">{accountNotice.kind === "deleted" ? "🗑️" : "⛔"}</span>
               </div>
-              <h3 className="text-lg font-bold text-foreground mb-2">
+              <h3 className="text-lg font-bold text-foreground mb-1">
                 {accountNotice.kind === "deleted" ? "Аккаунт удалён" : "Аккаунт заблокирован"}
               </h3>
+              {accountNotice.kind === "banned" && (
+                <p className="text-sm text-amber-500/80 font-semibold mb-1">
+                  {accountNotice.expiresAt
+                    ? `До ${new Date(accountNotice.expiresAt).toLocaleString("ru-RU", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}`
+                    : "Навсегда"}
+                </p>
+              )}
               <p className="text-sm text-muted-foreground mb-1">
                 {accountNotice.kind === "deleted"
                   ? "Этот аккаунт был удалён администратором."
-                  : "Доступ к этому аккаунту временно ограничен."}
+                  : "Вам ограничен доступ к этому аккаунту."}
               </p>
               <div className="bg-secondary/50 border border-border rounded-2xl px-4 py-3 my-4 text-left">
                 <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Причина</p>
                 <p className="text-sm text-foreground">{accountNotice.reason}</p>
               </div>
               {accountNotice.kind === "banned" && accountNotice.expiresAt && (
-                <p className="text-xs text-muted-foreground mb-4">
-                  Блокировка снимется: {new Date(accountNotice.expiresAt).toLocaleString("ru-RU")}
+                <p className="text-xs text-muted-foreground mb-3">
+                  Блокировка снимется автоматически:<br />
+                  <span className="font-semibold text-foreground">{new Date(accountNotice.expiresAt).toLocaleString("ru-RU")}</span>
+                </p>
+              )}
+              {accountNotice.kind === "banned" && !accountNotice.expiresAt && (
+                <p className="text-xs text-muted-foreground mb-3">
+                  Обратитесь в поддержку для обжалования блокировки.
                 </p>
               )}
               <button

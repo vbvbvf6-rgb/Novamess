@@ -509,22 +509,49 @@ function App() {
     return () => clearInterval(id);
   }, []);
 
-  // Real-time maintenance toggle via SSE — shows overlay to all users instantly
-  // when admin enables/disables maintenance, without requiring a page refresh.
+  // Real-time maintenance + ban via SSE
   useEffect(() => {
     if (!userId) return;
     const token = sessionStorage.getItem("pulse-token");
     if (!token) return;
     const url = `/api/users/me/events?_token=${encodeURIComponent(token)}`;
     const es = new EventSource(url);
+
     const handleMaintenance = (e: MessageEvent) => {
       try {
         const data = JSON.parse(e.data) as MaintenanceData;
         setMaintenanceData(data);
       } catch {}
     };
+
+    // When admin bans this user in real-time — log them out immediately
+    const handleBanned = (e: MessageEvent) => {
+      try {
+        const data = JSON.parse(e.data) as { userId: number; banReason: string | null; banExpiresAt: string | null };
+        if (data.userId !== userId) return;
+        es.close();
+        // Clear session
+        sessionStorage.removeItem("pulse-user-id");
+        sessionStorage.removeItem("pulse-user");
+        sessionStorage.removeItem("pulse-token");
+        sessionStorage.removeItem("pulse-tab-owned");
+        queryClient.clear();
+        // Store ban info so Login page can show it immediately
+        sessionStorage.setItem("pulse-banned-info", JSON.stringify({
+          banReason: data.banReason || "Причина не указана",
+          banExpiresAt: data.banExpiresAt || null,
+        }));
+        setUserId(null);
+      } catch {}
+    };
+
     es.addEventListener("maintenance", handleMaintenance);
-    return () => { es.removeEventListener("maintenance", handleMaintenance); es.close(); };
+    es.addEventListener("banned", handleBanned);
+    return () => {
+      es.removeEventListener("maintenance", handleMaintenance);
+      es.removeEventListener("banned", handleBanned);
+      es.close();
+    };
   }, [userId]);
 
   useEffect(() => {

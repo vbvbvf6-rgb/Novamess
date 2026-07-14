@@ -22,6 +22,9 @@ interface AdminUser {
   is_admin: boolean;
   is_bot: boolean;
   has_prime: boolean;
+  is_banned: boolean;
+  ban_reason: string | null;
+  ban_expires_at: string | null;
 }
 
 interface Stats {
@@ -799,6 +802,21 @@ export default function Admin() {
         if (!isBanned) next.add(target.id); else next.delete(target.id);
         return next;
       });
+      // Update user in list so ban details are visible immediately
+      setUsers(prev => prev.map(u => u.id === target.id ? {
+        ...u,
+        is_banned: !!data.isBanned,
+        ban_reason: data.banReason ?? null,
+        ban_expires_at: data.banExpiresAt ?? null,
+      } : u));
+      if (selectedUser?.id === target.id) {
+        setSelectedUser(prev => prev ? {
+          ...prev,
+          is_banned: !!data.isBanned,
+          ban_reason: data.banReason ?? null,
+          ban_expires_at: data.banExpiresAt ?? null,
+        } : null);
+      }
       setBanConfirm(null);
     } catch { showToast("Ошибка соединения", "err"); }
     setBanLoading(false);
@@ -811,7 +829,12 @@ export default function Admin() {
         fetch("/api/admin/users", { headers: getHeader() }),
         fetch("/api/admin/stats", { headers: getHeader() }),
       ]);
-      if (usersRes.ok) setUsers(await usersRes.json());
+      if (usersRes.ok) {
+        const fetchedUsers: AdminUser[] = await usersRes.json();
+        setUsers(fetchedUsers);
+        // Initialize bannedIds from the fetched list
+        setBannedIds(new Set(fetchedUsers.filter(u => u.is_banned).map(u => u.id)));
+      }
       if (statsRes.ok) setStats(await statsRes.json());
     } catch {}
     setLoading(false);
@@ -3195,18 +3218,33 @@ export default function Admin() {
 
                       {/* Ban / Unban */}
                       {!selectedUser.is_admin && (
-                        <button
-                          onClick={() => bannedIds.has(selectedUser.id) ? handleBanToggle(selectedUser) : setBanConfirm(selectedUser)}
-                          disabled={banLoading}
-                          className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-all text-sm font-medium ${
-                            bannedIds.has(selectedUser.id)
-                              ? "bg-orange-500/10 border-orange-500/30 text-orange-400 hover:bg-orange-500/20"
-                              : "bg-card border-border text-muted-foreground hover:border-orange-500/30 hover:text-orange-400"
-                          }`}
-                        >
-                          <Ban size={18} />
-                          {bannedIds.has(selectedUser.id) ? "Разблокировать пользователя" : "Заблокировать пользователя"}
-                        </button>
+                        <div className="space-y-2">
+                          {bannedIds.has(selectedUser.id) && (
+                            <div className="bg-orange-500/8 border border-orange-500/25 rounded-xl px-3 py-2.5 space-y-1.5">
+                              <p className="text-[11px] font-bold uppercase tracking-widest text-orange-400">Активная блокировка</p>
+                              {selectedUser.ban_reason && (
+                                <p className="text-xs text-foreground font-medium">Причина: {selectedUser.ban_reason}</p>
+                              )}
+                              <p className="text-xs text-muted-foreground">
+                                {selectedUser.ban_expires_at
+                                  ? `До: ${new Date(selectedUser.ban_expires_at).toLocaleString("ru-RU")}`
+                                  : "Навсегда"}
+                              </p>
+                            </div>
+                          )}
+                          <button
+                            onClick={() => bannedIds.has(selectedUser.id) ? handleBanToggle(selectedUser) : setBanConfirm(selectedUser)}
+                            disabled={banLoading}
+                            className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-all text-sm font-medium ${
+                              bannedIds.has(selectedUser.id)
+                                ? "bg-orange-500/10 border-orange-500/30 text-orange-400 hover:bg-orange-500/20"
+                                : "bg-card border-border text-muted-foreground hover:border-orange-500/30 hover:text-orange-400"
+                            }`}
+                          >
+                            <Ban size={18} />
+                            {bannedIds.has(selectedUser.id) ? "Разблокировать пользователя" : "Заблокировать пользователя"}
+                          </button>
+                        </div>
                       )}
 
                       {/* Delete */}
