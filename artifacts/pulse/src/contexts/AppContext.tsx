@@ -706,6 +706,52 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
     cleanupCall();
   }, [getUserHeaders, cleanupCall]);
 
+  // ── push notification accept/decline (works even after a cold start) ─────
+  // A click on the "Принять"/"Отклонить" action of a call push notification
+  // opens/focuses the app with ?callAction=accept|decline&callId=N. The call
+  // may not be in state yet (fresh launch, or the SSE "incoming-call" event
+  // fired before this tab existed) so we fetch it first if needed.
+  const handlePushCallAction = useCallback(async (action: string, callId: number) => {
+    if (action !== "accept" && action !== "decline") return;
+    try {
+      if (!activeCallRef.current || activeCallRef.current.id !== callId) {
+        const res = await fetch(`/api/calls/${callId}`, { headers: getUserHeaders() });
+        if (!res.ok) return;
+        const call = await res.json();
+        if (call.status !== "ringing") return;
+        activeCallRef.current = call;
+        setActiveCall(call);
+      }
+      if (action === "accept") await acceptCall();
+      else await declineCall();
+    } catch {}
+  }, [getUserHeaders, acceptCall, declineCall]);
+
+  // Cold start: the SW opened a brand-new window with the action in the URL.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const action = params.get("callAction");
+    const callId = params.get("callId");
+    if (action && callId) {
+      window.history.replaceState({}, "", window.location.pathname);
+      handlePushCallAction(action, Number(callId));
+    }
+  }, [handlePushCallAction]);
+
+  // Warm start: a window was already open — the SW posts a message instead
+  // of navigating, so we listen for it here.
+  useEffect(() => {
+    if (!("serviceWorker" in navigator)) return;
+    const onMessage = (e: MessageEvent) => {
+      const data = e.data;
+      if (data?.type === "notification-click" && data.isCall && data.callId != null && (data.action === "accept" || data.action === "decline")) {
+        handlePushCallAction(data.action, Number(data.callId));
+      }
+    };
+    navigator.serviceWorker.addEventListener("message", onMessage);
+    return () => navigator.serviceWorker.removeEventListener("message", onMessage);
+  }, [handlePushCallAction]);
+
   // ── hangUp ────────────────────────────────────────────────────────────────
   const hangUp = useCallback(async () => {
     const call = activeCallRef.current;

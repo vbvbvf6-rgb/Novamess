@@ -188,6 +188,7 @@ router.post("/calls", async (req, res) => {
         senderAvatar: callerAvatar,
         senderColor: callerColor,
         chatType: "call",
+        callId: call.id,
       });
     }
     res.status(201).json(built);

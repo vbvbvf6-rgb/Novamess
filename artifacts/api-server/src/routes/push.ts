@@ -23,6 +23,7 @@ export interface PushPayload {
   senderColor?: string;
   chatType?: string;
   image?: string;
+  callId?: number;
 }
 
 export async function sendPushToUser(

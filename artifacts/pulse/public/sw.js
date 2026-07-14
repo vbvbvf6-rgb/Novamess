@@ -85,12 +85,27 @@ self.addEventListener("message", (e) => {
 
 self.addEventListener("notificationclick", (e) => {
   e.notification.close();
-  const url = e.notification.data?.url || "/";
+  const data = e.notification.data || {};
+  const action = e.action || "";
+  const isCall = !!data.isCall;
+  const callId = data.callId;
+
+  // For calls, "accept"/"decline" need to reach the running app so it can
+  // join WebRTC media or PUT the call status — always focus/open a window
+  // and hand it the action so AppContext can finish the job once it boots.
+  let url = data.url || "/";
+  if (isCall && callId != null && (action === "accept" || action === "decline")) {
+    const u = new URL(url, self.location.origin);
+    u.searchParams.set("callAction", action);
+    u.searchParams.set("callId", String(callId));
+    url = u.pathname + u.search;
+  }
+
   e.waitUntil(
     clients.matchAll({ type: "window", includeUncontrolled: true }).then((list) => {
       for (const client of list) {
         if (client.url.includes(self.location.origin) && "focus" in client) {
-          client.postMessage({ type: "notification-click", url });
+          client.postMessage({ type: "notification-click", url, action, callId, isCall });
           return client.focus();
         }
       }
@@ -117,7 +132,7 @@ self.addEventListener("push", (e) => {
         body,
         icon,
         badge,
-        data: { url, isCall: true },
+        data: { url, isCall: true, callId: data.callId },
         vibrate: [300, 100, 300, 100, 300, 100, 300],
         tag,
         renotify: true,
