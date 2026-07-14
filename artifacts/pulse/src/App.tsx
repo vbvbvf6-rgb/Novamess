@@ -11,6 +11,7 @@ import { getSavedAccounts, saveAccount, removeAccount, SavedAccount } from "@/li
 import { ScreenLock } from "@/components/ScreenLock";
 import { motion, AnimatePresence } from "framer-motion";
 import { Clock, LogOut, ShieldCheck, Megaphone, X, Download, RefreshCw, RotateCcw } from "lucide-react";
+import { MaintenanceScreen, MaintenanceData } from "@/components/MaintenanceScreen";
 
 import { useNotifications } from "@/hooks/useNotifications";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
@@ -532,6 +533,35 @@ function App() {
   });
   const [addingAccount, setAddingAccount] = useState(false);
 
+  // Maintenance mode check
+  const [maintenanceData, setMaintenanceData] = useState<MaintenanceData | null>(null);
+  const [isAdminUser, setIsAdminUser] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/maintenance")
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setMaintenanceData(d); })
+      .catch(() => {});
+    // Re-check every 60 seconds
+    const id = setInterval(() => {
+      fetch("/api/maintenance")
+        .then(r => r.ok ? r.json() : null)
+        .then(d => { if (d) setMaintenanceData(d); })
+        .catch(() => {});
+    }, 60_000);
+    return () => clearInterval(id);
+  }, []);
+
+  useEffect(() => {
+    if (!userId) { setIsAdminUser(false); return; }
+    const token = sessionStorage.getItem("pulse-token");
+    if (!token) return;
+    fetch("/api/admin/check", { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => setIsAdminUser(d?.isAdmin === true))
+      .catch(() => {});
+  }, [userId]);
+
   // Global handler: when any API call returns 401 (expired/invalid token),
   // clear this tab's session and return to login screen
   useEffect(() => {
@@ -689,6 +719,13 @@ function App() {
     <AnimatePresence>
       {showLoginSplash && <LoginSplash onDone={() => setShowLoginSplash(false)} />}
     </AnimatePresence>
+    {/* Maintenance overlay — shown for non-admin users during technical break */}
+    {maintenanceData?.active && !isAdminUser && (
+      <MaintenanceScreen
+        data={maintenanceData}
+        onExpired={() => setMaintenanceData(prev => prev ? { ...prev, active: false } : null)}
+      />
+    )}
     </ErrorBoundary>
     </div>
   );

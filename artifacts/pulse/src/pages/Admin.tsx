@@ -5,7 +5,8 @@ import {
   Plus, Trash2, Key, BadgeCheck, X, ShieldCheck, ShieldOff, MessageSquare,
   PhoneCall, Gift, Crown, Megaphone, BarChart3, Activity, Star,
   Edit3, Save, ChevronDown, ChevronRight, ChevronLeft, Minus, Ban, FileText, Trophy, Image, Package,
-  ShieldAlert, Clock, CheckCircle2, Bug, Inbox, Send as SendIcon, Download
+  ShieldAlert, Clock, CheckCircle2, Bug, Inbox, Send as SendIcon, Download,
+  Wrench, Mail, ToggleLeft, ToggleRight, Timer
 } from "lucide-react";
 
 interface AdminUser {
@@ -405,6 +406,16 @@ export default function Admin() {
   const [announcementMsg, setAnnouncementMsg] = useState("");
   const [announcementSaving, setAnnouncementSaving] = useState(false);
   const [currentAnnouncement, setCurrentAnnouncement] = useState<string | null>(null);
+
+  // Maintenance mode
+  interface MaintenanceSettings { active: boolean; message: string; fixes: string[]; endsAt: string | null; }
+  const [showMaintenancePanel, setShowMaintenancePanel] = useState(false);
+  const [maintenance, setMaintenance] = useState<MaintenanceSettings>({ active: false, message: "", fixes: [], endsAt: null });
+  const [maintenanceLoading, setMaintenanceLoading] = useState(false);
+  const [maintFixInput, setMaintFixInput] = useState("");
+  const [mailTestResult, setMailTestResult] = useState<any>(null);
+  const [mailTestLoading, setMailTestLoading] = useState(false);
+  const [mailTestTo, setMailTestTo] = useState("");
   const fetchCurrentAnnouncement = async () => {
     try {
       const r = await fetch("/api/announcement", { headers: getHeader() });
@@ -764,6 +775,54 @@ export default function Admin() {
     setTimeout(() => setToast(null), 3500);
   };
 
+  // ── Maintenance handlers ──────────────────────────────────────────────────
+  const fetchMaintenance = async () => {
+    try {
+      const res = await fetch("/api/admin/maintenance", { headers: getHeader() });
+      if (res.ok) setMaintenance(await res.json());
+    } catch {}
+  };
+
+  const saveMaintenance = async (data: { active: boolean; message: string; fixes: string[]; endsAt: string | null }) => {
+    setMaintenanceLoading(true);
+    try {
+      const res = await fetch("/api/admin/maintenance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...getHeader() },
+        body: JSON.stringify(data),
+      });
+      const r = await res.json();
+      if (!res.ok) { showToast(r.error || "Ошибка", "err"); }
+      else {
+        setMaintenance(r.data);
+        showToast(r.data.active ? "🔧 Техперерыв включён" : "✅ Техперерыв отключён", r.data.active ? "err" : "ok");
+      }
+    } catch { showToast("Ошибка соединения", "err"); }
+    setMaintenanceLoading(false);
+  };
+
+  const addMaintFix = () => {
+    const v = maintFixInput.trim();
+    if (!v) return;
+    setMaintenance(prev => ({ ...prev, fixes: [...prev.fixes, v] }));
+    setMaintFixInput("");
+  };
+
+  const handleMailTest = async () => {
+    setMailTestLoading(true);
+    setMailTestResult(null);
+    try {
+      const url = mailTestTo.trim()
+        ? `/api/admin/mail-test?to=${encodeURIComponent(mailTestTo.trim())}`
+        : "/api/admin/mail-test";
+      const res = await fetch(url, { headers: getHeader() });
+      setMailTestResult(await res.json());
+    } catch (e: any) {
+      setMailTestResult({ ok: false, error: e?.message || "Ошибка соединения" });
+    }
+    setMailTestLoading(false);
+  };
+
   const fetchPosts = async () => {
     setPostsLoading(true);
     try {
@@ -830,7 +889,7 @@ export default function Admin() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => { fetchData(); fetchMaintenance(); }, [fetchData]);
 
   const fetchUserStats = async (uid: number) => {
     setUserStatsLoading(true);
@@ -1254,6 +1313,197 @@ export default function Admin() {
             <StatCard icon={<TrendingUp size={20} className="text-violet-400" />} label="Средний баланс" value={stats.totalUsers > 0 ? Math.round(stats.totalSpark / stats.totalUsers) : 0} color="bg-violet-500/10" />
           </div>
         )}
+
+        {/* ── Maintenance Mode ─────────────────────────────────────────── */}
+        <div className="bg-card border border-border rounded-2xl overflow-hidden">
+          <button
+            onClick={() => { setShowMaintenancePanel(v => !v); }}
+            className="w-full p-4 flex items-center justify-between hover:bg-secondary/50 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${maintenance.active ? "bg-orange-500/15" : "bg-secondary"}`}>
+                <Wrench size={18} className={maintenance.active ? "text-orange-400" : "text-muted-foreground"} />
+              </div>
+              <div className="text-left">
+                <p className="font-semibold text-sm">Технический перерыв</p>
+                <p className={`text-xs ${maintenance.active ? "text-orange-400 font-medium" : "text-muted-foreground"}`}>
+                  {maintenance.active
+                    ? maintenance.endsAt
+                      ? `Активен · до ${new Date(maintenance.endsAt).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })}`
+                      : "Активен (без таймера)"
+                    : "Отключён · пользователи видят приложение"}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {maintenance.active && (
+                <span className="px-2 py-0.5 rounded-full bg-orange-500/15 border border-orange-500/30 text-orange-400 text-[10px] font-black">ВКЛ</span>
+              )}
+              {showMaintenancePanel ? <ChevronDown size={16} className="text-muted-foreground" /> : <ChevronRight size={16} className="text-muted-foreground" />}
+            </div>
+          </button>
+
+          {showMaintenancePanel && (
+            <div className="border-t border-border p-4 space-y-4">
+              {/* Quick toggle */}
+              <div className="flex items-center justify-between p-3 rounded-xl bg-secondary/40 border border-border">
+                <div>
+                  <p className="text-sm font-semibold">Статус</p>
+                  <p className="text-xs text-muted-foreground">{maintenance.active ? "Пользователи видят экран техперерыва" : "Приложение работает в штатном режиме"}</p>
+                </div>
+                <button
+                  onClick={() => saveMaintenance({ ...maintenance, active: !maintenance.active })}
+                  disabled={maintenanceLoading}
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+                    maintenance.active
+                      ? "bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/25"
+                      : "bg-orange-500/15 border border-orange-500/30 text-orange-400 hover:bg-orange-500/25"
+                  }`}
+                >
+                  {maintenance.active ? <><ToggleRight size={16} /> Выключить</> : <><ToggleLeft size={16} /> Включить</>}
+                </button>
+              </div>
+
+              {/* Duration presets */}
+              <div>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                  <Timer size={12} /> Длительность
+                </p>
+                <div className="grid grid-cols-4 gap-1.5 mb-2">
+                  {[
+                    { label: "15 мин", min: 15 },
+                    { label: "30 мин", min: 30 },
+                    { label: "1 час", min: 60 },
+                    { label: "2 часа", min: 120 },
+                    { label: "4 часа", min: 240 },
+                    { label: "8 часов", min: 480 },
+                    { label: "24 часа", min: 1440 },
+                    { label: "∞ нет", min: 0 },
+                  ].map(p => {
+                    const endsAt = p.min > 0 ? new Date(Date.now() + p.min * 60_000).toISOString() : null;
+                    const isSelected = p.min === 0
+                      ? !maintenance.endsAt
+                      : maintenance.endsAt && Math.abs(new Date(maintenance.endsAt).getTime() - Date.now() - p.min * 60_000) < 5 * 60_000;
+                    return (
+                      <button
+                        key={p.label}
+                        onClick={() => setMaintenance(prev => ({ ...prev, endsAt }))}
+                        className={`py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+                          isSelected
+                            ? "bg-primary/15 border-primary/40 text-primary"
+                            : "border-border hover:border-primary/30 text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        {p.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                {maintenance.endsAt && (
+                  <p className="text-xs text-muted-foreground text-center">
+                    Завершится: {new Date(maintenance.endsAt).toLocaleString("ru-RU", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                  </p>
+                )}
+              </div>
+
+              {/* Message */}
+              <div>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Сообщение для пользователей</p>
+                <textarea
+                  value={maintenance.message}
+                  onChange={e => setMaintenance(prev => ({ ...prev, message: e.target.value }))}
+                  placeholder="Мы уже работаем над улучшениями. Совсем скоро вернёмся!"
+                  rows={2}
+                  className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary resize-none transition-colors"
+                />
+              </div>
+
+              {/* Fixes list */}
+              <div>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Что будет исправлено</p>
+                <div className="space-y-1.5 mb-2">
+                  {maintenance.fixes.map((fix, i) => (
+                    <div key={i} className="flex items-center gap-2 p-2 rounded-lg bg-secondary/40 border border-border text-sm">
+                      <CheckCircle2 size={14} className="text-emerald-400 shrink-0" />
+                      <span className="flex-1 text-foreground">{fix}</span>
+                      <button
+                        onClick={() => setMaintenance(prev => ({ ...prev, fixes: prev.fixes.filter((_, j) => j !== i) }))}
+                        className="p-0.5 text-muted-foreground hover:text-destructive transition-colors"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={maintFixInput}
+                    onChange={e => setMaintFixInput(e.target.value)}
+                    onKeyDown={e => e.key === "Enter" && addMaintFix()}
+                    placeholder="Добавить пункт... (Enter)"
+                    className="flex-1 bg-background border border-border rounded-xl px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
+                  />
+                  <button
+                    onClick={addMaintFix}
+                    className="px-3 py-2 rounded-xl bg-secondary border border-border text-sm hover:bg-primary/10 hover:border-primary/30 transition-colors"
+                  >
+                    <Plus size={16} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Save button */}
+              <button
+                onClick={() => saveMaintenance(maintenance)}
+                disabled={maintenanceLoading}
+                className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {maintenanceLoading ? <><RefreshCw size={14} className="animate-spin" /> Сохраняем...</> : <><Save size={14} /> Сохранить настройки</>}
+              </button>
+
+              {/* Divider */}
+              <div className="border-t border-border/50 pt-4">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                  <Mail size={12} /> Тест отправки Email
+                </p>
+                <div className="flex gap-2 mb-3">
+                  <input
+                    type="email"
+                    value={mailTestTo}
+                    onChange={e => setMailTestTo(e.target.value)}
+                    placeholder="Получатель (оставьте пустым = MAIL_FROM)"
+                    className="flex-1 bg-background border border-border rounded-xl px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
+                  />
+                  <button
+                    onClick={handleMailTest}
+                    disabled={mailTestLoading}
+                    className="px-4 py-2 rounded-xl bg-blue-500/15 border border-blue-500/30 text-blue-400 font-semibold text-sm hover:bg-blue-500/25 transition-colors disabled:opacity-50 flex items-center gap-2"
+                  >
+                    {mailTestLoading ? <RefreshCw size={14} className="animate-spin" /> : <Mail size={14} />}
+                    {mailTestLoading ? "..." : "Тест"}
+                  </button>
+                </div>
+                {mailTestResult && (
+                  <div className={`p-3 rounded-xl border text-xs font-mono whitespace-pre-wrap break-all ${
+                    mailTestResult.ok
+                      ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-300"
+                      : "bg-red-500/10 border-red-500/20 text-red-300"
+                  }`}>
+                    <p className="font-bold mb-1 not-italic">{mailTestResult.ok ? "✅ Письмо отправлено!" : "❌ Ошибка отправки"}</p>
+                    <p className="opacity-70">from: {mailTestResult.from}</p>
+                    <p className="opacity-70">to: {mailTestResult.to}</p>
+                    {mailTestResult.elasticResponse && (
+                      <p className="opacity-70 mt-1">Ответ Elastic Email: {JSON.stringify(mailTestResult.elasticResponse)}</p>
+                    )}
+                    {mailTestResult.reason && <p className="opacity-70">Причина: {mailTestResult.reason}</p>}
+                    {mailTestResult.error && <p className="opacity-70">Ошибка: {mailTestResult.error}</p>}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Tools row: Mass SPARK + Posts + Leaderboard */}
         <div className="grid md:grid-cols-2 gap-4">

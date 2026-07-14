@@ -30,6 +30,12 @@ db.execute(sql`CREATE TABLE IF NOT EXISTS post_reports (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 )`).catch(() => {});
 
+db.execute(sql`CREATE TABLE IF NOT EXISTS app_settings (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+)`).catch(() => {});
+
 async function isAdminUser(userId: number): Promise<boolean> {
   if (ADMIN_USER_IDS.includes(userId)) return true;
   try {
@@ -1260,6 +1266,87 @@ router.get("/admin/banned-words/list", requireAdmin, async (req, res) => {
     res.json((rows.rows as any[]).map(r => r.word));
   } catch {
     res.json([]);
+  }
+});
+
+// ── Maintenance mode (public read, admin write) ────────────────────────────
+
+router.get("/maintenance", async (_req, res) => {
+  try {
+    const rows = await db.execute(sql`SELECT value FROM app_settings WHERE key = 'maintenance' LIMIT 1`);
+    const row = rows.rows[0] as any;
+    if (!row) return res.json({ active: false });
+    const data = JSON.parse(row.value);
+    // Auto-expire if end time has passed
+    if (data.active && data.endsAt && new Date(data.endsAt) < new Date()) {
+      data.active = false;
+      await db.execute(sql`UPDATE app_settings SET value = ${JSON.stringify(data)}, updated_at = NOW() WHERE key = 'maintenance'`).catch(() => {});
+    }
+    return res.json(data);
+  } catch { return res.json({ active: false }); }
+});
+
+router.get("/admin/maintenance", requireAdmin, async (req, res) => {
+  try {
+    const rows = await db.execute(sql`SELECT value FROM app_settings WHERE key = 'maintenance' LIMIT 1`);
+    const row = rows.rows[0] as any;
+    if (!row) return res.json({ active: false, message: "", fixes: [], endsAt: null });
+    return res.json(JSON.parse(row.value));
+  } catch (err) { req.log.error(err); res.status(500).json({ error: "Ошибка сервера" }); }
+});
+
+router.post("/admin/maintenance", requireAdmin, async (req, res) => {
+  try {
+    const { active, message, fixes, endsAt } = req.body;
+    const data = {
+      active: !!active,
+      message: String(message || "").trim(),
+      fixes: Array.isArray(fixes) ? fixes.map(String).filter(Boolean) : [],
+      endsAt: endsAt || null,
+    };
+    const json = JSON.stringify(data);
+    await db.execute(sql`
+      INSERT INTO app_settings (key, value, updated_at)
+      VALUES ('maintenance', ${json}, NOW())
+      ON CONFLICT (key) DO UPDATE SET value = ${json}, updated_at = NOW()
+    `);
+    return res.json({ ok: true, data });
+  } catch (err) { req.log.error(err); res.status(500).json({ error: "Ошибка сервера" }); }
+});
+
+// ── Admin mail diagnostics ─────────────────────────────────────────────────
+
+router.get("/admin/mail-test", requireAdmin, async (req, res) => {
+  const apiKey = process.env.ELASTICEMAIL_API_KEY;
+  const from   = process.env.MAIL_FROM || process.env.SMTP_USER || process.env.GMAIL_USER || "(не задан)";
+  const providerNote = apiKey ? "Elastic Email" : process.env.BREVO_API_KEY ? "Brevo" : process.env.SMTP_HOST ? "SMTP" : "none";
+
+  if (!apiKey) {
+    return res.json({ ok: false, provider: providerNote, from, reason: "ELASTICEMAIL_API_KEY не задан" });
+  }
+
+  const to = String(req.query.to || from);
+  const params = new URLSearchParams({
+    apikey: apiKey,
+    from,
+    fromName: process.env.MAIL_FROM_NAME || "Nova",
+    to,
+    subject: "Nova — тест отправки письма",
+    bodyText: "Если вы видите это письмо — email работает!",
+    bodyHtml: "<p>Если вы видите это письмо — <b>email работает!</b></p>",
+    isTransactional: "true",
+  });
+
+  try {
+    const r = await fetch("https://api.elasticemail.com/v2/email/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: params.toString(),
+    });
+    const json = (await r.json().catch(() => ({}))) as any;
+    return res.json({ ok: json?.success === true, provider: "Elastic Email", status: r.status, from, to, elasticResponse: json });
+  } catch (err: any) {
+    return res.json({ ok: false, provider: "Elastic Email", from, to, error: err?.message });
   }
 });
 
