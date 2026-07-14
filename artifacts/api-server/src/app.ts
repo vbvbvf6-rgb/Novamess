@@ -244,6 +244,8 @@ const PUBLIC_API_PATHS = [
   "/auth/reset-password-via-email/verify",
   "/auth/reset-password/verify-question",
   "/auth/reset-password-final",
+  // Public maintenance status check (no auth — shown before login)
+  "/maintenance",
 ];
 
 // ── Session validity cache — avoids DB hit on every request ──────────────
