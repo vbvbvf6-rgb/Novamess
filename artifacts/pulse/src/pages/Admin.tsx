@@ -2958,19 +2958,26 @@ export default function Admin() {
                   </div>
                 ))
               ) : filtered.map(user => (
-                <motion.button
+                <motion.div
                   key={user.id}
                   whileHover={{ backgroundColor: "rgba(255,255,255,0.03)" }}
+                  className={`w-full p-3 flex items-center gap-3 transition-colors cursor-pointer ${selectedUser?.id === user.id ? "bg-primary/10 border-l-2 border-primary" : ""}`}
                   onClick={() => selectUser(user)}
-                  className={`w-full p-4 flex items-center gap-3 text-left transition-colors ${selectedUser?.id === user.id ? "bg-primary/10 border-l-2 border-primary" : ""}`}
                 >
-                  <div
-                    className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0 overflow-hidden"
-                    style={{ backgroundColor: user.avatar_color }}
-                  >
-                    {user.avatar_url
-                      ? <img src={user.avatar_url} alt="" className="w-full h-full object-cover rounded-full" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
-                      : user.display_name[0]?.toUpperCase()}
+                  <div className="relative shrink-0">
+                    <div
+                      className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm overflow-hidden"
+                      style={{ backgroundColor: user.avatar_color }}
+                    >
+                      {user.avatar_url
+                        ? <img src={user.avatar_url} alt="" className="w-full h-full object-cover rounded-full" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+                        : user.display_name[0]?.toUpperCase()}
+                    </div>
+                    {bannedIds.has(user.id) && (
+                      <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-orange-500 border-2 border-card flex items-center justify-center">
+                        <Ban size={8} className="text-white" />
+                      </div>
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap">
@@ -2987,10 +2994,18 @@ export default function Admin() {
                     </div>
                     <p className="text-xs text-muted-foreground">@{user.username}</p>
                   </div>
-                  <div className="flex items-center gap-1 text-primary text-sm font-bold shrink-0">
-                    <Zap size={12} /> {Number(user.balance).toLocaleString()}
-                  </div>
-                </motion.button>
+                  {/* Quick ban button */}
+                  {!user.is_admin && (
+                    <button
+                      onClick={e => { e.stopPropagation(); bannedIds.has(user.id) ? handleBanToggle(user) : setBanConfirm(user); }}
+                      disabled={banLoading}
+                      title={bannedIds.has(user.id) ? "Разблокировать" : "Заблокировать"}
+                      className={`shrink-0 w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${bannedIds.has(user.id) ? "bg-orange-500/20 text-orange-400 hover:bg-orange-500/30" : "text-muted-foreground/40 hover:bg-red-500/10 hover:text-red-400"}`}
+                    >
+                      <Ban size={14} />
+                    </button>
+                  )}
+                </motion.div>
               ))}
             </div>
           </div>
@@ -3030,9 +3045,26 @@ export default function Admin() {
                       </p>
                     </div>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Регистрация: {new Date(selectedUser.created_at).toLocaleDateString("ru-RU", { day: "2-digit", month: "long", year: "numeric" })}
-                  </p>
+                  <div className="flex items-center justify-between mt-2">
+                    <p className="text-xs text-muted-foreground">
+                      Регистрация: {new Date(selectedUser.created_at).toLocaleDateString("ru-RU", { day: "2-digit", month: "long", year: "numeric" })}
+                    </p>
+                    {/* Quick ban button in header */}
+                    {!selectedUser.is_admin && (
+                      <button
+                        onClick={() => bannedIds.has(selectedUser.id) ? handleBanToggle(selectedUser) : setBanConfirm(selectedUser)}
+                        disabled={banLoading}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                          bannedIds.has(selectedUser.id)
+                            ? "bg-orange-500/15 border border-orange-500/30 text-orange-400 hover:bg-orange-500/25"
+                            : "bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20"
+                        }`}
+                      >
+                        <Ban size={12} />
+                        {bannedIds.has(selectedUser.id) ? "Разбанить" : "Забанить"}
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 {/* Tabs */}
