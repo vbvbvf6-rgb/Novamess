@@ -60,6 +60,7 @@ export default function Register({ onLogin }: RegisterProps) {
   const [loading, setLoading] = useState(false);
 
   const [step, setStep] = useState<"form" | "verify">("form");
+  const [emailDelivered, setEmailDelivered] = useState(true);
   const [pendingUserId, setPendingUserId] = useState<number | null>(null);
   const [pendingLoginPayload, setPendingLoginPayload] = useState<{ token: string; userId: number; user: any } | null>(null);
   const [verifyCode, setVerifyCode] = useState("");
@@ -155,6 +156,7 @@ export default function Register({ onLogin }: RegisterProps) {
         setPendingUserId(data.userId);
         setPendingLoginPayload({ token: data.token, userId: data.userId, user: data.user });
         setResendCooldown(60);
+        setEmailDelivered(data.emailSent !== false);
         setStep("verify");
         return;
       }
@@ -252,9 +254,16 @@ export default function Register({ onLogin }: RegisterProps) {
               <Mail size={28} className="text-primary" />
             </div>
             <h1 className="text-2xl font-black text-foreground mb-1.5 text-center">Подтвердите email</h1>
-            <p className="text-sm text-muted-foreground text-center px-2">
-              Мы отправили 6-значный код на <span className="font-semibold text-foreground">{email.trim()}</span>
-            </p>
+            {emailDelivered ? (
+              <p className="text-sm text-muted-foreground text-center px-2">
+                Мы отправили 6-значный код на <span className="font-semibold text-foreground">{email.trim()}</span>
+              </p>
+            ) : (
+              <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl px-4 py-3 text-center mt-1">
+                <p className="text-sm text-yellow-400 font-semibold">⚠️ Не удалось отправить письмо</p>
+                <p className="text-xs text-yellow-400/80 mt-1">Проверьте папку «Спам» или нажмите «Отправить повторно» ниже</p>
+              </div>
+            )}
           </div>
 
           <form onSubmit={handleVerifyCode} className="space-y-4">

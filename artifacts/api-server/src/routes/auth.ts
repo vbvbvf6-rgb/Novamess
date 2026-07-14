@@ -530,12 +530,16 @@ router.post("/auth/register", async (req, res) => {
 
     const token = signToken(newUser.id);
 
+    let emailSent = false;
     if (rawEmail && verificationCode) {
-      // Fire-and-forget — don't block registration on email delivery.
-      // Log failures explicitly so they appear in Render / production logs.
-      sendVerificationEmail(rawEmail, verificationCode).catch((err: any) => {
-        console.error("[mailer] Registration verification email failed:", err?.message ?? err);
-      });
+      try {
+        emailSent = await sendVerificationEmail(rawEmail, verificationCode);
+        if (!emailSent) {
+          console.error(`[mailer] Email NOT delivered to ${rawEmail} — returned false. Check MAIL_FROM + Elastic Email verified senders.`);
+        }
+      } catch (err: any) {
+        console.error("[mailer] Registration email threw:", err?.message ?? err);
+      }
     }
 
     res.status(201).json({
@@ -543,6 +547,7 @@ router.post("/auth/register", async (req, res) => {
       token,
       ageVerified: false,
       requiresEmailVerification: !!rawEmail,
+      emailSent,
       user: {
         id: newUser.id,
         username: newUser.username,
