@@ -120,6 +120,43 @@ async function sendViaBrevo(opts: {
   return true;
 }
 
+// ── MailerSend (HTTP API — free 3000/month, email-only signup, no phone needed) ─
+async function sendViaMailerSend(opts: {
+  from: string;
+  fromName: string;
+  to: string;
+  subject: string;
+  text: string;
+  html: string;
+}): Promise<boolean> {
+  const apiKey = process.env.MAILERSEND_API_KEY;
+  if (!apiKey) return false;
+
+  const res = await fetch("https://api.mailersend.com/v1/email", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: { email: opts.from, name: opts.fromName },
+      to: [{ email: opts.to }],
+      subject: opts.subject,
+      text: opts.text,
+      html: opts.html,
+    }),
+  });
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    console.error(`[mailer] MailerSend FAILED: status=${res.status} body=${body}`);
+    logger.error({ status: res.status, body }, "MailerSend API error");
+    return false;
+  }
+  console.log(`[mailer] MailerSend OK → ${opts.to}`);
+  return true;
+}
+
 // ── Resend (HTTP API — works on Render, needs domain for mass sending) ──────
 async function sendViaResend(opts: {
   from: string;
@@ -201,16 +238,21 @@ export function isMailerConfigured(): boolean {
   const hasElastic = !!process.env.ELASTICEMAIL_API_KEY;
   const hasMailjet = !!(process.env.MAILJET_API_KEY && process.env.MAILJET_API_SECRET);
   const hasBrevo = !!process.env.BREVO_API_KEY;
+  const hasMailerSend = !!process.env.MAILERSEND_API_KEY;
   const hasResend = !!process.env.RESEND_API_KEY;
   const hasSmtp = !!(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
   const hasGmail = !!(process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD);
-  return hasElastic || hasMailjet || hasBrevo || hasResend || hasSmtp || hasGmail;
+  return hasElastic || hasMailjet || hasBrevo || hasMailerSend || hasResend || hasSmtp || hasGmail;
 }
 
 /** Call once at startup to log mailer status. */
 export async function testMailerConnection(): Promise<void> {
   if (process.env.BREVO_API_KEY) {
     console.log(`[mailer] Brevo configured (primary) — sender: ${getSenderAddress()}`);
+    return;
+  }
+  if (process.env.MAILERSEND_API_KEY) {
+    console.log(`[mailer] MailerSend configured — sender: ${getSenderAddress()}`);
     return;
   }
   if (process.env.RESEND_API_KEY) {
@@ -266,7 +308,20 @@ async function sendMail(opts: {
     }
   }
 
-  // 2. Resend — HTTP, needs domain for sending to arbitrary addresses
+  // 2. MailerSend — HTTP, free 3000/month, email-only signup, no phone needed
+  if (process.env.MAILERSEND_API_KEY) {
+    try {
+      const ok = await sendViaMailerSend({ from, fromName, ...opts });
+      if (ok) {
+        logger.info({ to: opts.to }, "Email sent via MailerSend");
+        return true;
+      }
+    } catch (err: any) {
+      logger.error({ errMessage: err?.message }, "MailerSend send failed");
+    }
+  }
+
+  // 3. Resend — HTTP, needs domain for sending to arbitrary addresses
   if (process.env.RESEND_API_KEY) {
     try {
       const ok = await sendViaResend({ from: `${fromName} <${from}>`, ...opts });
