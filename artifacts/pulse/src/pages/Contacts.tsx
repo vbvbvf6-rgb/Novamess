@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useGetContacts, useSearchUsers, useAddContact, useRemoveContact, getGetContactsQueryKey, getGetChatsQueryKey } from "@workspace/api-client-react";
 import type { User } from "@workspace/api-client-react";
-import { Search, UserPlus, UserMinus, MessageSquare, Users, Bell, Check, X, Clock, Radio } from "lucide-react";
+import { Search, UserPlus, UserMinus, MessageSquare, Users, Bell, Check, X, Clock, Radio, Pencil } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAppContext } from "@/contexts/AppContext";
@@ -30,6 +30,9 @@ export default function Contacts() {
   const [incoming, setIncoming] = useState<ContactRequest[]>([]);
   const [outgoing, setOutgoing] = useState<ContactRequest[]>([]);
   const [loadingReqs, setLoadingReqs] = useState(false);
+  const [editingNicknameId, setEditingNicknameId] = useState<number | null>(null);
+  const [nicknameInput, setNicknameInput] = useState("");
+  const nicknameInputRef = useRef<HTMLInputElement>(null);
   const { data: contacts, isLoading: contactsLoading } = useGetContacts();
   const { data: searchResults, isLoading: searchLoading } = useSearchUsers(
     { q: searchQuery },
@@ -178,6 +181,30 @@ export default function Contacts() {
     } catch {}
   };
 
+  const startEditNickname = (user: any) => {
+    setEditingNicknameId(user.id);
+    setNicknameInput((user as any).nickname || "");
+    setTimeout(() => nicknameInputRef.current?.focus(), 50);
+  };
+
+  const handleSaveNickname = async (contactId: number) => {
+    const trimmed = nicknameInput.trim();
+    try {
+      const res = await fetch(`/api/contacts/${contactId}/nickname`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...authHeader },
+        body: JSON.stringify({ nickname: trimmed || null }),
+      });
+      if (res.ok) {
+        queryClient.invalidateQueries({ queryKey: getGetContactsQueryKey() });
+        toast({ title: trimmed ? `Псевдоним сохранён: «${trimmed}»` : "Псевдоним удалён" });
+      }
+    } catch {
+      toast({ title: "Ошибка", variant: "destructive" });
+    }
+    setEditingNicknameId(null);
+  };
+
   const isBotUser = (u: any) => Boolean(u?.is_bot || u?.isBot || ["nova_ai", "deepseek_ai"].includes((u?.username || "").toLowerCase()));
   const rawUsers = searchQuery.length > 0 ? searchResults : contacts;
   const displayUsers = (rawUsers as any[])?.filter((u: any) => !isBotUser(u) && !u?.isGroup && !u?.isChannel && u?.type !== "group" && u?.type !== "channel");
@@ -275,40 +302,84 @@ export default function Contacts() {
                         {tab === "contacts" ? <span className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-card z-10 ${user.status === "online" ? "bg-green-500" : user.status === "away" ? "bg-yellow-500" : "bg-gray-500"}`} /> : null}
                       </div>
 
-                      <button onClick={() => setLocation(`/user/${user.id}`)} className="flex-1 min-w-0 text-left">
-                        <h3 className="font-semibold text-foreground truncate hover:text-primary transition-colors">{user.displayName}</h3>
-                        <p className="text-sm text-muted-foreground truncate">@{user.username} {(user as any).bio ? `• ${(user as any).bio}` : ""}</p>
-                      </button>
+                      {/* Name / nickname inline edit */}
+                      {tab === "contacts" && isContact && editingNicknameId === user.id ? (
+                        <form
+                          className="flex-1 min-w-0 flex items-center gap-2"
+                          onSubmit={(e) => { e.preventDefault(); handleSaveNickname(user.id); }}
+                        >
+                          <Input
+                            ref={nicknameInputRef}
+                            value={nicknameInput}
+                            onChange={(e) => setNicknameInput(e.target.value)}
+                            placeholder={user.displayName}
+                            maxLength={40}
+                            className="h-8 text-sm py-0 px-2 rounded-xl"
+                            onKeyDown={(e) => { if (e.key === "Escape") setEditingNicknameId(null); }}
+                          />
+                          <button type="submit" className="w-8 h-8 rounded-full flex items-center justify-center bg-green-500/15 text-green-500 hover:bg-green-500/25 transition-colors shrink-0" title="Сохранить">
+                            <Check size={15} />
+                          </button>
+                          <button type="button" onClick={() => setEditingNicknameId(null)} className="w-8 h-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors shrink-0" title="Отмена">
+                            <X size={15} />
+                          </button>
+                        </form>
+                      ) : (
+                        <button onClick={() => setLocation(`/user/${user.id}`)} className="flex-1 min-w-0 text-left">
+                          {tab === "contacts" && isContact && (user as any).nickname ? (
+                            <>
+                              <h3 className="font-semibold text-foreground truncate hover:text-primary transition-colors">{(user as any).nickname}</h3>
+                              <p className="text-sm text-muted-foreground truncate">{user.displayName} · @{user.username}</p>
+                            </>
+                          ) : (
+                            <>
+                              <h3 className="font-semibold text-foreground truncate hover:text-primary transition-colors">{user.displayName}</h3>
+                              <p className="text-sm text-muted-foreground truncate">@{user.username} {(user as any).bio ? `• ${(user as any).bio}` : ""}</p>
+                            </>
+                          )}
+                        </button>
+                      )}
 
-                      <div className="flex items-center gap-2">
+                      {!(tab === "contacts" && isContact && editingNicknameId === user.id) && (
+                      <div className="flex items-center gap-1.5">
                         {tab === "contacts" ? (
-                          <button onClick={() => handleMessage(user.id)} className="w-10 h-10 rounded-full flex items-center justify-center text-primary hover:bg-primary/10 transition-colors" title="Написать">
-                            <MessageSquare size={18} />
+                          <button onClick={() => handleMessage(user.id)} className="w-9 h-9 rounded-full flex items-center justify-center text-primary hover:bg-primary/10 transition-colors" title="Написать">
+                            <MessageSquare size={17} />
                           </button>
                         ) : (
-                          <button onClick={() => handleMessage(user.id)} className="w-10 h-10 rounded-full flex items-center justify-center text-primary hover:bg-primary/10 transition-colors" title="Открыть">
-                            <Radio size={18} />
+                          <button onClick={() => handleMessage(user.id)} className="w-9 h-9 rounded-full flex items-center justify-center text-primary hover:bg-primary/10 transition-colors" title="Открыть">
+                            <Radio size={17} />
+                          </button>
+                        )}
+                        {tab === "contacts" && isContact && (
+                          <button
+                            onClick={() => startEditNickname(user)}
+                            className="w-9 h-9 rounded-full flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                            title="Задать псевдоним"
+                          >
+                            <Pencil size={15} />
                           </button>
                         )}
                         {tab === "contacts" && searchQuery.length > 2 && !isContact ? (
                           <button
                             onClick={() => handleSendRequest(user.id)}
-                            className="w-10 h-10 rounded-full flex items-center justify-center text-muted-foreground hover:text-green-500 hover:bg-green-500/10 transition-colors"
+                            className="w-9 h-9 rounded-full flex items-center justify-center text-muted-foreground hover:text-green-500 hover:bg-green-500/10 transition-colors"
                             title="Отправить заявку"
                           >
-                            <UserPlus size={18} />
+                            <UserPlus size={17} />
                           </button>
                         ) : tab === "contacts" && isContact ? (
                           <button
                             onClick={() => handleRemoveContact(user.id)}
                             disabled={removeContact.isPending}
-                            className="w-10 h-10 rounded-full flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                            className="w-9 h-9 rounded-full flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
                             title="Удалить контакт"
                           >
-                            <UserMinus size={18} />
+                            <UserMinus size={17} />
                           </button>
                         ) : null}
                       </div>
+                      )}
                     </div>
                   );
                 })}
