@@ -6,7 +6,7 @@ import {
   PhoneCall, Gift, Crown, Megaphone, BarChart3, Activity, Star,
   Edit3, Save, ChevronDown, ChevronRight, ChevronLeft, Minus, Ban, FileText, Trophy, Image,
   ShieldAlert, Clock, CheckCircle2, Bug, Inbox, Send as SendIcon, Download,
-  Wrench, Mail, ToggleLeft, ToggleRight, Timer, Database
+  Wrench, Mail, ToggleLeft, ToggleRight, Timer, Database, Swords, Lock
 } from "lucide-react";
 
 interface AdminUser {
@@ -247,6 +247,34 @@ export default function Admin() {
   const [bulkMode, setBulkMode] = useState(false);
   const [bulkText, setBulkText] = useState("");
   const [addingBulk, setAddingBulk] = useState(false);
+
+  // Clan Wars
+  interface AdminClan { id: number; name: string; tag: string; wins: number; losses: number; member_count: number; }
+  interface ClanWar {
+    id: number; title: string; status: "upcoming" | "active" | "finished";
+    challenger_id: number; defender_id: number; challenger_score: number; defender_score: number;
+    winner_id: number | null; prize_description: string | null; start_at: string; end_at: string;
+    challenger_name: string; challenger_tag: string; defender_name: string; defender_tag: string; winner_name: string | null;
+  }
+  const [showClanWars, setShowClanWars] = useState(false);
+  const [adminClans, setAdminClans] = useState<AdminClan[]>([]);
+  const [clanWars, setClanWars] = useState<ClanWar[]>([]);
+  const [clanWarsLoading, setClanWarsLoading] = useState(false);
+  const [showCreateWar, setShowCreateWar] = useState(false);
+  const [warTitle, setWarTitle] = useState("");
+  const [warChallengerId, setWarChallengerId] = useState("");
+  const [warDefenderId, setWarDefenderId] = useState("");
+  const [warStartAt, setWarStartAt] = useState("");
+  const [warEndAt, setWarEndAt] = useState("");
+  const [warPrize, setWarPrize] = useState("");
+  const [creatingWar, setCreatingWar] = useState(false);
+  const [editingWarId, setEditingWarId] = useState<number | null>(null);
+  const [editWarChallengerScore, setEditWarChallengerScore] = useState("");
+  const [editWarDefenderScore, setEditWarDefenderScore] = useState("");
+  const [editWarStatus, setEditWarStatus] = useState<"upcoming" | "active" | "finished">("upcoming");
+  const [editWarWinnerId, setEditWarWinnerId] = useState("");
+  const [savingWarId, setSavingWarId] = useState<number | null>(null);
+  const [deletingWarId, setDeletingWarId] = useState<number | null>(null);
 
   // Support Bugs
   interface AdminBugReport {
@@ -1140,6 +1168,96 @@ export default function Admin() {
     } catch { showToast("Ошибка соединения", "err"); }
     setDeletingScannedId(null);
   };
+
+  // Clan Wars handlers
+  const fetchClanWarsData = async () => {
+    setClanWarsLoading(true);
+    try {
+      const [clansRes, warsRes] = await Promise.all([
+        fetch("/api/admin/clans", { headers: getHeader() }),
+        fetch("/api/clans/wars", { headers: getHeader() }),
+      ]);
+      if (clansRes.ok) setAdminClans(await clansRes.json());
+      if (warsRes.ok) setClanWars(await warsRes.json());
+    } catch { showToast("Ошибка соединения", "err"); }
+    setClanWarsLoading(false);
+  };
+
+  const handleCreateWar = async () => {
+    if (!warTitle.trim() || !warChallengerId || !warDefenderId || !warStartAt || !warEndAt) {
+      showToast("Заполните все обязательные поля", "err");
+      return;
+    }
+    if (warChallengerId === warDefenderId) {
+      showToast("Нельзя выбрать один и тот же клан", "err");
+      return;
+    }
+    setCreatingWar(true);
+    try {
+      const res = await fetch("/api/admin/clans/wars", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...getHeader() },
+        body: JSON.stringify({
+          title: warTitle.trim(),
+          challengerId: Number(warChallengerId),
+          defenderId: Number(warDefenderId),
+          startAt: new Date(warStartAt).toISOString(),
+          endAt: new Date(warEndAt).toISOString(),
+          prizeDescription: warPrize.trim() || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) { showToast(data.error || "Ошибка создания битвы", "err"); return; }
+      showToast("Битва создана!", "ok");
+      setWarTitle(""); setWarChallengerId(""); setWarDefenderId(""); setWarStartAt(""); setWarEndAt(""); setWarPrize("");
+      setShowCreateWar(false);
+      fetchClanWarsData();
+    } catch { showToast("Ошибка соединения", "err"); }
+    setCreatingWar(false);
+  };
+
+  const startEditWar = (war: ClanWar) => {
+    setEditingWarId(war.id);
+    setEditWarChallengerScore(String(war.challenger_score));
+    setEditWarDefenderScore(String(war.defender_score));
+    setEditWarStatus(war.status);
+    setEditWarWinnerId(war.winner_id ? String(war.winner_id) : "");
+  };
+
+  const handleSaveWar = async (warId: number) => {
+    setSavingWarId(warId);
+    try {
+      const res = await fetch(`/api/admin/clans/wars/${warId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...getHeader() },
+        body: JSON.stringify({
+          challengerScore: Number(editWarChallengerScore) || 0,
+          defenderScore: Number(editWarDefenderScore) || 0,
+          status: editWarStatus,
+          winnerId: editWarWinnerId ? Number(editWarWinnerId) : null,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) { showToast(data.error || "Ошибка сохранения", "err"); return; }
+      showToast("Битва обновлена", "ok");
+      setEditingWarId(null);
+      fetchClanWarsData();
+    } catch { showToast("Ошибка соединения", "err"); }
+    setSavingWarId(null);
+  };
+
+  const handleDeleteWar = async (warId: number) => {
+    setDeletingWarId(warId);
+    try {
+      const res = await fetch(`/api/admin/clans/wars/${warId}`, { method: "DELETE", headers: getHeader() });
+      if (res.ok) { showToast("Битва удалена", "ok"); setClanWars(prev => prev.filter(w => w.id !== warId)); }
+      else showToast("Ошибка удаления", "err");
+    } catch { showToast("Ошибка соединения", "err"); }
+    setDeletingWarId(null);
+  };
+
+  const WAR_STATUS_LABEL: Record<string, string> = { upcoming: "Скоро", active: "Идёт", finished: "Завершена" };
+  const WAR_STATUS_COLOR: Record<string, string> = { upcoming: "text-blue-400 bg-blue-500/10", active: "text-green-400 bg-green-500/10", finished: "text-muted-foreground bg-secondary" };
 
   const filtered = users.filter(u =>
     u.username.toLowerCase().includes(search.toLowerCase()) ||
@@ -2785,6 +2903,214 @@ export default function Admin() {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Clan Wars */}
+        <div className="bg-card border border-border rounded-2xl overflow-hidden">
+          <button
+            onClick={() => { setShowClanWars(v => !v); if (!showClanWars && adminClans.length === 0) fetchClanWarsData(); }}
+            className="w-full p-4 flex items-center justify-between hover:bg-secondary/50 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-amber-500/10 flex items-center justify-center">
+                <Swords size={18} className="text-amber-500" />
+              </div>
+              <div className="text-left">
+                <p className="font-semibold text-sm">Клановые битвы</p>
+                <p className="text-xs text-muted-foreground">
+                  Настройка войн между кланами
+                  {clanWars.length > 0 && ` · ${clanWars.length} битв`}
+                </p>
+              </div>
+            </div>
+            {showClanWars ? <ChevronDown size={16} className="text-muted-foreground" /> : <ChevronRight size={16} className="text-muted-foreground" />}
+          </button>
+          {showClanWars && (
+            <div className="border-t border-border">
+              <div className="p-3 border-b border-border flex items-center justify-between gap-2">
+                <p className="text-xs text-muted-foreground">{adminClans.length} кланов зарегистрировано</p>
+                <button
+                  onClick={() => setShowCreateWar(v => !v)}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-500/10 text-amber-500 border border-amber-500/20 hover:bg-amber-500/20 text-xs font-semibold transition-colors"
+                >
+                  <Plus size={13} /> Создать битву
+                </button>
+              </div>
+
+              {showCreateWar && (
+                <div className="p-3 border-b border-border space-y-2 bg-secondary/30">
+                  <input
+                    value={warTitle}
+                    onChange={e => setWarTitle(e.target.value)}
+                    placeholder="Название битвы"
+                    maxLength={100}
+                    className="w-full text-sm bg-background border border-border rounded-xl px-3 py-2 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
+                  />
+                  <div className="grid grid-cols-2 gap-2">
+                    <select
+                      value={warChallengerId}
+                      onChange={e => setWarChallengerId(e.target.value)}
+                      className="text-sm bg-background border border-border rounded-xl px-3 py-2 text-foreground focus:outline-none focus:border-primary transition-colors"
+                    >
+                      <option value="">Клан 1 (атакующий)</option>
+                      {adminClans.map(c => <option key={c.id} value={c.id}>[{c.tag}] {c.name}</option>)}
+                    </select>
+                    <select
+                      value={warDefenderId}
+                      onChange={e => setWarDefenderId(e.target.value)}
+                      className="text-sm bg-background border border-border rounded-xl px-3 py-2 text-foreground focus:outline-none focus:border-primary transition-colors"
+                    >
+                      <option value="">Клан 2 (защитник)</option>
+                      {adminClans.map(c => <option key={c.id} value={c.id}>[{c.tag}] {c.name}</option>)}
+                    </select>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-[10px] text-muted-foreground font-semibold uppercase">Начало</label>
+                      <input
+                        type="datetime-local"
+                        value={warStartAt}
+                        onChange={e => setWarStartAt(e.target.value)}
+                        className="w-full text-sm bg-background border border-border rounded-xl px-3 py-2 text-foreground focus:outline-none focus:border-primary transition-colors"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-muted-foreground font-semibold uppercase">Конец</label>
+                      <input
+                        type="datetime-local"
+                        value={warEndAt}
+                        onChange={e => setWarEndAt(e.target.value)}
+                        className="w-full text-sm bg-background border border-border rounded-xl px-3 py-2 text-foreground focus:outline-none focus:border-primary transition-colors"
+                      />
+                    </div>
+                  </div>
+                  <input
+                    value={warPrize}
+                    onChange={e => setWarPrize(e.target.value)}
+                    placeholder="Приз (необязательно)"
+                    maxLength={200}
+                    className="w-full text-sm bg-background border border-border rounded-xl px-3 py-2 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
+                  />
+                  <button
+                    onClick={handleCreateWar}
+                    disabled={creatingWar}
+                    className="w-full px-4 py-2 rounded-xl bg-amber-500 text-white text-sm font-semibold hover:bg-amber-400 disabled:opacity-50 transition-colors flex items-center justify-center gap-1.5"
+                  >
+                    {creatingWar ? <RefreshCw size={14} className="animate-spin" /> : <Swords size={14} />}
+                    Создать битву
+                  </button>
+                </div>
+              )}
+
+              <div className="max-h-96 overflow-y-auto divide-y divide-border">
+                {clanWarsLoading ? (
+                  Array.from({ length: 2 }).map((_, i) => (
+                    <div key={i} className="p-3 animate-pulse flex gap-2">
+                      <div className="h-4 bg-secondary rounded flex-1" />
+                    </div>
+                  ))
+                ) : clanWars.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground text-sm">
+                    <p>Битв пока нет</p>
+                    <p className="text-xs mt-1 text-muted-foreground/60">Нажмите «Создать битву», чтобы настроить первую войну кланов</p>
+                  </div>
+                ) : clanWars.map(war => (
+                  <div key={war.id} className="p-3 space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-foreground truncate">{war.title}</p>
+                        <p className="text-xs text-muted-foreground">
+                          [{war.challenger_tag}] {war.challenger_name} <span className="font-black">{war.challenger_score}</span> — <span className="font-black">{war.defender_score}</span> [{war.defender_tag}] {war.defender_name}
+                        </p>
+                      </div>
+                      <span className={`text-[10px] font-black px-2 py-0.5 rounded-full shrink-0 ${WAR_STATUS_COLOR[war.status]}`}>
+                        {WAR_STATUS_LABEL[war.status]}
+                      </span>
+                    </div>
+                    {war.winner_name && (
+                      <p className="text-xs text-amber-500 font-semibold flex items-center gap-1"><Trophy size={12} /> Победитель: {war.winner_name}</p>
+                    )}
+                    {war.prize_description && (
+                      <p className="text-xs text-muted-foreground">Приз: {war.prize_description}</p>
+                    )}
+
+                    {editingWarId === war.id ? (
+                      <div className="space-y-2 pt-1 border-t border-border/50 mt-2">
+                        <div className="grid grid-cols-2 gap-2">
+                          <input
+                            type="number"
+                            value={editWarChallengerScore}
+                            onChange={e => setEditWarChallengerScore(e.target.value)}
+                            placeholder={`Очки ${war.challenger_tag}`}
+                            className="text-sm bg-background border border-border rounded-xl px-3 py-1.5 text-foreground focus:outline-none focus:border-primary transition-colors"
+                          />
+                          <input
+                            type="number"
+                            value={editWarDefenderScore}
+                            onChange={e => setEditWarDefenderScore(e.target.value)}
+                            placeholder={`Очки ${war.defender_tag}`}
+                            className="text-sm bg-background border border-border rounded-xl px-3 py-1.5 text-foreground focus:outline-none focus:border-primary transition-colors"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <select
+                            value={editWarStatus}
+                            onChange={e => setEditWarStatus(e.target.value as any)}
+                            className="text-sm bg-background border border-border rounded-xl px-3 py-1.5 text-foreground focus:outline-none focus:border-primary transition-colors"
+                          >
+                            <option value="upcoming">Скоро</option>
+                            <option value="active">Идёт</option>
+                            <option value="finished">Завершена</option>
+                          </select>
+                          <select
+                            value={editWarWinnerId}
+                            onChange={e => setEditWarWinnerId(e.target.value)}
+                            className="text-sm bg-background border border-border rounded-xl px-3 py-1.5 text-foreground focus:outline-none focus:border-primary transition-colors"
+                          >
+                            <option value="">Без победителя</option>
+                            <option value={war.challenger_id}>[{war.challenger_tag}] {war.challenger_name}</option>
+                            <option value={war.defender_id}>[{war.defender_tag}] {war.defender_name}</option>
+                          </select>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleSaveWar(war.id)}
+                            disabled={savingWarId === war.id}
+                            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold disabled:opacity-50 transition-colors"
+                          >
+                            {savingWarId === war.id ? <RefreshCw size={12} className="animate-spin" /> : <Save size={12} />}
+                            Сохранить
+                          </button>
+                          <button
+                            onClick={() => setEditingWarId(null)}
+                            className="px-3 py-1.5 rounded-xl bg-secondary text-foreground text-xs font-semibold hover:bg-secondary/80 transition-colors"
+                          >
+                            Отмена
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => startEditWar(war)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-secondary text-foreground text-xs font-semibold hover:bg-secondary/80 transition-colors"
+                        >
+                          <Edit3 size={12} /> Изменить счёт / статус
+                        </button>
+                        <button
+                          onClick={() => handleDeleteWar(war.id)}
+                          disabled={deletingWarId === war.id}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-destructive/10 text-destructive text-xs font-semibold hover:bg-destructive/20 disabled:opacity-50 transition-colors"
+                        >
+                          <Trash2 size={12} /> Удалить
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Banwords */}
         <div className="bg-card border border-border rounded-2xl overflow-hidden">
