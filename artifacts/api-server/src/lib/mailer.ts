@@ -112,9 +112,11 @@ async function sendViaBrevo(opts: {
 
   if (!res.ok) {
     const body = await res.text().catch(() => "");
+    console.error(`[mailer] Brevo FAILED: status=${res.status} body=${body}`);
     logger.error({ status: res.status, body }, "Brevo API error");
     return false;
   }
+  console.log(`[mailer] Brevo OK → ${opts.to}`);
   return true;
 }
 
@@ -207,21 +209,17 @@ export function isMailerConfigured(): boolean {
 
 /** Call once at startup to log mailer status. */
 export async function testMailerConnection(): Promise<void> {
-  if (process.env.ELASTICEMAIL_API_KEY) {
-    const from = getSenderAddress();
-    if (from === "noreply@nova.app") {
-      console.warn("[mailer] WARNING: MAIL_FROM is not set — will use 'noreply@nova.app' which is NOT verified on Elastic Email. Set MAIL_FROM to your Elastic Email registration address!");
-    } else {
-      console.log(`[mailer] Elastic Email configured — sender: ${from}`);
-    }
-    return;
-  }
   if (process.env.BREVO_API_KEY) {
-    console.log(`[mailer] Brevo configured — HTTP API, sender: ${getSenderAddress()}`);
+    console.log(`[mailer] Brevo configured (primary) — sender: ${getSenderAddress()}`);
     return;
   }
   if (process.env.RESEND_API_KEY) {
     console.log(`[mailer] Resend configured — HTTP API, sender: ${getSenderAddress()}`);
+    return;
+  }
+  if (process.env.ELASTICEMAIL_API_KEY) {
+    const from = getSenderAddress();
+    console.warn(`[mailer] Elastic Email configured — sender: ${from}. NOTE: free accounts only send to the registered email; set BREVO_API_KEY for unrestricted sending.`);
     return;
   }
 
@@ -255,20 +253,7 @@ async function sendMail(opts: {
   const from = getSenderAddress();
   const fromName = getSenderName();
 
-  // 1. Elastic Email — HTTP, free 100/day, email-only signup (no phone), works from Russia
-  if (process.env.ELASTICEMAIL_API_KEY) {
-    try {
-      const ok = await sendViaElasticEmail({ from, fromName, ...opts });
-      if (ok) {
-        logger.info({ to: opts.to }, "Email sent via Elastic Email");
-        return true;
-      }
-    } catch (err: any) {
-      logger.error({ errMessage: err?.message }, "Elastic Email send failed");
-    }
-  }
-
-  // 2. Brevo — HTTP, free 300/day, no domain needed
+  // 1. Brevo — HTTP, free 300/day, no domain needed, sends to ANY address, great deliverability
   if (process.env.BREVO_API_KEY) {
     try {
       const ok = await sendViaBrevo({ from, fromName, ...opts });
@@ -281,7 +266,7 @@ async function sendMail(opts: {
     }
   }
 
-  // 3. Resend — HTTP, needs domain for sending to arbitrary addresses
+  // 2. Resend — HTTP, needs domain for sending to arbitrary addresses
   if (process.env.RESEND_API_KEY) {
     try {
       const ok = await sendViaResend({ from: `${fromName} <${from}>`, ...opts });
@@ -291,6 +276,20 @@ async function sendMail(opts: {
       }
     } catch (err: any) {
       logger.error({ errMessage: err?.message }, "Resend send failed");
+    }
+  }
+
+  // 3. Elastic Email — HTTP, free 100/day. Note: free accounts can only send to
+  //    the registered email address; upgrade or verify senders to send to others.
+  if (process.env.ELASTICEMAIL_API_KEY) {
+    try {
+      const ok = await sendViaElasticEmail({ from, fromName, ...opts });
+      if (ok) {
+        logger.info({ to: opts.to }, "Email sent via Elastic Email");
+        return true;
+      }
+    } catch (err: any) {
+      logger.error({ errMessage: err?.message }, "Elastic Email send failed");
     }
   }
 
