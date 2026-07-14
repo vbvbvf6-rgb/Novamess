@@ -643,7 +643,7 @@ function ClanDetailView({
       initial={{ opacity: 0, x: 30 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 30 }}
-      className="flex flex-col h-full"
+      className="flex flex-col h-full w-full"
     >
       {/* Header */}
       <div className="flex items-center gap-3 p-4 border-b border-border/50 shrink-0">
@@ -703,12 +703,14 @@ function ClanDetailView({
 
       <div className="flex-1 overflow-y-auto scrollbar-none">
         {/* Cover + logo */}
-        <div className="relative h-32 bg-gradient-to-br from-slate-700 to-slate-900 overflow-hidden">
-          {clanState.cover_url && (
-            <img src={clanState.cover_url} alt="" className="absolute inset-0 w-full h-full object-cover" />
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/10 to-transparent" />
-          <div className="absolute bottom-0 left-4 translate-y-1/2 w-16 h-16 rounded-2xl border-4 border-background bg-gradient-to-br from-slate-600 to-slate-800 overflow-hidden flex items-center justify-center shadow-lg">
+        <div className="relative h-32">
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-700 to-slate-900 overflow-hidden">
+            {clanState.cover_url && (
+              <img src={clanState.cover_url} alt="" className="absolute inset-0 w-full h-full object-cover" />
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/10 to-transparent" />
+          </div>
+          <div className="absolute bottom-0 left-4 translate-y-1/2 w-16 h-16 rounded-2xl border-4 border-background bg-gradient-to-br from-slate-600 to-slate-800 overflow-hidden flex items-center justify-center shadow-lg z-10">
             {clanState.logo_url ? (
               <img src={clanState.logo_url} alt="" className="absolute inset-0 w-full h-full object-cover" />
             ) : (
@@ -921,7 +923,7 @@ export default function Clans() {
 
   if (selectedClan) {
     return (
-      <div className="flex flex-col h-full bg-background">
+      <div className="flex flex-col h-full w-full bg-background">
         <AnimatePresence mode="wait">
           <ClanDetailView
             key={selectedClan.id}
