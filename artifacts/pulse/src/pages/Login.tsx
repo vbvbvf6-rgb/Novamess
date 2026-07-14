@@ -47,6 +47,7 @@ export default function Login({ onLogin }: LoginProps) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
+  const [accountNotice, setAccountNotice] = useState<{ kind: "deleted" | "banned"; reason: string; expiresAt?: string | null } | null>(null);
 
   const [step, setStep] = useState<"credentials" | "2fa" | "qr">("credentials");
   const [twoFaCode, setTwoFaCode] = useState("");
@@ -135,6 +136,14 @@ export default function Login({ onLogin }: LoginProps) {
       });
       const data = await res.json();
       if (!res.ok) {
+        if (data.accountDeleted) {
+          setAccountNotice({ kind: "deleted", reason: data.reason || "Причина не указана" });
+          return;
+        }
+        if (data.accountBanned) {
+          setAccountNotice({ kind: "banned", reason: data.banReason || "Причина не указана", expiresAt: data.banExpiresAt || null });
+          return;
+        }
         setError(data.error || "Неверный никнейм или пароль");
         return;
       }
@@ -639,6 +648,55 @@ export default function Login({ onLogin }: LoginProps) {
         </motion.div>
       </motion.div>
       </div>
+      <AnimatePresence>
+        {accountNotice && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[999] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+            onClick={() => setAccountNotice(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              onClick={e => e.stopPropagation()}
+              className="w-full max-w-sm bg-card border border-border rounded-3xl p-6 text-center shadow-2xl"
+            >
+              <div className={cn(
+                "w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4",
+                accountNotice.kind === "deleted" ? "bg-destructive/10" : "bg-amber-500/10"
+              )}>
+                <span className="text-2xl">{accountNotice.kind === "deleted" ? "🗑️" : "⛔"}</span>
+              </div>
+              <h3 className="text-lg font-bold text-foreground mb-2">
+                {accountNotice.kind === "deleted" ? "Аккаунт удалён" : "Аккаунт заблокирован"}
+              </h3>
+              <p className="text-sm text-muted-foreground mb-1">
+                {accountNotice.kind === "deleted"
+                  ? "Этот аккаунт был удалён администратором."
+                  : "Доступ к этому аккаунту временно ограничен."}
+              </p>
+              <div className="bg-secondary/50 border border-border rounded-2xl px-4 py-3 my-4 text-left">
+                <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Причина</p>
+                <p className="text-sm text-foreground">{accountNotice.reason}</p>
+              </div>
+              {accountNotice.kind === "banned" && accountNotice.expiresAt && (
+                <p className="text-xs text-muted-foreground mb-4">
+                  Блокировка снимется: {new Date(accountNotice.expiresAt).toLocaleString("ru-RU")}
+                </p>
+              )}
+              <button
+                onClick={() => setAccountNotice(null)}
+                className="w-full py-3 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm hover:opacity-90 transition-opacity"
+              >
+                Понятно
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

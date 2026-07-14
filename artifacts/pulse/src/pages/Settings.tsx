@@ -1060,7 +1060,7 @@ function FaqSection({ lang }: { lang: string }) {
   const items = lang === "ru" ? [
     { q: "Как создать группу или канал?", a: "Нажмите иконку карандаша в верхнем углу списка чатов → «Создать группу» или «Создать канал». Добавьте участников и задайте название." },
     { q: "Как включить двухфакторную аутентификацию?", a: "Настройки → Конфиденциальность и безопасность → Двухфакторная аутентификация. Отсканируйте QR-код в любом приложении-аутентификаторе (Google Authenticator, Authy)." },
-    { q: "Что такое Nova Prime и Prime+?", a: "Prime — платная подписка с золотым кольцом, значком ⭐, эксклюзивными темами и 2× Crystals. Prime+ добавляет алмазное кольцо, 3× Crystals, ежемесячный эпический подарок, видео-аватар и закрытый Prime+ Lounge." },
+    { q: "Что такое Nova Prime и Prime+?", a: "Prime — платная подписка с золотым кольцом, значком ⭐, эксклюзивными темами и 2× Crystals. Prime+ добавляет алмазное кольцо, 3× Crystals, видео-аватар и закрытый Prime+ Lounge." },
     { q: "Как работают исчезающие сообщения?", a: "В чате → ⋯ меню → «Исчезающие сообщения». Выберите таймер (5с, 1м, 1ч, 1д, 1нед). Сообщения автоматически удаляются после прочтения по истечении времени." },
     { q: "Что такое Кристалл 💎?", a: "Кристалл — внутренняя валюта Nova. Её можно заработать через ежедневные бонусы и задания, или купить в Кошельке. Кристаллы тратятся на подписку Prime." },
     { q: "Как установить PIN-блокировку экрана?", a: "Настройки → Конфиденциальность и безопасность → Блокировка экрана. Задайте 4–8 значный PIN-код. Приложение заблокируется через 1 минуту бездействия." },
@@ -1072,7 +1072,7 @@ function FaqSection({ lang }: { lang: string }) {
   ] : [
     { q: "How to create a group or channel?", a: "Tap the pencil icon at the top of the chat list → 'Create Group' or 'Create Channel'. Add members and set a name." },
     { q: "How to enable Two-Factor Authentication?", a: "Settings → Privacy & Security → Two-Factor Authentication. Scan the QR code with any authenticator app (Google Authenticator, Authy)." },
-    { q: "What is Nova Prime and Prime+?", a: "Prime is a paid subscription with a gold ring, ⭐ badge, exclusive themes and 2× Crystals. Prime+ adds a diamond ring, 3× Crystals, monthly epic gift, video avatar and exclusive Prime+ Lounge." },
+    { q: "What is Nova Prime and Prime+?", a: "Prime is a paid subscription with a gold ring, ⭐ badge, exclusive themes and 2× Crystals. Prime+ adds a diamond ring, 3× Crystals, video avatar and exclusive Prime+ Lounge." },
     { q: "How do disappearing messages work?", a: "In any chat → ⋯ menu → 'Disappearing Messages'. Choose a timer (5s, 1m, 1h, 1d, 1wk). Messages delete automatically after being read when the timer expires." },
     { q: "What is Crystal 💎?", a: "Crystal is Nova's in-app currency. Earn it through daily bonuses and tasks, or buy it in the Wallet. Spend Crystals on Prime subscriptions." },
     { q: "How to set a screen lock PIN?", a: "Settings → Privacy & Security → Screen Lock. Set a 4–8 digit PIN. The app locks after 1 minute of inactivity." },
@@ -2631,10 +2631,6 @@ export default function Settings() {
                   label={lang==="ru"?"Режим экономии заряда":"Power Saving Mode"}
                   desc={lang==="ru"?"Отключить фоновые анимации и эффекты":"Disable background animations and effects"}
                   right={<Switch checked={powerSaving} onCheckedChange={v => { setPowerSaving(v); setLs("pulse-power-saving", v); toast({ title: t("common.saved") }); }}/>}/>
-                <Row icon={<Gift size={18}/>} color="bg-yellow-500/10 text-yellow-500"
-                  label={lang==="ru"?"Анимированные подарки":"Animated Gifts"}
-                  desc={lang==="ru"?"Воспроизводить анимацию при получении подарков":"Play animation when receiving gifts"}
-                  right={<Switch checked={animatedEmoji} onCheckedChange={v => { setAnimatedEmoji(v); setLs("pulse-animated-emoji", v); toast({ title: t("common.saved") }); }}/>}/>
                 <Row icon={<Zap size={18}/>} color="bg-blue-500/10 text-blue-500"
                   label={lang==="ru"?"Эффекты сообщений":"Message Effects"}
                   desc={lang==="ru"?"Конфетти, снег и огонь при отправке":"Confetti, snow and fire on send"}

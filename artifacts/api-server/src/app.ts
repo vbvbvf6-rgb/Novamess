@@ -407,6 +407,32 @@ app.use("/api", (req: Request, res: Response, next: NextFunction) => {
   next();
 });
 
+// ── Maintenance mode enforcement ────────────────────────────────────────────
+// Blocks non-admin API traffic while maintenance is active, so users already
+// logged in are actually locked out in real time (not just shown a banner
+// that they can ignore because their existing session keeps working).
+const MAINTENANCE_ALLOWED_PATHS = ["/maintenance", "/auth/login", "/auth/logout", "/events"];
+app.use("/api", async (req: Request, res: Response, next: NextFunction) => {
+  if (MAINTENANCE_ALLOWED_PATHS.some(p => req.path === p || req.path.startsWith(p + "/"))) return next();
+  try {
+    const { db } = await import("@workspace/db");
+    const { sql } = await import("drizzle-orm");
+    const row = await db.execute(sql`SELECT value FROM app_settings WHERE key = 'maintenance'`);
+    const raw = (row.rows[0] as any)?.value;
+    if (!raw) return next();
+    const settings = JSON.parse(raw);
+    if (!settings?.active) return next();
+    if (settings?.endsAt && new Date(settings.endsAt).getTime() <= Date.now()) return next();
+    if (req.currentUserId) {
+      const admin = await db.execute(sql`SELECT is_admin FROM users WHERE id = ${req.currentUserId}`);
+      if ((admin.rows[0] as any)?.is_admin) return next();
+    }
+    return res.status(503).json({ error: "Технический перерыв", maintenance: true });
+  } catch {
+    return next();
+  }
+});
+
 app.use("/api", router);
 app.use("/bot", botApiRouter);
 

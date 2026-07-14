@@ -4,9 +4,9 @@ import {
   Shield, Diamond, Zap, Users, TrendingUp, Send, CheckCircle, AlertTriangle, RefreshCw,
   Plus, Trash2, Key, BadgeCheck, X, ShieldCheck, ShieldOff, MessageSquare,
   PhoneCall, Gift, Crown, Megaphone, BarChart3, Activity, Star,
-  Edit3, Save, ChevronDown, ChevronRight, ChevronLeft, Minus, Ban, FileText, Trophy, Image, Package,
+  Edit3, Save, ChevronDown, ChevronRight, ChevronLeft, Minus, Ban, FileText, Trophy, Image,
   ShieldAlert, Clock, CheckCircle2, Bug, Inbox, Send as SendIcon, Download,
-  Wrench, Mail, ToggleLeft, ToggleRight, Timer
+  Wrench, Mail, ToggleLeft, ToggleRight, Timer, Database
 } from "lucide-react";
 
 interface AdminUser {
@@ -151,6 +151,7 @@ export default function Admin() {
   const [newPassword, setNewPassword] = useState("");
   const [pwLoading, setPwLoading] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<AdminUser | null>(null);
+  const [deleteReason, setDeleteReason] = useState("");
   const [deleteLoading, setDeleteLoading] = useState(false);
 
   // Mass SPARK
@@ -192,6 +193,9 @@ export default function Admin() {
   // Ban
   const [banLoading, setBanLoading] = useState(false);
   const [bannedIds, setBannedIds] = useState<Set<number>>(new Set());
+  const [banConfirm, setBanConfirm] = useState<AdminUser | null>(null);
+  const [banReasonInput, setBanReasonInput] = useState("");
+  const [banDuration, setBanDuration] = useState<string>("permanent");
 
   // Moderation Appeals
   interface ModerationAppeal {
@@ -281,6 +285,37 @@ export default function Admin() {
   const [showAdminChats, setShowAdminChats] = useState(false);
   const [deletingChatId, setDeletingChatId] = useState<number | null>(null);
   const [chatSearchQ, setChatSearchQ] = useState("");
+
+  // Database usage
+  interface DbUsage {
+    totalMb: number; limitMb: number; percentUsed: number;
+    tables: { name: string; sizeMb: number; rowCount: number }[];
+  }
+  const [dbUsage, setDbUsage] = useState<DbUsage | null>(null);
+  const [dbUsageLoading, setDbUsageLoading] = useState(false);
+  const [showDbUsage, setShowDbUsage] = useState(false);
+  const [dbCleanupLoading, setDbCleanupLoading] = useState(false);
+
+  const fetchDbUsage = async () => {
+    setDbUsageLoading(true);
+    try {
+      const res = await fetch("/api/admin/database-usage", { headers: getHeader() });
+      if (res.ok) setDbUsage(await res.json());
+    } catch {}
+    setDbUsageLoading(false);
+  };
+
+  const handleDbCleanup = async () => {
+    setDbCleanupLoading(true);
+    try {
+      const res = await fetch("/api/admin/database-cleanup", { method: "POST", headers: getHeader() });
+      const data = await res.json();
+      if (!res.ok) { showToast(data.error || "Ошибка", "err"); return; }
+      showToast(`🧹 Удалено: ${data.deletedStories} историй, ${data.deletedScheduled} сообщений`, "ok");
+      fetchDbUsage();
+    } catch { showToast("Ошибка соединения", "err"); }
+    setDbCleanupLoading(false);
+  };
 
   const fetchAdminChats = async () => {
     setAdminChatsLoading(true);
@@ -401,12 +436,6 @@ export default function Admin() {
   const [eventKind, setEventKind] = useState<"event" | "giveaway">("event");
   const [eventCost, setEventCost] = useState(0);
   const [eventConditions, setEventConditions] = useState("");
-  // Announcement
-  const [showAnnouncementPanel, setShowAnnouncementPanel] = useState(false);
-  const [announcementMsg, setAnnouncementMsg] = useState("");
-  const [announcementSaving, setAnnouncementSaving] = useState(false);
-  const [currentAnnouncement, setCurrentAnnouncement] = useState<string | null>(null);
-
   // Maintenance mode
   interface MaintenanceSettings { active: boolean; message: string; fixes: string[]; endsAt: string | null; }
   const [showMaintenancePanel, setShowMaintenancePanel] = useState(false);
@@ -416,15 +445,6 @@ export default function Admin() {
   const [mailTestResult, setMailTestResult] = useState<any>(null);
   const [mailTestLoading, setMailTestLoading] = useState(false);
   const [mailTestTo, setMailTestTo] = useState("");
-  const fetchCurrentAnnouncement = async () => {
-    try {
-      const r = await fetch("/api/announcement", { headers: getHeader() });
-      const d = await r.json();
-      setCurrentAnnouncement(d?.message || null);
-      if (d?.message) setAnnouncementMsg(d.message);
-    } catch {}
-  };
-
   const EVENT_TYPES = [
     { emoji: "🎉", label: "Праздник", color: "#f59e0b" },
     { emoji: "🏆", label: "Турнир", color: "#eab308" },
@@ -542,51 +562,6 @@ export default function Admin() {
         showToast(!ev.isActive ? "✅ Событие активировано" : "⏸ Событие скрыто", "ok");
       }
     } catch { showToast("Ошибка", "err"); }
-  };
-
-  // Broadcast Push
-  const [showBroadcastPush, setShowBroadcastPush] = useState(false);
-  const [pushTitle, setPushTitle] = useState("");
-  const [pushBody, setPushBody] = useState("");
-  const [pushUrl, setPushUrl] = useState("");
-  const [pushLoading, setPushLoading] = useState(false);
-
-  const handleBroadcastPush = async () => {
-    if (!pushTitle.trim() || !pushBody.trim()) return showToast("Заполните заголовок и текст", "err");
-    setPushLoading(true);
-    try {
-      const res = await fetch("/api/admin/broadcast-push", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", ...getHeader() },
-        body: JSON.stringify({ title: pushTitle.trim(), body: pushBody.trim(), url: pushUrl.trim() || "/" }),
-      });
-      const data = await res.json();
-      if (!res.ok) { showToast(data.error || "Ошибка", "err"); setPushLoading(false); return; }
-      showToast(`📲 Push отправлен ${data.sent} подписчикам`, "ok");
-      setPushTitle(""); setPushBody(""); setPushUrl("");
-      setShowBroadcastPush(false);
-    } catch { showToast("Ошибка соединения", "err"); }
-    setPushLoading(false);
-  };
-
-  // Detailed Stats
-  interface DetailedStats {
-    newUsersToday: number; newUsersThisWeek: number;
-    messagesToday: number; messagesThisWeek: number; giftsToday: number;
-    topGifts: { name: string; emoji: string; rarity: string; cnt: number }[];
-    bannedUsers: number;
-  }
-  const [detailedStats, setDetailedStats] = useState<DetailedStats | null>(null);
-  const [detailedStatsLoading, setDetailedStatsLoading] = useState(false);
-  const [showDetailedStats, setShowDetailedStats] = useState(false);
-
-  const fetchDetailedStats = async () => {
-    setDetailedStatsLoading(true);
-    try {
-      const res = await fetch("/api/admin/stats/detailed", { headers: getHeader() });
-      if (res.ok) setDetailedStats(await res.json());
-    } catch {}
-    setDetailedStatsLoading(false);
   };
 
   const fetchGiftItems = async () => {
@@ -718,58 +693,6 @@ export default function Admin() {
     setAppealActionLoading(null);
   };
 
-  // Top-up requests
-  interface TopupRequest {
-    id: number;
-    user_id: number;
-    username: string;
-    display_name: string;
-    avatar_color: string;
-    avatar_url: string | null;
-    amount: number;
-    package_label: string;
-    price_label: string;
-    status: string;
-    created_at: string;
-  }
-  const [topupRequests, setTopupRequests] = useState<TopupRequest[]>([]);
-  const [topupLoading, setTopupLoading] = useState(false);
-  const [showTopup, setShowTopup] = useState(false);
-  const [topupActionLoading, setTopupActionLoading] = useState<number | null>(null);
-
-  const fetchTopupRequests = async () => {
-    setTopupLoading(true);
-    try {
-      const res = await fetch("/api/admin/topup-requests", { headers: getHeader() });
-      if (res.ok) setTopupRequests(await res.json());
-    } catch {}
-    setTopupLoading(false);
-  };
-
-  const handleTopupApprove = async (id: number) => {
-    setTopupActionLoading(id);
-    try {
-      const res = await fetch(`/api/admin/topup-requests/${id}/approve`, { method: "POST", headers: getHeader() });
-      const data = await res.json();
-      if (!res.ok) { showToast(data.error || "Ошибка", "err"); return; }
-      showToast(`✅ Одобрено +${data.amount} 💎 пользователю`, "ok");
-      setTopupRequests(prev => prev.map(r => r.id === id ? { ...r, status: "approved" } : r));
-    } catch { showToast("Ошибка соединения", "err"); }
-    setTopupActionLoading(null);
-  };
-
-  const handleTopupDeny = async (id: number) => {
-    setTopupActionLoading(id);
-    try {
-      const res = await fetch(`/api/admin/topup-requests/${id}/deny`, { method: "POST", headers: getHeader() });
-      const data = await res.json();
-      if (!res.ok) { showToast(data.error || "Ошибка", "err"); return; }
-      showToast("❌ Заявка отклонена", "ok");
-      setTopupRequests(prev => prev.map(r => r.id === id ? { ...r, status: "denied" } : r));
-    } catch { showToast("Ошибка соединения", "err"); }
-    setTopupActionLoading(null);
-  };
-
   const showToast = (msg: string, type: "ok" | "err") => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3500);
@@ -855,14 +778,18 @@ export default function Admin() {
     setLeaderboardLoading(false);
   };
 
-  const handleBanToggle = async (target: AdminUser) => {
+  const handleBanToggle = async (target: AdminUser, opts?: { reason?: string; durationHours?: number | null }) => {
     const isBanned = bannedIds.has(target.id);
     setBanLoading(true);
     try {
       const res = await fetch(`/api/admin/users/${target.id}/ban`, {
         method: "POST",
         headers: { "Content-Type": "application/json", ...getHeader() },
-        body: JSON.stringify({ ban: !isBanned }),
+        body: JSON.stringify(
+          isBanned
+            ? { ban: false }
+            : { ban: true, reason: opts?.reason?.trim() || "", durationHours: opts?.durationHours ?? null }
+        ),
       });
       const data = await res.json();
       if (!res.ok) { showToast(data.error || "Ошибка", "err"); return; }
@@ -872,6 +799,7 @@ export default function Admin() {
         if (!isBanned) next.add(target.id); else next.delete(target.id);
         return next;
       });
+      setBanConfirm(null);
     } catch { showToast("Ошибка соединения", "err"); }
     setBanLoading(false);
   };
@@ -1015,9 +943,14 @@ export default function Admin() {
 
   const handleDeleteUser = async () => {
     if (!deleteConfirm) return;
+    if (!deleteReason.trim()) { showToast("Укажите причину удаления", "err"); return; }
     setDeleteLoading(true);
     try {
-      const res = await fetch(`/api/admin/users/${deleteConfirm.id}`, { method: "DELETE", headers: getHeader() });
+      const res = await fetch(`/api/admin/users/${deleteConfirm.id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json", ...getHeader() },
+        body: JSON.stringify({ reason: deleteReason.trim() }),
+      });
       const data = await res.json();
       if (!res.ok) showToast(data.error || "Ошибка удаления", "err");
       else {
@@ -1026,6 +959,7 @@ export default function Admin() {
         if (selectedUser?.id === deleteConfirm.id) setSelectedUser(null);
         if (stats) setStats(prev => prev ? { ...prev, totalUsers: prev.totalUsers - 1 } : null);
         setDeleteConfirm(null);
+        setDeleteReason("");
       }
     } catch { showToast("Ошибка соединения", "err"); }
     setDeleteLoading(false);
@@ -1244,15 +1178,79 @@ export default function Admin() {
                 <p className="text-sm text-muted-foreground">Это действие необратимо</p>
               </div>
             </div>
-            <p className="text-sm text-foreground mb-5">
+            <p className="text-sm text-foreground mb-3">
               Вы действительно хотите удалить <span className="font-bold">@{deleteConfirm.username}</span>?
             </p>
+            <textarea
+              value={deleteReason}
+              onChange={e => setDeleteReason(e.target.value)}
+              placeholder="Причина удаления (будет показана пользователю при попытке входа)..."
+              rows={2}
+              className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-destructive transition-colors resize-none mb-5"
+            />
             <div className="flex gap-3">
-              <button onClick={() => setDeleteConfirm(null)} className="flex-1 py-2.5 rounded-xl border border-border text-sm font-medium text-muted-foreground hover:bg-secondary transition-colors">
+              <button onClick={() => { setDeleteConfirm(null); setDeleteReason(""); }} className="flex-1 py-2.5 rounded-xl border border-border text-sm font-medium text-muted-foreground hover:bg-secondary transition-colors">
                 Отмена
               </button>
-              <button onClick={handleDeleteUser} disabled={deleteLoading} className="flex-1 py-2.5 rounded-xl bg-destructive text-destructive-foreground text-sm font-bold hover:bg-destructive/90 transition-colors disabled:opacity-50">
+              <button onClick={handleDeleteUser} disabled={deleteLoading || !deleteReason.trim()} className="flex-1 py-2.5 rounded-xl bg-destructive text-destructive-foreground text-sm font-bold hover:bg-destructive/90 transition-colors disabled:opacity-50">
                 {deleteLoading ? "Удаляем..." : "Удалить"}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Ban confirm dialog with reason + duration */}
+      {banConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-card border border-border rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center">
+                <Ban size={20} className="text-orange-400" />
+              </div>
+              <div>
+                <h3 className="font-bold">Заблокировать пользователя</h3>
+                <p className="text-sm text-muted-foreground">@{banConfirm.username}</p>
+              </div>
+            </div>
+            <textarea
+              value={banReasonInput}
+              onChange={e => setBanReasonInput(e.target.value)}
+              placeholder="Причина блокировки..."
+              rows={2}
+              className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-orange-500 transition-colors resize-none mb-3"
+            />
+            <div className="grid grid-cols-3 gap-2 mb-5">
+              {[
+                { value: "1", label: "1 час" },
+                { value: "24", label: "24 часа" },
+                { value: "168", label: "7 дней" },
+                { value: "720", label: "30 дней" },
+                { value: "permanent", label: "Навсегда" },
+              ].map(opt => (
+                <button
+                  key={opt.value}
+                  onClick={() => setBanDuration(opt.value)}
+                  className={`py-2 rounded-xl border text-xs font-medium transition-colors ${banDuration === opt.value ? "border-orange-500 bg-orange-500/10 text-orange-400" : "border-border text-muted-foreground hover:border-orange-500/30"}`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => { setBanConfirm(null); setBanReasonInput(""); setBanDuration("permanent"); }} className="flex-1 py-2.5 rounded-xl border border-border text-sm font-medium text-muted-foreground hover:bg-secondary transition-colors">
+                Отмена
+              </button>
+              <button
+                onClick={() => handleBanToggle(banConfirm, { reason: banReasonInput, durationHours: banDuration === "permanent" ? null : Number(banDuration) })}
+                disabled={banLoading || !banReasonInput.trim()}
+                className="flex-1 py-2.5 rounded-xl bg-orange-500 text-white text-sm font-bold hover:bg-orange-600 transition-colors disabled:opacity-50"
+              >
+                {banLoading ? "Блокируем..." : "Заблокировать"}
               </button>
             </div>
           </motion.div>
@@ -1677,87 +1675,6 @@ export default function Admin() {
           )}
         </div>
 
-        {/* Top-up Requests */}
-        <div className="bg-card border border-border rounded-2xl overflow-hidden">
-          <button
-            onClick={() => { setShowTopup(v => !v); if (!showTopup && topupRequests.length === 0) fetchTopupRequests(); }}
-            className="w-full p-4 flex items-center justify-between hover:bg-secondary/50 transition-colors"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-green-500/10 flex items-center justify-center">
-                <Package size={18} className="text-green-400" />
-              </div>
-              <div className="text-left">
-                <p className="font-semibold text-sm">Заявки на пополнение</p>
-                <p className="text-xs text-muted-foreground">
-                  {topupRequests.filter(r => r.status === "pending").length > 0
-                    ? `${topupRequests.filter(r => r.status === "pending").length} ожидают подтверждения`
-                    : "Одобрить или отклонить заявки"}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              {topupRequests.filter(r => r.status === "pending").length > 0 && (
-                <span className="w-5 h-5 rounded-full bg-green-500 text-white text-[10px] font-black flex items-center justify-center">
-                  {topupRequests.filter(r => r.status === "pending").length}
-                </span>
-              )}
-              {showTopup ? <ChevronDown size={16} className="text-muted-foreground" /> : <ChevronRight size={16} className="text-muted-foreground" />}
-            </div>
-          </button>
-          {showTopup && (
-            <div className="border-t border-border">
-              <div className="p-2 border-b border-border flex justify-end">
-                <button onClick={fetchTopupRequests} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-secondary transition-colors">
-                  <RefreshCw size={12} className={topupLoading ? "animate-spin" : ""} /> Обновить
-                </button>
-              </div>
-              {topupLoading ? (
-                <div className="p-6 flex justify-center"><RefreshCw size={20} className="animate-spin text-muted-foreground" /></div>
-              ) : topupRequests.length === 0 ? (
-                <div className="p-6 text-center text-sm text-muted-foreground">Заявок нет</div>
-              ) : (
-                <div className="divide-y divide-border max-h-96 overflow-y-auto">
-                  {topupRequests.map(r => (
-                    <div key={r.id} className="p-3 flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full shrink-0 flex items-center justify-center text-sm font-bold text-white" style={{ background: r.avatar_color }}>
-                        {r.avatar_url ? <img src={r.avatar_url} className="w-full h-full rounded-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} /> : r.display_name[0]?.toUpperCase()}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold truncate">@{r.username}</p>
-                        <p className="text-xs text-muted-foreground">{r.package_label} — {r.amount} 💎 за {r.price_label}</p>
-                        <p className="text-[10px] text-muted-foreground">{new Date(r.created_at).toLocaleString("ru-RU")}</p>
-                      </div>
-                      {r.status === "pending" ? (
-                        <div className="flex gap-2 shrink-0">
-                          <button
-                            onClick={() => handleTopupApprove(r.id)}
-                            disabled={topupActionLoading === r.id}
-                            className="px-3 py-1.5 rounded-xl bg-green-500/10 border border-green-500/30 text-green-400 text-xs font-bold hover:bg-green-500/20 transition-colors disabled:opacity-50"
-                          >
-                            {topupActionLoading === r.id ? "..." : "✓ Одобрить"}
-                          </button>
-                          <button
-                            onClick={() => handleTopupDeny(r.id)}
-                            disabled={topupActionLoading === r.id}
-                            className="px-3 py-1.5 rounded-xl bg-destructive/10 border border-destructive/30 text-destructive text-xs font-bold hover:bg-destructive/20 transition-colors disabled:opacity-50"
-                          >
-                            {topupActionLoading === r.id ? "..." : "✗"}
-                          </button>
-                        </div>
-                      ) : (
-                        <span className={`text-xs font-bold px-2.5 py-1 rounded-xl shrink-0 ${r.status === "approved" ? "bg-green-500/10 text-green-400" : "bg-destructive/10 text-destructive"}`}>
-                          {r.status === "approved" ? "Одобрено" : "Отклонено"}
-                        </span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
         {/* Support Tickets + Bug Reports */}
         <div className="grid md:grid-cols-2 gap-4">
           {/* Support Tickets */}
@@ -2044,214 +1961,8 @@ export default function Admin() {
           </div>
         </div>
 
-        {/* Detailed Stats */}
-        <div className="bg-card border border-border rounded-2xl overflow-hidden">
-          <button
-            onClick={() => { setShowDetailedStats(v => !v); if (!showDetailedStats && !detailedStats) fetchDetailedStats(); }}
-            className="w-full p-4 flex items-center justify-between hover:bg-secondary/50 transition-colors"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-indigo-500/10 flex items-center justify-center">
-                <BarChart3 size={18} className="text-indigo-400" />
-              </div>
-              <div className="text-left">
-                <p className="font-semibold text-sm">Подробная аналитика</p>
-                <p className="text-xs text-muted-foreground">Динамика за сегодня и неделю</p>
-              </div>
-            </div>
-            {showDetailedStats ? <ChevronDown size={16} className="text-muted-foreground" /> : <ChevronRight size={16} className="text-muted-foreground" />}
-          </button>
-          {showDetailedStats && (
-            <div className="border-t border-border p-4">
-              {detailedStatsLoading ? (
-                <div className="flex justify-center py-6"><RefreshCw size={20} className="animate-spin text-muted-foreground" /></div>
-              ) : detailedStats ? (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 text-center">
-                      <p className="text-xs text-muted-foreground mb-1">Новых сегодня</p>
-                      <p className="text-2xl font-black text-emerald-400">{detailedStats.newUsersToday}</p>
-                      <p className="text-[10px] text-muted-foreground">за неделю: {detailedStats.newUsersThisWeek}</p>
-                    </div>
-                    <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 text-center">
-                      <p className="text-xs text-muted-foreground mb-1">Сообщений сегодня</p>
-                      <p className="text-2xl font-black text-blue-400">{detailedStats.messagesToday}</p>
-                      <p className="text-[10px] text-muted-foreground">за неделю: {detailedStats.messagesThisWeek}</p>
-                    </div>
-                    <div className="bg-pink-500/10 border border-pink-500/20 rounded-xl p-3 text-center">
-                      <p className="text-xs text-muted-foreground mb-1">Подарков сегодня</p>
-                      <p className="text-2xl font-black text-pink-400">{detailedStats.giftsToday}</p>
-                      <p className="text-[10px] text-muted-foreground">заблокировано: {detailedStats.bannedUsers}</p>
-                    </div>
-                  </div>
-                  {detailedStats.topGifts.length > 0 && (
-                    <div>
-                      <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Топ подарков по отправкам</p>
-                      <div className="space-y-1.5">
-                        {detailedStats.topGifts.map((g, i) => (
-                          <div key={i} className="flex items-center gap-2.5 text-sm">
-                            <span className="text-muted-foreground w-4 text-center font-black">{i + 1}</span>
-                            <span className="text-lg">{g.emoji}</span>
-                            <span className="flex-1 font-medium text-foreground">{g.name}</span>
-                            <span className={`text-[10px] font-black uppercase px-1.5 py-0.5 rounded ${
-                              g.rarity === "cosmic" ? "bg-violet-500/20 text-violet-300" :
-                              g.rarity === "legendary" ? "bg-amber-500/20 text-amber-300" :
-                              g.rarity === "epic" ? "bg-purple-500/20 text-purple-300" :
-                              g.rarity === "rare" ? "bg-blue-500/20 text-blue-300" : "bg-secondary text-muted-foreground"
-                            }`}>{g.rarity}</span>
-                            <span className="text-primary font-bold">{g.cnt}×</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  <button onClick={fetchDetailedStats} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-secondary transition-colors">
-                    <RefreshCw size={12} className={detailedStatsLoading ? "animate-spin" : ""} /> Обновить
-                  </button>
-                </div>
-              ) : (
-                <p className="text-center text-muted-foreground text-sm py-6">Не удалось загрузить</p>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Global Announcements — combined panel */}
-        <div className="bg-card border border-border rounded-2xl overflow-hidden">
-          <button
-            onClick={() => { setShowAnnouncementPanel(v => !v); if (!showAnnouncementPanel) { fetchCurrentAnnouncement(); } }}
-            className="w-full p-4 flex items-center justify-between hover:bg-secondary/50 transition-colors"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-amber-500/10 flex items-center justify-center">
-                <span className="text-amber-400 text-base">📢</span>
-              </div>
-              <div className="text-left">
-                <p className="font-semibold text-sm">Глобальные объявления</p>
-                <p className="text-xs text-muted-foreground">Баннер + рассылка всем пользователям</p>
-              </div>
-            </div>
-            {showAnnouncementPanel ? <ChevronDown size={16} className="text-muted-foreground" /> : <ChevronRight size={16} className="text-muted-foreground" />}
-          </button>
-
-          {showAnnouncementPanel && (
-            <div className="border-t border-border divide-y divide-border/50">
-
-              {/* ── Блок 1: Баннер-объявление ───────────────────────────── */}
-              <div className="px-4 py-4 space-y-3">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-amber-400">Баннер</span>
-                  <span className="text-[10px] text-muted-foreground">— отображается вверху экрана у всех пользователей</span>
-                </div>
-                {currentAnnouncement && (
-                  <div className="flex items-start gap-2 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl">
-                    <span className="text-amber-400 text-xs font-bold shrink-0 mt-0.5">Активно:</span>
-                    <p className="text-xs text-foreground leading-relaxed flex-1">{currentAnnouncement}</p>
-                  </div>
-                )}
-                <textarea
-                  value={announcementMsg}
-                  onChange={e => setAnnouncementMsg(e.target.value)}
-                  placeholder="Текст баннера (будет показан вверху экрана всем пользователям)..."
-                  rows={2}
-                  className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-amber-500 transition-colors resize-none"
-                />
-                <div className="flex gap-2">
-                  <button
-                    onClick={async () => {
-                      if (!announcementMsg.trim()) return showToast("Введите текст баннера", "err");
-                      setAnnouncementSaving(true);
-                      try {
-                        const r = await fetch("/api/admin/announcement", {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json", ...getHeader() },
-                          body: JSON.stringify({ message: announcementMsg.trim() }),
-                        });
-                        if (r.ok) { showToast("✅ Баннер опубликован", "ok"); setCurrentAnnouncement(announcementMsg.trim()); }
-                        else { const d = await r.json(); showToast(d.error || "Ошибка", "err"); }
-                      } catch { showToast("Ошибка соединения", "err"); }
-                      setAnnouncementSaving(false);
-                    }}
-                    disabled={announcementSaving}
-                    className="flex-1 py-2 rounded-xl bg-amber-500 text-white text-xs font-bold hover:opacity-90 transition-all disabled:opacity-50"
-                  >
-                    {announcementSaving ? "Публикую..." : "📢 Опубликовать баннер"}
-                  </button>
-                  {currentAnnouncement && (
-                    <button
-                      onClick={async () => {
-                        try {
-                          await fetch("/api/admin/announcement", { method: "DELETE", headers: getHeader() });
-                          showToast("🗑️ Баннер удалён", "ok");
-                          setCurrentAnnouncement(null);
-                          setAnnouncementMsg("");
-                        } catch { showToast("Ошибка", "err"); }
-                      }}
-                      className="px-3 py-2 rounded-xl border border-border text-xs text-muted-foreground hover:bg-secondary transition-colors"
-                    >
-                      Удалить
-                    </button>
-                  )}
-                </div>
-              </div>
-
-            </div>
-          )}
-        </div>
-
-        {/* Broadcast Push + Chat Management */}
-        <div className="grid md:grid-cols-2 gap-4">
-          {/* Broadcast Push Notification */}
-          <div className="bg-card border border-border rounded-2xl overflow-hidden">
-            <button
-              onClick={() => setShowBroadcastPush(v => !v)}
-              className="w-full p-4 flex items-center justify-between hover:bg-secondary/50 transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-sky-500/10 flex items-center justify-center">
-                  <SendIcon size={18} className="text-sky-400" />
-                </div>
-                <div className="text-left">
-                  <p className="font-semibold text-sm">Broadcast Push</p>
-                  <p className="text-xs text-muted-foreground">Push-уведомление всем подписчикам</p>
-                </div>
-              </div>
-              {showBroadcastPush ? <ChevronDown size={16} className="text-muted-foreground" /> : <ChevronRight size={16} className="text-muted-foreground" />}
-            </button>
-            {showBroadcastPush && (
-              <div className="px-4 pb-4 space-y-2.5 border-t border-border pt-3">
-                <input
-                  value={pushTitle}
-                  onChange={e => setPushTitle(e.target.value)}
-                  placeholder="Заголовок уведомления"
-                  className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-sky-500 transition-colors"
-                />
-                <textarea
-                  value={pushBody}
-                  onChange={e => setPushBody(e.target.value)}
-                  placeholder="Текст уведомления"
-                  rows={2}
-                  className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-sky-500 transition-colors resize-none"
-                />
-                <input
-                  value={pushUrl}
-                  onChange={e => setPushUrl(e.target.value)}
-                  placeholder="URL (необязательно, например /chats)"
-                  className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-sky-500 transition-colors"
-                />
-                <button
-                  onClick={handleBroadcastPush}
-                  disabled={pushLoading || !pushTitle.trim() || !pushBody.trim()}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-sky-500 text-white font-bold text-sm hover:bg-sky-600 transition-colors disabled:opacity-50"
-                >
-                  <SendIcon size={14} />
-                  {pushLoading ? "Отправляем..." : "Отправить push всем"}
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Chat Management */}
+        {/* Chat Management */}
+        <div className="grid md:grid-cols-1 gap-4">
           <div className="bg-card border border-border rounded-2xl overflow-hidden">
             <button
               onClick={() => { setShowAdminChats(v => !v); if (!showAdminChats && adminChats.length === 0) fetchAdminChats(); }}
@@ -2318,6 +2029,76 @@ export default function Admin() {
               </div>
             )}
           </div>
+        </div>
+
+        {/* Database usage */}
+        <div className="bg-card border border-border rounded-2xl overflow-hidden">
+          <button
+            onClick={() => { setShowDbUsage(v => !v); if (!showDbUsage && !dbUsage) fetchDbUsage(); }}
+            className="w-full p-4 flex items-center justify-between hover:bg-secondary/50 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-cyan-500/10 flex items-center justify-center">
+                <Database size={18} className="text-cyan-400" />
+              </div>
+              <div className="text-left">
+                <p className="font-semibold text-sm">База данных</p>
+                <p className="text-xs text-muted-foreground">
+                  {dbUsage ? `${dbUsage.totalMb} МБ использовано (${dbUsage.percentUsed}%)` : "Использование хранилища"}
+                </p>
+              </div>
+            </div>
+            {showDbUsage ? <ChevronDown size={16} className="text-muted-foreground" /> : <ChevronRight size={16} className="text-muted-foreground" />}
+          </button>
+          {showDbUsage && (
+            <div className="border-t border-border p-4">
+              {dbUsageLoading ? (
+                <div className="flex justify-center py-6"><RefreshCw size={20} className="animate-spin text-muted-foreground" /></div>
+              ) : dbUsage ? (
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5 text-xs">
+                      <span className="text-muted-foreground">Использовано</span>
+                      <span className="font-bold text-foreground">{dbUsage.totalMb} МБ / ~{(dbUsage.limitMb / 1024).toFixed(0)} ГБ</span>
+                    </div>
+                    <div className="w-full h-2.5 rounded-full bg-secondary overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all ${dbUsage.percentUsed > 80 ? "bg-destructive" : dbUsage.percentUsed > 50 ? "bg-amber-500" : "bg-cyan-500"}`}
+                        style={{ width: `${Math.max(2, dbUsage.percentUsed)}%` }}
+                      />
+                    </div>
+                    <p className="text-[10px] text-muted-foreground mt-1">Ориентировочный лимит для бесплатного тарифа Postgres — фактический может отличаться</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Крупнейшие таблицы</p>
+                    <div className="space-y-1.5">
+                      {dbUsage.tables.map(t => (
+                        <div key={t.name} className="flex items-center gap-2.5 text-sm">
+                          <span className="flex-1 font-medium text-foreground truncate">{t.name}</span>
+                          <span className="text-xs text-muted-foreground">{t.rowCount.toLocaleString("ru-RU")} строк</span>
+                          <span className="text-cyan-400 font-bold w-16 text-right">{t.sizeMb} МБ</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={fetchDbUsage} className="flex-1 text-xs text-muted-foreground hover:text-foreground flex items-center justify-center gap-1 px-2 py-2 rounded-lg hover:bg-secondary transition-colors border border-border">
+                      <RefreshCw size={12} className={dbUsageLoading ? "animate-spin" : ""} /> Обновить
+                    </button>
+                    <button
+                      onClick={handleDbCleanup}
+                      disabled={dbCleanupLoading}
+                      className="flex-1 text-xs font-bold text-cyan-400 hover:bg-cyan-500/10 flex items-center justify-center gap-1 px-2 py-2 rounded-lg transition-colors border border-cyan-500/30 disabled:opacity-50"
+                    >
+                      {dbCleanupLoading ? "Очищаем..." : "🧹 Очистить старые данные"}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-center text-muted-foreground text-sm py-6">Не удалось загрузить</p>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Platform Events */}
@@ -3415,7 +3196,7 @@ export default function Admin() {
                       {/* Ban / Unban */}
                       {!selectedUser.is_admin && (
                         <button
-                          onClick={() => handleBanToggle(selectedUser)}
+                          onClick={() => bannedIds.has(selectedUser.id) ? handleBanToggle(selectedUser) : setBanConfirm(selectedUser)}
                           disabled={banLoading}
                           className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-all text-sm font-medium ${
                             bannedIds.has(selectedUser.id)

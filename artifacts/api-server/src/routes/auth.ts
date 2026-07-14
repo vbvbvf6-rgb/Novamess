@@ -106,7 +106,7 @@ router.post("/auth/login", async (req, res) => {
 
     const rows = await db.execute(
       sql`SELECT id, username, display_name, avatar_color, avatar_url, bio, status, status_text,
-                 is_verified, is_bot, is_admin, is_banned, created_at, balance, password_hash,
+                 is_verified, is_bot, is_admin, is_banned, ban_reason, ban_expires_at, created_at, balance, password_hash,
                  COALESCE(totp_enabled, false) as totp_enabled,
                  COALESCE(age_verified, false) as age_verified
           FROM users
@@ -120,12 +120,36 @@ router.post("/auth/login", async (req, res) => {
       recordFailure(ukey);
       recordFailure(ipKey);
       await bruteForceDelay();
+      // Give a clear message if this exact username belonged to a deleted account
+      try {
+        const del = await db.execute(sql`SELECT reason, deleted_at FROM deleted_accounts WHERE LOWER(username) = ${ukey} LIMIT 1`);
+        const delRow = del.rows[0] as any;
+        if (delRow) {
+          return res.status(410).json({
+            error: "Аккаунт удалён",
+            accountDeleted: true,
+            reason: delRow.reason || "Причина не указана",
+            deletedAt: delRow.deleted_at,
+          });
+        }
+      } catch {}
       return res.status(401).json({ error: "Неверное имя или пароль" });
     }
 
     // ── Ban check ──────────────────────────────────────────────────────────
     if (user.is_banned === true || user.is_banned === "t" || user.is_banned === 1) {
-      return res.status(403).json({ error: "Ваш аккаунт заблокирован. Обратитесь в поддержку." });
+      const expiresAt = user.ban_expires_at ? new Date(user.ban_expires_at) : null;
+      if (expiresAt && expiresAt.getTime() <= Date.now()) {
+        // Ban has expired — auto-unban and let login proceed
+        await db.execute(sql`UPDATE users SET is_banned = false, ban_reason = NULL, ban_expires_at = NULL WHERE id = ${user.id}`);
+      } else {
+        return res.status(403).json({
+          error: "Ваш аккаунт заблокирован. Обратитесь в поддержку.",
+          accountBanned: true,
+          banReason: user.ban_reason || "Причина не указана",
+          banExpiresAt: expiresAt ? expiresAt.toISOString() : null,
+        });
+      }
     }
 
     const pass = String(password);

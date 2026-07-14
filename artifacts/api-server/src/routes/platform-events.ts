@@ -106,41 +106,6 @@ router.post("/platform-events/:id/leave", async (req, res) => {
   }
 });
 
-// Get active system announcement (public)
-router.get("/announcement", async (req, res) => {
-  try {
-    const r = await db.execute(sql`SELECT * FROM system_announcements WHERE is_active = true ORDER BY created_at DESC LIMIT 1`);
-    res.json(r.rows[0] || null);
-  } catch { res.json(null); }
-});
-
-// Admin: set/update announcement
-router.post("/admin/announcement", async (req, res) => {
-  try {
-    if (!(await isAdminUser(req.currentUserId))) return res.status(403).json({ error: "Доступ запрещён" });
-    const { message } = req.body;
-    if (!message?.trim()) return res.status(400).json({ error: "Сообщение обязательно" });
-    await db.execute(sql`UPDATE system_announcements SET is_active = false`);
-    const r = await db.execute(sql`
-      INSERT INTO system_announcements (message, is_active, created_by)
-      VALUES (${message.trim()}, true, ${req.currentUserId}) RETURNING *
-    `);
-    res.json(r.rows[0]);
-  } catch (err) {
-    req.log.error(err);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-// Admin: clear announcement
-router.delete("/admin/announcement", async (req, res) => {
-  try {
-    if (!(await isAdminUser(req.currentUserId))) return res.status(403).json({ error: "Доступ запрещён" });
-    await db.execute(sql`UPDATE system_announcements SET is_active = false`);
-    res.status(204).send();
-  } catch { res.status(500).json({ error: "Internal server error" }); }
-});
-
 router.get("/admin/platform-events", async (req, res) => {
   try {
     if (!(await isAdminUser(req.currentUserId))) return res.status(403).json({ error: "Доступ запрещён" });

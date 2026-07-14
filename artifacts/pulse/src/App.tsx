@@ -10,7 +10,7 @@ import { AddAccountDialog } from "@/components/layout/AddAccountDialog";
 import { getSavedAccounts, saveAccount, removeAccount, SavedAccount } from "@/lib/accounts";
 import { ScreenLock } from "@/components/ScreenLock";
 import { motion, AnimatePresence } from "framer-motion";
-import { Clock, LogOut, ShieldCheck, Megaphone, X, Download, RefreshCw, RotateCcw } from "lucide-react";
+import { Clock, LogOut, ShieldCheck, X, Download, RefreshCw, RotateCcw } from "lucide-react";
 import { MaintenanceScreen, MaintenanceData } from "@/components/MaintenanceScreen";
 
 import { useNotifications } from "@/hooks/useNotifications";
@@ -202,51 +202,6 @@ function GlobalNotificationListener() {
   return null;
 }
 
-function AnnouncementBanner() {
-  const [announcement, setAnnouncement] = useState<{ id: number; message: string } | null>(null);
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const token = sessionStorage.getItem("pulse-token");
-    if (!token) return;
-    fetch("/api/announcement", { headers: { Authorization: `Bearer ${token}` } })
-      .then(r => r.ok ? r.json() : null)
-      .then(data => {
-        if (data?.id && data?.message) {
-          const dismissKey = `nova-dismissed-ann-${data.id}`;
-          if (!localStorage.getItem(dismissKey)) {
-            setAnnouncement(data);
-            setVisible(true);
-          }
-        }
-      })
-      .catch(() => {});
-  }, []);
-
-  if (!visible || !announcement) return null;
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: -24 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -24 }}
-      className="fixed top-0 left-0 right-0 z-[200] bg-primary text-primary-foreground px-4 py-2.5 flex items-center gap-3 shadow-xl"
-    >
-      <Megaphone size={15} className="shrink-0" />
-      <p className="text-sm font-medium flex-1 leading-snug">{announcement.message}</p>
-      <button
-        onClick={() => {
-          localStorage.setItem(`nova-dismissed-ann-${announcement.id}`, "1");
-          setVisible(false);
-        }}
-        className="shrink-0 p-1 rounded-full hover:bg-white/20 transition-colors"
-      >
-        <X size={14} />
-      </button>
-    </motion.div>
-  );
-}
-
 function PwaUpdateBanner() {
   const { updateAvailable, applyUpdate } = useServiceWorkerUpdate();
   const [dismissed, setDismissed] = useState(false);
@@ -377,7 +332,6 @@ function MainAppInner({ onLogout, onSwitchAccount, onRemoveAccount, onOpenAddAcc
         <PwaUpdateBanner />
         <WhatsNewModal />
         <OnboardingModal />
-        <AnnouncementBanner />
         <ScreenLock>
           <AppLayout>
             <Switch>
@@ -542,13 +496,15 @@ function App() {
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d) setMaintenanceData(d); })
       .catch(() => {});
-    // Re-check every 60 seconds
+    // Re-check every 15 seconds so already-open tabs get kicked to the
+    // maintenance screen quickly (the API itself also rejects requests
+    // from non-admins in real time — this poll just drives the UI overlay).
     const id = setInterval(() => {
       fetch("/api/maintenance")
         .then(r => r.ok ? r.json() : null)
         .then(d => { if (d) setMaintenanceData(d); })
         .catch(() => {});
-    }, 60_000);
+    }, 15_000);
     return () => clearInterval(id);
   }, []);
 

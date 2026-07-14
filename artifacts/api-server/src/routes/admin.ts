@@ -11,7 +11,14 @@ const ADMIN_USER_IDS = [4];
 
 // Run once at module load to ensure required columns/tables exist
 db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_banned BOOLEAN NOT NULL DEFAULT FALSE`).catch(() => {});
+db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS ban_reason TEXT`).catch(() => {});
+db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS ban_expires_at TIMESTAMP WITH TIME ZONE`).catch(() => {});
 db.execute(sql`ALTER TABLE posts ADD COLUMN IF NOT EXISTS moderation_scanned_at TIMESTAMP WITH TIME ZONE`).catch(() => {});
+db.execute(sql`CREATE TABLE IF NOT EXISTS deleted_accounts (
+  username TEXT PRIMARY KEY,
+  reason TEXT,
+  deleted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+)`).catch(() => {});
 db.execute(sql`CREATE TABLE IF NOT EXISTS user_reports (
   id SERIAL PRIMARY KEY,
   reporter_id INTEGER NOT NULL,
@@ -129,6 +136,15 @@ router.delete("/admin/users/:userId", requireAdmin, async (req, res) => {
     }
     const target = await db.query.usersTable.findFirst({ where: eq(usersTable.id, targetId) });
     if (!target) return res.status(404).json({ error: "Пользователь не найден" });
+
+    const reason = typeof req.body?.reason === "string" ? req.body.reason.trim() : "";
+    if (!reason) return res.status(400).json({ error: "Укажите причину удаления аккаунта" });
+
+    await db.execute(sql`
+      INSERT INTO deleted_accounts (username, reason, deleted_at)
+      VALUES (${target.username}, ${reason}, NOW())
+      ON CONFLICT (username) DO UPDATE SET reason = ${reason}, deleted_at = NOW()
+    `).catch(() => {});
 
     // Delete in FK-safe order inside a transaction to prevent partial deletions
     // Pre-clean optional tables that may or may not exist (outside transaction)
@@ -400,64 +416,71 @@ router.post("/admin/users/:userId/ban", requireAdmin, async (req, res) => {
   try {
     const targetId = Number(req.params.userId);
     if (targetId === req.currentUserId) return res.status(400).json({ error: "Нельзя забанить себя" });
-    const { ban } = req.body;
-    await db.execute(sql`UPDATE users SET is_banned = ${!!ban} WHERE id = ${targetId}`);
-    const target = await db.execute(sql`SELECT username, is_banned FROM users WHERE id = ${targetId}`);
+    const { ban, reason, durationHours } = req.body;
+    if (ban) {
+      const expiresAt = durationHours ? new Date(Date.now() + Number(durationHours) * 3600_000).toISOString() : null;
+      await db.execute(sql`UPDATE users SET is_banned = true, ban_reason = ${reason?.trim() || null}, ban_expires_at = ${expiresAt} WHERE id = ${targetId}`);
+    } else {
+      await db.execute(sql`UPDATE users SET is_banned = false, ban_reason = NULL, ban_expires_at = NULL WHERE id = ${targetId}`);
+    }
+    const target = await db.execute(sql`SELECT username, is_banned, ban_reason, ban_expires_at FROM users WHERE id = ${targetId}`);
     const row = target.rows[0] as any;
-    res.json({ success: true, isBanned: row?.is_banned ?? !!ban, message: ban ? `@${row?.username} заблокирован` : `@${row?.username} разблокирован` });
+    res.json({
+      success: true,
+      isBanned: row?.is_banned ?? !!ban,
+      banReason: row?.ban_reason ?? null,
+      banExpiresAt: row?.ban_expires_at ?? null,
+      message: ban ? `@${row?.username} заблокирован${durationHours ? ` на ${durationHours} ч.` : " навсегда"}` : `@${row?.username} разблокирован`,
+    });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Ошибка сервера" });
   }
 });
 
-router.get("/admin/topup-requests", requireAdmin, async (req, res) => {
+// ── Database usage / storage monitoring ────────────────────────────────────
+router.get("/admin/database-usage", requireAdmin, async (req, res) => {
   try {
-    const rows = await db.execute(
-      sql`SELECT tr.id, tr.user_id, tr.amount, tr.package_label, tr.price_label, tr.status, tr.created_at, tr.resolved_at,
-                 u.username, u.display_name, u.avatar_color, u.avatar_url
-          FROM topup_requests tr
-          JOIN users u ON u.id = tr.user_id
-          ORDER BY tr.created_at DESC
-          LIMIT 100`
-    );
-    res.json(rows.rows);
+    const totalRow = await db.execute(sql`SELECT pg_database_size(current_database()) AS bytes`);
+    const totalBytes = Number((totalRow.rows[0] as any).bytes);
+
+    const tablesRow = await db.execute(sql`
+      SELECT relname AS table, pg_total_relation_size(relid) AS bytes, n_live_tup AS row_count
+      FROM pg_stat_user_tables
+      ORDER BY pg_total_relation_size(relid) DESC
+      LIMIT 12
+    `);
+    const tables = (tablesRow.rows as any[]).map(r => ({
+      name: r.table,
+      sizeMb: Math.round((Number(r.bytes) / (1024 * 1024)) * 100) / 100,
+      rowCount: Number(r.row_count),
+    }));
+
+    // Replit's free Postgres tier caps storage around 10 GB — shown as a soft reference limit.
+    const limitBytes = 10 * 1024 * 1024 * 1024;
+
+    res.json({
+      totalMb: Math.round((totalBytes / (1024 * 1024)) * 100) / 100,
+      limitMb: Math.round(limitBytes / (1024 * 1024)),
+      percentUsed: Math.min(100, Math.round((totalBytes / limitBytes) * 1000) / 10),
+      tables,
+    });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Ошибка сервера" });
   }
 });
 
-router.post("/admin/topup-requests/:id/approve", requireAdmin, async (req, res) => {
+// Cleanup: purge expired stories & old sent scheduled messages to reclaim space
+router.post("/admin/database-cleanup", requireAdmin, async (req, res) => {
   try {
-    const reqId = Number(req.params.id);
-    const rows = await db.execute(
-      sql`SELECT * FROM topup_requests WHERE id = ${reqId} AND status = 'pending'`
-    );
-    const tr = rows.rows[0] as any;
-    if (!tr) return res.status(404).json({ error: "Заявка не найдена или уже обработана" });
-
-    await db.execute(sql`UPDATE users SET balance = balance + ${tr.amount} WHERE id = ${tr.user_id}`);
-    await db.execute(sql`UPDATE topup_requests SET status = 'approved', resolved_at = NOW() WHERE id = ${reqId}`);
-
-    const balRow = await db.execute(sql`SELECT balance FROM users WHERE id = ${tr.user_id}`);
-    const newBalance = Number((balRow.rows[0] as any).balance);
-    res.json({ success: true, userId: tr.user_id, amount: tr.amount, newBalance });
-  } catch (err) {
-    req.log.error(err);
-    res.status(500).json({ error: "Ошибка сервера" });
-  }
-});
-
-router.post("/admin/topup-requests/:id/deny", requireAdmin, async (req, res) => {
-  try {
-    const reqId = Number(req.params.id);
-    const rows = await db.execute(
-      sql`SELECT id FROM topup_requests WHERE id = ${reqId} AND status = 'pending'`
-    );
-    if ((rows.rows as any[]).length === 0) return res.status(404).json({ error: "Заявка не найдена или уже обработана" });
-    await db.execute(sql`UPDATE topup_requests SET status = 'denied', resolved_at = NOW() WHERE id = ${reqId}`);
-    res.json({ success: true });
+    const expiredStories = await db.execute(sql`DELETE FROM stories WHERE expires_at IS NOT NULL AND expires_at < NOW() RETURNING id`);
+    const oldScheduled = await db.execute(sql`DELETE FROM scheduled_messages WHERE sent_at IS NOT NULL AND sent_at < NOW() - INTERVAL '7 days' RETURNING id`).catch(() => ({ rows: [] }));
+    res.json({
+      success: true,
+      deletedStories: (expiredStories.rows as any[]).length,
+      deletedScheduled: (oldScheduled.rows as any[]).length,
+    });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Ошибка сервера" });
@@ -759,52 +782,6 @@ router.delete("/admin/chats/:chatId", requireAdmin, async (req, res) => {
 });
 
 // ── Broadcast Push Notification ───────────────────────────────────────────────
-
-router.post("/admin/broadcast-push", requireAdmin, async (req, res) => {
-  try {
-    const { title, body, url } = req.body;
-    if (!title?.trim() || !body?.trim()) return res.status(400).json({ error: "Укажите title и body" });
-
-    const subs = await db.execute(sql`SELECT DISTINCT user_id FROM push_subscriptions`);
-    const userIds = (subs.rows as any[]).map(r => r.user_id);
-
-    let sent = 0;
-    const { sendPushToUser } = await import("./push.js");
-    for (const uid of userIds) {
-      await sendPushToUser(uid, { title: title.trim(), body: body.trim(), url: url || "/" });
-      sent++;
-    }
-
-    res.json({ success: true, sent, message: `Push отправлен ${sent} подписчикам` });
-  } catch (err) {
-    req.log.error(err);
-    res.status(500).json({ error: "Ошибка сервера" });
-  }
-});
-
-// ── Detailed Stats ────────────────────────────────────────────────────────────
-
-router.get("/admin/stats/detailed", requireAdmin, async (req, res) => {
-  try {
-    const [newToday, newThisWeek, msgsToday, msgsThisWeek, banned] = await Promise.all([
-      db.execute(sql`SELECT COUNT(*)::int AS cnt FROM users WHERE created_at >= NOW() - INTERVAL '1 day' AND is_bot = false`),
-      db.execute(sql`SELECT COUNT(*)::int AS cnt FROM users WHERE created_at >= NOW() - INTERVAL '7 days' AND is_bot = false`),
-      db.execute(sql`SELECT COUNT(*)::int AS cnt FROM messages WHERE created_at >= NOW() - INTERVAL '1 day'`),
-      db.execute(sql`SELECT COUNT(*)::int AS cnt FROM messages WHERE created_at >= NOW() - INTERVAL '7 days'`),
-      db.execute(sql`SELECT COUNT(*)::int AS cnt FROM users WHERE is_banned = true`).catch(() => ({ rows: [{ cnt: 0 }] })),
-    ]);
-    res.json({
-      newUsersToday: Number((newToday.rows[0] as any).cnt),
-      newUsersThisWeek: Number((newThisWeek.rows[0] as any).cnt),
-      messagesToday: Number((msgsToday.rows[0] as any).cnt),
-      messagesThisWeek: Number((msgsThisWeek.rows[0] as any).cnt),
-      bannedUsers: Number((banned.rows[0] as any).cnt || 0),
-    });
-  } catch (err) {
-    req.log.error(err);
-    res.status(500).json({ error: "Ошибка сервера" });
-  }
-});
 
 router.get("/admin/check", async (req, res) => {
   try {

@@ -220,12 +220,21 @@ export async function runSeed() {
   for (const u of SYSTEM_USERS) {
     const rows = await db.execute(sql`SELECT id FROM users WHERE username = ${u.username} LIMIT 1`);
     if ((rows.rows as any[]).length === 0) {
+      // For admin seed users, only create a fresh row if NO admin account exists yet at all.
+      // (Prevents a duplicate admin from being created every time the real admin renames
+      // their username away from the original seed username.)
+      if (u.isAdmin) {
+        const anyAdmin = await db.execute(sql`SELECT id FROM users WHERE is_admin = true LIMIT 1`);
+        if ((anyAdmin.rows as any[]).length > 0) {
+          continue;
+        }
+      }
       await db.execute(sql`
-        INSERT INTO users (username, display_name, avatar_color, avatar_url, status, is_bot, is_verified, is_admin, password_hash, balance)
+        INSERT INTO users (username, display_name, avatar_color, avatar_url, status, is_bot, is_verified, is_admin, password_hash, balance, has_prime, prime_tier, prime_expires_at)
         VALUES (
           ${u.username}, ${u.displayName}, ${u.avatarColor}, ${u.avatarUrl ?? null}, ${u.status},
           ${u.isBot ?? false}, ${u.isVerified ?? false}, ${u.isAdmin ?? false},
-          ${u.passwordHash}, 0
+          ${u.passwordHash}, 0, ${u.isAdmin ?? false}, ${u.isAdmin ? "prime_plus" : null}, ${u.isAdmin ? "2099-12-31" : null}
         )
       `);
       console.log(`[seed] Created user: ${u.username}`);
@@ -236,6 +245,13 @@ export async function runSeed() {
       `);
     }
   }
+
+  // Make sure every admin account always has full (permanent) Prime access, regardless
+  // of how it was created — admins shouldn't be gated behind Prime-only features.
+  await db.execute(sql`
+    UPDATE users SET has_prime = true, prime_tier = COALESCE(prime_tier, 'prime_plus'), prime_expires_at = '2099-12-31'
+    WHERE is_admin = true AND (has_prime IS NOT TRUE OR prime_expires_at IS NULL OR prime_expires_at < NOW())
+  `).catch(() => {});
 
   // ── 3. Ensure the official Aura channel exists ───────────────────────────
   const adminRow = await db.execute(sql`SELECT id FROM users WHERE username = 'creater_messenger' LIMIT 1`);
