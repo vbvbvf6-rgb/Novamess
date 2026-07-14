@@ -52,7 +52,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
           <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
             Произошла непредвиденная ошибка. Данные не потеряны — перезагрузите страницу.
           </p>
-          <details className="mb-5 text-left">
+          <details className="mb-5 text-left" open>
             <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors">
               Технические детали
             </summary>

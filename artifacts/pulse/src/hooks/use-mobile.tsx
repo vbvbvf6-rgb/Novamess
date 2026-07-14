@@ -10,9 +10,20 @@ export function useIsMobile() {
     const onChange = () => {
       setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
     }
-    mql.addEventListener("change", onChange)
+    // iOS Safari < 14 doesn't support addEventListener on MediaQueryList — use deprecated addListener as fallback
+    if (typeof mql.addEventListener === "function") {
+      mql.addEventListener("change", onChange)
+    } else {
+      (mql as any).addListener(onChange)
+    }
     setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
-    return () => mql.removeEventListener("change", onChange)
+    return () => {
+      if (typeof mql.removeEventListener === "function") {
+        mql.removeEventListener("change", onChange)
+      } else {
+        (mql as any).removeListener(onChange)
+      }
+    }
   }, [])
 
   return !!isMobile

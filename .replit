@@ -49,8 +49,8 @@ channel = "stable-25_05"
 [userenv]
 
 [userenv.shared]
-VAPID_PUBLIC_KEY = "BMdSFeQyTp58InOor8g-gPe9aCo8HUYFuAD30DFLUCfeq26BrXe3RzNzS0NZATBFDgW9gqm-Toxqx5j4q6Py1CQ"
-VAPID_EMAIL = "mailto:admin@pulse.app"
+VAPID_PUBLIC_KEY = "BLlRIBbbp2kqQrhSmdwJHTJZ4r5gXquy17td4VEQVjAUFnrxCfvWe8fDHSbSwgluzb6LNmTze_39dLXW9rcTkxo"
+VAPID_EMAIL = "mailto:admin@nova.app"
 PORT = "5000"
 BASE_PATH = "/"
 API_PORT = "8080"
