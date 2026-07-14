@@ -450,28 +450,49 @@ router.post("/admin/users/:userId/ban", requireAdmin, async (req, res) => {
 // ── Database usage / storage monitoring ────────────────────────────────────
 router.get("/admin/database-usage", requireAdmin, async (req, res) => {
   try {
-    const totalRow = await db.execute(sql`SELECT pg_database_size(current_database()) AS bytes`);
-    const totalBytes = Number((totalRow.rows[0] as any).bytes);
+    const [totalRow, tablesRow, statsRow] = await Promise.all([
+      db.execute(sql`
+        SELECT
+          pg_database_size(current_database()) AS bytes,
+          pg_size_pretty(pg_database_size(current_database())) AS pretty,
+          current_database() AS db_name,
+          version() AS pg_version
+      `),
+      db.execute(sql`
+        SELECT relname AS table, pg_total_relation_size(relid) AS bytes,
+               pg_size_pretty(pg_total_relation_size(relid)) AS pretty,
+               n_live_tup AS row_count
+        FROM pg_stat_user_tables
+        ORDER BY pg_total_relation_size(relid) DESC
+        LIMIT 15
+      `),
+      db.execute(sql`
+        SELECT
+          (SELECT count(*) FROM pg_stat_user_tables) AS table_count,
+          (SELECT sum(n_live_tup) FROM pg_stat_user_tables) AS total_rows,
+          (SELECT sum(pg_total_relation_size(relid)) FROM pg_stat_user_tables) AS tables_bytes,
+          (SELECT pg_size_pretty(sum(pg_total_relation_size(relid))) FROM pg_stat_user_tables) AS tables_pretty
+      `),
+    ]);
 
-    const tablesRow = await db.execute(sql`
-      SELECT relname AS table, pg_total_relation_size(relid) AS bytes, n_live_tup AS row_count
-      FROM pg_stat_user_tables
-      ORDER BY pg_total_relation_size(relid) DESC
-      LIMIT 12
-    `);
+    const totalBytes = Number((totalRow.rows[0] as any).bytes);
+    const stat = statsRow.rows[0] as any;
+
     const tables = (tablesRow.rows as any[]).map(r => ({
       name: r.table,
       sizeMb: Math.round((Number(r.bytes) / (1024 * 1024)) * 100) / 100,
+      sizePretty: r.pretty,
       rowCount: Number(r.row_count),
     }));
 
-    // Replit's free Postgres tier caps storage around 10 GB — shown as a soft reference limit.
-    const limitBytes = 10 * 1024 * 1024 * 1024;
-
     res.json({
       totalMb: Math.round((totalBytes / (1024 * 1024)) * 100) / 100,
-      limitMb: Math.round(limitBytes / (1024 * 1024)),
-      percentUsed: Math.min(100, Math.round((totalBytes / limitBytes) * 1000) / 10),
+      totalPretty: (totalRow.rows[0] as any).pretty,
+      dbName: (totalRow.rows[0] as any).db_name,
+      pgVersion: ((totalRow.rows[0] as any).pg_version as string).split(" ").slice(0, 2).join(" "),
+      tableCount: Number(stat.table_count),
+      totalRows: Number(stat.total_rows),
+      tablesBytesPretty: stat.tables_pretty,
       tables,
     });
   } catch (err) {

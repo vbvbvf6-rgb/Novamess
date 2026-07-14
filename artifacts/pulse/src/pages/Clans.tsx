@@ -433,7 +433,7 @@ export default function Clans() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-background">
+    <div className="flex flex-col h-full w-full bg-background">
       {/* Header */}
       <div className="px-4 pt-4 pb-3 border-b border-border/50 shrink-0">
         <div className="flex items-center gap-3 mb-4">

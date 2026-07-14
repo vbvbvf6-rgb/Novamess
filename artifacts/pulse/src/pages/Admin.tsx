@@ -291,8 +291,9 @@ export default function Admin() {
 
   // Database usage
   interface DbUsage {
-    totalMb: number; limitMb: number; percentUsed: number;
-    tables: { name: string; sizeMb: number; rowCount: number }[];
+    totalMb: number; totalPretty: string; dbName: string; pgVersion: string;
+    tableCount: number; totalRows: number; tablesBytesPretty: string;
+    tables: { name: string; sizeMb: number; sizePretty: string; rowCount: number }[];
   }
   const [dbUsage, setDbUsage] = useState<DbUsage | null>(null);
   const [dbUsageLoading, setDbUsageLoading] = useState(false);
@@ -2067,7 +2068,7 @@ export default function Admin() {
               <div className="text-left">
                 <p className="font-semibold text-sm">База данных</p>
                 <p className="text-xs text-muted-foreground">
-                  {dbUsage ? `${dbUsage.totalMb} МБ использовано (${dbUsage.percentUsed}%)` : "Использование хранилища"}
+                  {dbUsage ? `${dbUsage.totalPretty} · ${dbUsage.tableCount} таблиц · ${Number(dbUsage.totalRows).toLocaleString("ru-RU")} строк` : "Точные данные PostgreSQL"}
                 </p>
               </div>
             </div>
@@ -2079,27 +2080,37 @@ export default function Admin() {
                 <div className="flex justify-center py-6"><RefreshCw size={20} className="animate-spin text-muted-foreground" /></div>
               ) : dbUsage ? (
                 <div className="space-y-4">
-                  <div>
-                    <div className="flex items-center justify-between mb-1.5 text-xs">
-                      <span className="text-muted-foreground">Использовано</span>
-                      <span className="font-bold text-foreground">{dbUsage.totalMb} МБ / ~{(dbUsage.limitMb / 1024).toFixed(0)} ГБ</span>
+                  {/* Summary cards */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="bg-secondary/60 rounded-xl p-3">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-0.5">Размер БД</p>
+                      <p className="text-lg font-black text-cyan-400">{dbUsage.totalPretty}</p>
+                      <p className="text-[10px] text-muted-foreground">{dbUsage.totalMb} МБ точно</p>
                     </div>
-                    <div className="w-full h-2.5 rounded-full bg-secondary overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all ${dbUsage.percentUsed > 80 ? "bg-destructive" : dbUsage.percentUsed > 50 ? "bg-amber-500" : "bg-cyan-500"}`}
-                        style={{ width: `${Math.max(2, dbUsage.percentUsed)}%` }}
-                      />
+                    <div className="bg-secondary/60 rounded-xl p-3">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-0.5">Данные таблиц</p>
+                      <p className="text-lg font-black text-foreground">{dbUsage.tablesBytesPretty}</p>
+                      <p className="text-[10px] text-muted-foreground">{dbUsage.tableCount} таблиц</p>
                     </div>
-                    <p className="text-[10px] text-muted-foreground mt-1">Ориентировочный лимит для бесплатного тарифа Postgres — фактический может отличаться</p>
+                    <div className="bg-secondary/60 rounded-xl p-3">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-0.5">Всего строк</p>
+                      <p className="text-lg font-black text-foreground">{Number(dbUsage.totalRows).toLocaleString("ru-RU")}</p>
+                      <p className="text-[10px] text-muted-foreground">во всех таблицах</p>
+                    </div>
+                    <div className="bg-secondary/60 rounded-xl p-3">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-0.5">PostgreSQL</p>
+                      <p className="text-sm font-bold text-foreground leading-tight mt-0.5">{dbUsage.pgVersion}</p>
+                      <p className="text-[10px] text-muted-foreground truncate">{dbUsage.dbName}</p>
+                    </div>
                   </div>
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Крупнейшие таблицы</p>
+                    <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Таблицы по размеру</p>
                     <div className="space-y-1.5">
                       {dbUsage.tables.map(t => (
                         <div key={t.name} className="flex items-center gap-2.5 text-sm">
                           <span className="flex-1 font-medium text-foreground truncate">{t.name}</span>
-                          <span className="text-xs text-muted-foreground">{t.rowCount.toLocaleString("ru-RU")} строк</span>
-                          <span className="text-cyan-400 font-bold w-16 text-right">{t.sizeMb} МБ</span>
+                          <span className="text-xs text-muted-foreground">{t.rowCount.toLocaleString("ru-RU")} стр.</span>
+                          <span className="text-cyan-400 font-bold w-16 text-right text-xs">{t.sizePretty}</span>
                         </div>
                       ))}
                     </div>
