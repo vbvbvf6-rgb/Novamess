@@ -1,7 +1,10 @@
 import { createRoot } from "react-dom/client";
 import { setBaseUrl } from "@workspace/api-client-react";
 import App from "./App";
+import { setupNativeNotifications } from "./lib/nativeNotifications";
 import "./index.css";
+
+setupNativeNotifications();
 
 // When deployed on Vercel (frontend-only), VITE_API_URL points to the backend server.
 // In local dev or single-server deploys this is empty and relative URLs are used.
