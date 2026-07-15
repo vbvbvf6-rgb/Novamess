@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppProvider } from "@/contexts/AppContext";
+import { useAppContext } from "@/contexts/AppContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AddAccountDialog } from "@/components/layout/AddAccountDialog";
@@ -168,6 +169,132 @@ function MainApp({ onLogout, onSwitchAccount, onRemoveAccount, onOpenAddAccount 
   return <MainAppInner onLogout={onLogout} onSwitchAccount={onSwitchAccount} onRemoveAccount={onRemoveAccount} onOpenAddAccount={onOpenAddAccount} />;
 }
 
+interface InAppNotif {
+  id: string;
+  chatId: number;
+  senderName: string;
+  body: string;
+  senderAvatar?: string;
+  chatType?: string;
+  chatName?: string;
+}
+
+// In-app floating banner for messages when the app is open/visible
+function InAppMessageBanner() {
+  const { selectedChatId, setSelectedChatId } = useAppContext();
+  const [, navigate] = useLocation();
+  const [notifs, setNotifs] = useState<InAppNotif[]>([]);
+  const selectedChatIdRef = useRef(selectedChatId);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => { selectedChatIdRef.current = selectedChatId; }, [selectedChatId]);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      try {
+        const data = (e as CustomEvent).detail as {
+          chatId: number; senderName: string; body: string; messageId: number;
+          senderAvatar?: string; chatType?: string; chatName?: string;
+        };
+
+        // Don't show if user is already viewing this chat
+        if (data.chatId === selectedChatIdRef.current) return;
+
+        const notif: InAppNotif = {
+          id: `${data.chatId}-${data.messageId || Date.now()}`,
+          chatId: data.chatId,
+          senderName: data.senderName,
+          body: data.body,
+          senderAvatar: data.senderAvatar,
+          chatType: data.chatType,
+          chatName: data.chatName,
+        };
+
+        setNotifs(prev => {
+          // Replace existing notification from same chat with newer one
+          const filtered = prev.filter(n => n.chatId !== data.chatId);
+          return [...filtered, notif].slice(-3); // cap at 3
+        });
+      } catch {}
+    };
+
+    window.addEventListener("pulse:new-message", handler);
+    return () => window.removeEventListener("pulse:new-message", handler);
+  }, []);
+
+  // Auto-dismiss the oldest notification after 4s
+  useEffect(() => {
+    if (notifs.length === 0) return;
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      setNotifs(prev => prev.slice(1));
+    }, 4000);
+    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
+  }, [notifs]);
+
+  const dismiss = (id: string) => setNotifs(prev => prev.filter(n => n.id !== id));
+
+  const open = (chatId: number) => {
+    setSelectedChatId(chatId);
+    navigate("/");
+    setNotifs([]);
+  };
+
+  return (
+    <div className="fixed top-3 inset-x-0 z-[900] flex flex-col items-center gap-2 px-3 pointer-events-none">
+      <AnimatePresence mode="sync">
+        {notifs.map(notif => (
+          <motion.div
+            key={notif.id}
+            initial={{ opacity: 0, y: -56, scale: 0.94 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -40, scale: 0.94 }}
+            transition={{ type: "spring", damping: 28, stiffness: 400 }}
+            className="w-full max-w-sm pointer-events-auto"
+          >
+            <div
+              onClick={() => open(notif.chatId)}
+              className="bg-card/95 backdrop-blur-xl border border-border/60 rounded-2xl shadow-2xl shadow-black/25 overflow-hidden cursor-pointer active:scale-[0.98] transition-transform select-none"
+            >
+              {/* accent bar at top */}
+              <div className="h-0.5 bg-gradient-to-r from-primary via-blue-400 to-primary/60" />
+              <div className="flex items-center gap-3 px-3.5 py-2.5">
+                {/* Avatar */}
+                <div className="w-10 h-10 rounded-xl shrink-0 overflow-hidden bg-primary/15 flex items-center justify-center">
+                  {notif.senderAvatar ? (
+                    <img src={notif.senderAvatar} className="w-full h-full object-cover" alt="" />
+                  ) : (
+                    <span className="text-sm font-bold text-primary">
+                      {(notif.senderName || "?")[0].toUpperCase()}
+                    </span>
+                  )}
+                </div>
+                {/* Text */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-semibold text-foreground leading-tight truncate">
+                    {notif.chatType !== "direct" && notif.chatName ? notif.chatName : notif.senderName}
+                  </p>
+                  {notif.chatType !== "direct" && notif.chatName && (
+                    <p className="text-[11px] text-primary/80 leading-none mt-0.5">{notif.senderName}</p>
+                  )}
+                  <p className="text-[12px] text-muted-foreground truncate mt-0.5 leading-snug">{notif.body}</p>
+                </div>
+                {/* Dismiss button */}
+                <button
+                  onClick={ev => { ev.stopPropagation(); dismiss(notif.id); }}
+                  className="shrink-0 p-1.5 rounded-xl text-muted-foreground hover:bg-secondary/80 transition-colors"
+                >
+                  <X size={13} />
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        ))}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 function GlobalNotificationListener() {
   const { notify, requestPermission, registerPushSubscription } = useNotifications();
 
@@ -186,12 +313,17 @@ function GlobalNotificationListener() {
 
     const handler = (e: Event) => {
       try {
-        const data = (e as CustomEvent).detail as { chatId: number; senderName: string; body: string; messageId: number };
+        const data = (e as CustomEvent).detail as {
+          chatId: number; senderName: string; body: string; messageId: number; senderAvatar?: string;
+        };
+        // notify() shows OS notification — it skips automatically when app is focused,
+        // so InAppMessageBanner handles the foreground case instead
         notify(data.senderName, {
           body: data.body,
           url: "/",
           tag: `chat-${data.chatId}`,
           type: "message",
+          senderAvatar: data.senderAvatar,
         });
       } catch {}
     };
@@ -330,6 +462,7 @@ function MainAppInner({ onLogout, onSwitchAccount, onRemoveAccount, onOpenAddAcc
     >
       <TooltipProvider>
         <GlobalNotificationListener />
+        <InAppMessageBanner />
         <PwaUpdateBanner />
         <WhatsNewModal />
         <OnboardingModal />

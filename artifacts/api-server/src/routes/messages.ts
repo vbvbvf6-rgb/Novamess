@@ -547,7 +547,11 @@ router.post("/messages", async (req, res) => {
             messageId: msg.id,
             chatId: body.chatId,
             senderName,
+            senderId: uid,
             body: msgBody,
+            senderAvatar: notifIcon || undefined,
+            chatType,
+            chatName: chatType !== "direct" ? (chatInfo?.name || undefined) : undefined,
           });
           // Don't push to the sender themselves
           if (member.id === uid) continue;
