@@ -744,13 +744,38 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
     if (!("serviceWorker" in navigator)) return;
     const onMessage = (e: MessageEvent) => {
       const data = e.data;
-      if (data?.type === "notification-click" && data.isCall && data.callId != null && (data.action === "accept" || data.action === "decline")) {
-        handlePushCallAction(data.action, Number(data.callId));
+      if (!data) return;
+      if (data.type === "notification-click") {
+        if (data.isCall && data.callId != null && (data.action === "accept" || data.action === "decline")) {
+          handlePushCallAction(data.action, Number(data.callId));
+        } else if (data.chatId) {
+          // Message notification tapped — navigate to that chat
+          setSelectedChatId(Number(data.chatId));
+          window.dispatchEvent(new CustomEvent("pulse:navigate-home"));
+        }
       }
     };
     navigator.serviceWorker.addEventListener("message", onMessage);
     return () => navigator.serviceWorker.removeEventListener("message", onMessage);
-  }, [handlePushCallAction]);
+  }, [handlePushCallAction, setSelectedChatId]);
+
+  // Send auth token to SW so it can make API requests in background (periodic sync)
+  useEffect(() => {
+    if (!("serviceWorker" in navigator)) return;
+    const sendToken = () => {
+      const token = sessionStorage.getItem("pulse-token");
+      const userId = sessionStorage.getItem("pulse-user-id");
+      if (token && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({ type: "set-auth", token, userId });
+      }
+    };
+    // Send immediately if controller is ready, else wait for it
+    if (navigator.serviceWorker.controller) {
+      sendToken();
+    }
+    navigator.serviceWorker.addEventListener("controllerchange", sendToken);
+    return () => navigator.serviceWorker.removeEventListener("controllerchange", sendToken);
+  }, []);
 
   // ── hangUp ────────────────────────────────────────────────────────────────
   const hangUp = useCallback(async () => {

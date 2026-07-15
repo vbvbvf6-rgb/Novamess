@@ -22,6 +22,7 @@ export interface PushPayload {
   senderAvatar?: string;
   senderColor?: string;
   chatType?: string;
+  chatId?: number;
   image?: string;
   callId?: number;
 }
@@ -56,6 +57,58 @@ export async function sendPushToUser(
     }
   } catch {}
 }
+
+// ── Unread notifications for Periodic Background Sync ────────────────────────
+// Called by the Service Worker in periodicsync to find missed messages.
+// Returns the latest unread message per chat from the past 2 hours.
+router.get("/notifications/unread", async (req, res) => {
+  const uid = req.currentUserId;
+  if (!uid) return res.status(401).json({ error: "Unauthorized" });
+  try {
+    // Get most recent message per chat (last 2 hours) where user is a member
+    // but didn't send the message
+    const rows = await db.execute(sql`
+      SELECT DISTINCT ON (m.chat_id)
+        m.chat_id   AS "chatId",
+        m.type,
+        m.text,
+        u.display_name AS "senderName",
+        u.avatar_url   AS "senderAvatar",
+        c.name         AS "chatName",
+        c.type         AS "chatType"
+      FROM messages m
+      JOIN users u ON u.id = m.sender_id
+      JOIN chats c ON c.id = m.chat_id
+      JOIN chat_members cm ON cm.chat_id = m.chat_id AND cm.user_id = ${uid}
+      WHERE m.sender_id != ${uid}
+        AND m.created_at > NOW() - INTERVAL '2 hours'
+      ORDER BY m.chat_id, m.created_at DESC
+      LIMIT 10
+    `);
+
+    const notifications = (rows.rows as any[]).map((r) => {
+      const body =
+        r.type === "image"    ? "📷 Фото"
+        : r.type === "audio"  ? "🎤 Голосовое"
+        : r.type === "video"  ? "🎥 Видео"
+        : r.type === "document" ? "📎 Файл"
+        : r.type === "sticker" ? "🎨 Стикер"
+        : (r.text || "Новое сообщение");
+      const isDirect = r.chatType === "direct";
+      return {
+        chatId:  r.chatId,
+        title:   isDirect ? r.senderName : r.chatName,
+        body:    isDirect ? body : `${r.senderName}: ${body}`,
+        icon:    r.senderAvatar || null,
+      };
+    });
+
+    res.json({ notifications });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ notifications: [] });
+  }
+});
 
 router.get("/push/vapid-public-key", (_req, res) => {
   res.json({ key: VAPID_PUBLIC });

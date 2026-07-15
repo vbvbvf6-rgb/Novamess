@@ -78,6 +78,29 @@ export function useNotifications() {
     setPermission(Notification.permission);
   }, []);
 
+  // Re-register push when tab becomes visible (handles expired/cleared subscriptions)
+  useEffect(() => {
+    const onVisible = () => {
+      if (
+        typeof Notification !== "undefined" &&
+        Notification.permission === "granted" &&
+        "serviceWorker" in navigator
+      ) {
+        registerPushSubscription();
+        // Also refresh the auth token in SW
+        const token = sessionStorage.getItem("pulse-token");
+        const userId = sessionStorage.getItem("pulse-user-id");
+        if (token && navigator.serviceWorker.controller) {
+          navigator.serviceWorker.controller.postMessage({ type: "set-auth", token, userId });
+        }
+      }
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    // Also run once on mount
+    onVisible();
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, []);
+
   const requestPermission = useCallback(async (): Promise<NotificationPermission> => {
     if (typeof Notification === "undefined") return "denied";
     if (Notification.permission === "denied") return "denied";
@@ -90,6 +113,19 @@ export function useNotifications() {
         navigator.storage.persist().catch(() => {});
       }
       await registerPushSubscription();
+      // Register Periodic Background Sync so SW can check for missed messages
+      // even when the browser is closed (Android Chrome only)
+      try {
+        const reg = await navigator.serviceWorker.ready;
+        if ("periodicSync" in reg) {
+          const status = await (navigator.permissions as any).query({ name: "periodic-background-sync" });
+          if (status.state === "granted") {
+            await (reg as any).periodicSync.register("check-messages", {
+              minInterval: 5 * 60 * 1000, // every 5 minutes at most
+            });
+          }
+        }
+      } catch {}
     }
     return result;
   }, []);
@@ -128,7 +164,7 @@ export function useNotifications() {
       const notifOpts: NotificationOptions = {
         body,
         icon: notifIcon,
-        badge: "/icon-192.png",
+        badge: "/badge-96.png",
         tag: options.tag || "nova-message",
         silent: isSilent,
         requireInteraction: type === "call",  // call stays on screen until tapped

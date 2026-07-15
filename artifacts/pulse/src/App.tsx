@@ -426,6 +426,28 @@ function PwaUpdateBanner() {
 
 function MainAppInner({ onLogout, onSwitchAccount, onRemoveAccount, onOpenAddAccount }: MainAppProps) {
   useDocumentTitle();
+  const [, navigate] = useLocation();
+  const { setSelectedChatId } = useAppContext();
+
+  // Handle notification tap: navigate to specific chat
+  // Works both when app is open (SW postMessage) and when opened fresh (?chat=X URL)
+  useEffect(() => {
+    // 1. Fresh open from notification (SW opened a new window with /?chat=123)
+    const params = new URLSearchParams(window.location.search);
+    const chatFromUrl = params.get("chat");
+    if (chatFromUrl) {
+      const id = Number(chatFromUrl);
+      if (id > 0) {
+        setSelectedChatId(id);
+        navigate("/", { replace: true });
+      }
+    }
+
+    // 2. App was already open — AppContext dispatches this after setting selectedChatId
+    const onNavigateHome = () => navigate("/");
+    window.addEventListener("pulse:navigate-home", onNavigateHome);
+    return () => window.removeEventListener("pulse:navigate-home", onNavigateHome);
+  }, []);
 
   useEffect(() => {
     const checkScheduled = async () => {

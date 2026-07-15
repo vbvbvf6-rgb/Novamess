@@ -558,11 +558,12 @@ router.post("/messages", async (req, res) => {
           sendPushToUser(member.id, {
             title: notifTitle,
             body: notifBody,
-            url: "/",
+            url: `/?chat=${body.chatId}`,
             tag: `chat-${body.chatId}`,
             senderAvatar: notifIcon || undefined,
             senderColor,
             chatType,
+            chatId: body.chatId,
           });
         }
       } catch {}

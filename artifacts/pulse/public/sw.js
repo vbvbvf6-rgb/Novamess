@@ -52,10 +52,20 @@ self.addEventListener("fetch", (e) => {
   );
 });
 
+// ── Auth token storage (sent from app on mount / visibility change) ──────────
+let _authToken = null;
+let _authUserId = null;
+
 // Tell all clients a new SW is waiting — they can prompt the user to update
 self.addEventListener("message", (e) => {
   if (e.data?.type === "skip-waiting") {
     self.skipWaiting();
+    return;
+  }
+
+  if (e.data?.type === "set-auth") {
+    _authToken = e.data.token || null;
+    _authUserId = e.data.userId || null;
     return;
   }
 
@@ -109,11 +119,13 @@ self.addEventListener("notificationclick", (e) => {
     url = u.pathname + u.search;
   }
 
+  const chatId = e.notification.data?.chatId ?? null;
+
   e.waitUntil(
     clients.matchAll({ type: "window", includeUncontrolled: true }).then((list) => {
       for (const client of list) {
         if (client.url.includes(self.location.origin) && "focus" in client) {
-          client.postMessage({ type: "notification-click", url, action, callId, isCall });
+          client.postMessage({ type: "notification-click", url, action, callId, isCall, chatId });
           return client.focus();
         }
       }
@@ -121,6 +133,38 @@ self.addEventListener("notificationclick", (e) => {
     })
   );
 });
+
+// ── Periodic Background Sync — fallback for missed pushes ────────────────────
+// Fires on Android Chrome when browser is closed (if site has periodic-sync permission).
+// Checks /api/notifications/unread and shows any missed notifications.
+self.addEventListener("periodicsync", (e) => {
+  if (e.tag === "check-messages") {
+    e.waitUntil(checkUnreadAndNotify());
+  }
+});
+
+async function checkUnreadAndNotify() {
+  if (!_authToken) return;
+  try {
+    const res = await fetch("/api/notifications/unread", {
+      headers: { Authorization: `Bearer ${_authToken}` },
+    });
+    if (!res.ok) return;
+    const { notifications } = await res.json();
+    if (!Array.isArray(notifications)) return;
+    for (const n of notifications) {
+      self.registration.showNotification(n.title, {
+        body: n.body,
+        icon: n.icon || "/icon-192.png",
+        badge: "/badge-96.png",
+        tag: `chat-${n.chatId}`,
+        renotify: false,  // don't buzz again if notification already visible
+        data: { url: `/?chat=${n.chatId}`, chatId: n.chatId, isCall: false },
+        actions: [{ action: "open", title: "Открыть" }],
+      });
+    }
+  } catch {}
+}
 
 // ── Beautiful Push Notifications ─────────────────────────────────────────────
 self.addEventListener("push", (e) => {
@@ -140,7 +184,7 @@ self.addEventListener("push", (e) => {
         body,
         icon,
         badge,
-        data: { url, isCall: true, callId: data.callId },
+        data: { url, isCall: true, callId: data.callId, chatId: data.chatId ?? null },
         vibrate: [400, 100, 400, 100, 400, 200, 400, 100, 400],
         tag,
         renotify: true,
@@ -157,7 +201,7 @@ self.addEventListener("push", (e) => {
         icon,
         badge,
         image: data.image || undefined,
-        data: { url, isCall: false },
+        data: { url, isCall: false, chatId: data.chatId ?? null },
         vibrate: [200, 80, 200],
         tag,
         renotify: true,
