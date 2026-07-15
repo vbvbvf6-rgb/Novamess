@@ -967,6 +967,40 @@ function SpeakersSection({ lang }: { lang: string }) {
   );
 }
 
+function AndroidHeadsUpGuide() {
+  const [open, setOpen] = React.useState(false);
+  return (
+    <div className="mx-4 mb-2 bg-blue-500/5 border border-blue-500/20 rounded-xl px-3 py-2.5 text-xs">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center justify-between text-blue-400 font-semibold"
+      >
+        <span>Уведомления не всплывают поверх экрана?</span>
+        <ChevronDown size={14} className={`transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <div className="mt-2 text-blue-400/80 leading-relaxed flex flex-col gap-1.5">
+          <p>
+            Это ограничение Android, а не сбой приложения: браузер создаёт канал уведомлений
+            с обычной важностью, и всплывающий показ (heads-up) нужно один раз включить вручную.
+          </p>
+          <ol className="list-decimal list-inside space-y-0.5">
+            <li>Дождитесь любого уведомления от Nova (например, тестового сообщения).</li>
+            <li>Настройки телефона → Приложения → Chrome (или ваш браузер) → Уведомления.</li>
+            <li>Найдите категорию сайта Nova в списке и откройте её настройки.</li>
+            <li>Установите важность «Экстренные» / «Всплывающие» (Alerting / Pop on screen).</li>
+          </ol>
+          <p>
+            Мы также готовим Android-приложение (APK), где эти каналы создаются заранее
+            с высокой важностью — там всплытие работает сразу, без ручной настройки.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function NotificationPermissionBanner() {
   const { permission, requestPermission, isSupported } = useNotifications();
   const [requesting, setRequesting] = React.useState(false);
@@ -980,6 +1014,8 @@ function NotificationPermissionBanner() {
   // Detect if running as installed PWA (standalone mode)
   const isStandalone = window.matchMedia("(display-mode: standalone)").matches
     || (window.navigator as any).standalone === true;
+  const isAndroid = /Android/.test(navigator.userAgent);
+  const isNative = !!(window as any).Capacitor?.isNativePlatform?.();
 
   if (!isSupported) {
     if (isIOS && !iosVersionOk) {
@@ -1015,15 +1051,20 @@ function NotificationPermissionBanner() {
 
   if (permission === "granted") {
     return (
-      <div className="mx-4 mb-2 flex items-start gap-2 text-xs text-green-400 bg-green-500/10 border border-green-500/20 rounded-xl px-3 py-2.5">
-        <CheckCircle size={14} className="shrink-0 mt-0.5" />
-        <div className="flex flex-col gap-0.5">
-          <span className="font-semibold">Уведомления включены</span>
-          <span className="text-green-400/80">
-            Вы будете получать всплывающие уведомления о сообщениях и звонках — даже с закрытым приложением.
-          </span>
+      <>
+        <div className="mx-4 mb-2 flex items-start gap-2 text-xs text-green-400 bg-green-500/10 border border-green-500/20 rounded-xl px-3 py-2.5">
+          <CheckCircle size={14} className="shrink-0 mt-0.5" />
+          <div className="flex flex-col gap-0.5">
+            <span className="font-semibold">Уведомления включены</span>
+            <span className="text-green-400/80">
+              {isAndroid && !isNative
+                ? "Вы будете получать уведомления о сообщениях и звонках. Если они не всплывают поверх экрана — см. подсказку ниже."
+                : "Вы будете получать всплывающие уведомления о сообщениях и звонках — даже с закрытым приложением."}
+            </span>
+          </div>
         </div>
-      </div>
+        {isAndroid && !isNative && <AndroidHeadsUpGuide />}
+      </>
     );
   }
 
