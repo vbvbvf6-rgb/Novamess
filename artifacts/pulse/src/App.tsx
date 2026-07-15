@@ -424,8 +424,10 @@ function PwaUpdateBanner() {
   );
 }
 
-function MainAppInner({ onLogout, onSwitchAccount, onRemoveAccount, onOpenAddAccount }: MainAppProps) {
-  useDocumentTitle();
+// Rendered *inside* AppProvider so useAppContext() resolves correctly.
+// (MainAppInner itself renders AppProvider, so it can't call the hook directly —
+// that runs before the provider it returns is mounted.)
+function MainAppEffects() {
   const [, navigate] = useLocation();
   const { setSelectedChatId } = useAppContext();
 
@@ -487,6 +489,12 @@ function MainAppInner({ onLogout, onSwitchAccount, onRemoveAccount, onOpenAddAcc
     return () => clearInterval(id);
   }, []);
 
+  return null;
+}
+
+function MainAppInner({ onLogout, onSwitchAccount, onRemoveAccount, onOpenAddAccount }: MainAppProps) {
+  useDocumentTitle();
+
   return (
     <AppProvider
       onLogout={onLogout}
@@ -495,6 +503,7 @@ function MainAppInner({ onLogout, onSwitchAccount, onRemoveAccount, onOpenAddAcc
       onOpenAddAccount={onOpenAddAccount}
     >
       <TooltipProvider>
+        <MainAppEffects />
         <GlobalNotificationListener />
         <InAppMessageBanner />
         <PwaUpdateBanner />

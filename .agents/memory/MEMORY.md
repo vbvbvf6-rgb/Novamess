@@ -33,3 +33,4 @@
 - [Client-side video compression](client-video-compression.md) — no external object storage in this app, so raw video uploads bloated Postgres; added canvas+MediaRecorder re-encode before upload with graceful fallback to raw file if unsupported/not smaller.
 - [Account moderation system](account-moderation-system.md) — bans now have reason+optional expiry (ban_expires_at null=permanent); deletions require a reason stored in deleted_accounts, surfaced to the user at next login attempt.
 - [Maintenance enforcement](maintenance-enforcement.md) — maintenance mode used to be cosmetic-only (no backend block); now enforced via /api middleware in app.ts checking app_settings 'maintenance' key, admins exempt.
+- [Context provider self-consume bug](context-provider-self-consume.md) — a component can't call useContext() for a Provider it also renders in its own return; extract the consuming logic into a child rendered inside the Provider.
