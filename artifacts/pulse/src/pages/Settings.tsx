@@ -971,13 +971,37 @@ function NotificationPermissionBanner() {
   const { permission, requestPermission, isSupported } = useNotifications();
   const [requesting, setRequesting] = React.useState(false);
 
-  if (!isSupported) return null;
+  // Detect iOS
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+  // Detect if running as installed PWA (standalone mode)
+  const isStandalone = window.matchMedia("(display-mode: standalone)").matches
+    || (window.navigator as any).standalone === true;
+
+  if (!isSupported) {
+    if (isIOS && !isStandalone) {
+      return (
+        <div className="mx-4 mb-2 flex items-start gap-2 text-xs text-blue-400 bg-blue-500/10 border border-blue-500/20 rounded-xl px-3 py-2.5">
+          <AlertTriangle size={14} className="shrink-0 mt-0.5" />
+          <span>
+            На iPhone уведомления работают только в установленном приложении.{" "}
+            Нажмите «Поделиться» → «На экран Домой», затем откройте Nova из иконки на рабочем столе.
+          </span>
+        </div>
+      );
+    }
+    return null;
+  }
 
   if (permission === "granted") {
     return (
-      <div className="mx-4 mb-2 flex items-center gap-2 text-xs text-green-400 bg-green-500/10 border border-green-500/20 rounded-xl px-3 py-2.5">
-        <CheckCircle size={14} className="shrink-0" />
-        <span>Уведомления разрешены браузером</span>
+      <div className="mx-4 mb-2 flex items-start gap-2 text-xs text-green-400 bg-green-500/10 border border-green-500/20 rounded-xl px-3 py-2.5">
+        <CheckCircle size={14} className="shrink-0 mt-0.5" />
+        <div className="flex flex-col gap-0.5">
+          <span className="font-semibold">Уведомления включены</span>
+          <span className="text-green-400/80">
+            Вы будете получать всплывающие уведомления о сообщениях и звонках — даже с закрытым приложением.
+          </span>
+        </div>
       </div>
     );
   }
@@ -986,17 +1010,25 @@ function NotificationPermissionBanner() {
     return (
       <div className="mx-4 mb-2 flex items-start gap-2 text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-xl px-3 py-2.5">
         <AlertTriangle size={14} className="shrink-0 mt-0.5" />
-        <span>Уведомления заблокированы в браузере. Разрешите их вручную в настройках браузера.</span>
+        <div className="flex flex-col gap-0.5">
+          <span className="font-semibold">Уведомления заблокированы</span>
+          <span className="text-amber-400/80">
+            Разрешите уведомления вручную: в браузере нажмите на замок рядом с адресом → Уведомления → Разрешить.
+          </span>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="mx-4 mb-2 flex items-center justify-between gap-3 bg-primary/5 border border-primary/20 rounded-xl px-3 py-2.5">
-      <div className="flex items-center gap-2 min-w-0">
+    <div className="mx-4 mb-2 bg-primary/5 border border-primary/20 rounded-xl px-3 py-3 flex flex-col gap-2.5">
+      <div className="flex items-center gap-2">
         <Bell size={14} className="text-primary shrink-0" />
-        <span className="text-xs text-foreground">Разрешить push-уведомления?</span>
+        <span className="text-xs font-semibold text-foreground">Включить уведомления</span>
       </div>
+      <p className="text-xs text-muted-foreground leading-relaxed">
+        Разрешите максимальный доступ — вы будете получать всплывающие уведомления о новых сообщениях и входящих звонках прямо на экране блокировки и в шторке уведомлений.
+      </p>
       <button
         disabled={requesting}
         onClick={async () => {
@@ -1004,10 +1036,15 @@ function NotificationPermissionBanner() {
           await requestPermission();
           setRequesting(false);
         }}
-        className="shrink-0 px-3 py-1.5 bg-primary text-primary-foreground text-xs font-semibold rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-60"
+        className="w-full py-2 bg-primary text-primary-foreground text-xs font-semibold rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-60"
       >
-        {requesting ? "..." : "Включить"}
+        {requesting ? "Запрашиваем доступ..." : "🔔 Разрешить все уведомления"}
       </button>
+      {isIOS && isStandalone && (
+        <p className="text-xs text-muted-foreground/70 text-center">
+          После разрешения уведомления появятся на экране блокировки и в шторке.
+        </p>
+      )}
     </div>
   );
 }

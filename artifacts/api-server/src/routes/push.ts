@@ -35,12 +35,20 @@ export async function sendPushToUser(
     const rows = await db.execute(
       sql`SELECT endpoint, p256dh, auth FROM push_subscriptions WHERE user_id = ${userId}`
     );
+    const isCall = payload.chatType === "call";
+    // High urgency for calls (FCM/APNs wake device immediately), normal for messages
+    const urgency: "very-low" | "low" | "normal" | "high" = isCall ? "high" : "high";
+    // TTL: calls expire in 90 seconds (useless after that), messages last 24 hours
+    const ttl = isCall ? 90 : 86400;
     for (const row of rows.rows as any[]) {
       const subscription = {
         endpoint: row.endpoint,
         keys: { p256dh: row.p256dh, auth: row.auth },
       };
-      webpush.sendNotification(subscription, JSON.stringify(payload)).catch(async (err) => {
+      webpush.sendNotification(subscription, JSON.stringify(payload), {
+        urgency,
+        TTL: ttl,
+      }).catch(async (err) => {
         if (err.statusCode === 404 || err.statusCode === 410) {
           await db.execute(sql`DELETE FROM push_subscriptions WHERE endpoint = ${row.endpoint}`).catch(() => {});
         }

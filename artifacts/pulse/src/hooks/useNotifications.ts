@@ -84,6 +84,11 @@ export function useNotifications() {
     const result = await Notification.requestPermission();
     setPermission(result);
     if (result === "granted") {
+      // Request persistent storage so the browser keeps our SW alive
+      // and doesn't throttle notifications when memory is low
+      if ("storage" in navigator && "persist" in navigator.storage) {
+        navigator.storage.persist().catch(() => {});
+      }
       await registerPushSubscription();
     }
     return result;
@@ -119,13 +124,17 @@ export function useNotifications() {
       // Pick the best icon: senderAvatar > icon > fallback
       const notifIcon = options.senderAvatar || options.icon || "/icon-192.png";
 
+      const isSilent = localStorage.getItem("pulse-notify-sounds") === "false";
       const notifOpts: NotificationOptions = {
         body,
         icon: notifIcon,
         badge: "/icon-192.png",
-        tag: options.tag || "pulse-message",
-        silent: localStorage.getItem("pulse-notify-sounds") === "false",
-        data: { url: options.url || "/" },
+        tag: options.tag || "nova-message",
+        silent: isSilent,
+        requireInteraction: type === "call",  // call stays on screen until tapped
+        vibrate: type === "call" ? [400, 100, 400, 100, 400, 200, 400] : [200, 80, 200],
+        timestamp: Date.now(),
+        data: { url: options.url || "/", isCall: type === "call" },
       };
 
       if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {

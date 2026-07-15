@@ -64,21 +64,29 @@ self.addEventListener("message", (e) => {
 
     const notifIcon = senderAvatar || icon || "/icon-192.png";
     const badge = "/icon-192.png";
+    const isCall = chatType === "call";
 
     self.registration.showNotification(title, {
       body,
       icon: notifIcon,
       badge,
       image: image || undefined,
-      data: { url: url || "/" },
-      vibrate: [100, 50, 100],
-      tag: tag || "aura-message",
+      data: { url: url || "/", isCall, callId: e.data.callId },
+      vibrate: isCall ? [300, 100, 300, 100, 300, 100, 300] : [200, 100, 200],
+      tag: tag || "nova-message",
       renotify: true,
+      requireInteraction: isCall,   // call stays until user acts; messages dismiss
       silent: false,
-      actions: [
-        { action: "reply", title: "Ответить" },
-        { action: "open", title: "Открыть" },
-      ],
+      timestamp: Date.now(),
+      actions: isCall
+        ? [
+            { action: "accept", title: "✅ Принять" },
+            { action: "decline", title: "❌ Отклонить" },
+          ]
+        : [
+            { action: "reply", title: "Ответить" },
+            { action: "open", title: "Открыть" },
+          ],
     });
   }
 });
@@ -133,11 +141,12 @@ self.addEventListener("push", (e) => {
         icon,
         badge,
         data: { url, isCall: true, callId: data.callId },
-        vibrate: [300, 100, 300, 100, 300, 100, 300],
+        vibrate: [400, 100, 400, 100, 400, 200, 400, 100, 400],
         tag,
         renotify: true,
-        requireInteraction: true,
+        requireInteraction: true,   // stays on screen until user taps
         silent: false,
+        timestamp: Date.now(),
         actions: [
           { action: "accept", title: "✅ Принять" },
           { action: "decline", title: "❌ Отклонить" },
@@ -148,11 +157,13 @@ self.addEventListener("push", (e) => {
         icon,
         badge,
         image: data.image || undefined,
-        data: { url },
-        vibrate: [200, 100, 200],
+        data: { url, isCall: false },
+        vibrate: [200, 80, 200],
         tag,
         renotify: true,
         requireInteraction: false,
+        silent: false,
+        timestamp: Date.now(),
         actions: [
           { action: "reply", title: "Ответить" },
           { action: "open", title: "Открыть" },
