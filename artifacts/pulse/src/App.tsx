@@ -15,6 +15,7 @@ import { Clock, LogOut, ShieldCheck, X, Download, RefreshCw, RotateCcw } from "l
 import { MaintenanceScreen, MaintenanceData } from "@/components/MaintenanceScreen";
 
 import { useNotifications } from "@/hooks/useNotifications";
+import { playNotificationSound } from "@/lib/ringtones";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { PwaInstallPrompt } from "@/components/PwaInstallPrompt";
 import { useServiceWorkerUpdate } from "@/hooks/useServiceWorkerUpdate";
@@ -192,6 +193,9 @@ function InAppMessageBanner() {
   useEffect(() => {
     const handler = (e: Event) => {
       try {
+        // Respect "message notifications" toggle
+        if (localStorage.getItem("pulse-notify-messages") === "false") return;
+
         const data = (e as CustomEvent).detail as {
           chatId: number; senderName: string; body: string; messageId: number;
           senderAvatar?: string; chatType?: string; chatName?: string;
@@ -200,15 +204,23 @@ function InAppMessageBanner() {
         // Don't show if user is already viewing this chat
         if (data.chatId === selectedChatIdRef.current) return;
 
+        // Respect "show preview" toggle
+        const showPreview = localStorage.getItem("pulse-notify-preview") !== "false";
+
         const notif: InAppNotif = {
           id: `${data.chatId}-${data.messageId || Date.now()}`,
           chatId: data.chatId,
           senderName: data.senderName,
-          body: data.body,
+          body: showPreview ? data.body : "Новое сообщение",
           senderAvatar: data.senderAvatar,
           chatType: data.chatType,
           chatName: data.chatName,
         };
+
+        // Play short notification sound if sounds are enabled
+        if (localStorage.getItem("pulse-notify-sounds") !== "false") {
+          playNotificationSound();
+        }
 
         setNotifs(prev => {
           // Replace existing notification from same chat with newer one

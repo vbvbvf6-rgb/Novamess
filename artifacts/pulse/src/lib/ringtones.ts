@@ -157,6 +157,22 @@ function playCustomLoop(buffer: AudioBuffer, onStop: () => boolean): StopFn {
 
 /* ── Public API ─────────────────────────────────────────────────── */
 
+/** Short notification ding played for incoming messages (in-app). */
+export function playNotificationSound(): void {
+  try {
+    const AudioCtx = window.AudioContext ?? (window as any).webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx() as AudioContext;
+    // Two-tone "ping": a high note then a slightly higher one
+    playNotes(ctx, [
+      { freq: 1047, start: 0,    dur: 0.10, type: "sine" },
+      { freq: 1319, start: 0.12, dur: 0.16, type: "sine" },
+    ], 0.07);
+    setTimeout(() => { try { ctx.close(); } catch {} }, 600);
+  } catch {}
+}
+
+
 export function playRingtone(ringtoneId: string): StopFn {
   if (ringtoneId === "custom") {
     let stopped = false;

@@ -7,16 +7,21 @@ import { playRingtone, getSelectedRingtone } from "@/lib/ringtones";
 export function IncomingCall() {
   const { activeCall, currentUserId, acceptCall, declineCall } = useAppContext();
 
+  const callsEnabled = localStorage.getItem("pulse-notify-calls") !== "false";
+  const soundsEnabled = localStorage.getItem("pulse-notify-sounds") !== "false";
+
   const visible =
     !!activeCall &&
     activeCall.status === "ringing" &&
-    activeCall.callerId !== currentUserId;
+    activeCall.callerId !== currentUserId &&
+    callsEnabled;
 
   useEffect(() => {
     if (!visible) return;
+    if (!soundsEnabled) return;
     const stop = playRingtone(getSelectedRingtone());
     return stop;
-  }, [visible]);
+  }, [visible, soundsEnabled]);
 
   if (!activeCall || !visible) return null;
 
