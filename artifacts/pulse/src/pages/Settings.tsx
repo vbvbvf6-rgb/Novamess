@@ -1233,12 +1233,12 @@ function SupportSection({ lang, user, t, currentStatusOpt, onNavigate }: { lang:
           </div>
           {/* Check for updates row */}
           {(() => {
-            const hasDeferredUpdate = typeof window !== "undefined" && localStorage.getItem("aura-update-pending") === "true";
+            const hasDeferredUpdate = typeof window !== "undefined" && localStorage.getItem("nova-update-pending") === "true";
             return (
               <button
                 onClick={() => {
-                  localStorage.setItem("aura-pending-changelog", "true");
-                  localStorage.removeItem("aura-update-pending");
+                  localStorage.setItem("nova-pending-changelog", "true");
+                  localStorage.removeItem("nova-update-pending");
                   window.location.reload();
                 }}
                 className="mt-3 w-full flex items-center gap-3 py-2.5 px-3 rounded-xl border border-border hover:bg-secondary transition-colors text-sm font-medium text-left"
@@ -1598,7 +1598,7 @@ export default function Settings() {
     if (!res.ok) { toast({ title: lang === "ru" ? "Ошибка экспорта" : "Export failed", variant: "destructive" }); return; }
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a"); a.href = url; a.download = `aura-export-${Date.now()}.json`; a.click();
+    const a = document.createElement("a"); a.href = url; a.download = `nova-export-${Date.now()}.json`; a.click();
     URL.revokeObjectURL(url);
     toast({ title: lang === "ru" ? "Данные скачаны" : "Data downloaded" });
   };
