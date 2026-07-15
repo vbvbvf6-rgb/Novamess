@@ -971,21 +971,42 @@ function NotificationPermissionBanner() {
   const { permission, requestPermission, isSupported } = useNotifications();
   const [requesting, setRequesting] = React.useState(false);
 
-  // Detect iOS
+  // Detect iOS and version
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+  const iosVersionMatch = navigator.userAgent.match(/OS (\d+)_(\d+)/);
+  const iosMajor = iosVersionMatch ? parseInt(iosVersionMatch[1], 10) : 0;
+  const iosMinor = iosVersionMatch ? parseInt(iosVersionMatch[2], 10) : 0;
+  const iosVersionOk = !isIOS || iosMajor > 16 || (iosMajor === 16 && iosMinor >= 4);
   // Detect if running as installed PWA (standalone mode)
   const isStandalone = window.matchMedia("(display-mode: standalone)").matches
     || (window.navigator as any).standalone === true;
 
   if (!isSupported) {
+    if (isIOS && !iosVersionOk) {
+      // iOS < 16.4: web push not supported at all
+      return (
+        <div className="mx-4 mb-2 flex items-start gap-2 text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl px-3 py-2.5">
+          <AlertTriangle size={14} className="shrink-0 mt-0.5" />
+          <div className="flex flex-col gap-0.5">
+            <span className="font-semibold">iOS 15 и ниже: уведомления не поддерживаются</span>
+            <span className="text-red-400/80">
+              Push-уведомления требуют iOS 16.4+. Обновите iPhone до iOS 16.4 или новее, затем добавьте Nova на экран Домой через Сафари → «Поделиться» → «На экран Домой».
+            </span>
+          </div>
+        </div>
+      );
+    }
     if (isIOS && !isStandalone) {
+      // iOS 16.4+ but not installed as PWA
       return (
         <div className="mx-4 mb-2 flex items-start gap-2 text-xs text-blue-400 bg-blue-500/10 border border-blue-500/20 rounded-xl px-3 py-2.5">
           <AlertTriangle size={14} className="shrink-0 mt-0.5" />
-          <span>
-            На iPhone уведомления работают только в установленном приложении.{" "}
-            Нажмите «Поделиться» → «На экран Домой», затем откройте Nova из иконки на рабочем столе.
-          </span>
+          <div className="flex flex-col gap-0.5">
+            <span className="font-semibold">Установите приложение для уведомлений</span>
+            <span className="text-blue-400/80">
+              В Safari нажмите «Поделиться» → «На экран Домой» → «Добавить», затем откройте Nova из иконки на рабочем столе.
+            </span>
+          </div>
         </div>
       );
     }

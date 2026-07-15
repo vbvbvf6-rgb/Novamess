@@ -63,7 +63,7 @@ self.addEventListener("message", (e) => {
     const { title, body, icon, image, url, tag, senderAvatar, senderColor, chatType } = e.data;
 
     const notifIcon = senderAvatar || icon || "/icon-192.png";
-    const badge = "/icon-192.png";
+    const badge = "/badge-96.png";
     const isCall = chatType === "call";
 
     self.registration.showNotification(title, {
@@ -130,7 +130,7 @@ self.addEventListener("push", (e) => {
   const title = data.title || "Pulse";
   const body = data.body || "";
   const icon = data.senderAvatar || data.icon || "/icon-192.png";
-  const badge = "/icon-192.png";
+  const badge = "/badge-96.png";
   const tag = data.tag || "pulse-message";
   const url = data.url || "/";
   const isCall = data.chatType === "call";
