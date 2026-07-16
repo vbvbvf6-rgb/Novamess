@@ -11,6 +11,7 @@ const router = Router();
 const ADMIN_USER_IDS = [4];
 
 // Run once at module load to ensure required columns/tables exist
+db.execute(sql`ALTER TABLE bot_tokens ADD COLUMN IF NOT EXISTS code_lang TEXT NOT NULL DEFAULT 'python'`).catch(() => {});
 db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_banned BOOLEAN NOT NULL DEFAULT FALSE`).catch(() => {});
 db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS ban_reason TEXT`).catch(() => {});
 db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS ban_expires_at TIMESTAMP WITH TIME ZONE`).catch(() => {});
@@ -1403,6 +1404,136 @@ router.get("/updates", async (_req, res) => {
     `);
     res.json(rows.rows);
   } catch { res.json([]); }
+});
+
+// ── Force-reload (admin-controlled PWA update banner) ─────────────────────
+// Admin presses "Release update" → sets force_reload flag in app_settings.
+// Frontend polls /api/app/update-required and only shows the "Update" banner
+// AFTER this flag is set. On user reload the flag stays — admin clears it manually.
+
+// Public: returns whether admin has triggered a forced reload
+router.get("/app/update-required", async (_req, res) => {
+  try {
+    const rows = await db.execute(sql`SELECT value FROM app_settings WHERE key = 'force_reload' LIMIT 1`);
+    const row = rows.rows[0] as any;
+    if (!row) return res.json({ required: false });
+    const data = JSON.parse(row.value);
+    return res.json(data);
+  } catch { return res.json({ required: false }); }
+});
+
+// Admin: trigger forced reload for all users
+router.post("/admin/force-reload", requireAdmin, async (req, res) => {
+  try {
+    const { active } = req.body;
+    const data = { required: !!active, releasedAt: active ? new Date().toISOString() : null };
+    const json = JSON.stringify(data);
+    await db.execute(sql`
+      INSERT INTO app_settings (key, value, updated_at)
+      VALUES ('force_reload', ${json}, NOW())
+      ON CONFLICT (key) DO UPDATE SET value = ${json}, updated_at = NOW()
+    `);
+    // Broadcast so clients get it instantly without waiting for poll
+    broadcastToAll("force-reload", data);
+    return res.json({ ok: true, data });
+  } catch (err) { req.log.error(err); res.status(500).json({ error: "Ошибка сервера" }); }
+});
+
+// ── Admin bots management ──────────────────────────────────────────────────
+
+router.get("/admin/bots", requireAdmin, async (req, res) => {
+  try {
+    const rows = await db.execute(sql`
+      SELECT bt.id, bt.token, bt.inline_code, bt.code_lang, bt.created_at,
+             u.id as bot_user_id, u.username, u.display_name, u.avatar_url, u.avatar_color, u.bio,
+             o.username as owner_username, o.display_name as owner_display_name,
+             bw.url as webhook_url
+      FROM bot_tokens bt
+      JOIN users u ON u.id = bt.bot_user_id
+      JOIN users o ON o.id = bt.owner_user_id
+      LEFT JOIN bot_webhooks bw ON bw.bot_user_id = bt.bot_user_id
+      ORDER BY bt.created_at DESC
+    `);
+    res.json(rows.rows);
+  } catch (err) { req.log.error(err); res.status(500).json({ error: "Ошибка сервера" }); }
+});
+
+// Admin: delete any bot
+router.delete("/admin/bots/:botId", requireAdmin, async (req, res) => {
+  try {
+    const botId = Number(req.params.botId);
+    await db.execute(sql`DELETE FROM bot_webhooks WHERE bot_user_id = ${botId}`);
+    await db.execute(sql`DELETE FROM bot_updates WHERE bot_user_id = ${botId}`);
+    await db.execute(sql`DELETE FROM bot_tokens WHERE bot_user_id = ${botId}`);
+    await db.execute(sql`DELETE FROM chat_members WHERE user_id = ${botId}`);
+    await db.execute(sql`DELETE FROM messages WHERE sender_id = ${botId}`);
+    await db.execute(sql`DELETE FROM users WHERE id = ${botId}`);
+    res.status(204).send();
+  } catch (err) { req.log.error(err); res.status(500).json({ error: "Ошибка сервера" }); }
+});
+
+// Admin: update bot code (any bot)
+router.patch("/admin/bots/:botId/code", requireAdmin, async (req, res) => {
+  try {
+    const botId = Number(req.params.botId);
+    const { code, lang } = req.body;
+    const newCode = typeof code === "string" && code.trim() ? code.trim() : null;
+    const newLang = lang === "javascript" ? "javascript" : "python";
+    await db.execute(sql`UPDATE bot_tokens SET inline_code = ${newCode}, code_lang = ${newLang} WHERE bot_user_id = ${botId}`);
+    res.json({ ok: true, hasCode: newCode !== null, lang: newLang });
+  } catch (err) { req.log.error(err); res.status(500).json({ error: "Ошибка сервера" }); }
+});
+
+// ── Database cleanup ───────────────────────────────────────────────────────
+
+router.post("/admin/db-cleanup", requireAdmin, async (req, res) => {
+  try {
+    const { target, days } = req.body;
+    const d = Math.max(1, Number(days) || 30);
+    let deleted = 0;
+    if (target === "old_messages") {
+      const r = await db.execute(sql`
+        DELETE FROM messages WHERE created_at < NOW() - (${d} || ' days')::INTERVAL
+        AND chat_id IN (SELECT id FROM chats WHERE type != 'direct')
+      `);
+      deleted = (r as any).rowCount ?? 0;
+    } else if (target === "bot_updates") {
+      const r = await db.execute(sql`
+        DELETE FROM bot_updates WHERE created_at < NOW() - (${d} || ' days')::INTERVAL
+      `);
+      deleted = (r as any).rowCount ?? 0;
+    } else if (target === "old_sessions") {
+      const r = await db.execute(sql`
+        DELETE FROM user_sessions WHERE last_active_at < NOW() - (${d} || ' days')::INTERVAL
+      `);
+      deleted = (r as any).rowCount ?? 0;
+    } else if (target === "push_subscriptions") {
+      const r = await db.execute(sql`DELETE FROM push_subscriptions`);
+      deleted = (r as any).rowCount ?? 0;
+    } else if (target === "reports") {
+      const r = await db.execute(sql`DELETE FROM user_reports WHERE status != 'pending'`);
+      const r2 = await db.execute(sql`DELETE FROM post_reports WHERE created_at < NOW() - INTERVAL '90 days'`);
+      deleted = ((r as any).rowCount ?? 0) + ((r2 as any).rowCount ?? 0);
+    } else {
+      return res.status(400).json({ error: "Неизвестная цель очистки" });
+    }
+    res.json({ ok: true, deleted, target });
+  } catch (err) { req.log.error(err); res.status(500).json({ error: "Ошибка сервера" }); }
+});
+
+// Admin: get DB size stats
+router.get("/admin/db-stats", requireAdmin, async (req, res) => {
+  try {
+    const tables = ["messages", "bot_updates", "user_sessions", "push_subscriptions", "user_reports", "post_reports"];
+    const result: Record<string, number> = {};
+    for (const t of tables) {
+      try {
+        const r = await db.execute(sql.raw(`SELECT COUNT(*) as c FROM ${t}`));
+        result[t] = Number((r.rows[0] as any)?.c ?? 0);
+      } catch { result[t] = 0; }
+    }
+    res.json(result);
+  } catch (err) { req.log.error(err); res.status(500).json({ error: "Ошибка сервера" }); }
 });
 
 // ── Admin mail diagnostics ─────────────────────────────────────────────────

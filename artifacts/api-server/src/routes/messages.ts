@@ -580,9 +580,9 @@ router.post("/messages", async (req, res) => {
 
           const isImageMessage = body.type === "image" && !!body.mediaUrl;
 
-          const tokenRow = await db.execute(sql`SELECT id, inline_code FROM bot_tokens WHERE bot_user_id = ${bot.id}`);
+          const tokenRow = await db.execute(sql`SELECT id, inline_code, code_lang FROM bot_tokens WHERE bot_user_id = ${bot.id}`);
           if ((tokenRow.rows as any[]).length > 0 && !isImageMessage) {
-            const { inline_code } = tokenRow.rows[0] as any;
+            const { inline_code, code_lang } = tokenRow.rows[0] as any;
             const countRow = await db.execute(sql`SELECT COALESCE(MAX(update_id),0) as mx FROM bot_updates WHERE bot_user_id = ${bot.id}`);
             const nextId = Number((countRow.rows[0] as any)?.mx ?? 0) + 1;
             const senderRow = await db.execute(sql`SELECT id, username, display_name FROM users WHERE id = ${uid}`);
@@ -601,7 +601,24 @@ router.post("/messages", async (req, res) => {
             await db.execute(sql`INSERT INTO bot_updates (bot_user_id, update_id, payload) VALUES (${bot.id}, ${nextId}, ${JSON.stringify(payload)})`);
 
             if (inline_code && typeof inline_code === "string" && inline_code.trim()) {
-              const harness = `import sys as _sys, json as _json
+              const isJs = (code_lang === "javascript");
+              let proc: ReturnType<typeof spawn>;
+              if (isJs) {
+                // JavaScript: run via Node.js with inline harness
+                const jsHarness = `(async () => {
+const _upd = JSON.parse(require('fs').readFileSync('/dev/stdin', 'utf8'));
+const message = _upd.message || {};
+const text = message.text || '';
+const chat_id = (message.chat || {}).id || 0;
+const sender = message.from || {};
+const sendMessage = (t) => { process.stdout.write(String(t)); };
+const reply = (t) => sendMessage(t);
+${inline_code}
+})().catch(e => { process.stderr.write(e.message || String(e)); });`;
+                proc = spawn("node", ["-e", jsHarness]);
+              } else {
+                // Python: existing harness
+                const pyHarness = `import sys as _sys, json as _json
 _upd = _json.loads(_sys.stdin.read())
 message = _upd.get('message', {})
 text = message.get('text', '')
@@ -609,31 +626,32 @@ chat_id = message.get('chat', {}).get('id', 0)
 sender = message.get('from', {})
 ${inline_code}
 `;
+                proc = spawn("python3", ["-c", pyHarness]);
+              }
               const pyResult = await new Promise<{ out: string; err: string; killed: boolean }>((resolve) => {
                 let out = "", err = "";
                 let killed = false;
-                const py = spawn("python3", ["-c", harness]);
                 const timer = setTimeout(() => {
                   killed = true;
-                  py.kill("SIGKILL");
+                  proc.kill("SIGKILL");
                   resolve({ out: "", err: "⏱ Timeout: скрипт выполнялся дольше 10 секунд и был остановлен.", killed: true });
                 }, 10000);
-                py.stdout.on("data", (d: Buffer) => { out += d.toString(); });
-                py.stderr.on("data", (d: Buffer) => { err += d.toString(); });
-                py.on("close", () => {
+                proc.stdout.on("data", (d: Buffer) => { out += d.toString(); });
+                proc.stderr.on("data", (d: Buffer) => { err += d.toString(); });
+                proc.on("close", () => {
                   if (!killed) {
                     clearTimeout(timer);
                     resolve({ out: out.trim(), err: err.trim(), killed: false });
                   }
                 });
-                py.on("error", (e: Error) => { clearTimeout(timer); resolve({ out: "", err: e.message, killed: false }); });
+                proc.on("error", (e: Error) => { clearTimeout(timer); resolve({ out: "", err: e.message, killed: false }); });
                 try {
-                  py.stdin.write(JSON.stringify(payload));
-                  py.stdin.end();
+                  proc.stdin.write(JSON.stringify(payload));
+                  proc.stdin.end();
                 } catch {}
               });
 
-              const replyText = pyResult.out || (pyResult.err ? `🐛 Ошибка в коде бота:\n\`\`\`\n${pyResult.err}\n\`\`\`` : null);
+              const replyText = pyResult.out || (pyResult.err ? `🐛 Ошибка в коде бота (${isJs ? "JS" : "Python"}):\n\`\`\`\n${pyResult.err}\n\`\`\`` : null);
 
               if (replyText) {
                 await new Promise(r => setTimeout(r, 100 + Math.random() * 200));

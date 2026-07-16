@@ -47,6 +47,7 @@ interface BotRecord {
   token: string;
   webhook_url: string | null;
   inline_code: string | null;
+  code_lang: string | null;
   created_at: string;
 }
 
@@ -684,6 +685,7 @@ export default function Bots() {
   const [uploadingAvatar, setUploadingAvatar] = useState<number | null>(null);
   const [codeBot, setCodeBot] = useState<BotRecord | null>(null);
   const [codeText, setCodeText] = useState("");
+  const [codeLang, setCodeLang] = useState<"python" | "javascript">("python");
   const [savingCode, setSavingCode] = useState(false);
   const [activeExample, setActiveExample] = useState<keyof typeof EXAMPLES>("echo");
   const avatarInputRef = useRef<HTMLInputElement>(null);
@@ -813,11 +815,11 @@ export default function Bots() {
       const res = await fetch(`/api/bots/${codeBot.bot_user_id}/code`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json", ...getUserIdHeader() },
-        body: JSON.stringify({ code: codeText }),
+        body: JSON.stringify({ code: codeText, lang: codeLang }),
       });
       if (res.ok) {
-        setBots(prev => prev.map(b => b.bot_user_id === codeBot.bot_user_id ? { ...b, inline_code: codeText.trim() || null } : b));
-        toast({ title: "Код сохранён", description: codeText.trim() ? "Бот будет выполнять этот код при получении сообщений" : "Встроенный код удалён" });
+        setBots(prev => prev.map(b => b.bot_user_id === codeBot.bot_user_id ? { ...b, inline_code: codeText.trim() || null, code_lang: codeLang } : b));
+        toast({ title: "Код сохранён", description: codeText.trim() ? `Бот будет выполнять ${codeLang === "javascript" ? "JavaScript" : "Python"} код при получении сообщений` : "Встроенный код удалён" });
         setCodeBot(null);
       } else {
         const d = await res.json();
@@ -1027,7 +1029,7 @@ export default function Bots() {
                                     </div>
                                   </div>
                                   <button
-                                    onClick={() => { setCodeBot(bot); setCodeText(bot.inline_code || ""); }}
+                                    onClick={() => { setCodeBot(bot); setCodeText(bot.inline_code || ""); setCodeLang((bot.code_lang as "python" | "javascript") || "python"); }}
                                     className="shrink-0 text-xs font-semibold text-emerald-400 hover:text-emerald-300 border border-emerald-500/30 hover:border-emerald-500/50 px-3 py-1.5 rounded-lg transition-colors"
                                   >
                                     Изменить
@@ -1035,7 +1037,7 @@ export default function Bots() {
                                 </div>
                               ) : (
                                 <button
-                                  onClick={() => { setCodeBot(bot); setCodeText(""); }}
+                                  onClick={() => { setCodeBot(bot); setCodeText(""); setCodeLang("python"); }}
                                   className="w-full flex items-center gap-3 px-4 py-3 bg-violet-500/6 hover:bg-violet-500/10 border border-violet-500/20 hover:border-violet-500/40 rounded-xl transition-all group/code text-left"
                                 >
                                   <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center shrink-0 group-hover/code:bg-violet-500/20 transition-colors">
@@ -1448,38 +1450,80 @@ if __name__ == "__main__":
                   <Code2 size={16} className="text-emerald-400" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h2 className="font-bold text-foreground text-sm">Встроенный Python-код</h2>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h2 className="font-bold text-foreground text-sm">Встроенный код бота</h2>
                     <span className="text-xs text-muted-foreground font-mono bg-muted/40 px-2 py-0.5 rounded-lg">@{codeBot.username}</span>
+                    {/* Language toggle */}
+                    <div className="flex items-center gap-0.5 bg-[#0d1117] border border-white/10 rounded-lg p-0.5 ml-auto">
+                      {(["python", "javascript"] as const).map(lang => (
+                        <button
+                          key={lang}
+                          onClick={() => setCodeLang(lang)}
+                          className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all ${codeLang === lang ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30" : "text-white/30 hover:text-white/60"}`}
+                        >
+                          {lang === "python" ? "🐍 Python" : "⚡ JavaScript"}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">Выполняется на сервере · используйте <code className="font-mono text-emerald-400 text-[11px]">print()</code> для отправки ответа</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    Выполняется на сервере ·{" "}
+                    {codeLang === "javascript"
+                      ? <>используйте <code className="font-mono text-emerald-400 text-[11px]">sendMessage(текст)</code> или <code className="font-mono text-emerald-400 text-[11px]">reply(текст)</code> для ответа</>
+                      : <>используйте <code className="font-mono text-emerald-400 text-[11px]">print()</code> для отправки ответа</>
+                    }
+                  </p>
                 </div>
                 <button onClick={() => setCodeBot(null)} className="p-1.5 hover:bg-secondary rounded-lg transition-colors text-muted-foreground shrink-0"><X size={15} /></button>
               </div>
 
               {/* Variables reference */}
               <div className="px-5 py-3 bg-[#0d1117]/80 border-b border-white/5 shrink-0">
-                <div className="flex items-center gap-4 flex-wrap">
-                  <span className="text-[10px] text-white/30 font-semibold uppercase tracking-wider shrink-0">Переменные:</span>
-                  {[
-                    { name: "text", type: "str", desc: "текст сообщения" },
-                    { name: "chat_id", type: "int", desc: "id чата" },
-                    { name: "sender", type: "dict", desc: "{id, username, first_name}" },
-                    { name: "message", type: "dict", desc: "полный объект Update" },
-                  ].map(v => (
-                    <span key={v.name} className="flex items-center gap-1.5 text-[11px] font-mono">
-                      <span className="text-sky-400">{v.name}</span>
-                      <span className="text-white/20">:</span>
-                      <span className="text-amber-300/70">{v.type}</span>
-                      <span className="text-white/25 font-sans text-[10px]">— {v.desc}</span>
+                {codeLang === "javascript" ? (
+                  <div className="flex items-center gap-4 flex-wrap">
+                    <span className="text-[10px] text-white/30 font-semibold uppercase tracking-wider shrink-0">Переменные:</span>
+                    {[
+                      { name: "text", type: "string", desc: "текст сообщения" },
+                      { name: "chat_id", type: "number", desc: "id чата" },
+                      { name: "sender", type: "object", desc: "{id, username, first_name}" },
+                      { name: "message", type: "object", desc: "полный объект Update" },
+                    ].map(v => (
+                      <span key={v.name} className="flex items-center gap-1.5 text-[11px] font-mono">
+                        <span className="text-sky-400">{v.name}</span>
+                        <span className="text-white/20">:</span>
+                        <span className="text-amber-300/70">{v.type}</span>
+                        <span className="text-white/25 font-sans text-[10px]">— {v.desc}</span>
+                      </span>
+                    ))}
+                    <span className="flex items-center gap-1 text-[11px] font-mono ml-auto">
+                      <span className="text-purple-400">reply</span>
+                      <span className="text-white/40">(…)</span>
+                      <span className="text-white/25 font-sans text-[10px]">→ ответ бота</span>
                     </span>
-                  ))}
-                  <span className="flex items-center gap-1 text-[11px] font-mono ml-auto">
-                    <span className="text-purple-400">print</span>
-                    <span className="text-white/40">(…)</span>
-                    <span className="text-white/25 font-sans text-[10px]">→ ответ бота</span>
-                  </span>
-                </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-4 flex-wrap">
+                    <span className="text-[10px] text-white/30 font-semibold uppercase tracking-wider shrink-0">Переменные:</span>
+                    {[
+                      { name: "text", type: "str", desc: "текст сообщения" },
+                      { name: "chat_id", type: "int", desc: "id чата" },
+                      { name: "sender", type: "dict", desc: "{id, username, first_name}" },
+                      { name: "message", type: "dict", desc: "полный объект Update" },
+                    ].map(v => (
+                      <span key={v.name} className="flex items-center gap-1.5 text-[11px] font-mono">
+                        <span className="text-sky-400">{v.name}</span>
+                        <span className="text-white/20">:</span>
+                        <span className="text-amber-300/70">{v.type}</span>
+                        <span className="text-white/25 font-sans text-[10px]">— {v.desc}</span>
+                      </span>
+                    ))}
+                    <span className="flex items-center gap-1 text-[11px] font-mono ml-auto">
+                      <span className="text-purple-400">print</span>
+                      <span className="text-white/40">(…)</span>
+                      <span className="text-white/25 font-sans text-[10px]">→ ответ бота</span>
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Editor */}
@@ -1493,7 +1537,10 @@ if __name__ == "__main__":
                   value={codeText}
                   onChange={e => setCodeText(e.target.value)}
                   spellCheck={false}
-                  placeholder={`# Пример: эхо-бот\nif text:\n    print(f"Вы написали: {text}")\nelse:\n    print("Привет! Напишите что-нибудь.")`}
+                  placeholder={codeLang === "javascript"
+                    ? `// Пример: эхо-бот\nif (text) {\n  reply(\`Вы написали: \${text}\`);\n} else {\n  reply("Привет! Напишите что-нибудь.");\n}`
+                    : `# Пример: эхо-бот\nif text:\n    print(f"Вы написали: {text}")\nelse:\n    print("Привет! Напишите что-нибудь.")`
+                  }
                   className="w-full h-full min-h-[260px] bg-transparent text-emerald-300 font-mono text-sm pl-12 pr-5 pt-4 pb-4 focus:outline-none resize-none leading-[1.625rem] placeholder:text-white/15"
                 />
               </div>

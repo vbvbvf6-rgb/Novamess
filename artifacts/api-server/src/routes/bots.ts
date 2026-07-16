@@ -149,14 +149,15 @@ router.patch("/bots/:botId/code", async (req, res) => {
   try {
     const uid = req.currentUserId;
     const botId = Number(req.params.botId);
-    const { code } = req.body;
+    const { code, lang } = req.body;
 
     const own = await db.execute(sql`SELECT id FROM bot_tokens WHERE owner_user_id = ${uid} AND bot_user_id = ${botId}`);
     if ((own.rows as any[]).length === 0) return res.status(403).json({ error: "Нет доступа" });
 
     const newCode = typeof code === "string" && code.trim() ? code.trim() : null;
-    await db.execute(sql`UPDATE bot_tokens SET inline_code = ${newCode} WHERE owner_user_id = ${uid} AND bot_user_id = ${botId}`);
-    res.json({ ok: true, hasCode: newCode !== null });
+    const newLang = lang === "javascript" ? "javascript" : "python";
+    await db.execute(sql`UPDATE bot_tokens SET inline_code = ${newCode}, code_lang = ${newLang} WHERE owner_user_id = ${uid} AND bot_user_id = ${botId}`);
+    res.json({ ok: true, hasCode: newCode !== null, lang: newLang });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Ошибка сервера" });

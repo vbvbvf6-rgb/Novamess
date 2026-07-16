@@ -1,27 +1,57 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, X, Gift, Shield, Bell, Phone, Star } from "lucide-react";
+import { Sparkles, X, RefreshCw } from "lucide-react";
 import { APP_VERSION } from "@/lib/version";
+
 const PENDING_KEY = "aura-pending-changelog";
 const SEEN_KEY = "aura-changelog-seen-v";
 
-const CHANGELOG = [
-  { icon: Gift,    color: "text-pink-400",   bg: "bg-pink-500/10",   text: "Новый раздел «Подарки» — отправляй красивые подарки друзьям прямо в мессенджере" },
-  { icon: Shield,  color: "text-green-400",  bg: "bg-green-500/10",  text: "Защита от брутфорс-атак: блокировка после 5 попыток с нарастающим временем ожидания" },
-  { icon: Bell,    color: "text-blue-400",   bg: "bg-blue-500/10",   text: "Улучшены push-уведомления: более красивый внешний вид, поддержка аватаров и цветов" },
-  { icon: Phone,   color: "text-emerald-400",bg: "bg-emerald-500/10",text: "Звонки: индикатор завершения звонка собеседником и потери соединения" },
-  { icon: Star,    color: "text-amber-400",  bg: "bg-amber-500/10",  text: "Исправлены мелкие баги интерфейса: темы, кнопки назад, настройки каналов" },
-];
+interface UpdateEntry {
+  id: number;
+  version: string;
+  title: string;
+  body: string;
+  published_at: string | null;
+}
+
+const ICONS_BY_INDEX = ["🚀", "✨", "🔒", "🔔", "📞", "⭐", "🐛", "💎", "🎉", "🔧"];
+
+function getBullets(body: string): string[] {
+  return body
+    .split("\n")
+    .map(l => l.replace(/^[-•*]\s*/, "").trim())
+    .filter(Boolean);
+}
 
 export function WhatsNewModal() {
   const [open, setOpen] = useState(false);
+  const [updates, setUpdates] = useState<UpdateEntry[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     const pending = localStorage.getItem(PENDING_KEY) === "true";
     const seen = localStorage.getItem(SEEN_KEY);
     if (pending || seen !== APP_VERSION) {
-      const timer = setTimeout(() => setOpen(true), 600);
-      return () => clearTimeout(timer);
+      // Fetch from backend first, then show
+      setLoading(true);
+      fetch("/api/updates")
+        .then(async r => {
+          if (!r.ok) throw new Error("not ok");
+          const data = await r.json();
+          setUpdates(Array.isArray(data) ? data : []);
+          setLoading(false);
+          setError(false);
+          const timer = setTimeout(() => setOpen(true), 600);
+          return () => clearTimeout(timer);
+        })
+        .catch(() => {
+          setLoading(false);
+          setError(true);
+          // Still show modal even if fetch fails — with error state
+          const timer = setTimeout(() => setOpen(true), 600);
+          return () => clearTimeout(timer);
+        });
     }
     return undefined;
   }, []);
@@ -31,6 +61,18 @@ export function WhatsNewModal() {
     localStorage.setItem(SEEN_KEY, APP_VERSION);
     setOpen(false);
   };
+
+  // Use latest published update's version for display, fallback to APP_VERSION
+  const displayVersion = updates[0]?.version || APP_VERSION;
+  const displayTitle = updates[0]?.title || "Что нового";
+
+  // Flatten all bullets from all updates (show up to 7)
+  const allBullets: string[] = [];
+  for (const u of updates) {
+    for (const b of getBullets(u.body)) {
+      if (allBullets.length < 7) allBullets.push(b);
+    }
+  }
 
   return (
     <AnimatePresence>
@@ -62,8 +104,8 @@ export function WhatsNewModal() {
                       <Sparkles size={22} className="text-white" />
                     </div>
                     <div>
-                      <p className="text-[11px] font-black uppercase tracking-widest text-primary mb-0.5">Версия {APP_VERSION}</p>
-                      <h2 className="text-[18px] font-black text-foreground leading-tight">Что нового</h2>
+                      <p className="text-[11px] font-black uppercase tracking-widest text-primary mb-0.5">Версия {displayVersion}</p>
+                      <h2 className="text-[18px] font-black text-foreground leading-tight">{displayTitle}</h2>
                     </div>
                   </div>
                   <button
@@ -75,20 +117,36 @@ export function WhatsNewModal() {
                 </div>
 
                 <div className="space-y-2.5 mb-5">
-                  {CHANGELOG.map((item, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ opacity: 0, x: -12 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.05 * i, duration: 0.3 }}
-                      className="flex items-start gap-3"
-                    >
-                      <div className={`w-7 h-7 rounded-lg ${item.bg} flex items-center justify-center shrink-0 mt-0.5`}>
-                        <item.icon size={13} className={item.color} />
-                      </div>
-                      <p className="text-[13px] text-foreground/90 font-medium leading-snug">{item.text}</p>
-                    </motion.div>
-                  ))}
+                  {loading ? (
+                    <div className="flex items-center justify-center py-6 gap-2 text-muted-foreground">
+                      <RefreshCw size={16} className="animate-spin" />
+                      <span className="text-sm">Загружаем обновления…</span>
+                    </div>
+                  ) : error && allBullets.length === 0 ? (
+                    <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 text-center">
+                      <p className="text-sm text-red-400 font-medium">Не удалось загрузить обновления</p>
+                      <p className="text-xs text-muted-foreground mt-1">Проверьте соединение и попробуйте позже</p>
+                    </div>
+                  ) : allBullets.length === 0 ? (
+                    <div className="bg-muted/30 rounded-xl p-4 text-center">
+                      <p className="text-sm text-muted-foreground">Информация об обновлении появится позже</p>
+                    </div>
+                  ) : (
+                    allBullets.map((text, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, x: -12 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.05 * i, duration: 0.3 }}
+                        className="flex items-start gap-3"
+                      >
+                        <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5 text-sm">
+                          {ICONS_BY_INDEX[i % ICONS_BY_INDEX.length]}
+                        </div>
+                        <p className="text-[13px] text-foreground/90 font-medium leading-snug">{text}</p>
+                      </motion.div>
+                    ))
+                  )}
                 </div>
 
                 <button

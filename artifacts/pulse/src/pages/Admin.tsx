@@ -6,7 +6,8 @@ import {
   PhoneCall, Gift, Crown, Megaphone, BarChart3, Activity, Star,
   Edit3, Save, ChevronDown, ChevronRight, ChevronLeft, Minus, Ban, FileText, Trophy, Image,
   ShieldAlert, Clock, CheckCircle2, Bug, Inbox, Send as SendIcon, Download,
-  Wrench, Mail, ToggleLeft, ToggleRight, Timer, Database, Swords, Lock, Sparkles, Rocket, Calendar
+  Wrench, Mail, ToggleLeft, ToggleRight, Timer, Database, Swords, Lock, Sparkles, Rocket, Calendar,
+  Code2, Bot, Play, Wifi
 } from "lucide-react";
 
 interface AdminUser {
@@ -486,6 +487,35 @@ export default function Admin() {
   const [updateSaving, setUpdateSaving] = useState(false);
   const [mailTestLoading, setMailTestLoading] = useState(false);
   const [mailTestTo, setMailTestTo] = useState("");
+
+  // Force-reload (admin-controlled update release)
+  const [forceReloadActive, setForceReloadActive] = useState(false);
+  const [forceReloadLoading, setForceReloadLoading] = useState(false);
+
+  // Admin bot management
+  interface AdminBot {
+    id: number; bot_user_id: number; username: string; display_name: string;
+    avatar_url: string | null; avatar_color: string; token: string;
+    inline_code: string | null; code_lang: string | null;
+    webhook_url: string | null; created_at: string;
+    owner_username: string; owner_display_name: string;
+  }
+  const [showBotsPanel, setShowBotsPanel] = useState(false);
+  const [adminBots, setAdminBots] = useState<AdminBot[]>([]);
+  const [botsLoading, setBotsLoading] = useState(false);
+  const [deletingBotId, setDeletingBotId] = useState<number | null>(null);
+  const [editingBotCode, setEditingBotCode] = useState<AdminBot | null>(null);
+  const [botCodeText, setBotCodeText] = useState("");
+  const [botCodeLang, setBotCodeLang] = useState<"python" | "javascript">("python");
+  const [savingBotCode, setSavingBotCode] = useState(false);
+
+  // DB Cleanup
+  const [showDbCleanPanel, setShowDbCleanPanel] = useState(false);
+  const [dbStats, setDbStats] = useState<Record<string, number> | null>(null);
+  const [dbStatsLoading, setDbStatsLoading] = useState(false);
+  const [dbCleanTarget, setDbCleanTarget] = useState("bot_updates");
+  const [dbCleanDays, setDbCleanDays] = useState("30");
+  const [dbCleaning, setDbCleaning] = useState(false);
   const EVENT_TYPES = [
     { emoji: "🎉", label: "Праздник", color: "#f59e0b" },
     { emoji: "🏆", label: "Турнир", color: "#eab308" },
@@ -824,6 +854,106 @@ export default function Admin() {
       const res = await fetch(`/api/admin/updates/${id}`, { method: "DELETE", headers: getHeader() });
       if (res.ok) { fetchAppUpdates(); showToast("Удалено", "ok"); }
     } catch {}
+  };
+
+  // ── Force-reload handlers ─────────────────────────────────────────────────
+  useEffect(() => {
+    // Load current force-reload state on mount
+    fetch("/api/app/update-required").then(r => r.ok ? r.json() : null).then(d => {
+      if (d?.required === true) setForceReloadActive(true);
+    }).catch(() => {});
+  }, []);
+
+  const handleForceReload = async (active: boolean) => {
+    setForceReloadLoading(true);
+    try {
+      const res = await fetch("/api/admin/force-reload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...getHeader() },
+        body: JSON.stringify({ active }),
+      });
+      if (res.ok) {
+        setForceReloadActive(active);
+        showToast(active ? "🚀 Баннер обновления отправлен всем пользователям" : "✅ Баннер обновления отключён", active ? "ok" : "ok");
+      } else { showToast("Ошибка", "err"); }
+    } catch { showToast("Ошибка соединения", "err"); }
+    setForceReloadLoading(false);
+  };
+
+  // ── Admin bots handlers ───────────────────────────────────────────────────
+  const fetchAdminBots = useCallback(async () => {
+    setBotsLoading(true);
+    try {
+      const res = await fetch("/api/admin/bots", { headers: getHeader() });
+      if (res.ok) setAdminBots(await res.json());
+    } catch {}
+    setBotsLoading(false);
+  }, []);
+
+  const handleDeleteAdminBot = async (botId: number, username: string) => {
+    if (!window.confirm(`Удалить бота @${username}? Это нельзя отменить.`)) return;
+    setDeletingBotId(botId);
+    try {
+      const res = await fetch(`/api/admin/bots/${botId}`, { method: "DELETE", headers: getHeader() });
+      if (res.ok || res.status === 204) {
+        setAdminBots(prev => prev.filter(b => b.bot_user_id !== botId));
+        showToast(`Бот @${username} удалён`, "ok");
+      } else { showToast("Ошибка удаления", "err"); }
+    } catch { showToast("Ошибка соединения", "err"); }
+    setDeletingBotId(null);
+  };
+
+  const handleSaveAdminBotCode = async () => {
+    if (!editingBotCode) return;
+    setSavingBotCode(true);
+    try {
+      const res = await fetch(`/api/admin/bots/${editingBotCode.bot_user_id}/code`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", ...getHeader() },
+        body: JSON.stringify({ code: botCodeText, lang: botCodeLang }),
+      });
+      if (res.ok) {
+        setAdminBots(prev => prev.map(b => b.bot_user_id === editingBotCode.bot_user_id ? { ...b, inline_code: botCodeText.trim() || null, code_lang: botCodeLang } : b));
+        showToast("Код сохранён", "ok");
+        setEditingBotCode(null);
+      } else { showToast("Ошибка сохранения", "err"); }
+    } catch { showToast("Ошибка соединения", "err"); }
+    setSavingBotCode(false);
+  };
+
+  // ── DB cleanup handlers ───────────────────────────────────────────────────
+  const fetchDbStats = useCallback(async () => {
+    setDbStatsLoading(true);
+    try {
+      const res = await fetch("/api/admin/db-stats", { headers: getHeader() });
+      if (res.ok) setDbStats(await res.json());
+    } catch {}
+    setDbStatsLoading(false);
+  }, []);
+
+  const handleAdvancedCleanup = async () => {
+    const targets: Record<string, string> = {
+      bot_updates: "очереди обновлений ботов",
+      old_messages: "старых сообщений в группах",
+      old_sessions: "старых сессий",
+      push_subscriptions: "push-подписок",
+      reports: "обработанных жалоб",
+    };
+    if (!window.confirm(`Удалить записи из «${targets[dbCleanTarget] || dbCleanTarget}»? Это нельзя отменить.`)) return;
+    setDbCleaning(true);
+    try {
+      const res = await fetch("/api/admin/db-cleanup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...getHeader() },
+        body: JSON.stringify({ target: dbCleanTarget, days: Number(dbCleanDays) }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast(`✅ Удалено ${data.deleted} записей`, "ok");
+        fetchDbStats();
+      } else { showToast(data.error || "Ошибка", "err"); }
+    } catch { showToast("Ошибка соединения", "err"); }
+    setDbCleaning(false);
   };
 
   const handleMailTest = async () => {
@@ -1821,6 +1951,251 @@ export default function Admin() {
                   ))}
                 </div>
               )}
+            </div>
+          )}
+        </div>
+
+        {/* Force-reload: release update to users */}
+        <div className="bg-card border border-border rounded-2xl overflow-hidden">
+          <div className="p-4 flex items-center gap-3 flex-wrap">
+            <div className="w-9 h-9 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
+              <Wifi size={18} className="text-blue-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-sm">Выпуск обновления для пользователей</p>
+              <p className="text-xs text-muted-foreground">
+                {forceReloadActive
+                  ? "🟢 Баннер «Обновить» показывается всем пользователям"
+                  : "⚪ Баннер обновления скрыт — пользователи не видят кнопку обновления"}
+              </p>
+            </div>
+            <div className="flex gap-2 shrink-0">
+              {forceReloadActive ? (
+                <button
+                  onClick={() => handleForceReload(false)}
+                  disabled={forceReloadLoading}
+                  className="px-4 py-2 rounded-xl bg-secondary text-muted-foreground text-sm font-bold hover:bg-secondary/70 transition-colors disabled:opacity-50 flex items-center gap-2"
+                >
+                  {forceReloadLoading ? <RefreshCw size={13} className="animate-spin" /> : <ToggleRight size={13} />}
+                  Скрыть баннер
+                </button>
+              ) : (
+                <button
+                  onClick={() => handleForceReload(true)}
+                  disabled={forceReloadLoading}
+                  className="px-4 py-2 rounded-xl bg-blue-500 text-white text-sm font-bold hover:bg-blue-600 transition-colors disabled:opacity-50 flex items-center gap-2 shadow-[0_4px_14px_rgba(59,130,246,0.3)]"
+                >
+                  {forceReloadLoading ? <RefreshCw size={13} className="animate-spin" /> : <Rocket size={13} />}
+                  Показать баннер обновления
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Admin Bot Management */}
+        <div className="bg-card border border-border rounded-2xl overflow-hidden">
+          <button
+            onClick={() => { setShowBotsPanel(v => !v); if (!showBotsPanel && adminBots.length === 0) fetchAdminBots(); }}
+            className="w-full p-4 flex items-center justify-between hover:bg-secondary/50 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-cyan-500/10 flex items-center justify-center">
+                <Bot size={18} className="text-cyan-400" />
+              </div>
+              <div className="text-left">
+                <p className="font-semibold text-sm">Управление ботами</p>
+                <p className="text-xs text-muted-foreground">{adminBots.length > 0 ? `${adminBots.length} ботов в системе` : "Все боты платформы"}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {showBotsPanel ? <ChevronDown size={16} className="text-muted-foreground" /> : <ChevronRight size={16} className="text-muted-foreground" />}
+            </div>
+          </button>
+          {showBotsPanel && (
+            <div className="border-t border-border p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold text-muted-foreground">Все боты ({adminBots.length})</p>
+                <button onClick={fetchAdminBots} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
+                  <RefreshCw size={11} className={botsLoading ? "animate-spin" : ""} /> Обновить
+                </button>
+              </div>
+              {botsLoading ? (
+                <div className="flex justify-center py-4"><RefreshCw size={18} className="animate-spin text-muted-foreground" /></div>
+              ) : adminBots.length === 0 ? (
+                <p className="text-center text-sm text-muted-foreground py-4">Ботов пока нет</p>
+              ) : (
+                <div className="space-y-2">
+                  {adminBots.map(bot => (
+                    <div key={bot.bot_user_id} className="bg-background border border-border rounded-xl p-3">
+                      <div className="flex items-start gap-3">
+                        <div className="w-9 h-9 rounded-xl shrink-0 flex items-center justify-center text-white font-black text-sm overflow-hidden" style={{ background: bot.avatar_color }}>
+                          {bot.avatar_url ? <img src={bot.avatar_url} alt="" className="w-full h-full object-cover" /> : bot.display_name[0]?.toUpperCase()}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-semibold text-sm">{bot.display_name}</span>
+                            <span className="text-xs text-muted-foreground font-mono">@{bot.username}</span>
+                            {bot.inline_code && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold">
+                                {bot.code_lang === "javascript" ? "⚡ JS" : "🐍 Python"}
+                              </span>
+                            )}
+                            {bot.webhook_url && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-bold">webhook</span>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-muted-foreground mt-0.5">
+                            Владелец: @{bot.owner_username} · {new Date(bot.created_at).toLocaleDateString("ru-RU")}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button
+                            onClick={() => { setEditingBotCode(bot); setBotCodeText(bot.inline_code || ""); setBotCodeLang((bot.code_lang as "python" | "javascript") || "python"); }}
+                            title="Редактировать код"
+                            className="p-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 transition-colors"
+                          >
+                            <Code2 size={13} />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteAdminBot(bot.bot_user_id, bot.username)}
+                            disabled={deletingBotId === bot.bot_user_id}
+                            title="Удалить бота"
+                            className="p-1.5 rounded-lg hover:bg-red-500/10 text-muted-foreground hover:text-red-400 transition-colors disabled:opacity-50"
+                          >
+                            {deletingBotId === bot.bot_user_id ? <RefreshCw size={13} className="animate-spin" /> : <Trash2 size={13} />}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {/* Inline code editor for admin */}
+              {editingBotCode && (
+                <div className="bg-[#0d1117] border border-emerald-500/20 rounded-xl overflow-hidden">
+                  <div className="flex items-center gap-3 px-4 py-3 border-b border-white/5">
+                    <Code2 size={15} className="text-emerald-400 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <span className="text-sm font-bold text-foreground">Код: @{editingBotCode.username}</span>
+                    </div>
+                    {/* Language toggle */}
+                    <div className="flex items-center gap-0.5 bg-black/30 border border-white/10 rounded-lg p-0.5">
+                      {(["python", "javascript"] as const).map(lang => (
+                        <button key={lang} onClick={() => setBotCodeLang(lang)}
+                          className={`px-2 py-0.5 rounded-md text-[11px] font-bold transition-all ${botCodeLang === lang ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30" : "text-white/30 hover:text-white/60"}`}>
+                          {lang === "python" ? "🐍 Python" : "⚡ JS"}
+                        </button>
+                      ))}
+                    </div>
+                    <button onClick={() => setEditingBotCode(null)} className="p-1 text-white/40 hover:text-white/80 transition-colors shrink-0"><X size={13} /></button>
+                  </div>
+                  <textarea
+                    value={botCodeText}
+                    onChange={e => setBotCodeText(e.target.value)}
+                    spellCheck={false}
+                    placeholder={botCodeLang === "javascript" ? "// if (text) reply(`Вы написали: ${text}`);" : "# if text:\n#     print(f'Вы написали: {text}')"}
+                    rows={8}
+                    className="w-full bg-transparent text-emerald-300 font-mono text-sm px-4 py-3 focus:outline-none resize-none leading-relaxed placeholder:text-white/15"
+                  />
+                  <div className="flex gap-2 px-4 py-3 border-t border-white/5">
+                    <button onClick={() => setEditingBotCode(null)} className="flex-1 py-2 rounded-lg bg-white/5 text-white/50 text-sm font-medium hover:bg-white/10 transition-colors">Отмена</button>
+                    <button onClick={handleSaveAdminBotCode} disabled={savingBotCode}
+                      className="flex-1 py-2 rounded-lg bg-emerald-500 text-white text-sm font-bold hover:bg-emerald-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5">
+                      {savingBotCode ? <RefreshCw size={13} className="animate-spin" /> : <Play size={13} />} Сохранить код
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Database Cleanup */}
+        <div className="bg-card border border-border rounded-2xl overflow-hidden">
+          <button
+            onClick={() => { setShowDbCleanPanel(v => !v); if (!showDbCleanPanel && !dbStats) fetchDbStats(); }}
+            className="w-full p-4 flex items-center justify-between hover:bg-secondary/50 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-red-500/10 flex items-center justify-center">
+                <Database size={18} className="text-red-400" />
+              </div>
+              <div className="text-left">
+                <p className="font-semibold text-sm">Очистка базы данных</p>
+                <p className="text-xs text-muted-foreground">Удаление устаревших записей для освобождения места</p>
+              </div>
+            </div>
+            {showDbCleanPanel ? <ChevronDown size={16} className="text-muted-foreground" /> : <ChevronRight size={16} className="text-muted-foreground" />}
+          </button>
+          {showDbCleanPanel && (
+            <div className="border-t border-border p-4 space-y-4">
+              {/* Stats */}
+              {dbStatsLoading ? (
+                <div className="flex justify-center py-2"><RefreshCw size={16} className="animate-spin text-muted-foreground" /></div>
+              ) : dbStats && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {[
+                    { key: "messages", label: "Сообщения", color: "text-blue-400" },
+                    { key: "bot_updates", label: "Очередь ботов", color: "text-emerald-400" },
+                    { key: "user_sessions", label: "Сессии", color: "text-violet-400" },
+                    { key: "push_subscriptions", label: "Push-подписки", color: "text-orange-400" },
+                    { key: "user_reports", label: "Жалобы", color: "text-red-400" },
+                    { key: "post_reports", label: "Жалобы на посты", color: "text-pink-400" },
+                  ].map(({ key, label, color }) => (
+                    <div key={key} className="bg-background border border-border rounded-xl p-3 text-center">
+                      <p className={`text-xl font-black ${color}`}>{(dbStats[key] ?? 0).toLocaleString()}</p>
+                      <p className="text-[11px] text-muted-foreground">{label}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="flex gap-2 items-center justify-end">
+                <button onClick={fetchDbStats} disabled={dbStatsLoading} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
+                  <RefreshCw size={11} className={dbStatsLoading ? "animate-spin" : ""} /> Обновить
+                </button>
+              </div>
+
+              {/* Cleanup form */}
+              <div className="bg-muted/30 border border-border rounded-xl p-4 space-y-3">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Выполнить очистку</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Что удалить</label>
+                    <select
+                      value={dbCleanTarget}
+                      onChange={e => setDbCleanTarget(e.target.value)}
+                      className="w-full mt-0.5 bg-background border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-red-500/60 transition-colors"
+                    >
+                      <option value="bot_updates">Очередь обновлений ботов</option>
+                      <option value="old_messages">Старые сообщения (группы)</option>
+                      <option value="old_sessions">Старые сессии</option>
+                      <option value="push_subscriptions">Push-подписки (все)</option>
+                      <option value="reports">Закрытые жалобы</option>
+                    </select>
+                  </div>
+                  {["bot_updates", "old_messages", "old_sessions"].includes(dbCleanTarget) && (
+                    <div>
+                      <label className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Старше (дней)</label>
+                      <input
+                        type="number"
+                        value={dbCleanDays}
+                        onChange={e => setDbCleanDays(e.target.value)}
+                        min={1}
+                        className="w-full mt-0.5 bg-background border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-red-500/60 transition-colors"
+                      />
+                    </div>
+                  )}
+                </div>
+                <button
+                  onClick={handleAdvancedCleanup}
+                  disabled={dbCleaning}
+                  className="w-full py-2.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 font-bold text-sm hover:bg-red-500/20 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {dbCleaning ? <RefreshCw size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                  Очистить
+                </button>
+              </div>
             </div>
           )}
         </div>

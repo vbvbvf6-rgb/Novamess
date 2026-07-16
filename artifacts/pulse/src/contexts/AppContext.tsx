@@ -1094,6 +1094,10 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
         } catch {}
       });
 
+      es.addEventListener("force-reload", () => {
+        window.dispatchEvent(new CustomEvent("sse:force-reload"));
+      });
+
       es.addEventListener("open", () => { retryCount = 0; });
 
       es.onerror = () => {
