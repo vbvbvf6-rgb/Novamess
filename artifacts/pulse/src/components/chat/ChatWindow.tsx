@@ -1566,9 +1566,6 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
                 </svg>
               </div>
               <p className="text-sm text-muted-foreground font-medium">@{(chat.otherUser as any)?.username}</p>
-              {(chat.otherUser as any)?.bio && (
-                <p className="text-sm text-muted-foreground/80 mt-2 leading-relaxed">{(chat.otherUser as any).bio}</p>
-              )}
             </div>
             <p className="text-[13px] text-muted-foreground leading-relaxed bg-secondary/60 rounded-2xl px-5 py-3.5">
               Это бот — автоматическая программа в Nova.<br />Нажми кнопку ниже, чтобы начать.
