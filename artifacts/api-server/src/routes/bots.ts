@@ -73,8 +73,20 @@ router.post("/bots", async (req, res) => {
       INSERT INTO bot_tokens (owner_user_id, bot_user_id, token) VALUES (${uid}, ${botUserId}, ${token})
     `);
 
+    // Auto-create a DM chat between the owner and the bot so it appears
+    // immediately in the owner's chat list without any extra steps.
+    const chatRows = await db.execute(sql`
+      INSERT INTO chats (type) VALUES ('direct') RETURNING id
+    `);
+    const chatId = (chatRows.rows[0] as any).id;
+    await db.execute(sql`
+      INSERT INTO chat_members (chat_id, user_id, role)
+      VALUES (${chatId}, ${uid}, 'member'), (${chatId}, ${botUserId}, 'member')
+    `);
+
     res.status(201).json({
       id: botUserId,
+      chatId,
       username: lower,
       displayName: name.trim(),
       description: description?.trim() || null,
