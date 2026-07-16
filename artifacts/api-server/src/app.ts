@@ -246,6 +246,8 @@ const PUBLIC_API_PATHS = [
   "/auth/reset-password-final",
   // Public maintenance status check (no auth — shown before login)
   "/maintenance",
+  // Public app changelog — visible to everyone (no auth required)
+  "/updates",
 ];
 
 // ── Session validity cache — avoids DB hit on every request ──────────────

@@ -41,7 +41,7 @@ export default function Changelog() {
   };
 
   return (
-    <div className="flex flex-col min-h-[var(--app-h,100vh)] bg-background overflow-y-auto scrollbar-none">
+    <div className="flex-1 flex flex-col w-full min-h-[var(--app-h,100vh)] bg-background overflow-y-auto scrollbar-none">
       {/* Header */}
       <div
         className="shrink-0 border-b border-border bg-card/80 backdrop-blur-xl px-5 flex items-center justify-between"
