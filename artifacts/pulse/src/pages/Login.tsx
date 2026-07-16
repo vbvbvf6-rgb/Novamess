@@ -248,69 +248,81 @@ export default function Login({ onLogin }: LoginProps) {
     <div className="min-h-[100dvh] w-full bg-background relative" style={{ overflowY: "scroll", WebkitOverflowScrolling: "touch" } as React.CSSProperties}>
       {/* Dynamic Background — fixed so it stays behind scrollable content */}
       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+        {/* Primary blue orb — top-left */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 0.8, scale: 1 }}
-          transition={{ duration: 2.5, ease: "easeOut" }}
-          className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-primary/20 rounded-full blur-[60px] motion-reduce:animate-none [@media(pointer:coarse)]:animate-none animate-[pulseGlow_6s_ease-in-out_infinite_alternate]"
+          initial={{ opacity: 0, scale: 0.7 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 2.2, ease: "easeOut" }}
+          className="absolute top-[-15%] left-[-15%] w-[70%] h-[70%] rounded-full animate-[orb-drift-1_28s_ease-in-out_infinite]"
+          style={{ background: "radial-gradient(circle, hsl(213 94% 62% / 0.32) 0%, hsl(213 94% 62% / 0.12) 45%, transparent 70%)", filter: "blur(55px)", willChange: "transform" }}
         />
+        {/* Violet orb — bottom-right */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 0.7, scale: 1 }}
-          transition={{ duration: 2.5, delay: 0.4, ease: "easeOut" }}
-          className="absolute bottom-[-10%] right-[-10%] w-[65%] h-[65%] bg-violet-500/15 rounded-full blur-[50px] motion-reduce:animate-none [@media(pointer:coarse)]:animate-none animate-[pulseGlow_8s_ease-in-out_infinite_alternate-reverse]"
+          initial={{ opacity: 0, scale: 0.7 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 2.2, delay: 0.3, ease: "easeOut" }}
+          className="absolute bottom-[-15%] right-[-15%] w-[75%] h-[75%] rounded-full animate-[orb-drift-2_34s_ease-in-out_infinite]"
+          style={{ background: "radial-gradient(circle, hsl(265 75% 65% / 0.28) 0%, hsl(265 75% 65% / 0.1) 45%, transparent 70%)", filter: "blur(60px)", willChange: "transform" }}
         />
+        {/* Amber/Nova orb — center-right */}
         <motion.div
           initial={{ opacity: 0 }}
-          animate={{ opacity: 0.6 }}
-          transition={{ duration: 3, delay: 0.6, ease: "easeOut" }}
-          className="absolute top-[35%] left-[55%] w-[35%] h-[35%] bg-amber-500/12 rounded-full blur-[40px] motion-reduce:animate-none [@media(pointer:coarse)]:animate-none animate-[pulseGlow_10s_ease-in-out_infinite_alternate]"
+          animate={{ opacity: 1 }}
+          transition={{ duration: 2.5, delay: 0.5, ease: "easeOut" }}
+          className="absolute top-[28%] left-[50%] w-[45%] h-[45%] rounded-full animate-[orb-drift-3_38s_ease-in-out_infinite]"
+          style={{ background: "radial-gradient(circle, hsl(30 100% 58% / 0.22) 0%, hsl(30 100% 58% / 0.08) 50%, transparent 70%)", filter: "blur(50px)", willChange: "transform" }}
         />
+        {/* Indigo orb — mid-left */}
         <motion.div
           initial={{ opacity: 0 }}
-          animate={{ opacity: 0.5 }}
-          transition={{ duration: 3, delay: 0.8, ease: "easeOut" }}
-          className="absolute top-[60%] left-[10%] w-[25%] h-[25%] bg-blue-500/10 rounded-full blur-[30px] motion-reduce:animate-none [@media(pointer:coarse)]:animate-none animate-[pulseGlow_12s_ease-in-out_infinite_alternate-reverse]"
+          animate={{ opacity: 1 }}
+          transition={{ duration: 2.5, delay: 0.7, ease: "easeOut" }}
+          className="absolute top-[55%] left-[5%] w-[30%] h-[30%] rounded-full animate-[orb-drift-4_44s_ease-in-out_infinite]"
+          style={{ background: "radial-gradient(circle, hsl(240 70% 68% / 0.20) 0%, transparent 70%)", filter: "blur(40px)", willChange: "transform" }}
         />
-        {/* Floating particles */}
-        {[...Array(typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches ? 5 : 12)].map((_, i) => (
+        {/* Aurora shimmer band */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 3, delay: 1, ease: "easeOut" }}
+          className="absolute inset-x-0 animate-[aurora-shift_18s_ease-in-out_infinite]"
+          style={{ top: "40%", height: 180, background: "linear-gradient(90deg, transparent 0%, hsl(213 94% 62% / 0.08) 25%, hsl(265 75% 65% / 0.10) 50%, hsl(30 100% 58% / 0.06) 75%, transparent 100%)", filter: "blur(36px)", willChange: "transform, opacity" }}
+        />
+        {/* Floating star dots */}
+        {Array.from({ length: 18 }, (_, i) => (
           <motion.div
             key={i}
             initial={{ opacity: 0, scale: 0 }}
             animate={{
-              opacity: 0.4 + (i % 4) * 0.15,
+              opacity: [0, 0.5 + (i % 4) * 0.12, 0.3 + (i % 4) * 0.1],
               scale: 1,
-              y: [0, -(8 + (i % 6) * 4), 0],
-              x: [0, (i % 2 === 0 ? 1 : -1) * (3 + (i % 4) * 2), 0],
+              y: [0, -(10 + (i % 6) * 5), 0],
+              x: [0, (i % 2 === 0 ? 1 : -1) * (4 + (i % 4) * 2), 0],
             }}
             transition={{
-              opacity: { duration: 1.2, delay: 0.3 + i * 0.1 },
-              scale: { duration: 0.8, delay: 0.3 + i * 0.1 },
-              y: {
-                duration: 4 + (i % 5),
-                repeat: Infinity,
-                repeatType: "reverse",
-                ease: "easeInOut",
-                delay: i * 0.4,
-              },
-              x: {
-                duration: 5 + (i % 4),
-                repeat: Infinity,
-                repeatType: "reverse",
-                ease: "easeInOut",
-                delay: i * 0.3,
-              },
+              opacity: { duration: 1.5, delay: 0.5 + i * 0.08, times: [0, 0.3, 1] },
+              scale: { duration: 0.9, delay: 0.5 + i * 0.08 },
+              y: { duration: 4 + (i % 5), repeat: Infinity, repeatType: "reverse", ease: "easeInOut", delay: i * 0.35 },
+              x: { duration: 5 + (i % 4), repeat: Infinity, repeatType: "reverse", ease: "easeInOut", delay: i * 0.28 },
             }}
-            className="absolute rounded-full bg-primary/30"
+            className="absolute rounded-full"
             style={{
-              width: `${2 + (i % 3)}px`,
-              height: `${2 + (i % 3)}px`,
-              left: `${8 + (i * 7.8) % 84}%`,
-              top: `${5 + (i * 11.3) % 88}%`,
+              width: `${1.5 + (i % 3)}px`,
+              height: `${1.5 + (i % 3)}px`,
+              left: `${6 + (i * 5.5) % 88}%`,
+              top: `${4 + (i * 9.3) % 90}%`,
+              background: i % 3 === 0
+                ? "hsl(213 94% 75% / 0.7)"
+                : i % 3 === 1
+                ? "hsl(265 75% 78% / 0.6)"
+                : "hsl(35 100% 70% / 0.65)",
+              boxShadow: `0 0 ${3 + i % 4}px currentColor`,
             }}
           />
         ))}
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background/20" />
+        {/* Subtle noise texture */}
+        <div className="absolute inset-0" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`, backgroundSize: "160px 160px", opacity: 0.03, mixBlendMode: "overlay" as React.CSSProperties["mixBlendMode"] }} />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background/30" />
       </div>
 
       <div className="flex flex-col items-center p-4 pt-8 pb-8">

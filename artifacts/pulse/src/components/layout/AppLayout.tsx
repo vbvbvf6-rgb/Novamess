@@ -7,6 +7,7 @@ import { IncomingCall } from "@/components/calls/IncomingCall";
 import { CommandPalette } from "@/components/CommandPalette";
 import { useToast } from "@/hooks/use-toast";
 import { NetworkStatus } from "@/components/NetworkStatus";
+import { AnimatedBackground } from "@/components/AnimatedBackground";
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const { activeCall } = useAppContext();
@@ -63,13 +64,15 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         paddingRight: "env(safe-area-inset-right, 0px)",
       }}
     >
+      {/* Global animated background — orbs + particles */}
+      <AnimatedBackground className="absolute inset-0 z-0" />
+
       <Sidebar
         mobileSidebarOpen={mobileSidebarOpen}
         onMobileClose={() => setMobileSidebarOpen(false)}
         onOpenPalette={() => setPaletteOpen(true)}
       />
-      <main className="flex-1 flex overflow-hidden relative">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/5 via-background to-background pointer-events-none" />
+      <main className="flex-1 flex overflow-hidden relative z-10">
         {children}
       </main>
       <ActiveCall />
