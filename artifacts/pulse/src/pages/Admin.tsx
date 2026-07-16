@@ -1752,8 +1752,8 @@ export default function Admin() {
                         <input value={(form as any).version} onChange={e => setForm({ version: e.target.value })} placeholder="1.2.0" className="w-full mt-0.5 bg-background border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-violet-500/60 transition-colors" />
                       </div>
                       <div>
-                        <label className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Запланировать</label>
-                        <input type="datetime-local" value={(form as any).scheduled_at || ""} onChange={e => setForm({ scheduled_at: e.target.value })} className="w-full mt-0.5 bg-background border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-violet-500/60 transition-colors" />
+                        <label className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Дата выхода</label>
+                        <input type="datetime-local" value={(form as any).scheduled_at || ""} onChange={e => setForm({ scheduled_at: e.target.value })} className="w-full mt-0.5 bg-background border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-violet-500/60 transition-colors" title="Отображается в логе как дата релиза. Публикация происходит только вручную." />
                       </div>
                     </div>
                     <div>

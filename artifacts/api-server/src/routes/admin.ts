@@ -55,20 +55,9 @@ db.execute(sql`CREATE TABLE IF NOT EXISTS app_updates (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 )`).catch(() => {});
 
-// Auto-publish scheduled updates every 60 seconds
-setInterval(async () => {
-  try {
-    const rows = await db.execute(sql`
-      UPDATE app_updates
-      SET is_published = TRUE, published_at = NOW()
-      WHERE is_published = FALSE AND scheduled_at IS NOT NULL AND scheduled_at <= NOW()
-      RETURNING id, title
-    `);
-    if ((rows.rows as any[]).length > 0) {
-      broadcastToAll("app_update_published", { count: rows.rows.length });
-    }
-  } catch {}
-}, 60_000);
+// No auto-publish: updates are published ONLY when the admin explicitly
+// clicks "Publish now". scheduled_at is a display label ("planned release
+// date") shown in the public changelog, not a trigger.
 
 async function isAdminUser(userId: number): Promise<boolean> {
   if (ADMIN_USER_IDS.includes(userId)) return true;
@@ -1400,13 +1389,15 @@ router.delete("/admin/updates/:id", requireAdmin, async (req, res) => {
   } catch (err) { req.log.error(err); res.status(500).json({ error: "Ошибка сервера" }); }
 });
 
-// Public: published updates visible to all users
+// Public: only explicitly-published updates are visible to users.
+// Drafts and scheduled (future-dated) entries are invisible until
+// the admin clicks "Publish now".
 router.get("/updates", async (_req, res) => {
   try {
     const rows = await db.execute(sql`
-      SELECT id, version, title, body, published_at, created_at
+      SELECT id, version, title, body, scheduled_at, published_at, created_at
       FROM app_updates
-      WHERE is_published = TRUE OR (scheduled_at IS NOT NULL AND scheduled_at <= NOW())
+      WHERE is_published = TRUE
       ORDER BY COALESCE(published_at, created_at) DESC
       LIMIT 20
     `);
