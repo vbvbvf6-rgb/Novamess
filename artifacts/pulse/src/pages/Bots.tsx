@@ -865,7 +865,7 @@ export default function Bots() {
   const exampleCode = EXAMPLES[activeExample].code(firstToken, host);
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto bg-background scrollbar-none">
+    <div className="flex flex-col min-h-[var(--app-h,100vh)] overflow-y-auto bg-background scrollbar-none">
       <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarFileChange} />
 
       {/* Header */}

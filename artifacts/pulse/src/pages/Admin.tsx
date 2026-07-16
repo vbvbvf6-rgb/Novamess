@@ -6,7 +6,7 @@ import {
   PhoneCall, Gift, Crown, Megaphone, BarChart3, Activity, Star,
   Edit3, Save, ChevronDown, ChevronRight, ChevronLeft, Minus, Ban, FileText, Trophy, Image,
   ShieldAlert, Clock, CheckCircle2, Bug, Inbox, Send as SendIcon, Download,
-  Wrench, Mail, ToggleLeft, ToggleRight, Timer, Database, Swords, Lock
+  Wrench, Mail, ToggleLeft, ToggleRight, Timer, Database, Swords, Lock, Sparkles, Rocket, Calendar
 } from "lucide-react";
 
 interface AdminUser {
@@ -475,6 +475,15 @@ export default function Admin() {
   const [maintenanceLoading, setMaintenanceLoading] = useState(false);
   const [maintFixInput, setMaintFixInput] = useState("");
   const [mailTestResult, setMailTestResult] = useState<any>(null);
+
+  // App updates / changelog
+  interface AppUpdate { id: number; version: string; title: string; body: string; is_published: boolean; scheduled_at: string | null; published_at: string | null; created_at: string; }
+  const [showUpdatesPanel, setShowUpdatesPanel] = useState(false);
+  const [appUpdates, setAppUpdates] = useState<AppUpdate[]>([]);
+  const [updatesLoading, setUpdatesLoading] = useState(false);
+  const [newUpdate, setNewUpdate] = useState<{ version: string; title: string; body: string; scheduled_at: string } | null>(null);
+  const [editingUpdate, setEditingUpdate] = useState<AppUpdate | null>(null);
+  const [updateSaving, setUpdateSaving] = useState(false);
   const [mailTestLoading, setMailTestLoading] = useState(false);
   const [mailTestTo, setMailTestTo] = useState("");
   const EVENT_TYPES = [
@@ -761,6 +770,60 @@ export default function Admin() {
     if (!v) return;
     setMaintenance(prev => ({ ...prev, fixes: [...prev.fixes, v] }));
     setMaintFixInput("");
+  };
+
+  const fetchAppUpdates = useCallback(async () => {
+    setUpdatesLoading(true);
+    try {
+      const res = await fetch("/api/admin/updates", { headers: getHeader() });
+      if (res.ok) setAppUpdates(await res.json());
+    } catch {}
+    setUpdatesLoading(false);
+  }, []);
+
+  const handleSaveUpdate = async () => {
+    const payload = editingUpdate || newUpdate;
+    if (!payload) return;
+    setUpdateSaving(true);
+    try {
+      if (editingUpdate && "id" in editingUpdate) {
+        const res = await fetch(`/api/admin/updates/${editingUpdate.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json", ...getHeader() },
+          body: JSON.stringify({ version: editingUpdate.version, title: editingUpdate.title, body: editingUpdate.body, scheduled_at: editingUpdate.scheduled_at || null }),
+        });
+        if (res.ok) { showToast("Обновление сохранено", "ok"); fetchAppUpdates(); setEditingUpdate(null); }
+        else showToast("Ошибка сохранения", "err");
+      } else if (newUpdate) {
+        const res = await fetch("/api/admin/updates", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...getHeader() },
+          body: JSON.stringify({ version: newUpdate.version, title: newUpdate.title, body: newUpdate.body, scheduled_at: newUpdate.scheduled_at || null }),
+        });
+        if (res.ok) { showToast("Обновление создано", "ok"); fetchAppUpdates(); setNewUpdate(null); }
+        else showToast("Ошибка создания", "err");
+      }
+    } catch { showToast("Ошибка соединения", "err"); }
+    setUpdateSaving(false);
+  };
+
+  const handlePublishUpdate = async (id: number) => {
+    try {
+      const res = await fetch(`/api/admin/updates/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", ...getHeader() },
+        body: JSON.stringify({ is_published: true }),
+      });
+      if (res.ok) { showToast("Опубликовано!", "ok"); fetchAppUpdates(); }
+      else showToast("Ошибка публикации", "err");
+    } catch { showToast("Ошибка соединения", "err"); }
+  };
+
+  const handleDeleteUpdate = async (id: number) => {
+    try {
+      const res = await fetch(`/api/admin/updates/${id}`, { method: "DELETE", headers: getHeader() });
+      if (res.ok) { fetchAppUpdates(); showToast("Удалено", "ok"); }
+    } catch {}
   };
 
   const handleMailTest = async () => {
@@ -1641,6 +1704,123 @@ export default function Admin() {
                   </div>
                 )}
               </div>
+            </div>
+          )}
+        </div>
+
+        {/* App Updates / Changelog */}
+        <div className="bg-card border border-border rounded-2xl overflow-hidden">
+          <button
+            onClick={() => { setShowUpdatesPanel(v => !v); if (!showUpdatesPanel && appUpdates.length === 0) fetchAppUpdates(); }}
+            className="w-full p-4 flex items-center justify-between hover:bg-secondary/50 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-violet-500/10 flex items-center justify-center">
+                <Sparkles size={18} className="text-violet-400" />
+              </div>
+              <div className="text-left">
+                <p className="font-semibold text-sm">Выпуск обновлений</p>
+                <p className="text-xs text-muted-foreground">
+                  {appUpdates.filter(u => u.is_published).length} опубликовано · {appUpdates.filter(u => !u.is_published && u.scheduled_at).length} запланировано
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {showUpdatesPanel ? <ChevronDown size={16} className="text-muted-foreground" /> : <ChevronRight size={16} className="text-muted-foreground" />}
+            </div>
+          </button>
+          {showUpdatesPanel && (
+            <div className="border-t border-border p-4 space-y-4">
+              {/* New update form */}
+              {!newUpdate && !editingUpdate && (
+                <button
+                  onClick={() => setNewUpdate({ version: "", title: "", body: "", scheduled_at: "" })}
+                  className="w-full py-2.5 rounded-xl bg-violet-500/15 border border-violet-500/30 text-violet-400 font-semibold text-sm hover:bg-violet-500/25 transition-colors flex items-center justify-center gap-2"
+                >
+                  <Plus size={14} /> Новое обновление
+                </button>
+              )}
+              {(newUpdate || editingUpdate) && (() => {
+                const form = editingUpdate || newUpdate!;
+                const setForm = editingUpdate ? (patch: any) => setEditingUpdate((p: any) => ({ ...p, ...patch })) : (patch: any) => setNewUpdate((p: any) => ({ ...p, ...patch }));
+                return (
+                  <div className="bg-muted/30 border border-border rounded-xl p-4 space-y-3">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{editingUpdate ? "Редактирование" : "Новое обновление"}</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Версия</label>
+                        <input value={(form as any).version} onChange={e => setForm({ version: e.target.value })} placeholder="1.2.0" className="w-full mt-0.5 bg-background border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-violet-500/60 transition-colors" />
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Запланировать</label>
+                        <input type="datetime-local" value={(form as any).scheduled_at || ""} onChange={e => setForm({ scheduled_at: e.target.value })} className="w-full mt-0.5 bg-background border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-violet-500/60 transition-colors" />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Заголовок</label>
+                      <input value={(form as any).title} onChange={e => setForm({ title: e.target.value })} placeholder="Что нового" className="w-full mt-0.5 bg-background border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-violet-500/60 transition-colors" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Описание</label>
+                      <textarea value={(form as any).body} onChange={e => setForm({ body: e.target.value })} placeholder="Перечислите изменения..." rows={4} className="w-full mt-0.5 bg-background border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-violet-500/60 transition-colors resize-none" />
+                    </div>
+                    <div className="flex gap-2">
+                      <button onClick={() => { setNewUpdate(null); setEditingUpdate(null); }} className="flex-1 py-2 rounded-lg border border-border text-sm text-muted-foreground hover:bg-secondary transition-colors">Отмена</button>
+                      <button onClick={handleSaveUpdate} disabled={updateSaving || !(form as any).version || !(form as any).title} className="flex-1 py-2 rounded-lg bg-violet-500 text-white font-bold text-sm hover:bg-violet-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5">
+                        {updateSaving ? <RefreshCw size={13} className="animate-spin" /> : <Save size={13} />} Сохранить
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
+              {/* Updates list */}
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold text-muted-foreground">Все обновления</p>
+                <button onClick={fetchAppUpdates} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
+                  <RefreshCw size={11} className={updatesLoading ? "animate-spin" : ""} /> Обновить
+                </button>
+              </div>
+              {updatesLoading ? (
+                <div className="flex justify-center py-4"><RefreshCw size={18} className="animate-spin text-muted-foreground" /></div>
+              ) : appUpdates.length === 0 ? (
+                <p className="text-center text-sm text-muted-foreground py-4">Обновлений пока нет</p>
+              ) : (
+                <div className="space-y-2">
+                  {appUpdates.map(u => (
+                    <div key={u.id} className="bg-background border border-border rounded-xl p-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-xs font-black text-violet-400">v{u.version}</span>
+                            <span className="font-semibold text-sm truncate">{u.title}</span>
+                            {u.is_published ? (
+                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">✓ Опубликовано</span>
+                            ) : u.scheduled_at ? (
+                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 shrink-0 flex items-center gap-0.5"><Calendar size={9} /> {new Date(u.scheduled_at).toLocaleString("ru-RU", { day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit" })}</span>
+                            ) : (
+                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-secondary text-muted-foreground border border-border shrink-0">Черновик</span>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2 whitespace-pre-line">{u.body}</p>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          {!u.is_published && (
+                            <button onClick={() => handlePublishUpdate(u.id)} title="Опубликовать сейчас" className="p-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 transition-colors">
+                              <Rocket size={12} />
+                            </button>
+                          )}
+                          <button onClick={() => { setEditingUpdate(u); setNewUpdate(null); }} title="Редактировать" className="p-1.5 rounded-lg hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors">
+                            <Edit3 size={12} />
+                          </button>
+                          <button onClick={() => handleDeleteUpdate(u.id)} title="Удалить" className="p-1.5 rounded-lg hover:bg-red-500/10 text-muted-foreground hover:text-red-400 transition-colors">
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>

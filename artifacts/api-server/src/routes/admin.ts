@@ -44,6 +44,32 @@ db.execute(sql`CREATE TABLE IF NOT EXISTS app_settings (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 )`).catch(() => {});
 
+db.execute(sql`CREATE TABLE IF NOT EXISTS app_updates (
+  id SERIAL PRIMARY KEY,
+  version TEXT NOT NULL,
+  title TEXT NOT NULL,
+  body TEXT NOT NULL,
+  is_published BOOLEAN NOT NULL DEFAULT FALSE,
+  scheduled_at TIMESTAMP WITH TIME ZONE,
+  published_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+)`).catch(() => {});
+
+// Auto-publish scheduled updates every 60 seconds
+setInterval(async () => {
+  try {
+    const rows = await db.execute(sql`
+      UPDATE app_updates
+      SET is_published = TRUE, published_at = NOW()
+      WHERE is_published = FALSE AND scheduled_at IS NOT NULL AND scheduled_at <= NOW()
+      RETURNING id, title
+    `);
+    if ((rows.rows as any[]).length > 0) {
+      broadcastToAll("app_update_published", { count: rows.rows.length });
+    }
+  } catch {}
+}, 60_000);
+
 async function isAdminUser(userId: number): Promise<boolean> {
   if (ADMIN_USER_IDS.includes(userId)) return true;
   try {
@@ -1322,6 +1348,70 @@ router.post("/admin/maintenance", requireAdmin, async (req, res) => {
     broadcastToAll("maintenance", data);
     return res.json({ ok: true, data });
   } catch (err) { req.log.error(err); res.status(500).json({ error: "Ошибка сервера" }); }
+});
+
+// ── App Updates / Changelog ────────────────────────────────────────────────
+
+router.get("/admin/updates", requireAdmin, async (req, res) => {
+  try {
+    const rows = await db.execute(sql`SELECT * FROM app_updates ORDER BY created_at DESC`);
+    res.json(rows.rows);
+  } catch (err) { req.log.error(err); res.status(500).json({ error: "Ошибка сервера" }); }
+});
+
+router.post("/admin/updates", requireAdmin, async (req, res) => {
+  try {
+    const { version, title, body, scheduled_at } = req.body;
+    if (!version || !title || !body) return res.status(400).json({ error: "version, title, body обязательны" });
+    const rows = await db.execute(sql`
+      INSERT INTO app_updates (version, title, body, scheduled_at)
+      VALUES (${version}, ${title}, ${body}, ${scheduled_at || null})
+      RETURNING *
+    `);
+    res.status(201).json(rows.rows[0]);
+  } catch (err) { req.log.error(err); res.status(500).json({ error: "Ошибка сервера" }); }
+});
+
+router.patch("/admin/updates/:id", requireAdmin, async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const { version, title, body, scheduled_at, is_published } = req.body;
+    if (is_published === true) {
+      await db.execute(sql`UPDATE app_updates SET is_published = TRUE, published_at = NOW() WHERE id = ${id}`);
+    } else {
+      // Update only provided fields individually to avoid conditional sql interpolation issues
+      if (version !== undefined) await db.execute(sql`UPDATE app_updates SET version = ${version} WHERE id = ${id}`);
+      if (title !== undefined) await db.execute(sql`UPDATE app_updates SET title = ${title} WHERE id = ${id}`);
+      if (body !== undefined) await db.execute(sql`UPDATE app_updates SET body = ${body} WHERE id = ${id}`);
+      if (scheduled_at !== undefined) {
+        const sat = scheduled_at || null;
+        await db.execute(sql`UPDATE app_updates SET scheduled_at = ${sat} WHERE id = ${id}`);
+      }
+    }
+    const rows = await db.execute(sql`SELECT * FROM app_updates WHERE id = ${id}`);
+    res.json(rows.rows[0]);
+  } catch (err) { req.log.error(err); res.status(500).json({ error: "Ошибка сервера" }); }
+});
+
+router.delete("/admin/updates/:id", requireAdmin, async (req, res) => {
+  try {
+    await db.execute(sql`DELETE FROM app_updates WHERE id = ${Number(req.params.id)}`);
+    res.status(204).send();
+  } catch (err) { req.log.error(err); res.status(500).json({ error: "Ошибка сервера" }); }
+});
+
+// Public: published updates visible to all users
+router.get("/updates", async (_req, res) => {
+  try {
+    const rows = await db.execute(sql`
+      SELECT id, version, title, body, published_at, created_at
+      FROM app_updates
+      WHERE is_published = TRUE OR (scheduled_at IS NOT NULL AND scheduled_at <= NOW())
+      ORDER BY COALESCE(published_at, created_at) DESC
+      LIMIT 20
+    `);
+    res.json(rows.rows);
+  } catch { res.json([]); }
 });
 
 // ── Admin mail diagnostics ─────────────────────────────────────────────────

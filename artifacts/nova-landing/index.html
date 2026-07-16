@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Nova — мессенджер нового поколения. Звонки, чаты, боты, приватность.">
+<title>Nova Messenger</title>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --card: #13131a;
+    --border: rgba(255,255,255,0.07);
+    --primary: #7c3aed;
+    --primary-light: #a78bfa;
+    --text: #f1f1f5;
+    --muted: #6b7280;
+    --accent: #4f46e5;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; overflow-x: hidden; }
+
+  /* ─── NAV ─── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 2rem;
+    backdrop-filter: blur(20px);
+    background: rgba(10,10,15,0.8);
+    border-bottom: 1px solid var(--border);
+  }
+  .logo { display: flex; align-items: center; gap: .75rem; text-decoration: none; }
+  .logo-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: linear-gradient(135deg, #7c3aed, #4f46e5);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; box-shadow: 0 0 20px rgba(124,58,237,.4);
+  }
+  .logo-text { font-size: 1.2rem; font-weight: 800; color: var(--text); }
+  .nav-cta {
+    padding: .5rem 1.25rem; border-radius: 999px;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    color: #fff; font-weight: 700; font-size: .875rem;
+    text-decoration: none; transition: opacity .2s, transform .2s;
+    box-shadow: 0 4px 20px rgba(124,58,237,.35);
+  }
+  .nav-cta:hover { opacity: .9; transform: translateY(-1px); }
+
+  /* ─── HERO ─── */
+  .hero {
+    min-height: 100vh; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 6rem 1.5rem 4rem;
+    text-align: center; position: relative; overflow: hidden;
+  }
+  .hero::before {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background:
+      radial-gradient(ellipse 80% 60% at 50% -10%, rgba(124,58,237,.22) 0%, transparent 70%),
+      radial-gradient(ellipse 50% 50% at 80% 80%, rgba(79,70,229,.12) 0%, transparent 60%);
+  }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: .5rem;
+    padding: .35rem 1rem; border-radius: 999px;
+    border: 1px solid rgba(124,58,237,.35);
+    background: rgba(124,58,237,.08);
+    font-size: .78rem; font-weight: 600; color: var(--primary-light);
+    margin-bottom: 1.75rem; letter-spacing: .02em;
+  }
+  .hero-badge span { width: 6px; height: 6px; border-radius: 50%; background: var(--primary-light); animation: pulse-dot 2s infinite; }
+  @keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.8)} }
+
+  .hero h1 {
+    font-size: clamp(2.4rem, 6vw, 4.5rem); font-weight: 900; line-height: 1.1;
+    letter-spacing: -.03em; max-width: 800px;
+    background: linear-gradient(135deg, #fff 30%, rgba(167,139,250,.8));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .hero h1 em { font-style: normal; color: var(--primary-light); -webkit-text-fill-color: var(--primary-light); }
+  .hero p {
+    margin-top: 1.25rem; font-size: clamp(1rem, 2vw, 1.2rem);
+    color: var(--muted); max-width: 560px; line-height: 1.7;
+  }
+  .hero-btns { display: flex; gap: 1rem; margin-top: 2.5rem; flex-wrap: wrap; justify-content: center; }
+  .btn-primary {
+    padding: .875rem 2rem; border-radius: 999px;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    color: #fff; font-weight: 800; font-size: 1rem;
+    text-decoration: none; transition: transform .2s, box-shadow .2s;
+    box-shadow: 0 8px 30px rgba(124,58,237,.4);
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(124,58,237,.55); }
+  .btn-secondary {
+    padding: .875rem 2rem; border-radius: 999px;
+    border: 1px solid var(--border); background: rgba(255,255,255,.04);
+    color: var(--text); font-weight: 700; font-size: 1rem;
+    text-decoration: none; transition: background .2s, border-color .2s;
+  }
+  .btn-secondary:hover { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.15); }
+  .btn-secondary .icon { font-size: .8em; opacity: .5; }
+
+  /* ─── MOCKUP ─── */
+  .hero-mockup {
+    margin-top: 4rem; width: 100%; max-width: 380px;
+    border-radius: 28px; overflow: hidden;
+    border: 1px solid var(--border);
+    box-shadow: 0 40px 80px rgba(0,0,0,.5), 0 0 0 1px rgba(124,58,237,.15);
+    position: relative;
+  }
+  .mockup-bar { height: 44px; background: var(--card); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 1rem; gap: .5rem; }
+  .mockup-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .mockup-screen { background: #0d0d14; padding: 1rem; display: flex; flex-direction: column; gap: .75rem; min-height: 240px; }
+  .msg { display: flex; gap: .6rem; align-items: flex-end; }
+  .msg.me { flex-direction: row-reverse; }
+  .msg-avatar { width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; }
+  .msg-bubble { padding: .55rem .85rem; border-radius: 14px; font-size: .8rem; line-height: 1.5; max-width: 72%; }
+  .msg-bubble.other { background: #1e1e2e; border-bottom-left-radius: 4px; color: #e2e2f0; }
+  .msg-bubble.mine { background: linear-gradient(135deg,#7c3aed,#4f46e5); border-bottom-right-radius: 4px; color: #fff; }
+  .msg-time { font-size: .65rem; color: rgba(255,255,255,.3); }
+
+  /* ─── FEATURES ─── */
+  section { padding: 5rem 1.5rem; }
+  .section-label { font-size: .75rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--primary-light); margin-bottom: .75rem; }
+  .section-title { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 900; letter-spacing: -.03em; line-height: 1.15; }
+  .section-sub { color: var(--muted); margin-top: .75rem; font-size: 1.05rem; max-width: 540px; line-height: 1.7; }
+
+  .features-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.25rem; margin-top: 3rem; max-width: 1100px; margin-left: auto; margin-right: auto; }
+  .feature-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 20px; padding: 1.75rem;
+    transition: border-color .25s, transform .25s, box-shadow .25s;
+    position: relative; overflow: hidden;
+  }
+  .feature-card:hover { border-color: rgba(124,58,237,.3); transform: translateY(-3px); box-shadow: 0 20px 60px rgba(0,0,0,.3); }
+  .feature-card::before {
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(124,58,237,.4), transparent);
+    opacity: 0; transition: opacity .25s;
+  }
+  .feature-card:hover::before { opacity: 1; }
+  .feature-icon { font-size: 1.8rem; margin-bottom: 1rem; }
+  .feature-title { font-size: 1.05rem; font-weight: 700; margin-bottom: .5rem; }
+  .feature-desc { font-size: .875rem; color: var(--muted); line-height: 1.65; }
+
+  /* ─── UPCOMING ─── */
+  .upcoming-section { background: linear-gradient(135deg, rgba(124,58,237,.06), rgba(79,70,229,.04)); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .upcoming-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; margin-top: 2.5rem; max-width: 1100px; margin-left: auto; margin-right: auto; }
+  .upcoming-card {
+    display: flex; align-items: flex-start; gap: .875rem;
+    background: rgba(255,255,255,.03); border: 1px solid var(--border);
+    border-radius: 14px; padding: 1.1rem 1.25rem;
+  }
+  .upcoming-badge { font-size: 1.2rem; flex-shrink: 0; margin-top: 1px; }
+  .upcoming-card h4 { font-size: .9rem; font-weight: 700; margin-bottom: .25rem; }
+  .upcoming-card p { font-size: .8rem; color: var(--muted); line-height: 1.5; }
+  .upcoming-tag {
+    display: inline-block; font-size: .65rem; font-weight: 700;
+    padding: .2rem .6rem; border-radius: 999px; margin-bottom: .4rem;
+    background: rgba(124,58,237,.15); color: var(--primary-light); border: 1px solid rgba(124,58,237,.25);
+  }
+
+  /* ─── DOWNLOAD ─── */
+  .download-section { text-align: center; }
+  .download-cards { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-top: 2.5rem; }
+  .dl-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 18px; padding: 1.5rem 2rem;
+    display: flex; align-items: center; gap: 1rem;
+    min-width: 240px; text-decoration: none; color: var(--text);
+    transition: border-color .2s, transform .2s, box-shadow .2s;
+    cursor: pointer;
+  }
+  .dl-card:hover { border-color: rgba(124,58,237,.3); transform: translateY(-2px); box-shadow: 0 16px 40px rgba(0,0,0,.3); }
+  .dl-card.disabled { opacity: .45; cursor: not-allowed; }
+  .dl-icon { font-size: 2rem; flex-shrink: 0; }
+  .dl-label { font-size: .7rem; color: var(--muted); font-weight: 600; letter-spacing: .05em; text-transform: uppercase; }
+  .dl-name { font-size: 1rem; font-weight: 800; }
+  .dl-badge {
+    font-size: .65rem; font-weight: 700; padding: .2rem .6rem;
+    border-radius: 999px; background: rgba(124,58,237,.15);
+    color: var(--primary-light); border: 1px solid rgba(124,58,237,.25);
+    margin-top: .25rem; display: inline-block;
+  }
+
+  /* ─── FOOTER ─── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 2.5rem 1.5rem;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 1rem;
+    color: var(--muted); font-size: .85rem;
+  }
+  .footer-logo { display: flex; align-items: center; gap: .5rem; font-weight: 700; color: var(--text); text-decoration: none; }
+  .footer-links { display: flex; gap: 1.5rem; }
+  .footer-links a { color: var(--muted); text-decoration: none; transition: color .2s; }
+  .footer-links a:hover { color: var(--text); }
+
+  /* ─── STATS ─── */
+  .stats-row { display: flex; gap: 2.5rem; flex-wrap: wrap; justify-content: center; margin-top: 3.5rem; }
+  .stat { text-align: center; }
+  .stat-num { font-size: 2.2rem; font-weight: 900; letter-spacing: -.04em; background: linear-gradient(135deg, #fff, var(--primary-light)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .stat-label { font-size: .8rem; color: var(--muted); margin-top: .25rem; font-weight: 600; }
+
+  @media (max-width: 640px) {
+    nav { padding: .875rem 1.25rem; }
+    .hero { padding: 5rem 1.25rem 3rem; }
+    section { padding: 4rem 1.25rem; }
+    footer { flex-direction: column; text-align: center; }
+    .footer-links { justify-content: center; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="logo">
+    <div class="logo-icon">✦</div>
+    <span class="logo-text">Nova</span>
+  </a>
+  <a href="MESSENGER_URL_HERE" class="nav-cta" id="nav-open">Открыть мессенджер →</a>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge"><span></span> Уже доступен · v1.0</div>
+  <h1>Мессенджер,<br>который <em>думает</em> о тебе</h1>
+  <p>Nova — приватный, быстрый и умный мессенджер с видеозвонками, ботами, историями и уведомлениями в реальном времени.</p>
+  <div class="hero-btns">
+    <a href="MESSENGER_URL_HERE" class="btn-primary" id="hero-open">Перейти к мессенджеру</a>
+    <a href="#features" class="btn-secondary">Узнать больше <span class="icon">↓</span></a>
+  </div>
+
+  <!-- Mockup -->
+  <div class="hero-mockup">
+    <div class="mockup-bar">
+      <div class="mockup-dot" style="background:#ff5f57"></div>
+      <div class="mockup-dot" style="background:#febc2e"></div>
+      <div class="mockup-dot" style="background:#28c840"></div>
+    </div>
+    <div class="mockup-screen">
+      <div class="msg">
+        <div class="msg-avatar" style="background:#7c3aed">А</div>
+        <div>
+          <div class="msg-bubble other">Привет! Как дела? 👋</div>
+          <div class="msg-time">13:41</div>
+        </div>
+      </div>
+      <div class="msg me">
+        <div class="msg-avatar" style="background:#4f46e5">Я</div>
+        <div>
+          <div class="msg-bubble mine">Отлично! Nova работает 🚀</div>
+          <div class="msg-time">13:42</div>
+        </div>
+      </div>
+      <div class="msg">
+        <div class="msg-avatar" style="background:#7c3aed">А</div>
+        <div>
+          <div class="msg-bubble other">Удобно, что есть звонки прямо тут ✨</div>
+          <div class="msg-time">13:42</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FEATURES -->
+<section id="features" style="max-width:1140px;margin:0 auto">
+  <div class="section-label">Возможности</div>
+  <div class="section-title">Всё что нужно —<br>в одном приложении</div>
+  <p class="section-sub">Nova создан для людей, которые ценят скорость, приватность и удобство.</p>
+
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon">💬</div>
+      <div class="feature-title">Чаты и каналы</div>
+      <div class="feature-desc">Личные сообщения, группы и каналы для вещания. Поддержка фото, видео, аудио, файлов и стикеров.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📹</div>
+      <div class="feature-title">Видеозвонки HD</div>
+      <div class="feature-desc">Кристально чёткое видео с умным восстановлением связи, минимизацией и продолжением в фоне.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🤖</div>
+      <div class="feature-title">Боты на Python</div>
+      <div class="feature-desc">Создай собственного бота за 5 минут. Python SDK, webhook-поддержка, polling, команды и ответы.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📖</div>
+      <div class="feature-title">Истории</div>
+      <div class="feature-desc">Делитесь моментами через истории с реакциями и приватными просмотрами. Исчезают через 24 часа.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🔔</div>
+      <div class="feature-title">Умные уведомления</div>
+      <div class="feature-desc">Плавающие баннеры когда приложение открыто. Планируемая поддержка push для закрытых приложений.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🛡️</div>
+      <div class="feature-title">Приватность</div>
+      <div class="feature-desc">Двухфакторная аутентификация, удаление аккаунта, управление сессиями и закрытые группы.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">⭐</div>
+      <div class="feature-title">Nova Prime</div>
+      <div class="feature-desc">Эксклюзивные стикеры, кастомные звуки, приоритетная поддержка и доступ к закрытому Prime-каналу.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🎯</div>
+      <div class="feature-title">Квесты и события</div>
+      <div class="feature-desc">Ежедневные задания, серии и мероприятия. Получай кристаллы за активность в приложении.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🎙️</div>
+      <div class="feature-title">Голосовые сообщения</div>
+      <div class="feature-desc">Запись и воспроизведение прямо в чате. Удобная дорожка с визуализацией волны и скоростью воспроизведения.</div>
+    </div>
+  </div>
+</section>
+
+<!-- UPCOMING -->
+<section class="upcoming-section" id="roadmap">
+  <div style="max-width:1100px;margin:0 auto">
+    <div class="section-label">Roadmap</div>
+    <div class="section-title">Что будет<br>в следующих обновах</div>
+    <p class="section-sub">Мы активно развиваем Nova. Вот что уже в работе.</p>
+
+    <div class="upcoming-grid">
+      <div class="upcoming-card">
+        <div class="upcoming-badge">🔥</div>
+        <div>
+          <div class="upcoming-tag">Скоро</div>
+          <h4>FCM Push-уведомления</h4>
+          <p>Уведомления будут приходить даже когда приложение полностью закрыто.</p>
+        </div>
+      </div>
+      <div class="upcoming-card">
+        <div class="upcoming-badge">📱</div>
+        <div>
+          <div class="upcoming-tag">В разработке</div>
+          <h4>Android APK</h4>
+          <p>Нативное Android-приложение с высокоприоритетными звонками и уведомлениями.</p>
+        </div>
+      </div>
+      <div class="upcoming-card">
+        <div class="upcoming-badge">🔐</div>
+        <div>
+          <div class="upcoming-tag">Планируется</div>
+          <h4>Зашифрованные чаты</h4>
+          <p>End-to-end шифрование для личных переписок. Ни сервер, ни мы не увидим ваши сообщения.</p>
+        </div>
+      </div>
+      <div class="upcoming-card">
+        <div class="upcoming-badge">🎨</div>
+        <div>
+          <div class="upcoming-tag">Планируется</div>
+          <h4>Темы оформления</h4>
+          <p>Кастомные цветовые схемы, градиенты и фоны для каждого чата.</p>
+        </div>
+      </div>
+      <div class="upcoming-card">
+        <div class="upcoming-badge">📹</div>
+        <div>
+          <div class="upcoming-tag">Планируется</div>
+          <h4>Групповые звонки</h4>
+          <p>Видеоконференции на несколько участников с демонстрацией экрана.</p>
+        </div>
+      </div>
+      <div class="upcoming-card">
+        <div class="upcoming-badge">🛒</div>
+        <div>
+          <div class="upcoming-tag">Планируется</div>
+          <h4>Маркетплейс ботов</h4>
+          <p>Каталог публичных ботов — найди нужного или опубликуй своего.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DOWNLOAD -->
+<section class="download-section" id="download">
+  <div class="section-label">Скачать</div>
+  <div class="section-title">Попробуй Nova прямо сейчас</div>
+  <p class="section-sub" style="margin:0 auto;margin-top:.75rem">Доступен как веб-приложение (PWA). Android APK скоро.</p>
+
+  <div class="download-cards">
+    <a href="MESSENGER_URL_HERE" class="dl-card" id="dl-web">
+      <div class="dl-icon">🌐</div>
+      <div>
+        <div class="dl-label">Открыть в браузере</div>
+        <div class="dl-name">Nova Web</div>
+        <div class="dl-badge">Доступен сейчас</div>
+      </div>
+    </a>
+    <div class="dl-card disabled" title="Скоро">
+      <div class="dl-icon">🤖</div>
+      <div>
+        <div class="dl-label">Скачать для Android</div>
+        <div class="dl-name">Nova APK</div>
+        <div class="dl-badge">Скоро</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <a href="#" class="footer-logo">✦ Nova</a>
+  <div class="footer-links">
+    <a href="#features">Возможности</a>
+    <a href="#roadmap">Roadmap</a>
+    <a href="MESSENGER_URL_HERE/privacy">Конфиденциальность</a>
+    <a href="MESSENGER_URL_HERE/terms">Условия</a>
+  </div>
+  <span>© 2024–2026 Nova Messenger</span>
+</footer>
+
+<script>
+  // Replace MESSENGER_URL_HERE with the actual messenger URL at runtime.
+  // To deploy to GitHub Pages, just update the constant below and push index.html.
+  const MESSENGER_URL = "https://nova-messenger.replit.app"; // ← замени на свой URL
+
+  document.querySelectorAll('a[href*="MESSENGER_URL_HERE"], [id="nav-open"], [id="hero-open"], [id="dl-web"]').forEach(el => {
+    const cur = el.getAttribute("href") || "";
+    el.setAttribute("href", cur.replace("MESSENGER_URL_HERE", MESSENGER_URL) || MESSENGER_URL);
+  });
+  document.querySelectorAll('.footer-links a').forEach(a => {
+    if (a.getAttribute("href")?.startsWith("MESSENGER_URL_HERE")) {
+      a.setAttribute("href", a.getAttribute("href").replace("MESSENGER_URL_HERE", MESSENGER_URL));
+    }
+  });
+
+  // Smooth animate-in on scroll
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.style.opacity = "1"; e.target.style.transform = "translateY(0)"; } });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll(".feature-card, .upcoming-card, .dl-card").forEach(el => {
+    el.style.opacity = "0";
+    el.style.transform = "translateY(20px)";
+    el.style.transition = "opacity .5s ease, transform .5s ease, border-color .25s, box-shadow .25s";
+    observer.observe(el);
+  });
+</script>
+</body>
+</html>

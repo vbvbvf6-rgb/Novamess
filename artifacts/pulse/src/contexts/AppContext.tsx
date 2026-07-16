@@ -306,13 +306,18 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
           // won't enter this branch again (iceTransportPolicy === "relay").
           iceRestartCount++;
           console.debug("[WebRTC] ICE failed — switching to relay-only (TURN) transport");
-          pc.close(); // triggers onconnectionstatechange("closed") below
+          // IMPORTANT: create & register relay peer BEFORE calling pc.close().
+          // pc.close() fires onconnectionstatechange("closed") — potentially
+          // synchronously in some browsers. If peersRef still holds the old pc
+          // at that moment, the identity guard would pass and cleanupCall()
+          // would fire prematurely, tearing down the call mid-switch.
           const relayPc = createPeerRef.current!(targetUserId, roomId, "relay");
-          peersRef.current.set(targetUserId, relayPc);
           if (localStreamRef.current) {
             localStreamRef.current.getTracks().forEach((t) => relayPc.addTrack(t, localStreamRef.current!));
             boostVideoBitrate(relayPc);
           }
+          peersRef.current.set(targetUserId, relayPc); // overwrite BEFORE close
+          pc.close(); // identity guard will see relayPc ≠ pc → won't cleanupCall
           relayPc.createOffer()
             .then((offer) => relayPc.setLocalDescription(offer).then(() => {
               socketRef.current?.emit("webrtc-signal", {
@@ -405,7 +410,6 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
         if (localStreamRef.current) {
           localStreamRef.current.getTracks().forEach((t) => pc!.addTrack(t, localStreamRef.current!));
           boostVideoBitrate(pc!);
-          boostVideoBitrate(pc);
         }
         // Flush any earlier pending signals for this user
         const pending = pendingSignalsRef.current.get(fromUserId) || [];
@@ -462,7 +466,16 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
     // as part of startCall — creating a second peer overwrites the first and breaks signaling).
     sock.on("peer-joined", async ({ userId: newUserId }: { userId: number; callId: number }) => {
       if (newUserId === currentUserIdRef.current) return;
-      if (peersRef.current.has(newUserId)) return; // already negotiating — don't duplicate
+      const existingPeer = peersRef.current.get(newUserId);
+      if (existingPeer) {
+        const cs = existingPeer.connectionState;
+        const ice = existingPeer.iceConnectionState;
+        // Only skip if the existing peer is actually healthy
+        if (cs !== "failed" && cs !== "closed" && ice !== "failed") return;
+        // Stale/failed peer — close it and let a fresh one take over
+        try { existingPeer.close(); } catch {}
+        peersRef.current.delete(newUserId);
+      }
       const pc = createPeer(newUserId, roomId);
       peersRef.current.set(newUserId, pc);
       if (localStreamRef.current) {
