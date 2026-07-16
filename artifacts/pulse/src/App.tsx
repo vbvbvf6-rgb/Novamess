@@ -37,6 +37,8 @@ import Wallet from "@/pages/Wallet";
 import Admin from "@/pages/Admin";
 import Prime from "@/pages/Prime";
 
+import Bots from "@/pages/Bots";
+import Changelog from "@/pages/Changelog";
 import Clans from "@/pages/Clans";
 import Leaderboard from "@/pages/Leaderboard";
 import Events from "@/pages/Events";
@@ -521,6 +523,8 @@ function MainAppInner({ onLogout, onSwitchAccount, onRemoveAccount, onOpenAddAcc
               <Route path="/admin" component={Admin} />
               <Route path="/prime" component={Prime} />
 
+              <Route path="/bots" component={Bots} />
+              <Route path="/changelog" component={Changelog} />
               <Route path="/clans" component={Clans} />
               <Route path="/leaderboard" component={Leaderboard} />
               <Route path="/events" component={Events} />

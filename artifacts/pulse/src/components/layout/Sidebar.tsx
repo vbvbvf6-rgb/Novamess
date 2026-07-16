@@ -26,6 +26,8 @@ import {
   Search,
   CalendarDays,
   Swords,
+  Bot,
+  Newspaper,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAppContext } from "@/contexts/AppContext";
@@ -240,6 +242,8 @@ export function Sidebar({ mobileSidebarOpen, onMobileClose, onMobileOpen, onOpen
     { href: "/clans",        icon: Swords,         label: "Кланы" },
     { href: "/wallet",       icon: Wallet,         label: t("nav.wallet") },
     { href: "/leaderboard",  icon: Trophy,         label: t("nav.leaderboard") },
+    { href: "/bots",         icon: Bot,            label: "Боты" },
+    { href: "/changelog",    icon: Newspaper,      label: "Что нового" },
     { href: "/profile",      icon: UserCircle,     label: t("nav.profile") },
     { href: "/settings",     icon: Settings,       label: t("nav.settings") },
   ];
