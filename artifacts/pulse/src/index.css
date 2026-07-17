@@ -164,60 +164,6 @@
   }
 }
 
-/* ── Animated background orbs ───────────────────────────────────────────── */
-@keyframes orb-drift-1 {
-  0%   { transform: translate(0px, 0px) scale(1); }
-  25%  { transform: translate(60px, -40px) scale(1.06); }
-  50%  { transform: translate(30px, 70px) scale(0.95); }
-  75%  { transform: translate(-50px, 20px) scale(1.04); }
-  100% { transform: translate(0px, 0px) scale(1); }
-}
-@keyframes orb-drift-2 {
-  0%   { transform: translate(0px, 0px) scale(1); }
-  30%  { transform: translate(-70px, 50px) scale(1.08); }
-  60%  { transform: translate(40px, -60px) scale(0.94); }
-  100% { transform: translate(0px, 0px) scale(1); }
-}
-@keyframes orb-drift-3 {
-  0%   { transform: translate(0px, 0px) scale(1); }
-  40%  { transform: translate(50px, 30px) scale(1.05); }
-  70%  { transform: translate(-30px, -50px) scale(0.96); }
-  100% { transform: translate(0px, 0px) scale(1); }
-}
-@keyframes orb-drift-4 {
-  0%   { transform: translate(0px, 0px) scale(0.98); }
-  35%  { transform: translate(-40px, -30px) scale(1.07); }
-  65%  { transform: translate(60px, 45px) scale(0.93); }
-  100% { transform: translate(0px, 0px) scale(0.98); }
-}
-@keyframes aurora-shift {
-  0%, 100% { opacity: 0.25; transform: scaleX(1) scaleY(1) rotate(-2deg); }
-  50%       { opacity: 0.40; transform: scaleX(1.08) scaleY(0.96) rotate(2deg); }
-}
-@keyframes noise-pan {
-  0%   { background-position: 0% 0%; }
-  100% { background-position: 100% 100%; }
-}
-
-/* ── Page content mount animation ─────────────────────────────────────── */
-@keyframes page-in {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-.animate-page-in {
-  animation: page-in 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-/* ── Card hover lift ──────────────────────────────────────────────────── */
-.hover-lift {
-  transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
-              box-shadow 0.22s cubic-bezier(0.22, 1, 0.36, 1);
-}
-.hover-lift:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 32px -4px rgba(0,0,0,0.22), 0 2px 8px -2px rgba(0,0,0,0.15);
-}
-
 /* ── Keyframes ──────────────────────────────────────────────────────────── */
 @keyframes typingBounce {
   0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }

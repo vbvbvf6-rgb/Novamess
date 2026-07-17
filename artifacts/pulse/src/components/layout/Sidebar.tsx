@@ -282,16 +282,7 @@ export function Sidebar({ mobileSidebarOpen, onMobileClose, onMobileOpen, onOpen
   );
 
   const DesktopSidebar = (
-    <div className="hidden md:flex flex-col w-[260px] bg-[#f2f3f5] dark:bg-[#080810] rounded-r-[28px] shrink-0 relative z-20 shadow-[4px_0_32px_rgba(0,0,0,0.08)] dark:shadow-[4px_0_32px_rgba(0,0,0,0.55)] overflow-hidden border-r border-border/40" style={{ height: "var(--app-h, 100dvh)" }}>
-      {/* Sidebar animated background orbs */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden>
-        <div className="absolute -top-20 -left-20 w-56 h-56 rounded-full animate-[orb-drift-1_30s_ease-in-out_infinite]"
-          style={{ background: "radial-gradient(circle, hsl(213 94% 62% / 0.10) 0%, transparent 70%)", filter: "blur(40px)", willChange: "transform" }} />
-        <div className="absolute -bottom-16 -right-16 w-48 h-48 rounded-full animate-[orb-drift-2_36s_ease-in-out_infinite]"
-          style={{ background: "radial-gradient(circle, hsl(265 75% 65% / 0.09) 0%, transparent 70%)", filter: "blur(35px)", willChange: "transform" }} />
-        <div className="absolute top-1/3 -right-8 w-36 h-36 rounded-full animate-[orb-drift-3_42s_ease-in-out_infinite]"
-          style={{ background: "radial-gradient(circle, hsl(30 100% 58% / 0.07) 0%, transparent 70%)", filter: "blur(30px)", willChange: "transform" }} />
-      </div>
+    <div className="hidden md:flex flex-col w-[260px] bg-[#f2f3f5] dark:bg-[#0a0a0d] rounded-r-[28px] shrink-0 relative z-20 shadow-[4px_0_32px_rgba(0,0,0,0.08)] dark:shadow-[4px_0_32px_rgba(0,0,0,0.55)] overflow-hidden border-r border-border/40" style={{ height: "var(--app-h, 100dvh)" }}>
       <div className="flex items-center gap-3 px-5 pt-5 pb-4">
         <div className="relative shrink-0 drop-shadow-[0_4px_12px_rgba(59,130,246,0.45)]">
           <PulseLogo size={38} />
