@@ -246,14 +246,71 @@ export default function Login({ onLogin }: LoginProps) {
 
   return (
     <div className="min-h-[100dvh] w-full bg-background relative" style={{ overflowY: "scroll", WebkitOverflowScrolling: "touch" } as React.CSSProperties}>
-      {/* Background */}
+      {/* Dynamic Background — fixed so it stays behind scrollable content */}
       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full opacity-30 blur-3xl"
-          style={{ background: "radial-gradient(circle, hsl(213 94% 62% / 0.15) 0%, transparent 70%)" }} />
-        <div className="absolute bottom-[-20%] right-[-10%] w-[70%] h-[70%] rounded-full opacity-25 blur-3xl"
-          style={{ background: "radial-gradient(circle, hsl(265 75% 65% / 0.12) 0%, transparent 70%)" }} />
-        <div className="absolute top-[30%] right-[10%] w-[40%] h-[40%] rounded-full opacity-20 blur-3xl"
-          style={{ background: "radial-gradient(circle, hsl(30 100% 58% / 0.10) 0%, transparent 70%)" }} />
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 0.8, scale: 1 }}
+          transition={{ duration: 2.5, ease: "easeOut" }}
+          className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-primary/20 rounded-full blur-[60px] motion-reduce:animate-none [@media(pointer:coarse)]:animate-none animate-[pulseGlow_6s_ease-in-out_infinite_alternate]"
+        />
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 0.7, scale: 1 }}
+          transition={{ duration: 2.5, delay: 0.4, ease: "easeOut" }}
+          className="absolute bottom-[-10%] right-[-10%] w-[65%] h-[65%] bg-violet-500/15 rounded-full blur-[50px] motion-reduce:animate-none [@media(pointer:coarse)]:animate-none animate-[pulseGlow_8s_ease-in-out_infinite_alternate-reverse]"
+        />
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 0.6 }}
+          transition={{ duration: 3, delay: 0.6, ease: "easeOut" }}
+          className="absolute top-[35%] left-[55%] w-[35%] h-[35%] bg-amber-500/12 rounded-full blur-[40px] motion-reduce:animate-none [@media(pointer:coarse)]:animate-none animate-[pulseGlow_10s_ease-in-out_infinite_alternate]"
+        />
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 0.5 }}
+          transition={{ duration: 3, delay: 0.8, ease: "easeOut" }}
+          className="absolute top-[60%] left-[10%] w-[25%] h-[25%] bg-blue-500/10 rounded-full blur-[30px] motion-reduce:animate-none [@media(pointer:coarse)]:animate-none animate-[pulseGlow_12s_ease-in-out_infinite_alternate-reverse]"
+        />
+        {/* Floating particles */}
+        {[...Array(typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches ? 5 : 12)].map((_, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, scale: 0 }}
+            animate={{
+              opacity: 0.4 + (i % 4) * 0.15,
+              scale: 1,
+              y: [0, -(8 + (i % 6) * 4), 0],
+              x: [0, (i % 2 === 0 ? 1 : -1) * (3 + (i % 4) * 2), 0],
+            }}
+            transition={{
+              opacity: { duration: 1.2, delay: 0.3 + i * 0.1 },
+              scale: { duration: 0.8, delay: 0.3 + i * 0.1 },
+              y: {
+                duration: 4 + (i % 5),
+                repeat: Infinity,
+                repeatType: "reverse",
+                ease: "easeInOut",
+                delay: i * 0.4,
+              },
+              x: {
+                duration: 5 + (i % 4),
+                repeat: Infinity,
+                repeatType: "reverse",
+                ease: "easeInOut",
+                delay: i * 0.3,
+              },
+            }}
+            className="absolute rounded-full bg-primary/30"
+            style={{
+              width: `${2 + (i % 3)}px`,
+              height: `${2 + (i % 3)}px`,
+              left: `${8 + (i * 7.8) % 84}%`,
+              top: `${5 + (i * 11.3) % 88}%`,
+            }}
+          />
+        ))}
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background/20" />
       </div>
 
       <div className="flex flex-col items-center p-4 pt-8 pb-8">
