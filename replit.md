@@ -63,6 +63,30 @@ Set these env vars to offload new uploads to any S3-compatible object storage (C
 - **Security**: 2FA (TOTP) via auth routes + Settings UI; screen lock PIN; disappearing messages timer per chat (5s–1mo); message search (per-chat and cross-chat via `/api/messages/search`); privacy settings (read receipts, online status) persisted to DB
 - **Chat folders**: All / Unread / Groups / Bots tabs in ChatList sidebar
 
+## Vercel + Wispbyte deployment
+
+Frontend is deployed to Vercel; backend runs on Wispbyte.
+
+**Vercel project settings (must match exactly):**
+
+| Setting | Value |
+|---------|-------|
+| Root Directory | *(empty — repo root, not `artifacts/pulse`)* |
+| Framework Preset | Other |
+| Install Command | `pnpm install` |
+| Build Command | `BASE_PATH=/ pnpm --filter @workspace/pulse run build` |
+| Output Directory | `artifacts/pulse/dist` |
+
+These are already encoded in the root `vercel.json`; Vercel picks them up automatically as long as Root Directory is the repo root. If any Build & Output setting is overridden in the Vercel UI, it takes precedence over `vercel.json` — clear all overrides.
+
+**Required environment variable in Vercel** (Settings → Environment Variables):
+
+| Key | Value |
+|-----|-------|
+| `VITE_API_URL` | Wispbyte backend URL (e.g. `https://your-project.wispbyte.com`) |
+
+Without `VITE_API_URL` the frontend won't know where the API is and all requests will fail.
+
 ## User preferences
 
 _Populate as you build — explicit user instructions worth remembering across sessions._
