@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffd166"/>
+      <stop offset="35%" stop-color="#ff9433"/>
+      <stop offset="70%" stop-color="#ff5c1a"/>
+      <stop offset="100%" stop-color="#d63600"/>
+    </linearGradient>
+    <linearGradient id="shine" x1="5%" y1="5%" x2="55%" y2="55%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.65"/>
+      <stop offset="70%" stop-color="#ffffff" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="starGrad" x1="50%" y1="13%" x2="50%" y2="87%" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.85"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="shadow" x="-25%" y="-25%" width="150%" height="150%">
+      <feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#c83000" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+  <!-- Rounded background square -->
+  <rect x="3" y="3" width="94" height="94" rx="24" fill="url(#bg)" filter="url(#shadow)"/>
+  <!-- Inner border for depth -->
+  <rect x="3" y="3" width="94" height="94" rx="24" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
+  <!-- Nova 4-pointed star burst -->
+  <path d="M50 13 C50 13 54.5 41 87 50 C54.5 59 50 87 50 87 C50 87 45.5 59 13 50 C45.5 41 50 13 50 13Z"
+    fill="url(#starGrad)" filter="url(#glow)"/>
+  <!-- Shine overlay on star -->
+  <path d="M50 13 C50 13 54.5 41 87 50 C54.5 59 50 87 50 87 C50 87 45.5 59 13 50 C45.5 41 50 13 50 13Z"
+    fill="url(#shine)"/>
+  <!-- Center highlight -->
+  <circle cx="50" cy="50" r="5.5" fill="white" opacity="0.95"/>
+  <circle cx="50" cy="50" r="2.5" fill="white" opacity="1"/>
+  <!-- Gloss top-left highlight -->
+  <ellipse cx="37" cy="27" rx="15" ry="9" fill="white" opacity="0.12" transform="rotate(-20 37 27)"/>
+</svg>

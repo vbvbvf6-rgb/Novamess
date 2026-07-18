@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <ellipse cx="100" cy="110" rx="75" ry="72" fill="#FFD93D"/>
+  <ellipse cx="76" cy="93" rx="10" ry="11" fill="#2D2D2D"/>
+  <ellipse cx="124" cy="93" rx="10" ry="11" fill="#2D2D2D"/>
+  <circle cx="79" cy="89" r="3.5" fill="white"/>
+  <circle cx="127" cy="89" r="3.5" fill="white"/>
+  <ellipse cx="100" cy="128" rx="24" ry="18" fill="#2D2D2D"/>
+  <ellipse cx="100" cy="125" rx="20" ry="14" fill="#FF6B6B"/>
+  <ellipse cx="100" cy="128" rx="14" ry="8" fill="#CC3333"/>
+  <path d="M88 118 Q100 116 112 118" stroke="white" stroke-width="2.5" fill="none"/>
+  <ellipse cx="66" cy="136" rx="11" ry="8" fill="#FF9E9E" opacity="0.6"/>
+  <ellipse cx="134" cy="136" rx="11" ry="8" fill="#FF9E9E" opacity="0.6"/>
+  <path d="M55 72 Q42 55 58 65" stroke="#2D2D2D" stroke-width="3" fill="none"/>
+  <path d="M145 72 Q158 55 142 65" stroke="#2D2D2D" stroke-width="3" fill="none"/>
+  <text x="100" y="42" font-size="22" text-anchor="middle">🔥</text>
+</svg>
