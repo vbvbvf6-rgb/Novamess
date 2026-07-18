@@ -1,0 +1,11 @@
+[build]
+  command = "BASE_PATH=/ pnpm --filter @workspace/pulse run build"
+  publish = "artifacts/pulse/dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
