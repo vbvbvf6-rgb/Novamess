@@ -30,12 +30,14 @@ jobs:
           cache: pnpm
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --no-frozen-lockfile
 
       - name: Build
         run: BASE_PATH=/Novamess/ pnpm --filter @workspace/pulse run build
         env:
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          NODE_ENV: production
+          REPL_ID: ""
 
       - uses: actions/upload-pages-artifact@v3
         with:
