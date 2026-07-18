@@ -1,0 +1,101 @@
+[13:07:38]Server marked as offline
+[13:07:44][Wispbyte]: Checking server disk space usage, this could take a few seconds...
+[13:07:44][Wispbyte]: Updating process configuration files...
+[13:07:44][Wispbyte]: Ensuring file permissions are set correctly, this could take a few seconds...
+[13:07:45]Server marked as starting
+ __        ___           _           _       
+ \ \      / (_)___ _ __ | |__  _   _| |_ ___ 
+  \ \ /\ / /| / __| '_ \| '_ \| | | | __/ _ \
+   \ V  V / | \__ \ |_) | |_) | |_| | ||  __/
+    \_/\_/  |_|___/ .__/|_.__/ \__, |\__\___|
+                  |_|          |___/         
+Your server is currently starting! Enjoy using Wispbyte
+[13:07:51][Wispbyte] : Docker image pulled successfully
+[13:07:51]v19.9.0
+[13:07:51]Server marked as running
+[13:07:51]:/home/container$ if [[ -d .git ]] && [[ ${AUTO_UPDATE} == "1" ]]; then git pull; fi; if [[ ! -z ${NODE_PACKAGES} ]]; then /usr/local/bin/npm install ${NODE_PACKAGES}; fi; if [[ ! -z ${UNNODE_PACKAGES} ]]; then /usr/local/bin/npm uninstall ${UNNODE_PACKAGES}; fi; if [ -f /home/container/package.json ]; then /usr/local/bin/npm install; fi; /usr/local/bin/node /home/container/${JS_FILE}
+[13:07:51]hint: Pulling without specifying how to reconcile divergent branches is
+[13:07:51]hint: discouraged. You can squelch this message by running one of the following
+[13:07:51]hint: commands sometime before your next pull:
+[13:07:51]hint:
+[13:07:51]hint: git config pull.rebase false # merge (the default strategy)
+[13:07:51]hint: git config pull.rebase true # rebase
+[13:07:51]hint: git config pull.ff only # fast-forward only
+[13:07:51]hint:
+[13:07:51]hint: You can replace "git config" with "git config --global" to set a default
+[13:07:51]hint: preference for all repositories. You can also pass --rebase, --no-rebase,
+[13:07:51]hint: or --ff-only on the command line to override the configured default per
+[13:07:51]hint: invocation.
+[13:07:52]Already up to date.
+[13:07:56]25l[..................] | idealTree: sill logfile start cleaning logs, removing 1
+[..................] / idealTree: sill logfile start cleaning logs, removing 1
+[..................] / idealTree: sill logfile start cleaning logs, removing 1
+[..................] - idealTree: sill logfile start cleaning logs, removing 1
+[#########.........] | idealTree: timing idealTree Completed in 506ms
+[#########.........] / idealTree: timing idealTree Completed in 506ms
+[#########.........] / idealTree: timing idealTree Completed in 506ms
+[#########.........] / idealTree: timing idealTree Completed in 506ms
+[#########.........] / idealTree: timing idealTree Completed in 506ms
+[#########.........] / idealTree: timing idealTree Completed in 506ms
+[#########.........] / idealTree: timing idealTree Completed in 506ms
+[#########.........] / idealTree: timing idealTree Completed in 506ms 25h
+[13:07:56]> workspace@1.0.0 preinstall
+[13:07:56]> sh -c 'rm -f package-lock.json yarn.lock; case "$npm_config_user_agent" in pnpm/*) ;; *) echo "Use pnpm instead" >&2; exit 1 ;; esac'
+[13:07:56]Use pnpm instead
+[13:07:56]npm ERR! code 1
+[13:07:56]npm ERR! path /home/container
+[13:07:56]npm ERR! command failed
+[13:07:56]npm ERR! command sh -c sh -c 'rm -f package-lock.json yarn.lock; case "$npm_config_user_agent" in pnpm/*) ;; *) echo "Use pnpm instead" >&2; exit 1 ;; esac'
+[13:07:56]
+[13:07:56]npm ERR! A complete log of this run can be found in: /home/container/.npm/_logs/2026-07-18T08_08_13_640Z-debug-0.log
+[13:07:56]
+[13:07:56][Nova] Устанавливаем зависимости сервера...
+[13:08:00][Nova] Запускаем сервер...
+[13:08:00][start] Applying database migrations...
+[13:08:03]> @workspace/db@0.0.0 push-force /home/container/lib/db
+[13:08:03]> drizzle-kit push --force --config ./drizzle.config.ts
+[13:08:03]sh: 1: drizzle-kit: not found
+[13:08:04]/home/container/lib/db:
+[13:08:04] ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL @workspace/db@0.0.0 push-force: `drizzle-kit push --force --config ./drizzle.config.ts`
+[13:08:04]spawn ENOENT
+[13:08:04] WARN Local package.json exists, but node_modules missing, did you mean to install?
+[13:08:04][start] DB migration completed (possibly with warnings)
+[13:08:04][start] Starting server on port 8080...
+[13:08:04]node:internal/modules/cjs/loader:1093
+[13:08:04]throw err;
+[13:08:04]^
+[13:08:04]Error: Cannot find module '/home/runner/workspace/artifacts/api-server/dist/index.mjs'
+[13:08:04] в Module._resolveFilename (node:internal/modules/cjs/loader:1090:15)
+[13:08:04] в Module._load (узел: внутренний/модули/cjs/загрузчик:934:27)
+[13:08:04] в Function.executeUserEntryPoint [как runMain] (узел: внутренний/модули/run_main:83:12)
+[13:08:04] в узле: внутренний/основной/run_main_module:23:47 {
+[13:08:04]код: 'MODULE_NOT_FOUND',
+[13:08:04]requireStack: []
+[13:08:04]}
+[13:08:04]Node.js версия 19.9.0
+[13:08:04]узел: дочерний процесс: 960
+[13:08:04]выдает ошибку;
+[13:08:04]^
+[13:08:04]Ошибка: Сбой команды: bash scripts/start-prod.sh
+[13:08:04] при проверке execsyncerror (узел: child_process:885:11)
+[13:08:04] в execSync (узел: дочерний процесс:957:15)
+[13:08:04]в процессе выполнения (/home/container/index.js:6:3)
+[13:08:04]в объекте.<аноним> (/home/container/index.js:16:1)
+[13:08:04] в модуле._compile (узел: внутренний/модули/cjs/загрузчик:1275:14)
+[13:08:04] в Module._extensions..js (узел: внутренний/модули/cjs/загрузчик:1329:10)
+[13:08:04] в модуле.load (node:internal/modules/cjs/loader:1133:32)
+[13:08:04] в Module._load (node:internal/modules/cjs/loader:972:12)
+[13:08:04] at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:83:12) {
+[13:08:04]status: 1,
+[13:08:04]signal: null,
+[13:08:04]вывод: [ null, null, null ],
+[13:08:04]pid: 57,
+[13:08:04]стандартный вывод: null,
+[13:08:04]stderr: null
+[13:08:04]}
+[13:08:04]Node.js версия 19.9.0
+[13:08:05]Сервер помечен как отключенный
+[13:08:06][Wispbyte] : ---------- Обнаружен сбой серверного процесса! ----------
+[13:08:06][Wispbyte]: Код выхода: 1
+[13:08:06][Wispbyte]: Не хватает памяти: ложь
+[13:08:06][Wispbyte]: Прерывание автоматического перезапуска, последний сбой произошел менее 60 секунд назад.
