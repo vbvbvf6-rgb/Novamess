@@ -1,16 +1,29 @@
 // Nova Messenger — Wispbyte startup (pre-built, no compilation needed)
+
+// Load .env file first — Wispbyte writes env vars to /home/container/.env
+const fs = require("fs");
+const path = require("path");
+const envPath = path.join(__dirname, ".env");
+if (fs.existsSync(envPath)) {
+  const lines = fs.readFileSync(envPath, "utf8").split("\n");
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const idx = trimmed.indexOf("=");
+    if (idx === -1) continue;
+    const key = trimmed.slice(0, idx).trim();
+    const val = trimmed.slice(idx + 1).trim().replace(/^["']|["']$/g, "");
+    if (key && !process.env[key]) process.env[key] = val;
+  }
+  console.log("[Nova] Loaded .env file");
+}
+
 const { execSync } = require("child_process");
 
 function run(cmd, label) {
   console.log(`\n[Nova] ${label}...`);
-  execSync(cmd, { stdio: "inherit", cwd: process.cwd() });
+  execSync(cmd, { stdio: "inherit", cwd: process.cwd(), env: process.env });
 }
-
-// Установить только prod-зависимости API сервера (легко, ~50 пакетов)
-run(
-  "npm install --prefix artifacts/api-server --omit=dev 2>/dev/null || true",
-  "Устанавливаем зависимости сервера"
-);
 
 // Применить миграции и запустить готовый билд
 run("bash scripts/start-prod.sh", "Запускаем сервер");
