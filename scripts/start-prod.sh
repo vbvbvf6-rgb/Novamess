@@ -13,5 +13,6 @@ else
 fi
 
 echo "[start] Starting server on port ${PORT:-8080}..."
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PORT=${PORT:-8080} NODE_ENV=production node --enable-source-maps \
-  /home/runner/workspace/artifacts/api-server/dist/index.mjs
+  "$SCRIPT_DIR/../artifacts/api-server/dist/index.mjs"
