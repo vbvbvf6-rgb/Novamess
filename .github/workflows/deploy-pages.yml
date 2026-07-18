@@ -33,7 +33,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build
-        run: BASE_PATH=/ pnpm --filter @workspace/pulse run build
+        run: BASE_PATH=/Novamess/ pnpm --filter @workspace/pulse run build
         env:
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
 
