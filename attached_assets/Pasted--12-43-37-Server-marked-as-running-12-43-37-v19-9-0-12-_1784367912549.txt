@@ -1,0 +1,127 @@
+[12:43:37]Server marked as running
+[12:43:37]v19.9.0
+[12:43:37]:/home/container$ if [[ -d .git ]] && [[ ${AUTO_UPDATE} == "1" ]]; then git pull; fi; if [[ ! -z ${NODE_PACKAGES} ]]; then /usr/local/bin/npm install ${NODE_PACKAGES}; fi; if [[ ! -z ${UNNODE_PACKAGES} ]]; then /usr/local/bin/npm uninstall ${UNNODE_PACKAGES}; fi; if [ -f /home/container/package.json ]; then /usr/local/bin/npm install; fi; /usr/local/bin/node /home/container/${JS_FILE}
+[12:43:37]hint: Pulling without specifying how to reconcile divergent branches is
+[12:43:37]hint: discouraged. You can squelch this message by running one of the following
+[12:43:37]hint: commands sometime before your next pull:
+[12:43:37]hint:
+[12:43:37]hint: git config pull.rebase false # merge (the default strategy)
+[12:43:37]hint: git config pull.rebase true # rebase
+[12:43:37]hint: git config pull.ff only # fast-forward only
+[12:43:37]hint:
+[12:43:37]hint: You can replace "git config" with "git config --global" to set a default
+[12:43:37]hint: preference for all repositories. You can also pass --rebase, --no-rebase,
+[12:43:37]hint: or --ff-only on the command line to override the configured default per
+[12:43:37]hint: invocation.
+[12:43:37]Already up to date.
+[12:43:37]25l[..................] \ уточнение: хронометраж arborist: ctor Завершено за 3 мс [..................] \ idealTree: sill logfile выполнена очистка файлов журналов [..................] | idealTree: sill logfile выполнена очистка файлов журналов [..................] - idealTree: sill logfile выполнена очистка файлов журналов [..................] - idealTree: sill logfile выполнена очистка файлов журналов [..................] - idealTree: sill logfile выполнена очистка файлов журналов [..................] - idealTree: sill logfile выполнена очистка файлов журналов [..................] - idealTree: sill logfile выполнена очистка файлов журналов [..................] - idealTree: sill logfile выполнена очистка файлов журналов [..................] - idealTree: sill logfile выполнена очистка файлов журналов [..................] - idealTree: sill logfile выполнена очистка файлов журналов [..................] - idealTree: sill logfile выполнена очистка файлов журналов [..................] - idealTree: sill logfile выполнена очистка файлов журналов [..................] - idealTree: sill logfile выполнена очистка файлов журналов [..................] - idealTree: подоконник logfile выполнена очистка файлов журнала [#########.........] \ idealTree: контейнер: синхронизация idealTree: #root Завершено в [#########.........] \ idealTree:контейнер: синхронизация idealTree: #root Завершено в [#########.........] \ idealTree: контейнер: хронометраж idealTree:#root Завершено в [#########.........] \ idealTree: контейнер: хронометраж idealTree:#root завершено в [#########.........] \ idealTree:контейнер: синхронизация idealTree:#root Завершено в [#########.........] \ idealTree: контейнер: синхронизация idealTree:#root завершено в [#########.........] \ idealTree:контейнер: синхронизация idealTree:#root Завершено в [#########.........] \ idealTree: контейнер: синхронизация idealTree:#root завершено в [#########.........] | idealTree: хронометраж idealTree завершен за 3585 мс [#########.........] | idealTree: хронометраж idealTree завершен за 3585 мс [#########.........] | idealTree: синхронизация idealTree завершена за 3585 мс [#########.........] | reify: undici-типы: массовый запрос на проверку  порога { [#########.........] | reify: undici-типы: массовый запрос на подоконный аудит { [#########.........] / reify: undici-типы: массовый запрос на подоконный аудит { [#########.........] / reify: undici-типы: массовый запрос на подоконный аудит { [#########.........] / reify: undici-типы: массовый запрос на подоконный аудит { [#########.........] / уточнение: undici-типы: массовый запрос на подоконный аудит { [#########.........] - уточнение: undici-типы: подоконный аудит массовый запрос { [#########.........] - reify: undici-типы: массовый запрос на подоконник аудита { [#########.........] - reify: undici-типы: массовый запрос на подоконник аудита { [#########.........] - уточнение: undici-типы: массовый запрос на подоконник аудита { [#########.........] - уточнение: undici-типы: массовый запрос на подоконник аудита { [#########.........] - уточнение: undici-типы: массовый запрос на подоконник аудита { [#########.........] - уточнение: undici-типы: массовый запрос на подоконник аудита { [#########.........] - уточнение: undici-типы: массовый запрос на подоконник аудита { [#########.........] - уточнение: undici-типы: массовый запрос на подоконник аудита { [##################] - reify: undici-типы: http выборка GET 200 https://registry. [##################] - reify:undici-types: http fetch GET 200 https://registry. [##################] - reify:undici-types: http fetch GET 200 https://registry. [##################] - reify:undici-types: http fetch GET 200 https://registry. [##################] - reify:undici-types: http fetch GET 200 https://registry. [##################] - reify:undici-types: http fetch GET 200 https://registry. [##################] - reify:undici-types: http fetch GET 200 https://registry. [##################] - reify:undici-types: http fetch GET 200 https://registry. [##################] - reify:undici-types: http fetch GET 200 https://registry. [##################] - reify:undici-types: http fetch GET 200 https://registry. [##################] - reify:undici-types: http fetch GET 200 https://registry. [##################] - reify:undici-types: http fetch GET 200 https://registry. [##################] - reify:undici-types: http fetch GET 200 https://registry. [##################] - reify:undici-types: http fetch GET 200 https://registry. [##################] \ reify:undici-types: http fetch GET 200 https://registry. [##################] | reify:undici-types: http fetch GET 200 https://registry. 25h
+[12:43:37]> workspace@1.0.0 preinstall
+[12:43:37]> sh -c 'rm -f package-lock.json yarn.lock; case "$npm_config_user_agent" in pnpm/*) ;; *) echo "Use pnpm instead" >&2; exit 1 ;; esac'
+[12:43:37]Вместо этого используйте pnpm
+ошибка с кодом! npm [12:43:37] 1
+ошибка в пути! npm [12:43:37] /главная страница/контейнер
+ОШИБКА!npm [12:43:37] сбой команды
+командаОШИБКА! npm [12:43:37] sh -c sh -c 'rm -f package-lock.json yarn.lock; регистр "$npm_config_user_agent" в pnpm/*) ;; *) echo "Вместо этого использовать pnpm" >&2; выход 1 ;; esac'
+[12:43:37]
+ОШИБКА!npm [12:43:37] Полный журнал этого запуска можно найти по адресу: /home/container/.npm/_logs/2026-07-18T07_42_55_806Z-debug-0.log
+[12:43:37][Nova] pnpm уже установлен
+[12:43:38][Nova] Устанавливаем зависимости...
+[12:43:38]Область действия: все 9 проектов рабочей области
+[12:43:38]Файл блокировки обновлен, шаг разрешения пропущен
+[12:43:39]Количество посылок: +681
+[12:43:41]Прогресс: решено 0, повторно использовано 1, загружено 0, добавлено 0
+[12:43:42] [1AProgress: resolved 0, reused 4, downloaded 0, added 0
+[12:43:43] [1AProgress: resolved 0, reused 5, downloaded 0, added 0
+[12:43:44] [1AProgress: resolved 0, reused 9, downloaded 0, added 0
+[12:43:45] [1прогресс: решено 0, повторно использовано 12, загружено 0, добавлено 0
+[12:43:45] [1прогресс: решено 0, повторно использовано 15, загружено 0, добавлено 0
+[12:43:46] [1прогресс: решено 0, повторно использовано 17, загружено 0, добавлено 0
+[12:43:46] [1прогресс: решено 0, повторно использовано 23, загружено 0, добавлено 0
+[12:43:47] [1AProgress: resolved 0, reused 30, downloaded 0, added 0
+[12:43:47] [1AProgress: resolved 0, reused 35, downloaded 0, added 0
+[12:43:49] [1AProgress: решено 0, повторно использовано 45, загружено 0, добавлено 0
+[12:43:51] [1AProgress: решено 0, повторно использовано 52, загружено 0, добавлено 0
+[12:43:51] [1AProgress: решено 0, повторно использовано 63, загружено 0, добавлено 0
+[12:43:52] [1AProgress: решено 0, повторно использовано 87, загружено 0, добавлено 0
+[12:43:53] [1AProgress: решено 0, повторно использовано 96, загружено 0, добавлено 0
+[12:43:56] [1AProgress: resolved 0, reused 105, downloaded 0, added 0
+[12:43:56] [1AProgress: resolved 0, reused 115, downloaded 0, added 0
+[12:43:57] [1AProgress: resolved 0, reused 126, downloaded 0, added 0
+[12:43:58]Загрузка react-icons@5.6.0: 0,00 Б/22,42 МБ
+[12:43:58] [1AЗагрузка react-icons@5.6.0: 429,00 Б/22,42 МБ
+[12:43:58] [2AПрогресс: разрешен 0, повторно использовано 134, загружено 0, добавлено 0
+[12:43:58] [1B [1ADownloading react-icons@5.6.0: 54,29 КБ/22,42 МБ
+[12:43:58] [2AProgress: resolved 0, reused 135, downloaded 0, added 0
+[12:43:59] [1B [1ADownloading react-icons@5.6.0: 202,15 КБ/22,42 МБ
+[12:43:59] [1ADownloading react-icons@5.6.0: 243.37 kB/22.42 MB
+[12:44:00] [1ADownloading react-icons@5.6.0: 259.76 kB/22.42 MB
+[12:44:00] [1ADownloading react-icons@5.6.0: 392,40 КБ/22,42 МБ
+[12:44:01] [1ADownloading react-icons@5.6.0: 556,24 КБ/22,42 МБ
+[12:44:01] [1ADownloading react-icons@5.6.0: 769,23 КБ/22,42 МБ
+[12:44:02] [1ADownloading react-icons@5.6.0: 933,07 КБ/22,42 МБ
+[12:44:02] [1загрузка react-icons@5.6.0: 1.23 MB/22.42 MB
+[12:44:03] [1загрузка react-icons@5.6.0: 1.83 MB/22.42 MB
+[12:44:04] [1загрузка react-icons@5.6.0: 2.72 MB/22.42 MB
+[12:44:04] [1загрузка react-icons@5.6.0: 4,62 МБ/22,42 МБ
+[12:44:05] [1загрузка react-icons@5.6.0: 6,98 МБ/22,42 МБ
+[12:44:05] [2прогресс: решено 0, повторно использовано 135, загружено 0, добавлено 1
+[12:44:05] [1B [1 Загрузка react-icons@5.6.0: 7,96 МБ/22,42 МБ
+[12:44:05] [2прогресс: решено 0, повторно использовано 135, загружено 0, добавлено 3
+[12:44:06] [1B [1ADownloading react-icons@5.6.0: 8,29 МБ/22,42 МБ
+[12:44:06] [1ADownloading react-icons@5.6.0: 8,52 МБ/22,42 МБ
+[12:44:07] [1ADownloading react-icons@5.6.0: 8,85 МБ/22,42 МБ
+[12:44:09] [1ADownloading react-icons@5.6.0: 9.26 MB/22.42 MB
+[12:44:09] [2AProgress: resolved 0, reused 135, downloaded 5, added 3
+[12:44:09] [1B [1ADownloading react-icons@5.6.0: 9.27 MB/22.42 MB
+[12:44:10] [1ADownloading react-icons@5.6.0: 10,39 МБ/22,42 МБ
+[12:44:12] [2AProgress: resolved 0, reused 135, downloaded 12, added 4
+[12:44:12] [1B [1ADownloading react-icons@5.6.0: 10.57 MB/22.42 MB
+[12:44:12] [1ADownloading react-icons@5.6.0: 10.58 MB/22.42 MB
+[12:44:15] [2AProgress: resolved 0, reused 135, downloaded 20, added 4
+[12:44:15] [1B [1ADownloading react-icons@5.6.0: 11.88 MB/22.42 MB
+[12:44:15] [1ADownloading react-icons@5.6.0: 11.89 MB/22.42 MB
+[12:44:16] [1ADownloading react-icons@5.6.0: 12,46 МБ/22,42 МБ
+[12:44:17] [1ADownloading react-icons@5.6.0: 12,85 МБ/22,42 МБ
+[12:44:19] [2AProgress: resolved 0, reused 135, downloaded 24, added 7
+[12:44:19] [1B [1ADownloading react-icons@5.6.0: 13.19 MB/22.42 MB
+[12:44:19] [1ADownloading react-icons@5.6.0: 13.21 MB/22.42 MB
+[12:44:19] [1ADownloading react-icons@5.6.0: 14,48 МБ/22,42 МБ
+[12:44:21] [2прогресс: решено 0, повторно использовано 135, загружено 25, добавлено 11
+[12:44:21] [1B [1 Загрузка react-icons@5.6.0: 14.49 MB/22.42 MB
+[12:44:21] [1загрузка react-icons@5.6.0: 14.51 MB/22.42 MB
+[12:44:22] [1загрузка react-icons@5.6.0: 15.25 MB/22.42 MB
+[12:44:24] [2прогресс: решено 0, повторно использовано 135, загружено 27, добавлено 15
+[12:44:24] [1B [1 Загрузка react-icons@5.6.0: 15,81 МБ/22,42 МБ
+[12:44:24] [1загрузка react-icons@5.6.0: 15.82 MB/22.42 MB
+[12:44:25] [1загрузка react-icons@5.6.0: 16,77 МБ/22,42 МБ
+[12:44:26] [2прогресс: решено 0, повторно использовано 135, загружено 32, добавлено 16
+[12:44:26] [1B [1 Загрузка react-icons@5.6.0: 17.12 MB/22.42 MB
+[12:44:26] [1загрузка react-icons@5.6.0: 17,13 МБ/22,42 МБ
+[12:44:27] [1 Загрузка react-icons@5.6.0: 18,23 МБ/22,42 МБ
+[12:44:30] [2AProgress: resolved 0, reused 135, downloaded 35, added 19
+[12:44:30] [1B [1ADownloading react-icons@5.6.0: 18.43 MB/22.42 MB
+[12:44:30] [1ADownloading react-icons@5.6.0: 18.44 MB/22.42 MB
+[12:44:32] [2прогресс: решено 0, повторно использовано 135, загружено 41, добавлено 20
+[12:44:32] [1B [1 Загрузка react-icons@5.6.0: 19.74 MB/22.42 MB
+[12:44:32] [1загрузка react-icons@5.6.0: 19,75 МБ/22,42 МБ
+[12:44:32] [1загрузка react-icons@5.6.0: 20.26 MB/22.42 MB
+[12:44:33] [1загрузка react-icons@5.6.0: 20,59 МБ/22,42 МБ
+[12:44:34] [2прогресс: решено 0, повторно использовано 135, загружено 45, добавлено 23
+[12:44:35] [1B [1 Загрузка react-icons@5.6.0: 21.03 MB/22.42 MB
+[12:44:35] [1загрузка react-icons@5.6.0: 21.05 MB/22.42 MB
+[12:44:35] [1загрузка react-icons@5.6.0: 22.00 MB/22.42 MB
+[12:44:38] [2A ПРЕДУПРЕЖДАЮ, что средняя скорость загрузки архива 18 КБ / с (размер 66 КБ) ниже 50 КБ / с: https://registry.npmjs.org/postal-mime/-/postal-mime-2.7.4.tgz (ПОЛУЧИТЬ)
+[12:44:38]Прогресс: решено 0, повторно использовано 135, загружено 45, добавлено 23
+[12:44:38]Загрузка react-icons@5.6.0: 22.00 MB/22.42 MB
+[12:44:39] [2AProgress: resolved 0, reused 135, downloaded 52, added 24
+[12:44:39] [1B [1ADownloading react-icons@5.6.0: 22.35 MB/22.42 MB
+[12:44:39] [1ADownloading react-icons@5.6.0: 22.36 MB/22.42 MB
+[12:44:43] [2прогресс: решено 0, повторно использовано 135, загружено 59, добавлено 24
+[12:44:43] [1B [2загрузка react-icons@5.6.0: 22.42 МБ/22.42 МБ, готово
+[12:44:43]Прогресс: решено 0, повторно использовано 135, загружено 59, добавлено 24
+[12:44:47] [1AProgress: решено 0, повторно использовано 135, загружено 63, добавлено 27
+[12:44:54] [1AProgress: решено 0, повторно использовано 135, загружено 70, добавлено 28
+[12:44:57] [1AProgress: решено 0, повторно использовано 135, загружено 78, добавлено 28
+[12:45:00] [1A WARN GET https://registry.npmjs.org/https-proxy-agent/-/https-proxy-agent-7.0.6.tgz ошибка (ECONNRESET). Повторная попытка через 10 секунд. Осталось 2 повторных попытки.
+[12:45:00]Прогресс: решено 0, повторно использовано 135, загружено 78, добавлено 28
+[12:45:00] [1AПрогресс: решено 0, повторно использовано 135, загружено 81, добавлено 31
