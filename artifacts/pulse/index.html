@@ -28,10 +28,63 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Preconnect to backend so TCP+TLS is ready before JS fires requests -->
+    <meta name="x-api-url" content="%VITE_API_URL%" />
   </head>
   <body>
     <script>
       (function(){var t=localStorage.getItem('pulse-theme');if(t==='light'){document.documentElement.classList.add('light');}else{document.documentElement.classList.add('dark');}})();
+    </script>
+    <!-- Early prefetch: fires API requests BEFORE the JS bundle even loads.
+         Saves ~400ms on warm server; starts waking up cold server sooner. -->
+    <script>
+    (function(){
+      try {
+        // Read API base from meta tag (set by Vite at build time)
+        var apiMeta = document.querySelector('meta[name="x-api-url"]');
+        var apiBase = apiMeta ? apiMeta.getAttribute('content') : '';
+        // If the meta tag wasn't substituted (dev mode or var not set), use relative
+        if (!apiBase || apiBase.indexOf('http') !== 0) apiBase = '';
+
+        // Add preconnect dynamically so browser opens TCP+TLS early
+        if (apiBase) {
+          try {
+            var origin = new URL(apiBase).origin;
+            var lnk = document.createElement('link');
+            lnk.rel = 'preconnect'; lnk.href = origin; lnk.crossOrigin = 'anonymous';
+            document.head.appendChild(lnk);
+          } catch(e) {}
+        }
+
+        // Extract saved auth token
+        var token = null;
+        try {
+          var accounts = JSON.parse(localStorage.getItem('pulse-accounts') || '[]');
+          if (Array.isArray(accounts) && accounts.length > 0 && accounts[0].token) {
+            token = accounts[0].token;
+          }
+        } catch(e) {}
+        if (!token) token = sessionStorage.getItem('pulse-token');
+
+        if (token) {
+          var h = { 'Authorization': 'Bearer ' + token };
+          var base = apiBase;
+          var get = function(path) {
+            return fetch(base + path, { headers: h, credentials: 'same-origin' })
+              .then(function(r){ return r.ok ? r.json() : null; })
+              .catch(function(){ return null; });
+          };
+          // Fire all critical requests in parallel immediately
+          window.__prefetch = {
+            me:       get('/api/users/me'),
+            chats:    get('/api/chats'),
+            contacts: get('/api/contacts'),
+            posts:    get('/api/posts'),
+            stories:  get('/api/stories'),
+          };
+        }
+      } catch(e) {}
+    })();
     </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>

@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Switch, Route, Router as WouterRouter, useLocation, useParams } from "wouter";
-import { QueryClient } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
-import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
+import { queryClient, localStoragePersister } from "@/lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppProvider } from "@/contexts/AppContext";
@@ -54,28 +53,6 @@ import Privacy from "@/pages/Privacy";
 import Terms from "@/pages/Terms";
 import JoinInvite from "@/pages/JoinInvite";
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 1000 * 60 * 5,    // данные «свежие» 5 минут
-      gcTime: 1000 * 60 * 60 * 24, // хранить в памяти 24 часа
-      retry: 2,
-    },
-  },
-});
-
-// Синхронный персистер — восстанавливает кеш ДО первого рендера
-const localStoragePersister = (() => {
-  try {
-    return createSyncStoragePersister({
-      storage: window.localStorage,
-      key: "nova-query-cache",
-      throttleTime: 2000,
-    });
-  } catch {
-    return undefined; // приватный режим — работаем без кеша
-  }
-})();
 
 function LandscapeBlock() {
   const [on, setOn] = useState(false);
