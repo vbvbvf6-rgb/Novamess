@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Switch, Route, Router as WouterRouter, useLocation, useParams } from "wouter";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { persistQueryClient } from "@tanstack/react-query-persist-client";
+import { QueryClient } from "@tanstack/react-query";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -57,39 +57,25 @@ import JoinInvite from "@/pages/JoinInvite";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5,   // данные считаются свежими 5 минут
+      staleTime: 1000 * 60 * 5,    // данные «свежие» 5 минут
       gcTime: 1000 * 60 * 60 * 24, // хранить в памяти 24 часа
       retry: 2,
     },
   },
 });
 
-// Персистентный кеш: при следующем открытии данные появятся мгновенно
-try {
-  const localStoragePersister = createSyncStoragePersister({
-    storage: window.localStorage,
-    key: "nova-query-cache",
-    throttleTime: 2000,
-  });
-  persistQueryClient({
-    queryClient,
-    persister: localStoragePersister,
-    maxAge: 1000 * 60 * 60 * 24, // кеш живёт 24 часа
-    // Не кешируем чувствительные данные — только чаты и профили
-    dehydrateOptions: {
-      shouldDehydrateQuery: (query) => {
-        const key = query.queryKey[0];
-        return typeof key === "string" && (
-          key.includes("/api/chats") ||
-          key.includes("/api/users/me") ||
-          key.includes("/api/stories")
-        );
-      },
-    },
-  });
-} catch {
-  // localStorage недоступен (приватный режим) — работаем без кеша
-}
+// Синхронный персистер — восстанавливает кеш ДО первого рендера
+const localStoragePersister = (() => {
+  try {
+    return createSyncStoragePersister({
+      storage: window.localStorage,
+      key: "nova-query-cache",
+      throttleTime: 2000,
+    });
+  } catch {
+    return undefined; // приватный режим — работаем без кеша
+  }
+})();
 
 function LandscapeBlock() {
   const [on, setOn] = useState(false);
@@ -903,7 +889,23 @@ function App() {
     <ErrorBoundary>
     <LandscapeBlock />
     <LanguageProvider>
-      <QueryClientProvider client={queryClient}>
+      <PersistQueryClientProvider
+        client={queryClient}
+        persistOptions={localStoragePersister ? {
+          persister: localStoragePersister,
+          maxAge: 1000 * 60 * 60 * 24,
+          dehydrateOptions: {
+            shouldDehydrateQuery: (query) => {
+              const key = query.queryKey[0];
+              return typeof key === "string" && (
+                key === "/api/chats" ||
+                key === "/api/users/me" ||
+                key === "/api/stories"
+              );
+            },
+          },
+        } : { persister: { persistClient: async () => {}, restoreClient: async () => undefined, removeClient: async () => {} } }}
+      >
         <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
           <Switch>
             <Route path="/privacy" component={Privacy} />
@@ -933,7 +935,7 @@ function App() {
           </Switch>
           <PwaInstallPrompt />
         </WouterRouter>
-      </QueryClientProvider>
+      </PersistQueryClientProvider>
     </LanguageProvider>
     <AnimatePresence>
       {showLoginSplash && <LoginSplash onDone={() => setShowLoginSplash(false)} />}
