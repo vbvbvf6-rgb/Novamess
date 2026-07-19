@@ -82,6 +82,8 @@
     "@capacitor/core": "^8.4.1",
     "@capacitor/local-notifications": "^8.2.0",
     "@capacitor/push-notifications": "^8.1.1",
+    "@tanstack/query-sync-storage-persister": "^5.101.2",
+    "@tanstack/react-query-persist-client": "^5.101.2",
     "socket.io-client": "^4.8.3"
   }
 }
