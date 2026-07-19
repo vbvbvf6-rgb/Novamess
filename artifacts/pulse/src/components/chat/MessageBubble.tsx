@@ -1632,6 +1632,23 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[9999] bg-black/90 flex items-center justify-center"
             onClick={() => setLightbox(null)}
+            onTouchStart={(e) => {
+              const t = e.touches[0];
+              (e.currentTarget as any)._swipeStartX = t.clientX;
+              (e.currentTarget as any)._swipeStartY = t.clientY;
+            }}
+            onTouchEnd={(e) => {
+              const startX = (e.currentTarget as any)._swipeStartX ?? 0;
+              const startY = (e.currentTarget as any)._swipeStartY ?? 0;
+              const dx = e.changedTouches[0].clientX - startX;
+              const dy = e.changedTouches[0].clientY - startY;
+              if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50) {
+                if (dx < 0) setLightbox(l => l && l.idx < l.urls.length - 1 ? { ...l, idx: l.idx + 1 } : l);
+                else setLightbox(l => l && l.idx > 0 ? { ...l, idx: l.idx - 1 } : l);
+              } else if (dy > 80 && Math.abs(dx) < 60) {
+                setLightbox(null); // свайп вниз — закрыть
+              }
+            }}
           >
             <button
               className="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/10 hover:bg-white/10 flex items-center justify-center text-white transition-colors z-10"

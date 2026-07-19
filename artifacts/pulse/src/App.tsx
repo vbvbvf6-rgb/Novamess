@@ -900,7 +900,9 @@ function App() {
               return typeof key === "string" && (
                 key === "/api/chats" ||
                 key === "/api/users/me" ||
-                key === "/api/stories"
+                key === "/api/stories" ||
+                key === "/api/contacts" ||
+                key === "/api/posts"
               );
             },
           },
