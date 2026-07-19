@@ -41,7 +41,7 @@ router.use(adminRouter);
 // router.use(aiRouter); // AI feature disabled
 router.use(eventsRouter);
 router.use(walletRouter);
-router.use(botsRouter);
+if (!process.env.DISABLE_BOTS) router.use(botsRouter);
 router.use(supportRouter);
 router.use(primeRouter);
 router.use(pushRouter);
