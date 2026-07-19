@@ -1,4 +1,4 @@
-const CACHE_NAME = "nova-mrqjqne9";
+const CACHE_NAME = "nova-mrrguzzu";
 const SHELL_URLS = ["/", "/manifest.json", "/favicon.svg", "/icon-192.png", "/icon-512.png"];
 
 self.addEventListener("install", (e) => {
