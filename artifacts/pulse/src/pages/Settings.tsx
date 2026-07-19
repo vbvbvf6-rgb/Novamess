@@ -10,7 +10,7 @@ import {
   Sun, Palette, Database, Edit3, CheckCircle, LogOut, Link, Key, Eye,
   EyeOff, Phone, Globe, Type, Download, Trash2, Copy, Check, ChevronDown,
   ChevronRight, User, Radio, BellOff, Volume2, VolumeX, Clock, MessageSquare,
-  Gift, PhoneCall, Monitor, Zap, AlertTriangle, X, Flame, Upload, Camera, Crown,
+  PhoneCall, Monitor, Zap, AlertTriangle, X, Flame, Upload, Camera, Crown,
   ShieldCheck, QrCode, Fingerprint, LogIn, HelpCircle, RefreshCw,
   Battery, FolderOpen, ArrowLeft, Mic, Headphones, Bot,
   SlidersHorizontal, Layers, Calendar, Play, FileText, MapPin, Mail, SendHorizonal
@@ -1397,7 +1397,7 @@ export default function Settings() {
   // Notifications
   const [notifyMessages, setNotifyMessages] = useState(() => lsb("pulse-notify-messages", true));
   const [notifySounds, setNotifySounds] = useState(() => lsb("pulse-notify-sounds", true));
-  const [notifyGifts, setNotifyGifts] = useState(() => lsb("pulse-notify-gifts", true));
+
   const [notifyCalls, setNotifyCalls] = useState(() => lsb("pulse-notify-calls", true));
   const [notifyPreview, setNotifyPreview] = useState(() => lsb("pulse-notify-preview", true));
   const [notificationSound, setNotificationSound] = useState(() => localStorage.getItem("pulse-notification-sound") || "classic");
@@ -2214,9 +2214,6 @@ export default function Settings() {
                 <Row icon={<Volume2 size={18}/>} color="bg-blue-500/10 text-blue-500"
                   label={t("settings.notifySounds")} desc={t("settings.notifySoundsDesc")}
                   right={<Switch checked={notifySounds} onCheckedChange={v => { setNotifySounds(v); setLs("pulse-notify-sounds", v); toast({ title: v ? t("notify.on") : t("notify.off"), description: t("settings.notifySounds") }); }}/>}/>
-                <Row icon={<Gift size={18}/>} color="bg-pink-500/10 text-pink-500"
-                  label={t("settings.notifyGifts")} desc={t("settings.notifyGiftsDesc")}
-                  right={<Switch checked={notifyGifts} onCheckedChange={v => { setNotifyGifts(v); setLs("pulse-notify-gifts", v); }}/>}/>
                 <Row icon={<PhoneCall size={18}/>} color="bg-green-500/10 text-green-500"
                   label={t("settings.notifyCalls")} desc={t("settings.notifyCallsDesc")}
                   right={<Switch checked={notifyCalls} onCheckedChange={v => { setNotifyCalls(v); setLs("pulse-notify-calls", v); }}/>}/>

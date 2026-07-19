@@ -142,7 +142,7 @@ export function useNotifications() {
         image?: string;
         url?: string;
         tag?: string;
-        type?: "message" | "call" | "gift";
+        type?: "message" | "call";
       } = {}
     ) => {
       if (typeof Notification === "undefined") return;
@@ -152,7 +152,7 @@ export function useNotifications() {
       const type = options.type ?? "message";
       if (type === "message" && localStorage.getItem("pulse-notify-messages") === "false") return;
       if (type === "call" && localStorage.getItem("pulse-notify-calls") === "false") return;
-      if (type === "gift" && localStorage.getItem("pulse-notify-gifts") === "false") return;
+
 
       const showPreview = localStorage.getItem("pulse-notify-preview") !== "false";
       const body = showPreview ? (options.body || "") : "";

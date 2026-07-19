@@ -20,13 +20,7 @@ router.get("/users/me", async (req, res) => {
     const ageVerified = row?.age_verified === true || row?.age_verified === "t" || row?.age_verified === 1;
     const isAdmin = row?.is_admin === true || row?.is_admin === "t" || row?.is_admin === 1;
     const isBot = row?.is_bot === true || row?.is_bot === "t" || row?.is_bot === 1;
-    const popularityRow = await db.execute(sql`
-      SELECT COALESCE(SUM(gi.price), 0)::int AS popularity
-      FROM gifts g
-      JOIN gift_items gi ON gi.id = g.gift_item_id
-      WHERE g.receiver_id = ${uid} AND g.is_anonymous = false
-    `);
-    const popularity = Number((popularityRow.rows[0] as any)?.popularity || 0);
+    const popularity = 0;
     res.json({ ...user, balance, hasPrime, primeTier, primeExpiresAt: row?.prime_expires_at ?? null, usernameChangedAt: row?.username_changed_at ?? null, ageVerified, isAdmin, isBot, popularity });
   } catch (err) {
     req.log.error(err);
@@ -149,13 +143,7 @@ router.get("/users/:userId", async (req, res) => {
     const userId = Number(req.params.userId);
     const user = await db.query.usersTable.findFirst({ where: eq(usersTable.id, userId) });
     if (!user) return res.status(404).json({ error: "User not found" });
-    const popularityRow = await db.execute(sql`
-      SELECT COALESCE(SUM(gi.price), 0)::int AS popularity
-      FROM gifts g
-      JOIN gift_items gi ON gi.id = g.gift_item_id
-      WHERE g.receiver_id = ${userId} AND g.is_anonymous = false
-    `);
-    const popularity = Number((popularityRow.rows[0] as any)?.popularity || 0);
+    const popularity = 0;
     if (userId !== requesterId && !(user as any).showOnlineStatus) {
       return res.json({ ...user, status: "offline", lastSeen: null, popularity });
     }
@@ -169,14 +157,12 @@ router.get("/users/:userId", async (req, res) => {
 router.get("/stats/me", async (req, res) => {
   try {
     const uid = req.currentUserId;
-    const { messagesTable, callsTable, giftsTable, chatMembersTable, contactsTable } = await import("@workspace/db");
+    const { messagesTable, callsTable, chatMembersTable, contactsTable } = await import("@workspace/db");
     const { count, sum } = await import("drizzle-orm");
 
     const [msgCount] = await db.select({ count: count() }).from(messagesTable).where(eq(messagesTable.senderId, uid));
     const [callCount] = await db.select({ count: count() }).from(callsTable).where(eq(callsTable.callerId, uid));
     const [callDuration] = await db.select({ total: sum(callsTable.durationSeconds) }).from(callsTable).where(eq(callsTable.callerId, uid));
-    const [giftsSent] = await db.select({ count: count() }).from(giftsTable).where(eq(giftsTable.senderId, uid));
-    const [giftsReceived] = await db.select({ count: count() }).from(giftsTable).where(eq(giftsTable.receiverId, uid));
     const [chatsCount] = await db.select({ count: count() }).from(chatMembersTable).where(eq(chatMembersTable.userId, uid));
     const [contactsCount] = await db.select({ count: count() }).from(contactsTable).where(eq(contactsTable.userId, uid));
 
@@ -187,52 +173,12 @@ router.get("/stats/me", async (req, res) => {
       messagesSent: Number(msgCount?.count ?? 0),
       callsMade: Number(callCount?.count ?? 0),
       callDurationSeconds: Number(callDuration?.total ?? 0),
-      giftsSent: Number(giftsSent?.count ?? 0),
-      giftsReceived: Number(giftsReceived?.count ?? 0),
+      giftsSent: 0,
+      giftsReceived: 0,
       chatsCount: Number(chatsCount?.count ?? 0),
       contactsCount: Number(contactsCount?.count ?? 0),
       popularity: Math.min(balance, 10000),
     });
-  } catch (err) {
-    req.log.error(err);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-// Gift Showcase: top rarest unique gifts received by a user (public)
-router.get("/users/:userId/gift-showcase", async (req, res) => {
-  try {
-    const targetId = Number(req.params.userId);
-    if (!targetId) return res.status(400).json({ error: "Invalid userId" });
-
-    const rows = await db.execute(sql`
-      SELECT
-        gi.id,
-        gi.name,
-        gi.emoji,
-        gi.rarity,
-        gi.animation_type,
-        gi.stars,
-        COUNT(g.id)::int AS count
-      FROM gifts g
-      JOIN gift_items gi ON gi.id = g.gift_item_id
-      WHERE g.receiver_id = ${targetId}
-        AND g.is_anonymous = false
-      GROUP BY gi.id, gi.name, gi.emoji, gi.rarity, gi.animation_type, gi.stars
-      ORDER BY
-        CASE gi.rarity
-          WHEN 'cosmic'    THEN 1
-          WHEN 'legendary' THEN 2
-          WHEN 'epic'      THEN 3
-          WHEN 'rare'      THEN 4
-          ELSE 5
-        END ASC,
-        gi.stars DESC,
-        count DESC
-      LIMIT 8
-    `);
-
-    res.json(rows.rows);
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });
@@ -441,7 +387,7 @@ router.delete("/users/me", async (req, res) => {
       sql`DELETE FROM message_reactions WHERE user_id = ${uid}`,
       sql`DELETE FROM story_views WHERE viewer_id = ${uid}`,
       sql`DELETE FROM stories WHERE user_id = ${uid}`,
-      sql`DELETE FROM gifts WHERE sender_id = ${uid} OR receiver_id = ${uid}`,
+
       sql`DELETE FROM calls WHERE caller_id = ${uid} OR callee_id = ${uid}`,
       sql`DELETE FROM contacts WHERE user_id = ${uid} OR contact_id = ${uid}`,
       sql`DELETE FROM contact_requests WHERE from_user_id = ${uid} OR to_user_id = ${uid}`,
@@ -485,7 +431,7 @@ router.delete("/users/me", async (req, res) => {
         security_question = NULL,
         security_answer = NULL,
         id_document_url = NULL,
-        last_monthly_gift_at = NULL,
+
         prime_tier = NULL,
         prime_expires_at = NULL
       WHERE id = ${uid}

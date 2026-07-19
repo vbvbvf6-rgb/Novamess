@@ -2,22 +2,21 @@ const PROGRESS_KEY = "pulse-quests-progress";
 const DONE_KEY = "pulse-quests-done";
 const RESET_KEY = "pulse-quests-reset";
 
-export type QuestAction = "message_sent" | "call_made" | "reaction_added" | "gift_sent" | "contact_added";
+export type QuestAction = "message_sent" | "call_made" | "reaction_added" | "contact_added";
 
 const QUEST_ACTIONS: Record<string, QuestAction[]> = {
   q1: ["message_sent"],
   q2: ["call_made"],
   q3: ["reaction_added"],
-  q4: ["gift_sent"],
   q5: ["contact_added"],
   q6: ["call_made"],
 };
 
 const QUEST_TOTALS: Record<string, number> = {
-  q1: 5, q2: 1, q3: 3, q4: 1, q5: 3, q6: 5,
+  q1: 5, q2: 1, q3: 3, q5: 3, q6: 5,
 };
 
-const DAILY_QUESTS = ["q1", "q2", "q3", "q4"];
+const DAILY_QUESTS = ["q1", "q2", "q3"];
 const WEEKLY_QUESTS = ["q5", "q6"];
 
 function getTodayKey(): string {

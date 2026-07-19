@@ -437,7 +437,7 @@ function SparkActivityLog() {
       sent: "Отправлено",
       received: "Получено",
       daily_bonus: "Ежедневный бонус",
-      monthly_gift: "Ежемесячный подарок",
+
       subscription: "Подписка",
       subscription_bonus: "Бонус подписки",
       purchase: "Пополнение",
@@ -476,7 +476,7 @@ function SparkActivityLog() {
             Number(act.amount) > 0 ? "bg-green-500/15" : Number(act.amount) < 0 ? "bg-red-500/15" : "bg-secondary"
           }`}>
             {act.type === "daily_bonus" ? "🎁" :
-             act.type === "monthly_gift" ? "💎" :
+
              act.type === "subscription" ? "👑" :
              act.type === "sent" ? "📤" :
              act.type === "received" ? "📥" :

@@ -1,7 +1,7 @@
 import { db } from "@workspace/db";
 import { sql } from "drizzle-orm";
 
-const GIFT_CATALOG = [
+const _REMOVED_GIFT_CATALOG = [
   // ── COMMON (50–200 ⚡) ──────────────────────────────────────────────────
   { name: "Яблоко",            emoji: "🍎",  animationType: "bounce",    rarity: "common",    stars: 1,  price: 60,    description: "Спелое красное яблоко",                    primeOnly: false },
   { name: "Персик",            emoji: "🍑",  animationType: "bounce",    rarity: "common",    stars: 1,  price: 65,    description: "Сладкий летний персик",                    primeOnly: false },
@@ -192,31 +192,7 @@ const SYSTEM_USERS: Array<{
 ];
 
 export async function runSeed() {
-  // ── 1. Bulk-upsert gift catalog (single query instead of 300+) ────────────
-  if (GIFT_CATALOG.length > 0) {
-    const values = GIFT_CATALOG.map(item =>
-      sql`(${item.name}, ${item.emoji}, ${item.animationType}, ${item.rarity},
-           ${item.stars}, ${item.price}, ${item.description}, ${item.primeOnly})`
-    );
-
-    await db.execute(sql`
-      INSERT INTO gift_items (name, emoji, animation_type, rarity, stars, price, description, prime_only)
-      VALUES ${sql.join(values, sql`, `)}
-      ON CONFLICT (name) DO UPDATE SET
-        emoji          = EXCLUDED.emoji,
-        animation_type = EXCLUDED.animation_type,
-        rarity         = EXCLUDED.rarity,
-        stars          = EXCLUDED.stars,
-        price          = EXCLUDED.price,
-        description    = EXCLUDED.description,
-        prime_only     = EXCLUDED.prime_only
-    `);
-
-    const total = await db.execute(sql`SELECT COUNT(*) as cnt FROM gift_items`);
-    console.log(`[seed] Gift catalog: ${(total.rows[0] as any).cnt} items`);
-  }
-
-  // ── 2. Ensure system users exist ──────────────────────────────────────────
+  // ── 1. Ensure system users exist ──────────────────────────────────────────
   for (const u of SYSTEM_USERS) {
     const rows = await db.execute(sql`SELECT id FROM users WHERE username = ${u.username} LIMIT 1`);
     if ((rows.rows as any[]).length === 0) {

@@ -652,8 +652,7 @@ export function ChatList() {
                   ? lastMessage.text || ""
                   : lastMessage.type === "image"
                   ? "📷 Фото"
-                  : lastMessage.type === "gift"
-                  ? "🎁 Подарок"
+
                   : lastMessage.type === "audio"
                   ? "🎤 Голосовое"
                   : lastMessage.type === "call"

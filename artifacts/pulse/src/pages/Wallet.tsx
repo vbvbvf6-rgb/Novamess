@@ -26,7 +26,7 @@ const BASE_TASKS = [
 
 interface TxEntry {
   id: string;
-  type: "earn" | "spend" | "gift_in" | "gift_out";
+  type: "earn" | "spend";
   amount: number;
   label: string;
   time: Date;
@@ -478,7 +478,7 @@ export default function Wallet() {
                   </div>
                 ) : (
                   txHistory.map((tx, i) => {
-                    const isPositive = tx.type === "earn" || tx.type === "gift_in";
+                    const isPositive = tx.type === "earn";
                     return (
                       <motion.div key={tx.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}
                         className="flex items-center gap-3 p-3.5 bg-card border border-border rounded-2xl">

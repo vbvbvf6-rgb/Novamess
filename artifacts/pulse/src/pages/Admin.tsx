@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Shield, Diamond, Zap, Users, TrendingUp, Send, CheckCircle, AlertTriangle, RefreshCw,
   Plus, Trash2, Key, BadgeCheck, X, ShieldCheck, ShieldOff, MessageSquare,
-  PhoneCall, Gift, Crown, Megaphone, BarChart3, Activity, Star,
+  PhoneCall, Crown, Megaphone, BarChart3, Activity, Star,
   Edit3, Save, ChevronDown, ChevronRight, ChevronLeft, Minus, Ban, FileText, Trophy, Image,
   ShieldAlert, Clock, CheckCircle2, Bug, Inbox, Send as SendIcon, Download,
   Wrench, Mail, ToggleLeft, ToggleRight, Timer, Database, Swords, Lock, Sparkles, Rocket, Calendar,
@@ -35,51 +35,12 @@ interface Stats {
   totalMessages: number;
   totalChats: number;
   totalCalls: number;
-  totalGifts: number;
+
 }
 
 interface UserStats {
   messagesSent: number;
-  giftsSent: number;
-  giftsReceived: number;
   callsTotal: number;
-}
-
-interface GiftItem {
-  id: number;
-  name: string;
-  emoji: string;
-  rarity: string;
-  stars: number;
-  price: number;
-  animationType: string;
-  primeOnly: boolean;
-}
-
-const ADMIN_GIFT_IMAGE_MAP: Record<string, string> = {
-  "Сердечко":       "/gifts/heart.png",
-  "Звёздочка":      "/gifts/star-42.png",
-  "Цветок сакуры":  "/gifts/sakura.png",
-  "Пончик":         "/gifts/donut.png",
-  "Котёнок":        "/gifts/kitten.png",
-  "Воздушный шар":  "/gifts/balloon.png",
-  "Четырёхлистник": "/gifts/clover.png",
-  "Пицца":          "/gifts/pizza.png",
-  "Торт":           "/gifts/birthday-cake.png",
-  "Луна":           "/gifts/moon.png",
-  "Корона":         "/gifts/crown.png",
-  "Корона Prime":   "/gifts/crown.png",
-  "Красная роза":   "/gifts/rose-in-glass.png",
-  "Бриллиант":      "/gifts/diamond-heart.png",
-  "Волшебство":     "/gifts/magic-crystal.png",
-  "Кристалл":       "/gifts/magic-crystal.png",
-  "Пульс":          "/gifts/confetti-box.png",
-};
-
-function AdminGiftThumb({ name, emoji, size = 40 }: { name: string; emoji: string; size?: number }) {
-  const src = ADMIN_GIFT_IMAGE_MAP[name];
-  if (src) return <img src={src} alt={name} style={{ width: size, height: size, objectFit: "contain" }} draggable={false} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />;
-  return <span style={{ fontSize: size * 0.78, lineHeight: 1 }}>{emoji}</span>;
 }
 
 interface AdminPost {
@@ -151,7 +112,7 @@ export default function Admin() {
   const [giveLoading, setGiveLoading] = useState(false);
   const [toast, setToast] = useState<{ msg: string; type: "ok" | "err" } | null>(null);
   const [search, setSearch] = useState("");
-  const [activeTab, setActiveTab] = useState<"balance" | "password" | "actions" | "stats" | "gifts">("balance");
+  const [activeTab, setActiveTab] = useState<"balance" | "password" | "actions" | "stats">("balance");
   const [newPassword, setNewPassword] = useState("");
   const [pwLoading, setPwLoading] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<AdminUser | null>(null);
@@ -185,14 +146,6 @@ export default function Admin() {
   const [leaderboardLoading, setLeaderboardLoading] = useState(false);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [leaderTab, setLeaderTab] = useState<"byBalance" | "byMessages">("byBalance");
-
-  // Gifts
-  const [giftItems, setGiftItems] = useState<GiftItem[]>([]);
-  const [giftItemsLoading, setGiftItemsLoading] = useState(false);
-  const [selectedGiftId, setSelectedGiftId] = useState<number | null>(null);
-  const [giftMessage, setGiftMessage] = useState("");
-  const [giftAnonymous, setGiftAnonymous] = useState(false);
-  const [giftLoading, setGiftLoading] = useState(false);
 
   // Ban
   const [banLoading, setBanLoading] = useState(false);
@@ -369,52 +322,6 @@ export default function Admin() {
       } else { showToast("Ошибка удаления", "err"); }
     } catch { showToast("Ошибка соединения", "err"); }
     setDeletingChatId(null);
-  };
-
-  // Gift Catalog Management
-  interface CatalogGift {
-    id: number; name: string; emoji: string; rarity: string; animation_type: string;
-    stars: number; price: number; prime_only: boolean; times_sent: number;
-  }
-  const [giftCatalog, setGiftCatalog] = useState<CatalogGift[]>([]);
-  const [giftCatalogLoading, setGiftCatalogLoading] = useState(false);
-  const [showGiftCatalog, setShowGiftCatalog] = useState(false);
-  const [editingCatalogGiftId, setEditingCatalogGiftId] = useState<number | null>(null);
-  const [catalogEdit, setCatalogEdit] = useState<Record<number, Partial<CatalogGift>>>({});
-  const [catalogSavingId, setCatalogSavingId] = useState<number | null>(null);
-
-  const fetchGiftCatalog = async () => {
-    setGiftCatalogLoading(true);
-    try {
-      const res = await fetch("/api/admin/gift-catalog", { headers: getHeader() });
-      if (res.ok) setGiftCatalog(await res.json());
-    } catch {}
-    setGiftCatalogLoading(false);
-  };
-
-  const handleSaveCatalogGift = async (giftId: number) => {
-    const edits = catalogEdit[giftId];
-    if (!edits) return;
-    setCatalogSavingId(giftId);
-    try {
-      const res = await fetch(`/api/admin/gift-items/${giftId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json", ...getHeader() },
-        body: JSON.stringify({
-          price: edits.price !== undefined ? Number(edits.price) : undefined,
-          rarity: edits.rarity,
-          stars: edits.stars !== undefined ? Number(edits.stars) : undefined,
-          primeOnly: edits.prime_only,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) { showToast(data.error || "Ошибка", "err"); setCatalogSavingId(null); return; }
-      showToast("✅ Подарок обновлён", "ok");
-      setGiftCatalog(prev => prev.map(g => g.id === giftId ? { ...g, ...edits } : g));
-      setEditingCatalogGiftId(null);
-      setCatalogEdit(prev => { const n = { ...prev }; delete n[giftId]; return n; });
-    } catch { showToast("Ошибка соединения", "err"); }
-    setCatalogSavingId(null);
   };
 
   const fetchAppeals = async () => {
@@ -633,40 +540,6 @@ export default function Admin() {
         showToast(!ev.isActive ? "✅ Событие активировано" : "⏸ Событие скрыто", "ok");
       }
     } catch { showToast("Ошибка", "err"); }
-  };
-
-  const fetchGiftItems = async () => {
-    setGiftItemsLoading(true);
-    try {
-      const res = await fetch("/api/gifts", { headers: getHeader() });
-      if (res.ok) setGiftItems(await res.json());
-    } catch {}
-    setGiftItemsLoading(false);
-  };
-
-  const handleGiveGift = async () => {
-    if (!selectedUser || !selectedGiftId) return;
-    setGiftLoading(true);
-    try {
-      const res = await fetch("/api/admin/give-gift", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", ...getHeader() },
-        body: JSON.stringify({
-          userId: selectedUser.id,
-          giftItemId: selectedGiftId,
-          message: giftMessage.trim() || undefined,
-          anonymous: giftAnonymous,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) { showToast(data.error || "Ошибка", "err"); setGiftLoading(false); return; }
-      showToast(data.message, "ok");
-      setSelectedGiftId(null);
-      setGiftMessage("");
-      setGiftAnonymous(false);
-      if (stats) setStats(prev => prev ? { ...prev, totalGifts: prev.totalGifts + 1 } : null);
-    } catch { showToast("Ошибка соединения", "err"); }
-    setGiftLoading(false);
   };
 
   const fetchBugs = async () => {
@@ -1080,17 +953,9 @@ export default function Admin() {
     setShowEditProfile(false);
     setEditDisplayName(user.display_name);
     setEditBio("");
-    setSelectedGiftId(null);
-    setGiftMessage("");
-    setGiftAnonymous(false);
-  };
-
   useEffect(() => {
     if (activeTab === "stats" && selectedUser) {
       fetchUserStats(selectedUser.id);
-    }
-    if (activeTab === "gifts" && giftItems.length === 0) {
-      fetchGiftItems();
     }
   }, [activeTab, selectedUser]);
 
@@ -1642,7 +1507,7 @@ export default function Admin() {
             <StatCard icon={<MessageSquare size={20} className="text-blue-400" />} label="Сообщений" value={stats.totalMessages} color="bg-blue-500/10" />
             <StatCard icon={<Activity size={20} className="text-green-400" />} label="Чатов" value={stats.totalChats} color="bg-green-500/10" />
             <StatCard icon={<PhoneCall size={20} className="text-cyan-400" />} label="Звонков" value={stats.totalCalls} color="bg-cyan-500/10" />
-            <StatCard icon={<Gift size={20} className="text-pink-400" />} label="Подарков" value={stats.totalGifts} color="bg-pink-500/10" />
+
             <StatCard icon={<TrendingUp size={20} className="text-violet-400" />} label="Средний баланс" value={stats.totalUsers > 0 ? Math.round(stats.totalSpark / stats.totalUsers) : 0} color="bg-violet-500/10" />
           </div>
         )}
@@ -3095,147 +2960,6 @@ export default function Admin() {
           )}
         </div>
 
-        {/* [Gift Catalog removed] */}
-        <div className="hidden">
-          <button
-            onClick={() => {}}
-            className="w-full p-4 flex items-center justify-between hover:bg-secondary/50 transition-colors"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-pink-500/10 flex items-center justify-center">
-                <Gift size={18} className="text-pink-400" />
-              </div>
-              <div className="text-left">
-                <p className="font-semibold text-sm">Каталог подарков</p>
-                <p className="text-xs text-muted-foreground">Редактирование цен, редкости и звёзд</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              {giftCatalog.length > 0 && <span className="text-xs text-muted-foreground">{giftCatalog.length} подарков</span>}
-              {showGiftCatalog ? <ChevronDown size={16} className="text-muted-foreground" /> : <ChevronRight size={16} className="text-muted-foreground" />}
-            </div>
-          </button>
-          {showGiftCatalog && (
-            <div className="border-t border-border">
-              <div className="p-2 border-b border-border flex justify-end">
-                <button onClick={fetchGiftCatalog} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-secondary transition-colors">
-                  <RefreshCw size={12} className={giftCatalogLoading ? "animate-spin" : ""} /> Обновить
-                </button>
-              </div>
-              {giftCatalogLoading ? (
-                <div className="p-6 flex justify-center"><RefreshCw size={20} className="animate-spin text-muted-foreground" /></div>
-              ) : giftCatalog.length === 0 ? (
-                <div className="p-6 text-center text-sm text-muted-foreground">Каталог пуст</div>
-              ) : (
-                <div className="divide-y divide-border max-h-[480px] overflow-y-auto">
-                  {giftCatalog.map(gift => {
-                    const isEditing = editingCatalogGiftId === gift.id;
-                    const edits = catalogEdit[gift.id] || {};
-                    const currentRarity = edits.rarity ?? gift.rarity;
-                    return (
-                      <div key={gift.id} className={`p-3 transition-colors ${isEditing ? "bg-secondary/20" : "hover:bg-secondary/10"}`}>
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 shrink-0 flex items-center justify-center">
-                            <AdminGiftThumb name={gift.name} emoji={gift.emoji} size={38} />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <p className="text-sm font-semibold truncate">{gift.name}</p>
-                              <span className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded ${
-                                currentRarity === "cosmic" ? "bg-violet-500/20 text-violet-300" :
-                                currentRarity === "legendary" ? "bg-amber-500/20 text-amber-300" :
-                                currentRarity === "epic" ? "bg-purple-500/20 text-purple-300" :
-                                currentRarity === "rare" ? "bg-blue-500/20 text-blue-300" : "bg-secondary text-muted-foreground"
-                              }`}>{currentRarity}</span>
-                              {gift.prime_only && <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300">PRIME</span>}
-                            </div>
-                            <p className="text-xs text-muted-foreground">⭐ {edits.stars ?? gift.stars} · {(edits.price ?? gift.price).toLocaleString()} 💎 · отправлено: {gift.times_sent}×</p>
-                          </div>
-                          <button
-                            onClick={() => {
-                              if (isEditing) { setEditingCatalogGiftId(null); setCatalogEdit(prev => { const n = { ...prev }; delete n[gift.id]; return n; }); }
-                              else setEditingCatalogGiftId(gift.id);
-                            }}
-                            className="shrink-0 p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-                          >
-                            {isEditing ? <X size={14} /> : <Edit3 size={14} />}
-                          </button>
-                        </div>
-                        {isEditing && (
-                          <motion.div
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: "auto" }}
-                            className="mt-3 space-y-2 pl-13"
-                          >
-                            <div className="grid grid-cols-2 gap-2">
-                              <div>
-                                <label className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">Цена (💎)</label>
-                                <input
-                                  type="number"
-                                  inputMode="numeric"
-                                  value={edits.price ?? gift.price}
-                                  onChange={e => setCatalogEdit(prev => ({ ...prev, [gift.id]: { ...prev[gift.id], price: Number(e.target.value) } }))}
-                                  className="mt-1 w-full bg-background border border-border rounded-lg px-2.5 py-1.5 text-sm text-foreground focus:outline-none focus:border-primary transition-colors"
-                                />
-                              </div>
-                              <div>
-                                <label className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">Звёзды</label>
-                                <input
-                                  type="number"
-                                  inputMode="numeric"
-                                  min={1}
-                                  max={200}
-                                  value={edits.stars ?? gift.stars}
-                                  onChange={e => setCatalogEdit(prev => ({ ...prev, [gift.id]: { ...prev[gift.id], stars: Number(e.target.value) } }))}
-                                  className="mt-1 w-full bg-background border border-border rounded-lg px-2.5 py-1.5 text-sm text-foreground focus:outline-none focus:border-primary transition-colors"
-                                />
-                              </div>
-                            </div>
-                            <div>
-                              <label className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">Редкость</label>
-                              <div className="mt-1 flex flex-wrap gap-1.5">
-                                {(["common","rare","epic","legendary","cosmic"] as const).map(r => (
-                                  <button
-                                    key={r}
-                                    onClick={() => setCatalogEdit(prev => ({ ...prev, [gift.id]: { ...prev[gift.id], rarity: r } }))}
-                                    className={`px-2 py-1 rounded-lg text-[10px] font-black uppercase transition-all ${
-                                      currentRarity === r
-                                        ? r === "cosmic" ? "bg-violet-500 text-white" : r === "legendary" ? "bg-amber-500 text-black" : r === "epic" ? "bg-purple-500 text-white" : r === "rare" ? "bg-blue-500 text-white" : "bg-secondary text-foreground"
-                                        : "bg-secondary/60 text-muted-foreground hover:bg-secondary"
-                                    }`}
-                                  >
-                                    {r}
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <button
-                                onClick={() => setCatalogEdit(prev => ({ ...prev, [gift.id]: { ...prev[gift.id], prime_only: !(edits.prime_only ?? gift.prime_only) } }))}
-                                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all ${(edits.prime_only ?? gift.prime_only) ? "bg-amber-500/20 border border-amber-500/50 text-amber-300" : "bg-secondary text-muted-foreground hover:bg-secondary/80"}`}
-                              >
-                                <Crown size={12} /> Prime Only
-                              </button>
-                            </div>
-                            <button
-                              onClick={() => handleSaveCatalogGift(gift.id)}
-                              disabled={catalogSavingId === gift.id || Object.keys(edits).length === 0}
-                              className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-primary text-primary-foreground font-bold text-sm hover:bg-primary/90 transition-colors disabled:opacity-50"
-                            >
-                              <Save size={14} />
-                              {catalogSavingId === gift.id ? "Сохраняем..." : "Сохранить изменения"}
-                            </button>
-                          </motion.div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
         {/* Posts Moderation + Leaderboard */}
         <div className="grid md:grid-cols-2 gap-4">
           {/* Posts moderation */}
@@ -4203,16 +3927,6 @@ export default function Admin() {
                               <p className="text-2xl font-black text-foreground">{userStats.callsTotal.toLocaleString()}</p>
                               <p className="text-xs text-muted-foreground">Звонков</p>
                             </div>
-                            <div className="bg-pink-500/10 border border-pink-500/20 rounded-xl p-3 text-center">
-                              <Gift size={20} className="text-pink-400 mx-auto mb-1" />
-                              <p className="text-2xl font-black text-foreground">{userStats.giftsSent.toLocaleString()}</p>
-                              <p className="text-xs text-muted-foreground">Подарков отправлено</p>
-                            </div>
-                            <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-3 text-center">
-                              <Gift size={20} className="text-green-400 mx-auto mb-1" />
-                              <p className="text-2xl font-black text-foreground">{userStats.giftsReceived.toLocaleString()}</p>
-                              <p className="text-xs text-muted-foreground">Подарков получено</p>
-                            </div>
                           </div>
                           <div className="bg-muted/30 rounded-xl p-3 text-xs text-muted-foreground space-y-1">
                             <div className="flex justify-between">
@@ -4252,4 +3966,5 @@ export default function Admin() {
       </div>
     </div>
   );
+}
 }
