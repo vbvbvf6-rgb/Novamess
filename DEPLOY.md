@@ -1,142 +1,132 @@
-# Деплой Nova: Vercel (фронтенд) + Render (бэкенд)
+# Деплой Nova: Pxxl (фронтенд + бэкенд)
 
 ## Архитектура
 
 ```
 Пользователь
     │
-    ├─► Vercel ──── React/Vite фронтенд (CDN, быстро)
+    ├─► Pxxl ──── React/Vite фронтенд (статический сайт)
     │
-    └─► Render ──── Express API + Socket.IO + PostgreSQL
+    └─► Pxxl ──── Express API + Socket.IO (always-on, без cold starts)
 ```
 
 Фронтенд знает адрес бэкенда через переменную `VITE_API_URL`.
 
+> **Почему Pxxl, а не Vercel для бэкенда?**
+> Vercel — serverless, каждый запрос живёт секунды. Socket.IO требует
+> постоянного соединения, поэтому real-time (чаты, звонки, статусы)
+> работает только на always-on платформах. Pxxl держит сервер всегда живым.
+
 ---
 
-## Шаг 1. Бэкенд — Render (без карты)
+## Важно: модель выполнения
 
-### 1.1 База данных — Supabase
+Оба проекта на Pxxl (бэкенд и фронтенд) используют **один репозиторий** и **одну
+корневую директорию — `.` (корень репо)**. Все команды запускаются из корня,
+pnpm workspace-фильтры выбирают нужный пакет. Никогда не указывай
+`artifacts/api-server` или `artifacts/pulse` как Root Directory в Pxxl — иначе
+workspace-зависимости не найдутся.
+
+---
+
+## Шаг 0. Требования
+
+- Аккаунт на [pxxl.app](https://pxxl.app) (Sign Up через GitHub — бесплатно)
+- GitHub репозиторий с этим кодом
+
+---
+
+## Шаг 1. База данных — Supabase
 
 1. [supabase.com](https://supabase.com) → **Start your project** (GitHub, без карты)
 2. **New project** → имя, пароль, регион **Frankfurt**
 3. Подожди ~2 минуты
-4. **Settings → Database → Connection string → Transaction** (вкладка) → скопируй:
+4. **Settings → Database → Connection string → Transaction** → скопируй:
    ```
    postgresql://postgres.xxxx:ПАРОЛЬ@aws-0-eu-central-1.pooler.supabase.com:6543/postgres
    ```
 
-### 1.2 Деплой API-сервера — Render
+---
 
-1. [render.com](https://render.com) → Sign Up (GitHub, без карты)
-2. **New → Web Service**
-3. Подключи GitHub репозиторий
+## Шаг 2. Бэкенд — Pxxl (API Server)
+
+1. [pxxl.app/dashboard](https://pxxl.app/dashboard) → **Deploy Project**
+2. Выбери GitHub репозиторий → **Import**
+3. Настройки:
 
 | Поле | Значение |
 |------|----------|
-| **Runtime** | Node |
-| **Build Command** | `npm install -g pnpm@10 && pnpm install --frozen-lockfile && pnpm --filter @workspace/api-server run build` |
+| **Project Name** | `nova-api` |
+| **Root Directory** | `.` (корень репозитория) |
+| **Install Command** | `npm install -g pnpm@10 && pnpm install --frozen-lockfile` |
+| **Build Command** | `pnpm --filter @workspace/api-server run build` |
 | **Start Command** | `node --enable-source-maps ./artifacts/api-server/dist/index.mjs` |
-| **Instance Type** | Free |
+| **Type** | Web Service (Node.js) |
 
-4. **Environment** → добавь:
+> Файл `pxxl.toml` в корне репо заполнит эти поля автоматически — проверь что они верны.
+
+4. **Environment Variables** → добавь:
 
 | Ключ | Значение |
 |------|----------|
 | `DATABASE_URL` | Строка из Supabase |
 | `NODE_ENV` | `production` |
-| `JWT_SECRET` | Нажми «Generate» или вставь 64 случайных символа |
+| `JWT_SECRET` | 64 случайных символа (`openssl rand -hex 32`) |
 
-5. **Create Web Service** → дождись деплоя (~5 мин)
-6. Запомни URL сервиса: `https://nova-api.onrender.com` ← это `VITE_API_URL`
+> `PORT` **не добавляй** — Pxxl устанавливает его автоматически.
+
+5. **Deploy** → дождись завершения (~3–5 мин)
+6. Запомни URL: `https://nova-api.pxxl.app` — это значение `VITE_API_URL`
 
 ---
 
-## Шаг 2. Фронтенд — Vercel (без карты)
+## Шаг 3. Фронтенд — Pxxl (Pulse)
 
-1. [vercel.com](https://vercel.com) → Sign Up (GitHub, без карты)
-2. **Add New → Project** → импортируй тот же GitHub репозиторий
-3. Vercel сам найдёт `vercel.json` в корне репозитория
-
-### Настройки проекта (если Vercel спросит)
+1. [pxxl.app/dashboard](https://pxxl.app/dashboard) → **Deploy Project** (новый проект)
+2. Выбери **тот же** репозиторий → **Import**
+3. Настройки:
 
 | Поле | Значение |
 |------|----------|
-| **Framework Preset** | Other |
-| **Root Directory** | `.` (корень) |
-| **Build Command** | *(берётся из vercel.json автоматически)* |
-| **Output Directory** | *(берётся из vercel.json автоматически)* |
+| **Project Name** | `nova-app` |
+| **Root Directory** | `.` (корень репозитория) |
+| **Install Command** | `npm install -g pnpm@10 && pnpm install --frozen-lockfile` |
+| **Build Command** | `BASE_PATH=/ pnpm --filter @workspace/pulse run build` |
+| **Output Directory** | `artifacts/pulse/dist` |
+| **Type** | Static Site |
 
-### Переменные окружения
-
-В Vercel → **Settings → Environment Variables** добавь:
+4. **Environment Variables** → добавь:
 
 | Ключ | Значение |
 |------|----------|
-| `VITE_API_URL` | URL твоего Render сервиса, например `https://nova-api.onrender.com` |
+| `VITE_API_URL` | URL бэкенда из Шага 2, например `https://nova-api.pxxl.app` |
 
-> ⚠️ Без `VITE_API_URL` фронтенд не будет знать где бэкенд и ничего не заработает.
+> ⚠️ Без `VITE_API_URL` фронтенд не знает где бэкенд — ничего работать не будет.
 
-4. **Deploy** → Vercel соберёт и задеплоит (~3–5 мин)
-
----
-
-## Шаг 3. Не давать Render засыпать — cron-job.org
-
-Render Free засыпает через 15 минут без запросов.
-
-1. [cron-job.org](https://cron-job.org) → Sign Up → **Create cronjob**
-2. URL: `https://nova-api.onrender.com/api/healthz`
-3. Schedule: **Every 14 minutes** → Save
+5. **Deploy** → ~3–5 мин
 
 ---
 
-## Шаг 4. Объектное хранилище для медиа (чтобы база не заканчивалась)
+## Шаг 4. Объектное хранилище для медиа (рекомендуется)
 
-По умолчанию фото/видео/голосовые/аватары/истории сохраняются прямо в Postgres как base64. Это удобно для старта, но база (Supabase Free — 500 МБ) заполняется очень быстро — один видеофайл "весит" в базе больше, чем сам файл. Чтобы это исправить один раз и навсегда, подключи S3-совместимое хранилище.
+По умолчанию фото/видео/аватары сохраняются в Postgres как base64.
+Supabase Free даёт 500 МБ — один видеофайл занимает сотни MB.
 
-Подходит любой провайдер с S3 API — можно начать с бесплатного и позже сменить без изменения кода и без потери данных (старые файлы просто останутся там, где были загружены):
+### Cloudflare R2 (бесплатно 10 ГБ)
 
-- **Cloudflare R2** — 10 ГБ бесплатно, дальше $0.015/ГБ/мес, без платы за исходящий трафик. Рекомендуется.
-- Backblaze B2, Supabase Storage (S3-режим), Wasabi, AWS S3 — тоже подходят.
-
-### Настройка (пример для Cloudflare R2)
-
-1. [dash.cloudflare.com](https://dash.cloudflare.com) → **R2** → **Create bucket** → включи Public Access (или подключи домен/CDN).
-2. **Manage API tokens** → создай токен с правами Read & Write на этот bucket → сохрани Access Key ID и Secret Access Key.
-3. В Render → **Environment** добавь:
+1. [dash.cloudflare.com](https://dash.cloudflare.com) → **R2** → **Create bucket** → включи Public Access
+2. **Manage API tokens** → Read & Write на bucket → сохрани Access Key ID и Secret
+3. В Pxxl → проект бэкенда → **Environment Variables** добавь:
 
 | Ключ | Значение |
 |------|----------|
 | `S3_ENDPOINT` | `https://<account_id>.r2.cloudflarestorage.com` |
 | `S3_BUCKET` | имя bucket |
-| `S3_ACCESS_KEY_ID` | из API-токена |
-| `S3_SECRET_ACCESS_KEY` | из API-токена |
-| `S3_PUBLIC_URL_BASE` | публичный URL bucket (или домен/CDN перед ним), без слеша на конце |
+| `S3_ACCESS_KEY_ID` | из токена |
+| `S3_SECRET_ACCESS_KEY` | из токена |
+| `S3_PUBLIC_URL_BASE` | публичный URL bucket (без слеша на конце) |
 
-4. **Manual Deploy** на Render — после этого все новые файлы будут уходить в R2, а в базе останется только ссылка.
-
-### Перенос уже загруженных файлов (уменьшить текущий размер базы)
-
-После того как переменные добавлены и сервис перезапущен, один раз выполни у себя локально (или в Replit Shell, откуда деплоится проект):
-
-```bash
-DATABASE_URL=... S3_ENDPOINT=... S3_BUCKET=... S3_ACCESS_KEY_ID=... S3_SECRET_ACCESS_KEY=... S3_PUBLIC_URL_BASE=... \
-pnpm --filter @workspace/scripts run migrate-media
-```
-
-Скрипт находит все существующие base64-файлы в базе, загружает их в хранилище и заменяет содержимое колонки на ссылку. После — выполни `VACUUM FULL;` в Supabase SQL Editor, чтобы Postgres освободил физическое место на диске.
-
-### Смена базы данных без потери данных
-
-Если база (Supabase/Neon/что угодно) когда-нибудь заполнится или понадобится сменить провайдера — это стандартный Postgres, доступный через `DATABASE_URL`, так что перенос делается штатными средствами Postgres, без миграции кода:
-
-```bash
-pg_dump "$OLD_DATABASE_URL" -Fc -f backup.dump
-pg_restore -d "$NEW_DATABASE_URL" backup.dump
-```
-
-Затем просто обновляешь `DATABASE_URL` в Render на новую строку подключения и делаешь Manual Deploy. Пользователи, чаты, история — всё сохраняется, потому что вынесенные в объектное хранилище файлы вообще не зависят от того, какая база данных используется.
+4. Redeploy бэкенда
 
 ---
 
@@ -144,33 +134,36 @@ pg_restore -d "$NEW_DATABASE_URL" backup.dump
 
 | URL | Что |
 |-----|-----|
-| `https://nova-messenger.vercel.app` | Твой мессенджер (фронтенд) |
-| `https://nova-api.onrender.com` | API-сервер (бэкенд) |
+| `https://nova-app.pxxl.app` | Мессенджер (фронтенд) |
+| `https://nova-api.pxxl.app` | API-сервер (бэкенд) |
 
 ---
 
 ## Частые ошибки
 
 ### Белый экран / "Failed to fetch"
-`VITE_API_URL` не задан в Vercel или задан неправильно.
-- Проверь: Vercel → Settings → Environment Variables
-- URL должен быть **без слеша в конце**: `https://nova-api.onrender.com` ✅ `https://nova-api.onrender.com/` ❌
+- Проверь `VITE_API_URL` в настройках фронтенд-проекта на Pxxl
+- URL **без слеша** в конце: `https://nova-api.pxxl.app` ✅
 - После изменения переменной → **Redeploy**
 
-### `DATABASE_URL must be set` на Render
-Переменная не добавлена в Render → Environment.
-Добавь `DATABASE_URL` → **Save Changes** → **Manual Deploy**
+### `PORT environment variable is required`
+- Удали `PORT` из Environment Variables — Pxxl выставляет его сам
+
+### `DATABASE_URL must be set`
+- Добавь `DATABASE_URL` в бэкенд-проект → **Save** → **Redeploy**
+
+### Build failed: "pnpm not found"
+- Install Command должен начинаться с `npm install -g pnpm@10 &&`
+
+### CORS ошибки
+- Бэкенд принимает запросы с любого домена — если видишь CORS,
+  проблема в неправильном `VITE_API_URL`
 
 ### Звонки не работают (нет звука)
-Встроенный TURN-сервер (openrelay) работает без регистрации.
-Если всё равно не слышат друг друга — это проблема с сетью/NAT.
-Можно улучшить добавив бесплатный TURN от [expressturn.com](https://expressturn.com) (только email, без карты):
-- Render Environment: `TURN_URL`, `TURN_USER`, `TURN_CRED`
+Добавь бесплатный TURN от [expressturn.com](https://expressturn.com):
 
-### Build failed на Vercel: "pnpm not found"
-Vercel должен установить pnpm через build command.
-Убедись что build command в `vercel.json` начинается с `npm install -g pnpm@10 &&`
-
-### CORS ошибки в консоли браузера
-Бэкенд уже настроен принимать запросы с любого домена (`cors: origin: true`).
-Если видишь CORS — проверь что `VITE_API_URL` указывает на правильный Render URL.
+| Ключ | Значение |
+|------|----------|
+| `TURN_URL` | URL от expressturn |
+| `TURN_USER` | username |
+| `TURN_CRED` | credential |

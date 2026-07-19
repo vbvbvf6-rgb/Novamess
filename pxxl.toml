@@ -1,0 +1,8 @@
+# Pxxl deployment config — API Server (backend)
+# Root directory for this project must be set to "." (repo root) in the Pxxl dashboard.
+# https://pxxl.app/docs
+
+[build]
+install_command = "npm install -g pnpm@10 && pnpm install --frozen-lockfile"
+build_command   = "pnpm --filter @workspace/api-server run build"
+start_command   = "node --enable-source-maps ./artifacts/api-server/dist/index.mjs"
