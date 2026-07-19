@@ -349,11 +349,10 @@ async function maybeRunWeeklyScan() {
 setTimeout(() => maybeRunWeeklyScan(), 60_000);
 setInterval(() => maybeRunWeeklyScan(), 60 * 60 * 1000);
 
-// ── Keep-alive: prevent Render free tier from sleeping ────────────────────────
-// Pings the server's own /health endpoint every 10 minutes so Render doesn't
-// spin down the instance after 15 minutes of inactivity.
-const SELF_URL = process.env.RENDER_EXTERNAL_URL || process.env.SELF_URL;
-if (SELF_URL && process.env.NODE_ENV === "production") {
+// ── Keep-alive: prevent free-tier sleeping (Render, Wispbyte, etc.) ──────────
+// Pings the server's own /health endpoint every 10 minutes.
+const SELF_URL = process.env.RENDER_EXTERNAL_URL || process.env.SELF_URL || "https://novamess.wispbyte.app";
+if (process.env.NODE_ENV === "production") {
   const keepAliveUrl = `${SELF_URL.replace(/\/$/, "")}/health`;
   setInterval(async () => {
     try {
