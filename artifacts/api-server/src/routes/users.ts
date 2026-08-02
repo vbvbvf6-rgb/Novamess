@@ -396,6 +396,7 @@ router.delete("/users/me", async (req, res) => {
       sql`DELETE FROM post_reports WHERE reporter_id = ${uid}`,
       sql`DELETE FROM referral_uses WHERE referrer_id = ${uid} OR referred_id = ${uid}`,
       sql`DELETE FROM push_subscriptions WHERE user_id = ${uid}`,
+      sql`DELETE FROM fcm_tokens WHERE user_id = ${uid}`,
       sql`DELETE FROM chat_members WHERE user_id = ${uid}`,
       sql`DELETE FROM chat_folder_chats WHERE chat_id IN (SELECT chat_id FROM chat_members WHERE user_id = ${uid})`,
       sql`DELETE FROM chat_folders WHERE user_id = ${uid}`,

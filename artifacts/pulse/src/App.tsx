@@ -16,6 +16,7 @@ import { Clock, LogOut, ShieldCheck, X, Download, RefreshCw, RotateCcw } from "l
 import { MaintenanceScreen, MaintenanceData } from "@/components/MaintenanceScreen";
 
 import { useNotifications } from "@/hooks/useNotifications";
+import { setupNativeNotifications, unregisterNativePush } from "@/lib/nativeNotifications";
 import { playNotificationSound } from "@/lib/ringtones";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { PwaInstallPrompt } from "@/components/PwaInstallPrompt";
@@ -758,6 +759,17 @@ function App() {
     window.addEventListener("pulse:unauthorized", handleUnauthorized);
     return () => window.removeEventListener("pulse:unauthorized", handleUnauthorized);
   }, []);
+
+  // Native push notifications (Capacitor / Android APK)
+  // Called whenever userId changes: registers FCM token on login, cleans up on logout.
+  useEffect(() => {
+    if (userId) {
+      const token = sessionStorage.getItem("pulse-token") ?? undefined;
+      setupNativeNotifications(token);
+    } else {
+      unregisterNativePush();
+    }
+  }, [userId]);
 
   const [showLoginSplash, setShowLoginSplash] = useState(false);
 

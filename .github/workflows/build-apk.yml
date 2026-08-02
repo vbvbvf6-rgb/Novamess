@@ -1,0 +1,119 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      api_url:
+        description: 'Backend API URL (e.g. https://nova-api.fly.dev)'
+        required: true
+        default: 'https://nova-api.fly.dev'
+  push:
+    branches: [main]
+    paths:
+      - 'artifacts/pulse/**'
+      - 'android/**'
+      - '.github/workflows/build-apk.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build Debug APK
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Checkout ────────────────────────────────────────────────────────
+      - uses: actions/checkout@v4
+
+      # ── 2. Setup tools ────────────────────────────────────────────────────
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      # ── 3. Install JS dependencies ─────────────────────────────────────────
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      # ── 4. Build web app (pointing at the real backend) ───────────────────
+      - name: Build frontend
+        run: BASE_PATH=/ pnpm --filter @workspace/pulse run build
+        env:
+          VITE_API_URL: ${{ github.event.inputs.api_url || secrets.VITE_API_URL || 'https://nova-api.fly.dev' }}
+          NODE_ENV: production
+          REPL_ID: ""
+
+      # ── 5. Set up Capacitor Android project ───────────────────────────────
+      - name: Copy capacitor config
+        run: cp android/capacitor.config.ts capacitor.config.ts
+
+      - name: Patch server URL in capacitor config
+        # Replace the hardcoded Replit URL with the real backend URL
+        run: |
+          API_URL="${{ github.event.inputs.api_url || secrets.VITE_API_URL || 'https://nova-api.fly.dev' }}"
+          sed -i "s|url:.*pulse\.replit\.app.*|url: \"$API_URL\",|g" capacitor.config.ts
+          echo "Updated capacitor.config.ts:"
+          cat capacitor.config.ts
+
+      - name: Init Capacitor (if needed)
+        run: |
+          if [ ! -f "capacitor.config.json" ] && ! grep -q '"appId"' package.json 2>/dev/null; then
+            npx cap init "Pulse Messenger" com.pulse.messenger --web-dir=artifacts/pulse/dist
+          fi
+
+      - name: Add Android platform
+        run: |
+          if [ ! -d "android/app" ]; then
+            npx cap add android
+          fi
+
+      - name: Sync Capacitor
+        run: npx cap sync android
+
+      # ── 6. Inject google-services.json for FCM ────────────────────────────
+      # Store the full JSON content as GitHub secret GOOGLE_SERVICES_JSON
+      - name: Write google-services.json
+        if: ${{ secrets.GOOGLE_SERVICES_JSON != '' }}
+        run: |
+          echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
+          echo "✅ google-services.json written"
+
+      - name: Warn if FCM not configured
+        if: ${{ secrets.GOOGLE_SERVICES_JSON == '' }}
+        run: |
+          echo "⚠️  GOOGLE_SERVICES_JSON secret not set — FCM push notifications will NOT work in this build."
+          echo "    See SETUP_FIREBASE.md for instructions."
+
+      # ── 7. Build APK ──────────────────────────────────────────────────────
+      - name: Make gradlew executable
+        run: chmod +x android/gradlew
+
+      - name: Build debug APK
+        working-directory: android
+        run: ./gradlew assembleDebug --no-daemon
+
+      # ── 8. Upload artifact ────────────────────────────────────────────────
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: nova-debug-${{ github.sha }}
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 14
+
+      # ── 9. Attach to release if tagged ───────────────────────────────────
+      - name: Upload to release (if tagged)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: android/app/build/outputs/apk/debug/app-debug.apk
+          name: Nova ${{ github.ref_name }}

@@ -1,4 +1,52 @@
-# Деплой Nova: Pxxl (фронтенд + бэкенд)
+# Деплой Nova
+
+---
+
+## ⭐ Бэкенд — Fly.io (бесплатно навсегда)
+
+**Fly.io** — лучший бесплатный вариант для Socket.IO: 3 VM в подарок, не спит, нет cold starts.
+
+### Первый деплой
+
+```bash
+# 1. Установи flyctl
+curl -L https://fly.io/install.sh | sh
+
+# 2. Войди в аккаунт (GitHub или email)
+flyctl auth login
+
+# 3. Создай приложение (первый раз)
+flyctl launch --no-deploy
+# При вопросе "Would you like to deploy now?" — ответь No
+
+# 4. Установи секреты
+flyctl secrets set \
+  DATABASE_URL="postgresql://..." \
+  JWT_SECRET="$(openssl rand -hex 32)" \
+  VAPID_PUBLIC_KEY="..." \
+  VAPID_PRIVATE_KEY="..." \
+  VAPID_EMAIL="mailto:admin@nova.app" \
+  FIREBASE_SERVICE_ACCOUNT='{"type":"service_account",...}'
+
+# 5. Задеплой
+flyctl deploy
+```
+
+Готово — твой API будет на `https://nova-api.fly.dev` (или другое имя из fly.toml).
+
+### Автодеплой при push
+
+Добавь секрет `FLY_API_TOKEN` в GitHub (Settings → Secrets).  
+GitHub Actions workflow `.github/workflows/deploy-fly.yml` деплоит автоматически.
+
+### Получить FLY_API_TOKEN
+```bash
+flyctl tokens create deploy -x 999999h
+```
+
+---
+
+## Деплой Nova: Pxxl (фронтенд + бэкенд)
 
 ## Архитектура
 

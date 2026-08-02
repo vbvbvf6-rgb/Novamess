@@ -1,27 +1,66 @@
-app = "nova-messenger"
-primary_region = "fra"
+# fly.toml — Fly.io configuration for Nova API backend
+# Docs: https://fly.io/docs/reference/configuration/
+#
+# To deploy:
+#   1. Install flyctl: curl -L https://fly.io/install.sh | sh
+#   2. flyctl auth login
+#   3. flyctl launch --no-deploy  (first time — creates the app, don't deploy yet)
+#   4. Set secrets (see below)
+#   5. flyctl deploy
+
+app = "nova-api"          # change to your preferred app name (must be unique on Fly.io)
+primary_region = "fra"    # Frankfurt — closest to most of Europe
 
 [build]
   dockerfile = "Dockerfile"
 
 [env]
   NODE_ENV = "production"
-  PORT = "8080"
-  VAPID_PUBLIC_KEY = "BMYTPQMepM0IUhvdnCp9EEZCX787iklvM032FY1m7vq6PheB6OUr-ZxocSlQE2tdmUBNULyvc_vfA5kyu9vVf7I"
-  VAPID_EMAIL = "mailto:admin@pulse.app"
+  PORT     = "8080"
 
-[http_service]
+# Fly.io injects DATABASE_URL, JWT_SECRET, etc. as secrets — not here.
+# Set them once with:
+#   flyctl secrets set DATABASE_URL="postgresql://..." JWT_SECRET="..." \
+#     VAPID_PUBLIC_KEY="..." VAPID_PRIVATE_KEY="..." VAPID_EMAIL="..." \
+#     FIREBASE_SERVICE_ACCOUNT='{"type":"service_account",...}'
+
+[[services]]
   internal_port = 8080
-  force_https = true
-  auto_stop_machines = "off"
+  protocol      = "tcp"
+  auto_stop_machines  = false   # keep alive — required for Socket.IO
   auto_start_machines = true
   min_machines_running = 1
 
-  [http_service.concurrency]
-    type = "requests"
-    hard_limit = 200
-    soft_limit = 150
+  [[services.ports]]
+    handlers = ["tls", "http"]
+    port     = 443
+
+  [[services.ports]]
+    handlers = ["http"]
+    port     = 80
+    force_https = true
+
+  [services.concurrency]
+    type       = "connections"
+    soft_limit = 200
+    hard_limit = 250
+
+  [[services.http_checks]]
+    interval     = "15s"
+    timeout      = "5s"
+    grace_period = "30s"
+    method       = "GET"
+    path         = "/api/health"
+
+[resources]
+  # Free tier: shared-1cpu-1gb is free within the 3-VM allowance
+  # Keep this size to stay within the Fly.io free tier.
+  [resources.compute]
+    cpu_kind = "shared"
+    cpus     = 1
+    memory   = "256mb"
 
 [[vm]]
-  size = "shared-cpu-1x"
   memory = "256mb"
+  cpu_kind = "shared"
+  cpus = 1

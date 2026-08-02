@@ -189,6 +189,7 @@ router.delete("/admin/users/:userId", requireAdmin, async (req, res) => {
       await db.execute(sql`DELETE FROM spark_activity WHERE user_id = ${targetId}`);
       await db.execute(sql`DELETE FROM pinned_messages WHERE pinned_by = ${targetId}`);
       await db.execute(sql`DELETE FROM push_subscriptions WHERE user_id = ${targetId}`);
+      await db.execute(sql`DELETE FROM fcm_tokens WHERE user_id = ${targetId}`).catch(() => {});
       await db.execute(sql`DELETE FROM bug_reports WHERE user_id = ${targetId}`);
       await db.execute(sql`DELETE FROM scheduled_messages WHERE sender_id = ${targetId}`);
       await db.execute(sql`DELETE FROM contacts WHERE user_id = ${targetId} OR contact_id = ${targetId}`);

@@ -112,7 +112,7 @@ const _schemaMigrations = (async () => {
 })();
 _schemaMigrations.catch((e) => logger.error({ err: e }, "Schema migration block failed"));
 
-// ── Push subscriptions table ───────────────────────────────────────────────
+// ── Push subscriptions table (Web Push / VAPID) ────────────────────────────
 db.execute(sql`
   CREATE TABLE IF NOT EXISTS push_subscriptions (
     id         SERIAL PRIMARY KEY,
@@ -124,6 +124,19 @@ db.execute(sql`
     CONSTRAINT push_subscriptions_endpoint_unique UNIQUE(endpoint)
   )
 `).catch(() => {});
+
+// ── FCM tokens table (native Android / Capacitor push notifications) ───────
+db.execute(sql`
+  CREATE TABLE IF NOT EXISTS fcm_tokens (
+    id         SERIAL PRIMARY KEY,
+    user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token      TEXT NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    CONSTRAINT fcm_tokens_token_unique UNIQUE(token)
+  )
+`).then(() =>
+  db.execute(sql`CREATE INDEX IF NOT EXISTS idx_fcm_tokens_user_id ON fcm_tokens(user_id)`)
+).catch(() => {});
 
 // ── Contact requests table ─────────────────────────────────────────────────
 db.execute(sql`
