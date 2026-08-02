@@ -1,8 +1,21 @@
-# Pxxl deployment config — API Server (backend)
-# Root directory for this project must be set to "." (repo root) in the Pxxl dashboard.
+# Pxxl deployment config — полный Docker-деплой (фронтенд + бэкенд вместе)
+#
+# Сайт и API раздаются с ОДНОГО домена Pxxl → работает без VPN в России.
+# Root directory в Pxxl Dashboard ДОЛЖЕН быть "." (корень репо).
+# VITE_API_URL НЕ нужен — фронтенд делает относительные запросы к /api/.
+#
 # https://pxxl.app/docs
 
 [build]
-install_command = "npm install -g pnpm@10 && pnpm install --frozen-lockfile"
-build_command   = "pnpm --filter @workspace/api-server run build"
-start_command   = "node --enable-source-maps ./artifacts/api-server/dist/index.mjs"
+dockerfile = "Dockerfile"
+
+[env]
+NODE_ENV = "production"
+
+# Переменные окружения задавай в Pxxl Dashboard → Environment Variables:
+#   DATABASE_URL            — строка подключения Supabase
+#   JWT_SECRET              — 64 случайных символа
+#   VAPID_PUBLIC_KEY        — публичный VAPID ключ
+#   VAPID_PRIVATE_KEY       — приватный VAPID ключ
+#   VAPID_EMAIL             — mailto:admin@nova.app
+#   FIREBASE_SERVICE_ACCOUNT — JSON от Firebase Service Account (для FCM пушей)

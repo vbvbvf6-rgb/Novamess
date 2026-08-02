@@ -44,9 +44,10 @@ COPY --from=builder /workspace/lib/db/drizzle ./migrations
 
 ENV NODE_ENV=production
 
-# Render sets PORT dynamically (usually 10000). The server reads process.env.PORT.
-# We do NOT hardcode PORT here so Render's value is used.
-EXPOSE 10000
+# PORT задаётся хостингом (Pxxl, Render, Fly.io и т.д.) через env.
+# Значение по умолчанию 8080 для Docker-окружений где PORT не задан.
+ENV PORT=8080
+EXPOSE 8080
 
 # Required env vars at runtime:
 #   DATABASE_URL   — Postgres connection string (e.g. from Supabase)
