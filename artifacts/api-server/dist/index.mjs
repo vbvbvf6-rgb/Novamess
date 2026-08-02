@@ -31082,9 +31082,9 @@ var require_jws = __commonJS({
 var require_decode = __commonJS({
   "../../node_modules/jsonwebtoken/decode.js"(exports, module) {
     var jws = require_jws();
-    module.exports = function(jwt6, options) {
+    module.exports = function(jwt7, options) {
       options = options || {};
-      var decoded = jws.decode(jwt6, options);
+      var decoded = jws.decode(jwt7, options);
       if (!decoded) {
         return null;
       }
@@ -112925,19 +112925,19 @@ var require_vapid_helper = __commonJS({
         exp: expiration,
         sub: subject
       };
-      const jwt6 = jws.sign({
+      const jwt7 = jws.sign({
         header,
         payload: jwtPayload,
         privateKey: toPEM(privateKey)
       });
       if (contentEncoding === WebPushConstants.supportedContentEncodings.AES_128_GCM) {
         return {
-          Authorization: "vapid t=" + jwt6 + ", k=" + publicKey
+          Authorization: "vapid t=" + jwt7 + ", k=" + publicKey
         };
       }
       if (contentEncoding === WebPushConstants.supportedContentEncodings.AES_GCM) {
         return {
-          Authorization: "WebPush " + jwt6,
+          Authorization: "WebPush " + jwt7,
           "Crypto-Key": "p256ecdsa=" + publicKey
         };
       }
@@ -137057,7 +137057,7 @@ var rateLimit = (passedOptions) => {
 var rate_limit_default = rateLimit;
 
 // src/app.ts
-var import_jsonwebtoken3 = __toESM(require_jsonwebtoken(), 1);
+var import_jsonwebtoken4 = __toESM(require_jsonwebtoken(), 1);
 
 // src/routes/index.ts
 var import_express25 = __toESM(require_express2(), 1);
@@ -137932,11 +137932,11 @@ function isValidIP(ip, version3) {
   }
   return false;
 }
-function isValidJWT(jwt6, alg) {
-  if (!jwtRegex.test(jwt6))
+function isValidJWT(jwt7, alg) {
+  if (!jwtRegex.test(jwt7))
     return false;
   try {
-    const [header] = jwt6.split(".");
+    const [header] = jwt7.split(".");
     if (!header)
       return false;
     const base643 = header.replace(/-/g, "+").replace(/_/g, "/").padEnd(header.length + (4 - header.length % 4) % 4, "=");
@@ -144223,13 +144223,7 @@ router4.get("/users/me", async (req, res) => {
     const ageVerified = row?.age_verified === true || row?.age_verified === "t" || row?.age_verified === 1;
     const isAdmin3 = row?.is_admin === true || row?.is_admin === "t" || row?.is_admin === 1;
     const isBot = row?.is_bot === true || row?.is_bot === "t" || row?.is_bot === 1;
-    const popularityRow = await db.execute(sql`
-      SELECT COALESCE(SUM(gi.price), 0)::int AS popularity
-      FROM gifts g
-      JOIN gift_items gi ON gi.id = g.gift_item_id
-      WHERE g.receiver_id = ${uid} AND g.is_anonymous = false
-    `);
-    const popularity = Number(popularityRow.rows[0]?.popularity || 0);
+    const popularity = 0;
     res.json({ ...user, balance, hasPrime, primeTier, primeExpiresAt: row?.prime_expires_at ?? null, usernameChangedAt: row?.username_changed_at ?? null, ageVerified, isAdmin: isAdmin3, isBot, popularity });
   } catch (err2) {
     req.log.error(err2);
@@ -144331,13 +144325,7 @@ router4.get("/users/:userId", async (req, res) => {
     const userId = Number(req.params.userId);
     const user = await db.query.usersTable.findFirst({ where: eq(usersTable.id, userId) });
     if (!user) return res.status(404).json({ error: "User not found" });
-    const popularityRow = await db.execute(sql`
-      SELECT COALESCE(SUM(gi.price), 0)::int AS popularity
-      FROM gifts g
-      JOIN gift_items gi ON gi.id = g.gift_item_id
-      WHERE g.receiver_id = ${userId} AND g.is_anonymous = false
-    `);
-    const popularity = Number(popularityRow.rows[0]?.popularity || 0);
+    const popularity = 0;
     if (userId !== requesterId && !user.showOnlineStatus) {
       return res.json({ ...user, status: "offline", lastSeen: null, popularity });
     }
@@ -144350,13 +144338,11 @@ router4.get("/users/:userId", async (req, res) => {
 router4.get("/stats/me", async (req, res) => {
   try {
     const uid = req.currentUserId;
-    const { messagesTable: messagesTable3, callsTable: callsTable3, giftsTable: giftsTable3, chatMembersTable: chatMembersTable5, contactsTable: contactsTable2 } = await Promise.resolve().then(() => (init_src(), src_exports));
+    const { messagesTable: messagesTable3, callsTable: callsTable3, chatMembersTable: chatMembersTable5, contactsTable: contactsTable2 } = await Promise.resolve().then(() => (init_src(), src_exports));
     const { count: count2, sum: sum2 } = await Promise.resolve().then(() => (init_drizzle_orm(), drizzle_orm_exports));
     const [msgCount] = await db.select({ count: count2() }).from(messagesTable3).where(eq(messagesTable3.senderId, uid));
     const [callCount] = await db.select({ count: count2() }).from(callsTable3).where(eq(callsTable3.callerId, uid));
     const [callDuration] = await db.select({ total: sum2(callsTable3.durationSeconds) }).from(callsTable3).where(eq(callsTable3.callerId, uid));
-    const [giftsSent] = await db.select({ count: count2() }).from(giftsTable3).where(eq(giftsTable3.senderId, uid));
-    const [giftsReceived] = await db.select({ count: count2() }).from(giftsTable3).where(eq(giftsTable3.receiverId, uid));
     const [chatsCount] = await db.select({ count: count2() }).from(chatMembersTable5).where(eq(chatMembersTable5.userId, uid));
     const [contactsCount] = await db.select({ count: count2() }).from(contactsTable2).where(eq(contactsTable2.userId, uid));
     const balanceRow = await db.execute(sql`SELECT balance FROM users WHERE id = ${uid}`);
@@ -144365,48 +144351,12 @@ router4.get("/stats/me", async (req, res) => {
       messagesSent: Number(msgCount?.count ?? 0),
       callsMade: Number(callCount?.count ?? 0),
       callDurationSeconds: Number(callDuration?.total ?? 0),
-      giftsSent: Number(giftsSent?.count ?? 0),
-      giftsReceived: Number(giftsReceived?.count ?? 0),
+      giftsSent: 0,
+      giftsReceived: 0,
       chatsCount: Number(chatsCount?.count ?? 0),
       contactsCount: Number(contactsCount?.count ?? 0),
       popularity: Math.min(balance, 1e4)
     });
-  } catch (err2) {
-    req.log.error(err2);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-router4.get("/users/:userId/gift-showcase", async (req, res) => {
-  try {
-    const targetId = Number(req.params.userId);
-    if (!targetId) return res.status(400).json({ error: "Invalid userId" });
-    const rows = await db.execute(sql`
-      SELECT
-        gi.id,
-        gi.name,
-        gi.emoji,
-        gi.rarity,
-        gi.animation_type,
-        gi.stars,
-        COUNT(g.id)::int AS count
-      FROM gifts g
-      JOIN gift_items gi ON gi.id = g.gift_item_id
-      WHERE g.receiver_id = ${targetId}
-        AND g.is_anonymous = false
-      GROUP BY gi.id, gi.name, gi.emoji, gi.rarity, gi.animation_type, gi.stars
-      ORDER BY
-        CASE gi.rarity
-          WHEN 'cosmic'    THEN 1
-          WHEN 'legendary' THEN 2
-          WHEN 'epic'      THEN 3
-          WHEN 'rare'      THEN 4
-          ELSE 5
-        END ASC,
-        gi.stars DESC,
-        count DESC
-      LIMIT 8
-    `);
-    res.json(rows.rows);
   } catch (err2) {
     req.log.error(err2);
     res.status(500).json({ error: "Internal server error" });
@@ -144585,7 +144535,6 @@ router4.delete("/users/me", async (req, res) => {
       sql`DELETE FROM message_reactions WHERE user_id = ${uid}`,
       sql`DELETE FROM story_views WHERE viewer_id = ${uid}`,
       sql`DELETE FROM stories WHERE user_id = ${uid}`,
-      sql`DELETE FROM gifts WHERE sender_id = ${uid} OR receiver_id = ${uid}`,
       sql`DELETE FROM calls WHERE caller_id = ${uid} OR callee_id = ${uid}`,
       sql`DELETE FROM contacts WHERE user_id = ${uid} OR contact_id = ${uid}`,
       sql`DELETE FROM contact_requests WHERE from_user_id = ${uid} OR to_user_id = ${uid}`,
@@ -144594,6 +144543,7 @@ router4.delete("/users/me", async (req, res) => {
       sql`DELETE FROM post_reports WHERE reporter_id = ${uid}`,
       sql`DELETE FROM referral_uses WHERE referrer_id = ${uid} OR referred_id = ${uid}`,
       sql`DELETE FROM push_subscriptions WHERE user_id = ${uid}`,
+      sql`DELETE FROM fcm_tokens WHERE user_id = ${uid}`,
       sql`DELETE FROM chat_members WHERE user_id = ${uid}`,
       sql`DELETE FROM chat_folder_chats WHERE chat_id IN (SELECT chat_id FROM chat_members WHERE user_id = ${uid})`,
       sql`DELETE FROM chat_folders WHERE user_id = ${uid}`,
@@ -144627,7 +144577,7 @@ router4.delete("/users/me", async (req, res) => {
         security_question = NULL,
         security_answer = NULL,
         id_document_url = NULL,
-        last_monthly_gift_at = NULL,
+
         prime_tier = NULL,
         prime_expires_at = NULL
       WHERE id = ${uid}
@@ -146044,6 +145994,7 @@ import { spawn } from "node:child_process";
 // src/routes/push.ts
 var import_express7 = __toESM(require_express2(), 1);
 var import_web_push = __toESM(require_src2(), 1);
+var import_jsonwebtoken3 = __toESM(require_jsonwebtoken(), 1);
 init_src();
 init_drizzle_orm();
 var router7 = (0, import_express7.Router)();
@@ -146053,31 +146004,148 @@ var VAPID_EMAIL = process.env.VAPID_EMAIL ?? "mailto:admin@pulse.app";
 if (VAPID_PUBLIC && VAPID_PRIVATE) {
   import_web_push.default.setVapidDetails(VAPID_EMAIL, VAPID_PUBLIC, VAPID_PRIVATE);
 }
-async function sendPushToUser(userId, payload) {
-  if (!VAPID_PUBLIC || !VAPID_PRIVATE) return;
+var _fcmAccessToken = null;
+var _fcmTokenExpiry = 0;
+async function getFcmAccessToken() {
+  if (!process.env.FIREBASE_SERVICE_ACCOUNT) return null;
+  if (_fcmAccessToken && Date.now() < _fcmTokenExpiry) return _fcmAccessToken;
   try {
-    const rows = await db.execute(
-      sql`SELECT endpoint, p256dh, auth FROM push_subscriptions WHERE user_id = ${userId}`
+    const sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+    const now = Math.floor(Date.now() / 1e3);
+    const assertion = import_jsonwebtoken3.default.sign(
+      {
+        iss: sa.client_email,
+        sub: sa.client_email,
+        aud: "https://oauth2.googleapis.com/token",
+        iat: now,
+        exp: now + 3600,
+        scope: "https://www.googleapis.com/auth/firebase.messaging"
+      },
+      sa.private_key,
+      { algorithm: "RS256" }
     );
-    const isCall = payload.chatType === "call";
-    const urgency = isCall ? "high" : "high";
-    const ttl = isCall ? 90 : 86400;
-    for (const row of rows.rows) {
-      const subscription = {
-        endpoint: row.endpoint,
-        keys: { p256dh: row.p256dh, auth: row.auth }
-      };
-      import_web_push.default.sendNotification(subscription, JSON.stringify(payload), {
-        urgency,
-        TTL: ttl
-      }).catch(async (err2) => {
-        if (err2.statusCode === 404 || err2.statusCode === 410) {
-          await db.execute(sql`DELETE FROM push_subscriptions WHERE endpoint = ${row.endpoint}`).catch(() => {
+    const res = await fetch("https://oauth2.googleapis.com/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        grant_type: "urn:ietf:params:oauth2:grant-type:jwt-bearer",
+        assertion
+      })
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    _fcmAccessToken = data.access_token;
+    _fcmTokenExpiry = Date.now() + (data.expires_in - 60) * 1e3;
+    return _fcmAccessToken;
+  } catch {
+    return null;
+  }
+}
+async function sendFcmToToken(fcmToken, payload) {
+  if (!process.env.FIREBASE_SERVICE_ACCOUNT) return false;
+  const sa = (() => {
+    try {
+      return JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+    } catch {
+      return null;
+    }
+  })();
+  if (!sa?.project_id) return false;
+  const accessToken = await getFcmAccessToken();
+  if (!accessToken) return false;
+  const isCall = !!payload.callId;
+  const body = {
+    message: {
+      token: fcmToken,
+      notification: {
+        title: payload.title,
+        body: payload.body
+      },
+      data: {
+        url: payload.url ?? "/",
+        chatId: String(payload.chatId ?? ""),
+        callId: String(payload.callId ?? ""),
+        tag: payload.tag ?? "nova-message",
+        type: isCall ? "call" : "message"
+      },
+      android: {
+        priority: "high",
+        notification: {
+          channel_id: isCall ? "calls" : "messages",
+          icon: "ic_stat_pulse",
+          color: "#ff5500",
+          default_vibrate_timings: true,
+          notification_priority: "PRIORITY_HIGH",
+          visibility: "PUBLIC",
+          ...isCall ? { sticky: true } : {}
+        },
+        // TTL: calls expire in 90s (useless after that), messages last 24h
+        ttl: isCall ? "90s" : "86400s"
+      }
+    }
+  };
+  try {
+    const res = await fetch(
+      `https://fcm.googleapis.com/v1/projects/${sa.project_id}/messages:send`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(body)
+      }
+    );
+    if (res.status === 404 || res.status === 410) return false;
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+async function sendPushToUser(userId, payload) {
+  if (VAPID_PUBLIC && VAPID_PRIVATE) {
+    try {
+      const rows = await db.execute(
+        sql`SELECT endpoint, p256dh, auth FROM push_subscriptions WHERE user_id = ${userId}`
+      );
+      const isCall = payload.chatType === "call";
+      const ttl = isCall ? 90 : 86400;
+      for (const row of rows.rows) {
+        const subscription = {
+          endpoint: row.endpoint,
+          keys: { p256dh: row.p256dh, auth: row.auth }
+        };
+        import_web_push.default.sendNotification(subscription, JSON.stringify(payload), {
+          urgency: "high",
+          TTL: ttl
+        }).catch(async (err2) => {
+          if (err2.statusCode === 404 || err2.statusCode === 410) {
+            await db.execute(
+              sql`DELETE FROM push_subscriptions WHERE endpoint = ${row.endpoint}`
+            ).catch(() => {
+            });
+          }
+        });
+      }
+    } catch {
+    }
+  }
+  if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+    try {
+      const rows = await db.execute(
+        sql`SELECT token FROM fcm_tokens WHERE user_id = ${userId}`
+      );
+      for (const row of rows.rows) {
+        const ok2 = await sendFcmToToken(row.token, payload);
+        if (!ok2) {
+          db.execute(
+            sql`DELETE FROM fcm_tokens WHERE token = ${row.token}`
+          ).catch(() => {
           });
         }
-      });
+      }
+    } catch {
     }
-  } catch {
   }
 }
 router7.get("/notifications/unread", async (req, res) => {
@@ -146151,6 +146219,41 @@ router7.delete("/push/subscribe", async (req, res) => {
       await db.execute(
         sql`DELETE FROM push_subscriptions WHERE user_id = ${uid}`
       );
+    }
+    res.json({ ok: true });
+  } catch (err2) {
+    req.log.error(err2);
+    res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
+  }
+});
+router7.post("/push/fcm-token", async (req, res) => {
+  try {
+    const uid = req.currentUserId;
+    if (!uid) return res.status(401).json({ error: "Unauthorized" });
+    const { token } = req.body;
+    if (!token || typeof token !== "string" || token.length < 10) {
+      return res.status(400).json({ error: "Invalid FCM token" });
+    }
+    await db.execute(
+      sql`INSERT INTO fcm_tokens (user_id, token, updated_at)
+          VALUES (${uid}, ${token}, NOW())
+          ON CONFLICT (token) DO UPDATE SET user_id = ${uid}, updated_at = NOW()`
+    );
+    res.json({ ok: true });
+  } catch (err2) {
+    req.log.error(err2);
+    res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
+  }
+});
+router7.delete("/push/fcm-token", async (req, res) => {
+  try {
+    const uid = req.currentUserId;
+    if (!uid) return res.status(401).json({ error: "Unauthorized" });
+    const { token } = req.body;
+    if (token) {
+      await db.execute(sql`DELETE FROM fcm_tokens WHERE user_id = ${uid} AND token = ${token}`);
+    } else {
+      await db.execute(sql`DELETE FROM fcm_tokens WHERE user_id = ${uid}`);
     }
     res.json({ ok: true });
   } catch (err2) {
@@ -148096,6 +148199,8 @@ router12.delete("/admin/users/:userId", requireAdmin, async (req, res) => {
       await db.execute(sql`DELETE FROM spark_activity WHERE user_id = ${targetId}`);
       await db.execute(sql`DELETE FROM pinned_messages WHERE pinned_by = ${targetId}`);
       await db.execute(sql`DELETE FROM push_subscriptions WHERE user_id = ${targetId}`);
+      await db.execute(sql`DELETE FROM fcm_tokens WHERE user_id = ${targetId}`).catch(() => {
+      });
       await db.execute(sql`DELETE FROM bug_reports WHERE user_id = ${targetId}`);
       await db.execute(sql`DELETE FROM scheduled_messages WHERE sender_id = ${targetId}`);
       await db.execute(sql`DELETE FROM contacts WHERE user_id = ${targetId} OR contact_id = ${targetId}`);
@@ -149733,69 +149838,6 @@ router14.post("/wallet/buy", async (req, res) => {
     ).catch(() => {
     });
     res.json({ success: true, balance, amount });
-  } catch (err2) {
-    req.log.error(err2);
-    res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
-  }
-});
-router14.post("/wallet/monthly-gift", async (req, res) => {
-  try {
-    const uid = req.currentUserId;
-    const primeRow = await db.execute(sql`SELECT has_prime, prime_tier, prime_expires_at, last_monthly_gift_at FROM users WHERE id = ${uid}`);
-    const user = primeRow.rows[0];
-    if (!user) return res.status(404).json({ error: "\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D" });
-    const hasPrime = (user.has_prime === true || user.has_prime === "t") && user.prime_expires_at && new Date(user.prime_expires_at) > /* @__PURE__ */ new Date();
-    const isPrimePlus = hasPrime && user.prime_tier === "prime_plus";
-    if (!isPrimePlus) return res.status(403).json({ error: "\u0415\u0436\u0435\u043C\u0435\u0441\u044F\u0447\u043D\u044B\u0439 \u043F\u043E\u0434\u0430\u0440\u043E\u043A \u0434\u043E\u0441\u0442\u0443\u043F\u0435\u043D \u0442\u043E\u043B\u044C\u043A\u043E \u0434\u043B\u044F Prime+" });
-    if (user.last_monthly_gift_at) {
-      const lastGift = new Date(user.last_monthly_gift_at);
-      const daysSinceLast = (Date.now() - lastGift.getTime()) / (1e3 * 60 * 60 * 24);
-      if (daysSinceLast < 30) {
-        const daysLeft = Math.ceil(30 - daysSinceLast);
-        return res.status(409).json({ error: `\u0421\u043B\u0435\u0434\u0443\u044E\u0449\u0438\u0439 \u043F\u043E\u0434\u0430\u0440\u043E\u043A \u0447\u0435\u0440\u0435\u0437 ${daysLeft} \u0434\u043D.`, daysLeft });
-      }
-    }
-    let epicGiftItem = null;
-    try {
-      const epicItems = await db.execute(sql`SELECT * FROM gift_items WHERE rarity = 'epic' ORDER BY RANDOM() LIMIT 1`);
-      epicGiftItem = epicItems.rows[0];
-    } catch {
-    }
-    if (!epicGiftItem) {
-      const sparkReward = 200;
-      await db.execute(sql`UPDATE users SET balance = balance + ${sparkReward}, last_monthly_gift_at = NOW() WHERE id = ${uid}`);
-      await db.execute(sql`INSERT INTO spark_activity (user_id, type, amount, description) VALUES (${uid}, 'monthly_gift', ${sparkReward}, 'Ежемесячный подарок Prime+')`).catch(() => {
-      });
-      const rows = await db.execute(sql`SELECT balance FROM users WHERE id = ${uid}`);
-      return res.json({ success: true, type: "spark", amount: sparkReward, balance: Number(rows.rows[0]?.balance ?? 0) });
-    }
-    await db.execute(sql`
-      INSERT INTO gifts (gift_item_id, sender_id, receiver_id, message)
-      VALUES (${epicGiftItem.id}, ${uid}, ${uid}, 'Ежемесячный подарок Prime+ 🎁')
-    `).catch(() => {
-    });
-    await db.execute(sql`UPDATE users SET last_monthly_gift_at = NOW() WHERE id = ${uid}`);
-    await db.execute(sql`INSERT INTO spark_activity (user_id, type, amount, description) VALUES (${uid}, 'monthly_gift', 0, ${"\u0415\u0436\u0435\u043C\u0435\u0441\u044F\u0447\u043D\u044B\u0439 \u044D\u043F\u0438\u0447\u0435\u0441\u043A\u0438\u0439 \u043F\u043E\u0434\u0430\u0440\u043E\u043A: " + epicGiftItem.name})`).catch(() => {
-    });
-    res.json({ success: true, type: "gift", gift: epicGiftItem });
-  } catch (err2) {
-    req.log.error(err2);
-    res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
-  }
-});
-router14.get("/wallet/monthly-gift/status", async (req, res) => {
-  try {
-    const uid = req.currentUserId;
-    const row = await db.execute(sql`SELECT last_monthly_gift_at, has_prime, prime_tier, prime_expires_at FROM users WHERE id = ${uid}`);
-    const user = row.rows[0];
-    const hasPrime = (user?.has_prime === true || user?.has_prime === "t") && user?.prime_expires_at && new Date(user.prime_expires_at) > /* @__PURE__ */ new Date();
-    const isPrimePlus = hasPrime && user?.prime_tier === "prime_plus";
-    if (!isPrimePlus) return res.json({ available: false, reason: "not_prime_plus" });
-    const lastGiftAt = user?.last_monthly_gift_at ? new Date(user.last_monthly_gift_at) : null;
-    const daysSinceLast = lastGiftAt ? (Date.now() - lastGiftAt.getTime()) / (1e3 * 60 * 60 * 24) : 999;
-    const available = daysSinceLast >= 30;
-    const daysLeft = available ? 0 : Math.ceil(30 - daysSinceLast);
-    res.json({ available, daysLeft, lastGiftAt: lastGiftAt?.toISOString() ?? null });
   } catch (err2) {
     req.log.error(err2);
     res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
@@ -152141,7 +152183,7 @@ app.use(async (req, _res, next) => {
   if (authHeader?.startsWith("Bearer ")) {
     const token = authHeader.slice(7);
     try {
-      const payload = import_jsonwebtoken3.default.verify(token, EFFECTIVE_JWT_SECRET);
+      const payload = import_jsonwebtoken4.default.verify(token, EFFECTIVE_JWT_SECRET);
       if (!payload.pending2fa && Number.isFinite(payload.userId) && payload.userId > 0) {
         if (payload.sid) {
           const valid = await isSessionValid(payload.sid);
@@ -152159,7 +152201,7 @@ app.use(async (req, _res, next) => {
   const queryToken = req.query._token || req.query.token;
   if (queryToken) {
     try {
-      const payload = import_jsonwebtoken3.default.verify(queryToken, EFFECTIVE_JWT_SECRET);
+      const payload = import_jsonwebtoken4.default.verify(queryToken, EFFECTIVE_JWT_SECRET);
       if (!payload.pending2fa && Number.isFinite(payload.userId) && payload.userId > 0) {
         if (payload.sid) {
           const valid = await isSessionValid(payload.sid);
@@ -152310,7 +152352,7 @@ var import_dist = __toESM(require_dist6(), 1);
 var { Server, Namespace, Socket } = import_dist.default;
 
 // src/lib/socket.ts
-var import_jsonwebtoken4 = __toESM(require_jsonwebtoken(), 1);
+var import_jsonwebtoken5 = __toESM(require_jsonwebtoken(), 1);
 init_src();
 init_drizzle_orm();
 var io2 = null;
@@ -152326,7 +152368,7 @@ function initSocketIO(server) {
     const token = socket.handshake.auth?.token || socket.handshake.query?.token;
     if (!token) return next(new Error("Unauthorized"));
     try {
-      const payload = import_jsonwebtoken4.default.verify(token, EFFECTIVE_JWT_SECRET);
+      const payload = import_jsonwebtoken5.default.verify(token, EFFECTIVE_JWT_SECRET);
       if (!payload.pending2fa && Number.isFinite(payload.userId) && payload.userId > 0) {
         socket.data.userId = payload.userId;
         return next();
@@ -152455,165 +152497,6 @@ function initSocketIO(server) {
 // src/seed.ts
 init_src();
 init_drizzle_orm();
-var GIFT_CATALOG = [
-  // ── COMMON (50–200 ⚡) ──────────────────────────────────────────────────
-  { name: "\u042F\u0431\u043B\u043E\u043A\u043E", emoji: "\u{1F34E}", animationType: "bounce", rarity: "common", stars: 1, price: 60, description: "\u0421\u043F\u0435\u043B\u043E\u0435 \u043A\u0440\u0430\u0441\u043D\u043E\u0435 \u044F\u0431\u043B\u043E\u043A\u043E", primeOnly: false },
-  { name: "\u041F\u0435\u0440\u0441\u0438\u043A", emoji: "\u{1F351}", animationType: "bounce", rarity: "common", stars: 1, price: 65, description: "\u0421\u043B\u0430\u0434\u043A\u0438\u0439 \u043B\u0435\u0442\u043D\u0438\u0439 \u043F\u0435\u0440\u0441\u0438\u043A", primeOnly: false },
-  { name: "\u0412\u0438\u0448\u043D\u044F", emoji: "\u{1F352}", animationType: "bounce", rarity: "common", stars: 1, price: 70, description: "\u0421\u043F\u0435\u043B\u0430\u044F \u0432\u0438\u0448\u043D\u044F \u2014 \u0434\u0432\u043E\u0439\u043D\u0430\u044F \u0443\u0434\u0430\u0447\u0430", primeOnly: false },
-  { name: "\u0412\u0438\u043D\u043E\u0433\u0440\u0430\u0434", emoji: "\u{1F347}", animationType: "bounce", rarity: "common", stars: 1, price: 75, description: "\u0421\u043E\u0447\u043D\u0430\u044F \u0433\u0440\u043E\u0437\u0434\u044C \u0432\u0438\u043D\u043E\u0433\u0440\u0430\u0434\u0430", primeOnly: false },
-  { name: "\u041A\u0430\u043F\u043A\u0435\u0439\u043A", emoji: "\u{1F9C1}", animationType: "confetti", rarity: "common", stars: 1, price: 80, description: "\u041D\u0435\u0436\u043D\u044B\u0439 \u043A\u0430\u043F\u043A\u0435\u0439\u043A \u0441\u043E \u0441\u043B\u0438\u0432\u043A\u0430\u043C\u0438", primeOnly: false },
-  { name: "\u0428\u043E\u043A\u043E\u043B\u0430\u0434", emoji: "\u{1F36B}", animationType: "bounce", rarity: "common", stars: 2, price: 90, description: "\u0413\u043E\u0440\u044C\u043A\u0438\u0439 \u0448\u043E\u043A\u043E\u043B\u0430\u0434 \u2014 \u043D\u0430\u0441\u0442\u043E\u044F\u0449\u0438\u0439 \u0432\u043A\u0443\u0441", primeOnly: false },
-  { name: "\u041F\u0435\u0447\u0435\u043D\u044C\u0435", emoji: "\u{1F36A}", animationType: "bounce", rarity: "common", stars: 1, price: 70, description: "\u0425\u0440\u0443\u0441\u0442\u044F\u0449\u0435\u0435 \u0434\u043E\u043C\u0430\u0448\u043D\u0435\u0435 \u043F\u0435\u0447\u0435\u043D\u044C\u0435", primeOnly: false },
-  { name: "\u0410\u0440\u0431\u0443\u0437", emoji: "\u{1F349}", animationType: "bounce", rarity: "common", stars: 1, price: 70, description: "\u0421\u043E\u0447\u043D\u044B\u0439 \u043B\u0435\u0442\u043D\u0438\u0439 \u0430\u0440\u0431\u0443\u0437", primeOnly: false },
-  { name: "\u0422\u044E\u043B\u044C\u043F\u0430\u043D", emoji: "\u{1F337}", animationType: "confetti", rarity: "common", stars: 2, price: 90, description: "\u042F\u0440\u043A\u0438\u0439 \u0432\u0435\u0441\u0435\u043D\u043D\u0438\u0439 \u0442\u044E\u043B\u044C\u043F\u0430\u043D", primeOnly: false },
-  { name: "\u0413\u0438\u0431\u0438\u0441\u043A\u0443\u0441", emoji: "\u{1F33A}", animationType: "confetti", rarity: "common", stars: 2, price: 95, description: "\u0422\u0440\u043E\u043F\u0438\u0447\u0435\u0441\u043A\u0438\u0439 \u0446\u0432\u0435\u0442\u043E\u043A \u0433\u0438\u0431\u0438\u0441\u043A\u0443\u0441\u0430", primeOnly: false },
-  { name: "\u041F\u0438\u043D\u0433\u0432\u0438\u043D", emoji: "\u{1F427}", animationType: "bounce", rarity: "common", stars: 2, price: 110, description: "\u0417\u0430\u0431\u0430\u0432\u043D\u044B\u0439 \u043F\u0438\u043D\u0433\u0432\u0438\u043D \u0438\u0437 \u0410\u043D\u0442\u0430\u0440\u043A\u0442\u0438\u043A\u0438", primeOnly: false },
-  { name: "\u0429\u0435\u043D\u043E\u043A", emoji: "\u{1F436}", animationType: "hearts", rarity: "common", stars: 2, price: 120, description: "\u0421\u0430\u043C\u044B\u0439 \u0432\u0435\u0440\u043D\u044B\u0439 \u0434\u0440\u0443\u0433", primeOnly: false },
-  { name: "\u041A\u0440\u043E\u043B\u0438\u043A", emoji: "\u{1F430}", animationType: "bounce", rarity: "common", stars: 2, price: 110, description: "\u041F\u0443\u0448\u0438\u0441\u0442\u044B\u0439 \u0431\u0435\u043B\u044B\u0439 \u043A\u0440\u043E\u043B\u0438\u043A", primeOnly: false },
-  { name: "\u0425\u043E\u043C\u044F\u0447\u043E\u043A", emoji: "\u{1F439}", animationType: "hearts", rarity: "common", stars: 2, price: 120, description: "\u041C\u0438\u043B\u044B\u0439 \u0445\u043E\u043C\u044F\u0447\u043E\u043A \u0437\u0430 \u0449\u0451\u0447\u043A\u043E\u0439", primeOnly: false },
-  { name: "\u041F\u0430\u043B\u044C\u043C\u0430", emoji: "\u{1F334}", animationType: "sparkle", rarity: "common", stars: 2, price: 100, description: "\u0422\u0440\u043E\u043F\u0438\u0447\u0435\u0441\u043A\u0430\u044F \u043F\u0430\u043B\u044C\u043C\u0430 \u0443 \u043C\u043E\u0440\u044F", primeOnly: false },
-  { name: "\u0421\u043D\u0435\u0436\u0438\u043D\u043A\u0430", emoji: "\u2744\uFE0F", animationType: "sparkle", rarity: "common", stars: 2, price: 90, description: "\u0423\u043D\u0438\u043A\u0430\u043B\u044C\u043D\u0430\u044F \u0441\u043D\u0435\u0436\u0438\u043D\u043A\u0430", primeOnly: false },
-  { name: "\u041E\u0441\u044C\u043C\u0438\u043D\u043E\u0433", emoji: "\u{1F419}", animationType: "bounce", rarity: "common", stars: 2, price: 130, description: "\u0425\u0438\u0442\u0440\u044B\u0439 \u0432\u043E\u0441\u044C\u043C\u0438\u043D\u043E\u0433\u0438\u0439 \u0434\u0440\u0443\u0433", primeOnly: false },
-  { name: "\u041A\u0440\u0430\u0431", emoji: "\u{1F980}", animationType: "bounce", rarity: "common", stars: 2, price: 130, description: "\u0411\u043E\u043A\u043E\u0432\u043E\u0435 \u043C\u044B\u0448\u043B\u0435\u043D\u0438\u0435 \u2014 \u043A\u0440\u0430\u0431 \u0434\u0443\u043C\u0430\u0435\u0442 \u0438\u043D\u0430\u0447\u0435", primeOnly: false },
-  { name: "\u0427\u0435\u0440\u0435\u043F\u0430\u0445\u0430", emoji: "\u{1F422}", animationType: "bounce", rarity: "common", stars: 2, price: 100, description: "\u041C\u0443\u0434\u0440\u0430\u044F \u0447\u0435\u0440\u0435\u043F\u0430\u0445\u0430", primeOnly: false },
-  { name: "\u041B\u044F\u0433\u0443\u0448\u043A\u0430", emoji: "\u{1F438}", animationType: "bounce", rarity: "common", stars: 1, price: 75, description: "\u0412\u0435\u0441\u0451\u043B\u0430\u044F \u0437\u0435\u043B\u0451\u043D\u0430\u044F \u043B\u044F\u0433\u0443\u0448\u043A\u0430", primeOnly: false },
-  { name: "\u0421\u0435\u0440\u0434\u0435\u0447\u043A\u043E", emoji: "\u2764\uFE0F", animationType: "hearts", rarity: "common", stars: 1, price: 50, description: "\u0422\u0451\u043F\u043B\u043E\u0435 \u0441\u0435\u0440\u0434\u0435\u0447\u043A\u043E \u0434\u043B\u044F \u0431\u043B\u0438\u0437\u043A\u043E\u0433\u043E \u0447\u0435\u043B\u043E\u0432\u0435\u043A\u0430", primeOnly: false },
-  { name: "\u0417\u0432\u0451\u0437\u0434\u043E\u0447\u043A\u0430", emoji: "\u2B50", animationType: "stars", rarity: "common", stars: 1, price: 50, description: "\u041C\u0430\u043B\u0435\u043D\u044C\u043A\u0430\u044F, \u043D\u043E \u044F\u0440\u043A\u0430\u044F \u0437\u0432\u0435\u0437\u0434\u0430", primeOnly: false },
-  { name: "\u041C\u044B\u043B\u044C\u043D\u044B\u0439 \u043F\u0443\u0437\u044B\u0440\u044C", emoji: "\u{1FAE7}", animationType: "sparkle", rarity: "common", stars: 1, price: 50, description: "\u0420\u0430\u0434\u0443\u0436\u043D\u044B\u0439 \u043F\u0443\u0437\u044B\u0440\u044C \u2014 \u043B\u0451\u0433\u043A\u043E\u0441\u0442\u044C \u0438 \u0440\u0430\u0434\u043E\u0441\u0442\u044C", primeOnly: false },
-  { name: "\u041A\u043E\u043D\u0444\u0435\u0442\u0430", emoji: "\u{1F36C}", animationType: "bounce", rarity: "common", stars: 1, price: 60, description: "\u0421\u043B\u0430\u0434\u043A\u0430\u044F \u043A\u043E\u043D\u0444\u0435\u0442\u0430 \u0434\u043B\u044F \u0445\u043E\u0440\u043E\u0448\u0435\u0433\u043E \u043D\u0430\u0441\u0442\u0440\u043E\u0435\u043D\u0438\u044F", primeOnly: false },
-  { name: "\u041A\u043B\u0443\u0431\u043D\u0438\u043A\u0430", emoji: "\u{1F353}", animationType: "bounce", rarity: "common", stars: 1, price: 70, description: "\u0421\u043F\u0435\u043B\u0430\u044F \u0438 \u0441\u043E\u0447\u043D\u0430\u044F \u043A\u043B\u0443\u0431\u043D\u0438\u043A\u0430", primeOnly: false },
-  { name: "\u041B\u0435\u0434\u0435\u043D\u0435\u0446", emoji: "\u{1F36D}", animationType: "sparkle", rarity: "common", stars: 1, price: 70, description: "\u042F\u0440\u043A\u0438\u0439 \u043B\u0435\u0434\u0435\u043D\u0435\u0446 \u043D\u0430 \u043F\u0430\u043B\u043E\u0447\u043A\u0435", primeOnly: false },
-  { name: "\u0420\u043E\u043C\u0430\u0448\u043A\u0430", emoji: "\u{1F33C}", animationType: "confetti", rarity: "common", stars: 1, price: 70, description: "\u041D\u0435\u0436\u043D\u0430\u044F \u0440\u043E\u043C\u0430\u0448\u043A\u0430 \u2014 \u0441\u0438\u043C\u0432\u043E\u043B \u0447\u0438\u0441\u0442\u043E\u0442\u044B", primeOnly: false },
-  { name: "\u0426\u0432\u0435\u0442\u043E\u043A \u0441\u0430\u043A\u0443\u0440\u044B", emoji: "\u{1F338}", animationType: "confetti", rarity: "common", stars: 1, price: 80, description: "\u041D\u0435\u0436\u043D\u044B\u0439 \u0446\u0432\u0435\u0442\u043E\u043A \u0432\u0435\u0441\u043D\u044B", primeOnly: false },
-  { name: "\u041F\u043E\u043D\u0447\u0438\u043A", emoji: "\u{1F369}", animationType: "bounce", rarity: "common", stars: 1, price: 80, description: "\u0421\u043B\u0430\u0434\u043A\u0438\u0439 \u043F\u043E\u043D\u0447\u0438\u043A \u043D\u0430 \u0443\u0434\u0430\u0447\u0443", primeOnly: false },
-  { name: "\u041C\u043E\u0440\u043E\u0436\u0435\u043D\u043E\u0435", emoji: "\u{1F366}", animationType: "bounce", rarity: "common", stars: 2, price: 80, description: "\u0425\u043E\u043B\u043E\u0434\u043D\u043E\u0435 \u0438 \u0432\u043A\u0443\u0441\u043D\u043E\u0435 \u043C\u043E\u0440\u043E\u0436\u0435\u043D\u043E\u0435", primeOnly: false },
-  { name: "\u0420\u044B\u0431\u043A\u0430", emoji: "\u{1F41F}", animationType: "bounce", rarity: "common", stars: 2, price: 90, description: "\u042F\u0440\u043A\u0430\u044F \u0442\u0440\u043E\u043F\u0438\u0447\u0435\u0441\u043A\u0430\u044F \u0440\u044B\u0431\u043A\u0430", primeOnly: false },
-  { name: "\u041F\u043E\u0434\u0441\u043E\u043B\u043D\u0443\u0445", emoji: "\u{1F33B}", animationType: "sparkle", rarity: "common", stars: 2, price: 90, description: "\u0421\u043E\u043B\u043D\u0435\u0447\u043D\u044B\u0439 \u043F\u043E\u0434\u0441\u043E\u043B\u043D\u0443\u0445 \u2014 \u0437\u0430\u0440\u044F\u0434 \u044D\u043D\u0435\u0440\u0433\u0438\u0438", primeOnly: false },
-  { name: "\u0427\u0430\u0448\u043A\u0430 \u043A\u043E\u0444\u0435", emoji: "\u2615", animationType: "sparkle", rarity: "common", stars: 2, price: 100, description: "\u0410\u0440\u043E\u043C\u0430\u0442\u043D\u0430\u044F \u0447\u0430\u0448\u043A\u0430 \u043A\u043E\u0444\u0435", primeOnly: false },
-  { name: "\u041B\u0443\u043D\u0430", emoji: "\u{1F319}", animationType: "sparkle", rarity: "common", stars: 2, price: 100, description: "\u041D\u043E\u0447\u043D\u0430\u044F \u043B\u0443\u043D\u0430 \u0441\u0432\u0435\u0442\u0438\u0442 \u0442\u043E\u043B\u044C\u043A\u043E \u0442\u0435\u0431\u0435", primeOnly: false },
-  { name: "\u0427\u0435\u0442\u044B\u0440\u0451\u0445\u043B\u0438\u0441\u0442\u043D\u0438\u043A", emoji: "\u{1F340}", animationType: "confetti", rarity: "common", stars: 2, price: 100, description: "\u041A\u043B\u0435\u0432\u0435\u0440 \u2014 \u0441\u0438\u043C\u0432\u043E\u043B \u0443\u0434\u0430\u0447\u0438", primeOnly: false },
-  { name: "\u0411\u0430\u0431\u043E\u0447\u043A\u0430", emoji: "\u{1F98B}", animationType: "magic", rarity: "common", stars: 2, price: 110, description: "\u041F\u0440\u0435\u043A\u0440\u0430\u0441\u043D\u0430\u044F \u0431\u0430\u0431\u043E\u0447\u043A\u0430 \u2014 \u0441\u0438\u043C\u0432\u043E\u043B \u043F\u0435\u0440\u0435\u043C\u0435\u043D", primeOnly: false },
-  { name: "\u041A\u043E\u0442\u0451\u043D\u043E\u043A", emoji: "\u{1F431}", animationType: "hearts", rarity: "common", stars: 2, price: 120, description: "\u0421\u0430\u043C\u044B\u0439 \u043C\u0438\u043B\u044B\u0439 \u043A\u043E\u0442\u0451\u043D\u043E\u043A", primeOnly: false },
-  { name: "\u0412\u043E\u0437\u0434\u0443\u0448\u043D\u044B\u0439 \u0448\u0430\u0440", emoji: "\u{1F388}", animationType: "balloons", rarity: "common", stars: 2, price: 120, description: "\u041F\u0440\u0430\u0437\u0434\u043D\u0438\u0447\u043D\u044B\u0439 \u0432\u043E\u0437\u0434\u0443\u0448\u043D\u044B\u0439 \u0448\u0430\u0440\u0438\u043A", primeOnly: false },
-  { name: "\u0420\u0435\u0442\u0440\u043E-\u0442\u0435\u043B\u0435\u0444\u043E\u043D", emoji: "\u{1F4DE}", animationType: "bounce", rarity: "common", stars: 2, price: 140, description: "\u041A\u043B\u0430\u0441\u0441\u0438\u0447\u0435\u0441\u043A\u0438\u0439 \u0440\u0435\u0442\u0440\u043E-\u0442\u0435\u043B\u0435\u0444\u043E\u043D", primeOnly: false },
-  { name: "\u041F\u0438\u0446\u0446\u0430", emoji: "\u{1F355}", animationType: "bounce", rarity: "common", stars: 2, price: 150, description: "\u041A\u0443\u0441\u043E\u0447\u0435\u043A \u0434\u0440\u0443\u0436\u0431\u044B \u0438 \u0442\u0435\u043F\u043B\u0430", primeOnly: false },
-  { name: "\u041C\u0435\u0434\u0432\u0435\u0436\u043E\u043D\u043E\u043A", emoji: "\u{1F9F8}", animationType: "hearts", rarity: "common", stars: 2, price: 160, description: "\u041C\u044F\u0433\u043A\u0438\u0439 \u043F\u043B\u044E\u0448\u0435\u0432\u044B\u0439 \u043C\u0435\u0434\u0432\u0435\u0436\u043E\u043D\u043E\u043A", primeOnly: false },
-  { name: "\u0422\u043E\u0440\u0442", emoji: "\u{1F382}", animationType: "confetti", rarity: "common", stars: 2, price: 180, description: "\u041F\u0440\u0430\u0437\u0434\u043D\u0438\u0447\u043D\u044B\u0439 \u0442\u043E\u0440\u0442", primeOnly: false },
-  { name: "\u0418\u0433\u0440\u043E\u0432\u0430\u044F \u043F\u0440\u0438\u0441\u0442\u0430\u0432\u043A\u0430", emoji: "\u{1F3AE}", animationType: "lightning", rarity: "common", stars: 2, price: 180, description: "\u0414\u043B\u044F \u043D\u0430\u0441\u0442\u043E\u044F\u0449\u0438\u0445 \u0433\u0435\u0439\u043C\u0435\u0440\u043E\u0432", primeOnly: false },
-  { name: "\u0421\u043D\u0435\u0433\u043E\u0432\u0438\u043A", emoji: "\u26C4", animationType: "sparkle", rarity: "common", stars: 2, price: 110, description: "\u0412\u0435\u0441\u0451\u043B\u044B\u0439 \u0441\u043D\u0435\u0433\u043E\u0432\u0438\u043A \u2014 \u0437\u0438\u043C\u043D\u0435\u0435 \u043D\u0430\u0441\u0442\u0440\u043E\u0435\u043D\u0438\u0435", primeOnly: false },
-  { name: "\u0420\u0430\u0434\u0443\u0436\u043D\u044B\u0439 \u043A\u0438\u0442", emoji: "\u{1F433}", animationType: "balloons", rarity: "common", stars: 2, price: 130, description: "\u041E\u0433\u0440\u043E\u043C\u043D\u044B\u0439 \u0434\u043E\u0431\u0440\u043E\u0434\u0443\u0448\u043D\u044B\u0439 \u043A\u0438\u0442", primeOnly: false },
-  // ── RARE (500–2000 ⚡) ─────────────────────────────────────────────────
-  { name: "\u041F\u0430\u043B\u0438\u0442\u0440\u0430", emoji: "\u{1F3A8}", animationType: "sparkle", rarity: "rare", stars: 3, price: 600, description: "\u041F\u0430\u043B\u0438\u0442\u0440\u0430 \u0445\u0443\u0434\u043E\u0436\u043D\u0438\u043A\u0430 \u2014 \u0442\u0432\u043E\u0440\u0447\u0435\u0441\u0442\u0432\u043E \u0431\u0435\u0437 \u0433\u0440\u0430\u043D\u0438\u0446", primeOnly: false },
-  { name: "\u041F\u0430\u0437\u043B", emoji: "\u{1F9E9}", animationType: "sparkle", rarity: "rare", stars: 3, price: 650, description: "\u041F\u043E\u0441\u043B\u0435\u0434\u043D\u0438\u0439 \u043A\u0443\u0441\u043E\u0447\u0435\u043A \u043F\u0430\u0437\u043B\u0430", primeOnly: false },
-  { name: "\u041C\u0438\u0448\u0435\u043D\u044C", emoji: "\u{1F3AF}", animationType: "lightning", rarity: "rare", stars: 3, price: 700, description: "\u0422\u043E\u0447\u043D\u043E \u0432 \u0446\u0435\u043B\u044C!", primeOnly: false },
-  { name: "\u0411\u0430\u0440\u0430\u0431\u0430\u043D\u044B", emoji: "\u{1F941}", animationType: "lightning", rarity: "rare", stars: 4, price: 850, description: "\u0420\u0438\u0442\u043C, \u0447\u0442\u043E \u0437\u0430\u0436\u0438\u0433\u0430\u0435\u0442", primeOnly: false },
-  { name: "\u041F\u0438\u0430\u043D\u0438\u043D\u043E", emoji: "\u{1F3B9}", animationType: "magic", rarity: "rare", stars: 4, price: 950, description: "\u041A\u043B\u0430\u0432\u0438\u0448\u0438 \u0441\u0443\u0434\u044C\u0431\u044B", primeOnly: false },
-  { name: "\u0411\u0430\u043D\u0442", emoji: "\u{1F380}", animationType: "hearts", rarity: "rare", stars: 3, price: 580, description: "\u041D\u0435\u0436\u043D\u044B\u0439 \u0431\u0430\u043D\u0442 \u2014 \u0441\u044E\u0440\u043F\u0440\u0438\u0437 \u0432\u043D\u0443\u0442\u0440\u0438", primeOnly: false },
-  { name: "\u0412\u043E\u043B\u043D\u0430", emoji: "\u{1F30A}", animationType: "bounce", rarity: "rare", stars: 4, price: 780, description: "\u041C\u043E\u0449\u043D\u0430\u044F \u0432\u043E\u043B\u043D\u0430 \u043E\u043A\u0435\u0430\u043D\u0430", primeOnly: false },
-  { name: "\u0413\u043E\u0440\u0430", emoji: "\u{1F3D4}\uFE0F", animationType: "sparkle", rarity: "rare", stars: 3, price: 720, description: "\u0413\u043E\u0440\u043D\u0430\u044F \u0432\u0435\u0440\u0448\u0438\u043D\u0430 \u2014 \u043F\u043E\u043A\u043E\u0440\u0438 \u0435\u0451!", primeOnly: false },
-  { name: "\u0421\u0432\u0435\u0447\u0430", emoji: "\u{1F56F}\uFE0F", animationType: "flame", rarity: "rare", stars: 4, price: 880, description: "\u0422\u0451\u043F\u043B\u043E\u0435 \u043F\u043B\u0430\u043C\u044F \u0441\u0432\u0435\u0447\u0438", primeOnly: false },
-  { name: "\u041C\u0430\u0441\u043A\u0430", emoji: "\u{1F3AD}", animationType: "magic", rarity: "rare", stars: 4, price: 1050, description: "\u0422\u0435\u0430\u0442\u0440\u0430\u043B\u044C\u043D\u0430\u044F \u043C\u0430\u0441\u043A\u0430 \u0434\u0432\u0443\u0445 \u043B\u0438\u0446", primeOnly: false },
-  { name: "\u0416\u0435\u043C\u0447\u0443\u0433", emoji: "\u{1FAAC}", animationType: "magic", rarity: "rare", stars: 5, price: 1800, description: "\u0416\u0435\u043C\u0447\u0443\u0436\u043D\u044B\u0439 \u0430\u043C\u0443\u043B\u0435\u0442 \u0437\u0430\u0449\u0438\u0442\u044B", primeOnly: false },
-  { name: "\u041C\u0430\u044F\u043A", emoji: "\u{1F5FC}", animationType: "sparkle", rarity: "rare", stars: 3, price: 880, description: "\u041C\u0430\u044F\u043A \u0432 \u043D\u043E\u0447\u0438 \u2014 \u043E\u0440\u0438\u0435\u043D\u0442\u0438\u0440 \u0434\u043B\u044F \u043A\u043E\u0440\u0430\u0431\u043B\u0435\u0439", primeOnly: false },
-  { name: "\u041A\u043E\u0440\u043E\u043D\u0430", emoji: "\u{1F451}", animationType: "sparkle", rarity: "rare", stars: 3, price: 500, description: "\u041F\u043E\u0447\u0443\u0432\u0441\u0442\u0432\u0443\u0439 \u0441\u0435\u0431\u044F \u043A\u043E\u0440\u043E\u043B\u0451\u043C", primeOnly: false },
-  { name: "\u041A\u0440\u0430\u0441\u043D\u0430\u044F \u0440\u043E\u0437\u0430", emoji: "\u{1F339}", animationType: "hearts", rarity: "rare", stars: 3, price: 750, description: "\u0410\u043B\u0430\u044F \u0440\u043E\u0437\u0430 \u2014 \u0441\u0438\u043C\u0432\u043E\u043B \u0441\u0442\u0440\u0430\u0441\u0442\u0438", primeOnly: false },
-  { name: "\u0411\u0440\u0438\u043B\u043B\u0438\u0430\u043D\u0442", emoji: "\u{1F48E}", animationType: "diamonds", rarity: "rare", stars: 4, price: 1e3, description: "\u0421\u0432\u0435\u0440\u043A\u0430\u044E\u0449\u0438\u0439 \u0431\u0440\u0438\u043B\u043B\u0438\u0430\u043D\u0442", primeOnly: false },
-  { name: "\u0417\u043E\u043B\u043E\u0442\u0430\u044F \u043C\u043E\u043D\u0435\u0442\u0430", emoji: "\u{1FA99}", animationType: "sparkle", rarity: "rare", stars: 3, price: 800, description: "\u0420\u0435\u0434\u043A\u0430\u044F \u0437\u043E\u043B\u043E\u0442\u0430\u044F \u043C\u043E\u043D\u0435\u0442\u0430 \u043D\u0430 \u0443\u0434\u0430\u0447\u0443", primeOnly: false },
-  { name: "\u0420\u0430\u043A\u0435\u0442\u0430", emoji: "\u{1F680}", animationType: "lightning", rarity: "rare", stars: 4, price: 1250, description: "\u0412 \u043D\u0435\u0431\u043E \u0438 \u0432\u044B\u0448\u0435!", primeOnly: false },
-  { name: "\u0413\u0438\u0442\u0430\u0440\u0430", emoji: "\u{1F3B8}", animationType: "sparkle", rarity: "rare", stars: 4, price: 1e3, description: "\u0420\u043E\u043A-\u043D-\u0440\u043E\u043B\u043B \u043D\u0430\u0432\u0441\u0435\u0433\u0434\u0430", primeOnly: false },
-  { name: "\u041A\u0443\u0431\u043E\u043A", emoji: "\u{1F3C6}", animationType: "fireworks", rarity: "rare", stars: 5, price: 1750, description: "\u0422\u044B \u043D\u0430\u0441\u0442\u043E\u044F\u0449\u0438\u0439 \u043F\u043E\u0431\u0435\u0434\u0438\u0442\u0435\u043B\u044C", primeOnly: false },
-  { name: "\u0420\u0430\u0434\u0443\u0433\u0430", emoji: "\u{1F308}", animationType: "confetti", rarity: "rare", stars: 4, price: 880, description: "\u042F\u0440\u043A\u0430\u044F \u0440\u0430\u0434\u0443\u0433\u0430 \u043F\u043E\u0441\u043B\u0435 \u0434\u043E\u0436\u0434\u044F", primeOnly: false },
-  { name: "\u041C\u043E\u043B\u043D\u0438\u044F", emoji: "\u26A1", animationType: "lightning", rarity: "rare", stars: 5, price: 1500, description: "\u042D\u043B\u0435\u043A\u0442\u0440\u0438\u0447\u0435\u0441\u043A\u0430\u044F \u044D\u043D\u0435\u0440\u0433\u0438\u044F", primeOnly: false },
-  { name: "\u0414\u0435\u043B\u044C\u0444\u0438\u043D", emoji: "\u{1F42C}", animationType: "bounce", rarity: "rare", stars: 4, price: 700, description: "\u0418\u0433\u0440\u0438\u0432\u044B\u0439 \u0438 \u0443\u043C\u043D\u044B\u0439 \u0434\u0435\u043B\u044C\u0444\u0438\u043D", primeOnly: false },
-  { name: "\u041B\u0438\u0441\u0430", emoji: "\u{1F98A}", animationType: "bounce", rarity: "rare", stars: 3, price: 620, description: "\u0425\u0438\u0442\u0440\u0430\u044F \u0438 \u043E\u0431\u0430\u044F\u0442\u0435\u043B\u044C\u043D\u0430\u044F \u043B\u0438\u0441\u0430", primeOnly: false },
-  { name: "\u0421\u043E\u0432\u0430", emoji: "\u{1F989}", animationType: "sparkle", rarity: "rare", stars: 4, price: 840, description: "\u041C\u0443\u0434\u0440\u0430\u044F \u043D\u043E\u0447\u043D\u0430\u044F \u0441\u043E\u0432\u0430", primeOnly: false },
-  { name: "\u0410\u043A\u0443\u043B\u0430", emoji: "\u{1F988}", animationType: "lightning", rarity: "rare", stars: 4, price: 1200, description: "\u0413\u0440\u043E\u0437\u043D\u0430\u044F \u0445\u043E\u0437\u044F\u0439\u043A\u0430 \u043C\u043E\u0440\u0435\u0439", primeOnly: false },
-  { name: "\u041F\u0430\u0440\u0443\u0441\u043D\u0438\u043A", emoji: "\u26F5", animationType: "bounce", rarity: "rare", stars: 3, price: 900, description: "\u0421\u0432\u043E\u0431\u043E\u0434\u043D\u044B\u0439 \u043F\u0430\u0440\u0443\u0441\u043D\u0438\u043A \u0432 \u043E\u0442\u043A\u0440\u044B\u0442\u043E\u043C \u043C\u043E\u0440\u0435", primeOnly: false },
-  { name: "\u0421\u0430\u043C\u043E\u0446\u0432\u0435\u0442", emoji: "\u{1F3C5}", animationType: "sparkle", rarity: "rare", stars: 5, price: 2e3, description: "\u0420\u0435\u0434\u043A\u0438\u0439 \u0441\u0430\u043C\u043E\u0446\u0432\u0435\u0442", primeOnly: false },
-  { name: "\u041C\u0435\u0434\u0430\u043B\u044C", emoji: "\u{1F947}", animationType: "fireworks", rarity: "rare", stars: 5, price: 1900, description: "\u0417\u043E\u043B\u043E\u0442\u0430\u044F \u043C\u0435\u0434\u0430\u043B\u044C \u0437\u0430 \u043F\u043E\u0431\u0435\u0434\u0443", primeOnly: false },
-  { name: "\u041F\u043E\u043F\u0443\u0433\u0430\u0439", emoji: "\u{1F99C}", animationType: "confetti", rarity: "rare", stars: 3, price: 760, description: "\u042F\u0440\u043A\u0438\u0439 \u0442\u0440\u043E\u043F\u0438\u0447\u0435\u0441\u043A\u0438\u0439 \u043F\u043E\u043F\u0443\u0433\u0430\u0439", primeOnly: false },
-  { name: "\u0412\u043E\u043B\u0448\u0435\u0431\u043D\u0430\u044F \u043B\u0430\u043C\u043F\u0430", emoji: "\u{1FA94}", animationType: "magic", rarity: "rare", stars: 4, price: 1100, description: "\u041B\u0430\u043C\u043F\u0430 \u0410\u043B\u0430\u0434\u0434\u0438\u043D\u0430 \u2014 \u0438\u0441\u043F\u043E\u043B\u043D\u0438 \u0436\u0435\u043B\u0430\u043D\u0438\u0435", primeOnly: false },
-  { name: "\u041C\u043E\u0440\u0441\u043A\u0430\u044F \u0437\u0432\u0435\u0437\u0434\u0430", emoji: "\u2B50", animationType: "stars", rarity: "rare", stars: 4, price: 960, description: "\u042F\u0440\u043A\u0430\u044F \u043C\u043E\u0440\u0441\u043A\u0430\u044F \u0437\u0432\u0435\u0437\u0434\u0430", primeOnly: false },
-  { name: "\u0413\u043E\u0440\u044F\u0449\u0435\u0435 \u0441\u0435\u0440\u0434\u0446\u0435", emoji: "\u2764\uFE0F\u200D\u{1F525}", animationType: "flame", rarity: "rare", stars: 5, price: 1600, description: "\u0421\u0442\u0440\u0430\u0441\u0442\u043D\u043E\u0435 \u043E\u0433\u043D\u0435\u043D\u043D\u043E\u0435 \u0441\u0435\u0440\u0434\u0446\u0435", primeOnly: false },
-  // ── EPIC (3000–12000 ⚡) ───────────────────────────────────────────────
-  { name: "\u041B\u0435\u0432", emoji: "\u{1F981}", animationType: "flame", rarity: "epic", stars: 6, price: 3200, description: "\u0426\u0430\u0440\u044C \u0437\u0432\u0435\u0440\u0435\u0439, \u0433\u043E\u0440\u0434\u044B\u0439 \u0438 \u043D\u0435\u043F\u043E\u0431\u0435\u0434\u0438\u043C\u044B\u0439", primeOnly: false },
-  { name: "\u0422\u0438\u0433\u0440", emoji: "\u{1F42F}", animationType: "flame", rarity: "epic", stars: 7, price: 4600, description: "\u041F\u043E\u043B\u043E\u0441\u0430\u0442\u044B\u0439 \u043E\u0445\u043E\u0442\u043D\u0438\u043A \u0434\u0436\u0443\u043D\u0433\u043B\u0435\u0439", primeOnly: false },
-  { name: "\u041E\u0440\u0451\u043B", emoji: "\u{1F985}", animationType: "lightning", rarity: "epic", stars: 7, price: 5400, description: "\u041E\u0440\u0451\u043B \u043F\u0430\u0440\u0438\u0442 \u0432\u044B\u0448\u0435 \u0432\u0441\u0435\u0445", primeOnly: false },
-  { name: "\u0412\u0443\u043B\u043A\u0430\u043D", emoji: "\u{1F30B}", animationType: "flame", rarity: "epic", stars: 8, price: 6800, description: "\u0418\u0437\u0432\u0435\u0440\u0433\u0430\u044E\u0449\u0438\u0439\u0441\u044F \u0432\u0443\u043B\u043A\u0430\u043D \u0441\u0438\u043B\u044B", primeOnly: false },
-  { name: "\u0414\u041D\u041A \u0436\u0438\u0437\u043D\u0438", emoji: "\u{1F9EC}", animationType: "galaxy", rarity: "epic", stars: 7, price: 4800, description: "\u041A\u043E\u0434 \u0436\u0438\u0437\u043D\u0438 \u2014 \u0442\u0430\u0439\u043D\u0430 \u0432\u0441\u0435\u043B\u0435\u043D\u043D\u043E\u0439", primeOnly: false },
-  { name: "\u0424\u0435\u0439\u0435\u0440\u0432\u0435\u0440\u043A", emoji: "\u{1F386}", animationType: "fireworks", rarity: "epic", stars: 8, price: 7200, description: "\u042F\u0440\u043A\u0438\u0439 \u0432\u0437\u0440\u044B\u0432 \u0444\u0435\u0439\u0435\u0440\u0432\u0435\u0440\u043A\u0430", primeOnly: false },
-  { name: "\u0410\u043B\u0445\u0438\u043C\u0438\u044F", emoji: "\u2697\uFE0F", animationType: "magic", rarity: "epic", stars: 9, price: 10500, description: "\u041F\u0440\u0435\u0432\u0440\u0430\u0442\u0438\u0442\u044C \u0441\u0432\u0438\u043D\u0435\u0446 \u0432 \u0437\u043E\u043B\u043E\u0442\u043E", primeOnly: false },
-  { name: "\u0413\u043E\u0440\u0438\u043B\u043B\u0430", emoji: "\u{1F98D}", animationType: "flame", rarity: "epic", stars: 6, price: 3400, description: "\u041C\u043E\u0433\u0443\u0447\u0430\u044F \u0433\u043E\u0440\u0438\u043B\u043B\u0430 \u2014 \u0441\u0438\u043B\u0430 \u0438 \u043C\u0443\u0434\u0440\u043E\u0441\u0442\u044C", primeOnly: false },
-  { name: "\u041C\u0435\u0434\u0443\u0437\u0430", emoji: "\u{1FABC}", animationType: "magic", rarity: "epic", stars: 7, price: 5e3, description: "\u0421\u0432\u0435\u0442\u044F\u0449\u0430\u044F\u0441\u044F \u043C\u0435\u0434\u0443\u0437\u0430 \u0433\u043B\u0443\u0431\u0438\u043D", primeOnly: false },
-  { name: "\u041F\u0430\u043D\u0442\u0435\u0440\u0430", emoji: "\u{1F406}", animationType: "lightning", rarity: "epic", stars: 8, price: 7600, description: "\u0411\u044B\u0441\u0442\u0440\u0430\u044F \u0438 \u0441\u043C\u0435\u0440\u0442\u043E\u043D\u043E\u0441\u043D\u0430\u044F \u043F\u0430\u043D\u0442\u0435\u0440\u0430", primeOnly: false },
-  { name: "\u041C\u043E\u043B\u043E\u0442 \u0422\u043E\u0440\u0430", emoji: "\u{1F528}", animationType: "lightning", rarity: "epic", stars: 9, price: 9500, description: "\u041C\u043E\u043B\u043E\u0442 \u0431\u043E\u0433\u0430 \u0433\u0440\u043E\u043C\u0430", primeOnly: false },
-  { name: "\u041F\u0430\u0443\u0442\u0438\u043D\u0430", emoji: "\u{1F578}\uFE0F", animationType: "magic", rarity: "epic", stars: 6, price: 3600, description: "\u0422\u043E\u043D\u043A\u0430\u044F \u0441\u0435\u0442\u044C \u0441\u0443\u0434\u044C\u0431\u044B", primeOnly: false },
-  { name: "\u0414\u0440\u0430\u043A\u043E\u043D", emoji: "\u{1F409}", animationType: "flame", rarity: "epic", stars: 6, price: 3e3, description: "\u041C\u043E\u0433\u0443\u0449\u0435\u0441\u0442\u0432\u0435\u043D\u043D\u044B\u0439 \u043E\u0433\u043D\u0435\u0434\u044B\u0448\u0430\u0449\u0438\u0439 \u0434\u0440\u0430\u043A\u043E\u043D", primeOnly: false },
-  { name: "\u0415\u0434\u0438\u043D\u043E\u0440\u043E\u0433", emoji: "\u{1F984}", animationType: "magic", rarity: "epic", stars: 7, price: 5e3, description: "\u041C\u0430\u0433\u0438\u0447\u0435\u0441\u043A\u0438\u0439 \u0435\u0434\u0438\u043D\u043E\u0440\u043E\u0433 \u0438\u0437 \u043B\u0435\u0433\u0435\u043D\u0434", primeOnly: false },
-  { name: "\u0424\u0435\u043D\u0438\u043A\u0441", emoji: "\u{1F985}", animationType: "flame", rarity: "epic", stars: 7, price: 6e3, description: "\u041F\u0442\u0438\u0446\u0430 \u0444\u0435\u043D\u0438\u043A\u0441 \u2014 \u0432\u043E\u0437\u0440\u043E\u0436\u0434\u0435\u043D\u0438\u0435", primeOnly: false },
-  { name: "\u041F\u043B\u0430\u043D\u0435\u0442\u0430", emoji: "\u{1FA90}", animationType: "galaxy", rarity: "epic", stars: 8, price: 7500, description: "\u0414\u0430\u043B\u0451\u043A\u0430\u044F \u0437\u0430\u0433\u0430\u0434\u043E\u0447\u043D\u0430\u044F \u043F\u043B\u0430\u043D\u0435\u0442\u0430", primeOnly: false },
-  { name: "\u0412\u043E\u043B\u0448\u0435\u0431\u0441\u0442\u0432\u043E", emoji: "\u{1FA84}", animationType: "magic", rarity: "epic", stars: 8, price: 9e3, description: "\u0418\u0441\u043F\u043E\u043B\u043D\u0438 \u043B\u044E\u0431\u043E\u0435 \u0436\u0435\u043B\u0430\u043D\u0438\u0435", primeOnly: false },
-  { name: "\u041A\u0440\u0438\u0441\u0442\u0430\u043B\u043B", emoji: "\u{1F52E}", animationType: "galaxy", rarity: "epic", stars: 9, price: 12e3, description: "\u041C\u0430\u0433\u0438\u0447\u0435\u0441\u043A\u0438\u0439 \u043F\u0440\u0435\u0434\u0441\u043A\u0430\u0437\u0430\u0442\u0435\u043B\u044C\u043D\u044B\u0439 \u0448\u0430\u0440", primeOnly: false },
-  { name: "\u041F\u0435\u0433\u0430\u0441", emoji: "\u{1F40E}", animationType: "magic", rarity: "epic", stars: 6, price: 4e3, description: "\u041A\u0440\u044B\u043B\u0430\u0442\u044B\u0439 \u043A\u043E\u043D\u044C \u0431\u043E\u0433\u043E\u0432", primeOnly: false },
-  { name: "\u041D\u0430\u0440\u0432\u0430\u043B", emoji: "\u{1F40B}", animationType: "sparkle", rarity: "epic", stars: 7, price: 4400, description: "\u041C\u0438\u0444\u0438\u0447\u0435\u0441\u043A\u0438\u0439 \u043C\u043E\u0440\u0441\u043A\u043E\u0439 \u0435\u0434\u0438\u043D\u043E\u0440\u043E\u0433", primeOnly: false },
-  { name: "\u0425\u0440\u0443\u0441\u0442\u0430\u043B\u044C\u043D\u043E\u0435 \u0441\u0435\u0440\u0434\u0446\u0435", emoji: "\u{1F4A0}", animationType: "diamonds", rarity: "epic", stars: 8, price: 7e3, description: "\u0425\u0440\u0443\u0441\u0442\u0430\u043B\u044C\u043D\u043E\u0435 \u0441\u0435\u0440\u0434\u0446\u0435 \u0432\u0435\u0447\u043D\u043E\u0439 \u043B\u044E\u0431\u0432\u0438", primeOnly: false },
-  { name: "\u0416\u0430\u0440-\u043F\u0442\u0438\u0446\u0430", emoji: "\u{1F525}", animationType: "flame", rarity: "epic", stars: 7, price: 8e3, description: "\u041E\u0433\u043D\u0435\u043D\u043D\u0430\u044F \u043F\u0442\u0438\u0446\u0430 \u0438\u0437 \u0441\u043A\u0430\u0437\u043E\u043A", primeOnly: false },
-  { name: "\u041C\u043E\u0440\u0441\u043A\u043E\u0439 \u043A\u043E\u043D\u0451\u043A", emoji: "\u{1FAC0}", animationType: "magic", rarity: "epic", stars: 7, price: 5600, description: "\u0412\u043E\u043B\u0448\u0435\u0431\u043D\u044B\u0439 \u043C\u043E\u0440\u0441\u043A\u043E\u0439 \u043A\u043E\u043D\u0451\u043A", primeOnly: false },
-  { name: "\u0413\u0440\u0438\u0444\u043E\u043D", emoji: "\u{1F981}", animationType: "flame", rarity: "epic", stars: 9, price: 1e4, description: "\u0413\u043E\u0440\u0434\u044B\u0439 \u0441\u0442\u0440\u0430\u0436 \u2014 \u043B\u0435\u0432 \u0438 \u043E\u0440\u0451\u043B \u0432 \u043E\u0434\u043D\u043E\u043C", primeOnly: false },
-  { name: "\u0421\u0430\u043F\u0444\u0438\u0440\u043E\u0432\u044B\u0439 \u043A\u0443\u043B\u043E\u043D", emoji: "\u{1F48E}", animationType: "diamonds", rarity: "epic", stars: 8, price: 6400, description: "\u0420\u0435\u0434\u043A\u0438\u0439 \u0441\u0430\u043F\u0444\u0438\u0440\u043E\u0432\u044B\u0439 \u043A\u0443\u043B\u043E\u043D", primeOnly: false },
-  { name: "\u041C\u0430\u0433\u0438\u0447\u0435\u0441\u043A\u0438\u0439 \u0433\u0440\u0438\u0431", emoji: "\u{1F344}", animationType: "magic", rarity: "epic", stars: 6, price: 3400, description: "\u0412\u043E\u043B\u0448\u0435\u0431\u043D\u044B\u0439 \u0433\u0440\u0438\u0431 \u0438\u0437 \u0434\u0440\u0443\u0433\u043E\u0433\u043E \u043C\u0438\u0440\u0430", primeOnly: false },
-  { name: "\u0417\u043E\u043B\u043E\u0442\u0430\u044F \u0440\u044B\u0431\u043A\u0430", emoji: "\u{1F41F}", animationType: "sparkle", rarity: "epic", stars: 7, price: 4200, description: "\u0418\u0441\u043F\u043E\u043B\u043D\u044F\u0435\u0442 \u0442\u0440\u0438 \u0436\u0435\u043B\u0430\u043D\u0438\u044F", primeOnly: false },
-  { name: "\u0420\u0443\u0431\u0438\u043D\u043E\u0432\u043E\u0435 \u043A\u043E\u043B\u044C\u0446\u043E", emoji: "\u{1F48D}", animationType: "hearts", rarity: "epic", stars: 8, price: 8400, description: "\u041A\u043E\u043B\u044C\u0446\u043E \u0441 \u043E\u0433\u043D\u0435\u043D\u043D\u044B\u043C \u0440\u0443\u0431\u0438\u043D\u043E\u043C", primeOnly: false },
-  { name: "\u0412\u043E\u043B\u0448\u0435\u0431\u043D\u0430\u044F \u0441\u043A\u0440\u0438\u043F\u043A\u0430", emoji: "\u{1F3BB}", animationType: "magic", rarity: "epic", stars: 7, price: 7800, description: "\u0421\u043A\u0440\u0438\u043F\u043A\u0430, \u0438\u0433\u0440\u0430\u044E\u0449\u0430\u044F \u0441\u0430\u043C\u0430 \u043F\u043E \u0441\u0435\u0431\u0435", primeOnly: false },
-  { name: "\u0427\u0451\u0440\u043D\u044B\u0439 \u043A\u043E\u0442", emoji: "\u{1F408}\u200D\u2B1B", animationType: "magic", rarity: "epic", stars: 6, price: 5200, description: "\u0422\u0430\u0438\u043D\u0441\u0442\u0432\u0435\u043D\u043D\u044B\u0439 \u0447\u0451\u0440\u043D\u044B\u0439 \u043A\u043E\u0442 \u0441 \u043B\u0443\u043D\u043E\u0439", primeOnly: false },
-  { name: "\u0421\u0444\u0438\u043D\u043A\u0441", emoji: "\u{1F3FA}", animationType: "galaxy", rarity: "epic", stars: 9, price: 11e3, description: "\u0417\u0430\u0433\u0430\u0434\u043E\u0447\u043D\u044B\u0439 \u0441\u0442\u0440\u0430\u0436 \u0442\u0430\u0439\u043D \u0432\u0435\u043A\u043E\u0432", primeOnly: false },
-  { name: "\u041E\u0433\u043D\u0435\u043D\u043D\u044B\u0439 \u0434\u0440\u0430\u043A\u043E\u043D", emoji: "\u{1F432}", animationType: "flame", rarity: "epic", stars: 7, price: 3600, description: "\u0414\u0440\u0430\u043A\u043E\u043D, \u0438\u0437\u0432\u0435\u0440\u0433\u0430\u044E\u0449\u0438\u0439 \u043F\u043B\u0430\u043C\u044F", primeOnly: false },
-  // ── LEGENDARY (25000–250000 ⚡) ────────────────────────────────────────
-  { name: "\u041C\u0435\u0442\u0435\u043E\u0440", emoji: "\u{1F320}", animationType: "stars", rarity: "legendary", stars: 13, price: 28e3, description: "\u041F\u0430\u0434\u0430\u044E\u0449\u0438\u0439 \u043C\u0435\u0442\u0435\u043E\u0440 \u2014 \u0437\u0430\u0433\u0430\u0434\u0430\u0439 \u0436\u0435\u043B\u0430\u043D\u0438\u0435", primeOnly: false },
-  { name: "\u041F\u043B\u0430\u043D\u0435\u0442\u0430 \u0417\u0435\u043C\u043B\u044F", emoji: "\u{1F30D}", animationType: "galaxy", rarity: "legendary", stars: 16, price: 38e3, description: "\u0412\u0435\u0441\u044C \u043D\u0430\u0448 \u043C\u0438\u0440 \u2014 \u0442\u0435\u0431\u0435 \u0432 \u043F\u043E\u0434\u0430\u0440\u043E\u043A", primeOnly: false },
-  { name: "\u0412\u0435\u0447\u043D\u044B\u0439 \u043B\u0451\u0434", emoji: "\u{1F9CA}", animationType: "diamonds", rarity: "legendary", stars: 17, price: 42e3, description: "\u041B\u0435\u0434\u044F\u043D\u043E\u0439 \u043C\u043E\u043D\u043E\u043B\u0438\u0442 \u0432\u0435\u0447\u043D\u043E\u0441\u0442\u0438", primeOnly: false },
-  { name: "\u041C\u0430\u0433\u043D\u0438\u0442 \u0421\u0443\u0434\u044C\u0431\u044B", emoji: "\u{1F9F2}", animationType: "magic", rarity: "legendary", stars: 15, price: 45e3, description: "\u041C\u0430\u0433\u043D\u0438\u0442, \u043F\u0440\u0438\u0442\u044F\u0433\u0438\u0432\u0430\u044E\u0449\u0438\u0439 \u0443\u0434\u0430\u0447\u0443", primeOnly: false },
-  { name: "\u0410\u0442\u043E\u043C\u043D\u044B\u0439 \u0432\u0438\u0445\u0440\u044C", emoji: "\u2622\uFE0F", animationType: "vortex", rarity: "legendary", stars: 19, price: 75e3, description: "\u042D\u043D\u0435\u0440\u0433\u0438\u044F \u0430\u0442\u043E\u043C\u043D\u043E\u0433\u043E \u044F\u0434\u0440\u0430", primeOnly: false },
-  { name: "\u0410\u043B\u043C\u0430\u0437\u043D\u044B\u0439 \u0441\u043A\u0438\u043F\u0435\u0442\u0440", emoji: "\u{1FA84}", animationType: "diamonds", rarity: "legendary", stars: 20, price: 85e3, description: "\u0421\u043A\u0438\u043F\u0435\u0442\u0440 \u0438\u0437 \u0430\u043B\u043C\u0430\u0437\u043E\u0432 \u2014 \u0432\u043B\u0430\u0441\u0442\u044C \u0430\u0431\u0441\u043E\u043B\u044E\u0442\u043D\u0430", primeOnly: false },
-  { name: "\u0421\u0430\u043F\u0444\u0438\u0440\u043E\u0432\u044B\u0439 \u0449\u0438\u0442", emoji: "\u{1F6E1}\uFE0F", animationType: "diamonds", rarity: "legendary", stars: 14, price: 32e3, description: "\u0421\u0430\u043F\u0444\u0438\u0440\u043E\u0432\u044B\u0439 \u0449\u0438\u0442 \u2014 \u0437\u0430\u0449\u0438\u0442\u0430 \u043D\u0430 \u0432\u0435\u043A\u0430", primeOnly: false },
-  { name: "\u0413\u0430\u043B\u0430\u043A\u0442\u0438\u043A\u0430", emoji: "\u{1F30C}", animationType: "galaxy", rarity: "legendary", stars: 12, price: 25e3, description: "\u0426\u0435\u043B\u0430\u044F \u0433\u0430\u043B\u0430\u043A\u0442\u0438\u043A\u0430 \u0432 \u0442\u0432\u043E\u0438\u0445 \u0440\u0443\u043A\u0430\u0445", primeOnly: false },
-  { name: "\u0410\u043D\u0433\u0435\u043B", emoji: "\u{1F47C}", animationType: "magic", rarity: "legendary", stars: 15, price: 5e4, description: "\u041D\u0435\u0431\u0435\u0441\u043D\u044B\u0439 \u0430\u043D\u0433\u0435\u043B-\u0445\u0440\u0430\u043D\u0438\u0442\u0435\u043B\u044C", primeOnly: false },
-  { name: "\u041D\u043E\u0432\u0430", emoji: "\u{1F49C}", animationType: "fireworks", rarity: "legendary", stars: 20, price: 1e5, description: "\u0421\u0438\u043C\u0432\u043E\u043B \u043C\u0435\u0441\u0441\u0435\u043D\u0434\u0436\u0435\u0440\u0430 Nova", primeOnly: false },
-  { name: "\u041B\u0435\u0433\u0435\u043D\u0434\u0430\u0440\u043D\u0430\u044F \u0437\u0432\u0435\u0437\u0434\u0430", emoji: "\u{1F31F}", animationType: "stars", rarity: "legendary", stars: 25, price: 15e4, description: "\u041B\u0435\u0433\u0435\u043D\u0434\u0430\u0440\u043D\u0430\u044F \u043F\u0443\u0442\u0435\u0432\u043E\u0434\u043D\u0430\u044F \u0437\u0432\u0435\u0437\u0434\u0430", primeOnly: false },
-  { name: "\u0411\u0435\u0441\u043A\u043E\u043D\u0435\u0447\u043D\u043E\u0441\u0442\u044C", emoji: "\u267E\uFE0F", animationType: "galaxy", rarity: "legendary", stars: 50, price: 25e4, description: "\u0411\u0435\u0441\u043A\u043E\u043D\u0435\u0447\u043D\u043E\u0441\u0442\u044C \u0438 \u0434\u0430\u043B\u0435\u0435 \u2014 \u0432\u044B\u0441\u0448\u0438\u0439 \u043F\u043E\u0434\u0430\u0440\u043E\u043A", primeOnly: false },
-  { name: "\u0417\u043E\u043B\u043E\u0442\u043E\u0439 \u0434\u0440\u0430\u043A\u043E\u043D", emoji: "\u{1F409}", animationType: "galaxy", rarity: "legendary", stars: 14, price: 3e4, description: "\u041C\u043E\u0433\u0443\u0449\u0435\u0441\u0442\u0432\u0435\u043D\u043D\u044B\u0439 \u0437\u043E\u043B\u043E\u0442\u043E\u0439 \u0434\u0440\u0430\u043A\u043E\u043D \u0443\u0434\u0430\u0447\u0438", primeOnly: false },
-  { name: "\u041D\u0435\u0431\u0435\u0441\u043D\u044B\u0439 \u043A\u0438\u0442", emoji: "\u{1F40B}", animationType: "galaxy", rarity: "legendary", stars: 16, price: 36e3, description: "\u0413\u0438\u0433\u0430\u043D\u0442\u0441\u043A\u0438\u0439 \u043A\u0438\u0442 \u043F\u043B\u044B\u0432\u0451\u0442 \u0432 \u043D\u0435\u0431\u0435\u0441\u0430\u0445", primeOnly: false },
-  { name: "\u0421\u0435\u0432\u0435\u0440\u043D\u043E\u0435 \u0441\u0438\u044F\u043D\u0438\u0435", emoji: "\u{1F30C}", animationType: "magic", rarity: "legendary", stars: 17, price: 44e3, description: "\u041C\u0430\u0433\u0438\u0447\u0435\u0441\u043A\u043E\u0435 \u0441\u0435\u0432\u0435\u0440\u043D\u043E\u0435 \u0441\u0438\u044F\u043D\u0438\u0435", primeOnly: false },
-  { name: "\u0414\u0436\u0438\u043D\u043D", emoji: "\u{1F9DE}", animationType: "vortex", rarity: "legendary", stars: 18, price: 6e4, description: "\u041C\u043E\u0433\u0443\u0449\u0435\u0441\u0442\u0432\u0435\u043D\u043D\u044B\u0439 \u0434\u0436\u0438\u043D\u043D \u0438\u0441\u043F\u043E\u043B\u043D\u044F\u0435\u0442 \u0436\u0435\u043B\u0430\u043D\u0438\u044F", primeOnly: false },
-  { name: "\u0425\u0440\u0443\u0441\u0442\u0430\u043B\u044C\u043D\u044B\u0439 \u0434\u0432\u043E\u0440\u0435\u0446", emoji: "\u{1F3F0}", animationType: "diamonds", rarity: "legendary", stars: 19, price: 7e4, description: "\u0412\u0435\u043B\u0438\u0447\u0435\u0441\u0442\u0432\u0435\u043D\u043D\u044B\u0439 \u0434\u0432\u043E\u0440\u0435\u0446 \u0438\u0437 \u0445\u0440\u0443\u0441\u0442\u0430\u043B\u044F", primeOnly: false },
-  { name: "\u0415\u0434\u0438\u043D\u044B\u0439 \u0442\u0440\u043E\u043D", emoji: "\u{1F451}", animationType: "fireworks", rarity: "legendary", stars: 21, price: 9e4, description: "\u0422\u0440\u043E\u043D \u0432\u0441\u0435\u0445 \u043A\u043E\u0440\u043E\u043B\u0435\u0439 \u0438 \u0431\u043E\u0433\u043E\u0432", primeOnly: false },
-  { name: "\u041C\u0438\u0440\u043E\u0432\u043E\u0435 \u0434\u0435\u0440\u0435\u0432\u043E", emoji: "\u{1F332}", animationType: "magic", rarity: "legendary", stars: 15, price: 4e4, description: "\u0418\u0433\u0433\u0434\u0440\u0430\u0441\u0438\u043B\u044C \u2014 \u043E\u0441\u044C \u0432\u0441\u0435\u0433\u043E \u043C\u0438\u0440\u043E\u0437\u0434\u0430\u043D\u0438\u044F", primeOnly: false },
-  { name: "\u041D\u0435\u0431\u0435\u0441\u043D\u044B\u0439 \u0444\u0435\u043D\u0438\u043A\u0441", emoji: "\u{1F985}", animationType: "supernova", rarity: "legendary", stars: 22, price: 8e4, description: "\u0424\u0435\u043D\u0438\u043A\u0441, \u0440\u043E\u0436\u0434\u0451\u043D\u043D\u044B\u0439 \u0438\u0437 \u0437\u0432\u0451\u0437\u0434", primeOnly: false },
-  { name: "\u041D\u0435\u043F\u0442\u0443\u043D", emoji: "\u{1F531}", animationType: "vortex", rarity: "legendary", stars: 23, price: 12e4, description: "\u0412\u043B\u0430\u0441\u0442\u0435\u043B\u0438\u043D \u043C\u043E\u0440\u0435\u0439 \u0438 \u043E\u043A\u0435\u0430\u043D\u043E\u0432", primeOnly: false },
-  { name: "\u0417\u0432\u0451\u0437\u0434\u043D\u0430\u044F \u043A\u043E\u043B\u0435\u0441\u043D\u0438\u0446\u0430", emoji: "\u2B50", animationType: "stars", rarity: "legendary", stars: 24, price: 2e5, description: "\u041A\u043E\u043B\u0435\u0441\u043D\u0438\u0446\u0430 \u0431\u043E\u0433\u043E\u0432 \u043D\u0435\u0441\u0451\u0442\u0441\u044F \u0441\u043A\u0432\u043E\u0437\u044C \u0437\u0432\u0451\u0437\u0434\u044B", primeOnly: false },
-  // ── COSMIC (300000–2000000 ⚡) ─────────────────────────────────────────
-  { name: "\u041D\u0435\u0439\u0442\u0440\u043E\u043D\u043D\u0430\u044F \u0437\u0432\u0435\u0437\u0434\u0430", emoji: "\u{1F4A5}", animationType: "supernova", rarity: "cosmic", stars: 60, price: 3e5, description: "\u0421\u0432\u0435\u0440\u0445\u043F\u043B\u043E\u0442\u043D\u0430\u044F \u0437\u0432\u0435\u0437\u0434\u0430 \u0441 \u043D\u0435\u0432\u0435\u0440\u043E\u044F\u0442\u043D\u043E\u0439 \u044D\u043D\u0435\u0440\u0433\u0438\u0435\u0439", primeOnly: false },
-  { name: "\u041A\u0432\u0430\u0437\u0430\u0440", emoji: "\u{1F320}", animationType: "supernova", rarity: "cosmic", stars: 75, price: 5e5, description: "\u041C\u043E\u0449\u043D\u0435\u0439\u0448\u0438\u0439 \u0438\u0441\u0442\u043E\u0447\u043D\u0438\u043A \u0441\u0432\u0435\u0442\u0430 \u0432\u043E \u0432\u0441\u0435\u043B\u0435\u043D\u043D\u043E\u0439", primeOnly: false },
-  { name: "\u0427\u0451\u0440\u043D\u0430\u044F \u0434\u044B\u0440\u0430", emoji: "\u{1F300}", animationType: "vortex", rarity: "cosmic", stars: 90, price: 75e4, description: "\u0422\u043E\u0447\u043A\u0430, \u0438\u0437 \u043A\u043E\u0442\u043E\u0440\u043E\u0439 \u043D\u0435\u0442 \u0432\u043E\u0437\u0432\u0440\u0430\u0442\u0430", primeOnly: false },
-  { name: "\u041C\u0443\u043B\u044C\u0442\u0438\u0432\u0441\u0435\u043B\u0435\u043D\u043D\u0430\u044F", emoji: "\u{1FAA9}", animationType: "vortex", rarity: "cosmic", stars: 99, price: 9e5, description: "\u0411\u0435\u0441\u043A\u043E\u043D\u0435\u0447\u043D\u043E\u0435 \u043C\u043D\u043E\u0436\u0435\u0441\u0442\u0432\u043E \u043F\u0430\u0440\u0430\u043B\u043B\u0435\u043B\u044C\u043D\u044B\u0445 \u043C\u0438\u0440\u043E\u0432", primeOnly: false },
-  { name: "\u0410\u0431\u0441\u043E\u043B\u044E\u0442", emoji: "\u269C\uFE0F", animationType: "supernova", rarity: "cosmic", stars: 100, price: 1e6, description: "\u0410\u0431\u0441\u043E\u043B\u044E\u0442\u043D\u043E\u0435 \u0441\u043E\u0432\u0435\u0440\u0448\u0435\u043D\u0441\u0442\u0432\u043E \u2014 \u043F\u0440\u0435\u0434\u0435\u043B \u0432\u043E\u0437\u043C\u043E\u0436\u043D\u043E\u0433\u043E", primeOnly: false },
-  { name: "\u0421\u0438\u043D\u0433\u0443\u043B\u044F\u0440\u043D\u043E\u0441\u0442\u044C", emoji: "\u{1F4A0}", animationType: "vortex", rarity: "cosmic", stars: 150, price: 15e5, description: "\u0422\u043E\u0447\u043A\u0430 \u043D\u0430\u0447\u0430\u043B\u0430 \u0432\u0441\u0435\u0433\u043E \u2014 \u0431\u0435\u0441\u043A\u043E\u043D\u0435\u0447\u043D\u0430\u044F \u043F\u043B\u043E\u0442\u043D\u043E\u0441\u0442\u044C \u0431\u044B\u0442\u0438\u044F", primeOnly: false },
-  { name: "\u0421\u043E\u0437\u0434\u0430\u0442\u0435\u043B\u044C", emoji: "\u{1F310}", animationType: "supernova", rarity: "cosmic", stars: 200, price: 2e6, description: "\u0412\u044B\u0441\u0448\u0438\u0439 \u043F\u043E\u0434\u0430\u0440\u043E\u043A \u0432\u0441\u0435\u043B\u0435\u043D\u043D\u043E\u0439", primeOnly: false },
-  { name: "\u0412\u0441\u0435\u043B\u0435\u043D\u0441\u043A\u0438\u0439 \u043E\u0433\u043E\u043D\u044C", emoji: "\u{1F525}", animationType: "supernova", rarity: "cosmic", stars: 80, price: 6e5, description: "\u041F\u0435\u0440\u0432\u0438\u0447\u043D\u044B\u0439 \u043E\u0433\u043E\u043D\u044C \u043D\u0430\u0447\u0430\u043B\u0430 \u0432\u0441\u0435\u0433\u043E", primeOnly: false },
-  { name: "\u0411\u043E\u0433 \u0413\u0440\u043E\u043C\u0430", emoji: "\u26A1", animationType: "lightning", rarity: "cosmic", stars: 70, price: 4e5, description: "\u0413\u0440\u043E\u043C\u043E\u0432\u0435\u0440\u0436\u0435\u0446 \u2014 \u043F\u043E\u0432\u0435\u043B\u0438\u0442\u0435\u043B\u044C \u043C\u043E\u043B\u043D\u0438\u0439", primeOnly: false },
-  { name: "\u041E\u0441\u044C \u041C\u0438\u0440\u0430", emoji: "\u2696\uFE0F", animationType: "galaxy", rarity: "cosmic", stars: 65, price: 35e4, description: "\u041D\u0435\u0437\u0440\u0438\u043C\u0430\u044F \u043E\u0441\u044C, \u043D\u0430 \u043A\u043E\u0442\u043E\u0440\u043E\u0439 \u0434\u0435\u0440\u0436\u0438\u0442\u0441\u044F \u0432\u0441\u0435\u043B\u0435\u043D\u043D\u0430\u044F", primeOnly: false },
-  { name: "\u041B\u0435\u0432\u0438\u0430\u0444\u0430\u043D", emoji: "\u{1F409}", animationType: "vortex", rarity: "cosmic", stars: 88, price: 7e5, description: "\u0411\u0438\u0431\u043B\u0435\u0439\u0441\u043A\u043E\u0435 \u0447\u0443\u0434\u043E\u0432\u0438\u0449\u0435 \u0433\u043B\u0443\u0431\u0438\u043D", primeOnly: false },
-  { name: "\u0421\u043E\u043B\u043D\u0435\u0447\u043D\u044B\u0439 \u0434\u0440\u0430\u043A\u043E\u043D", emoji: "\u{1F31E}", animationType: "supernova", rarity: "cosmic", stars: 77, price: 56e4, description: "\u0414\u0440\u0430\u043A\u043E\u043D, \u0440\u043E\u0436\u0434\u0451\u043D\u043D\u044B\u0439 \u0432 \u043A\u043E\u0440\u043E\u043D\u0435 \u0441\u043E\u043B\u043D\u0446\u0430", primeOnly: false },
-  { name: "\u0412\u0435\u0447\u043D\u043E\u0441\u0442\u044C", emoji: "\u267E\uFE0F", animationType: "galaxy", rarity: "cosmic", stars: 95, price: 84e4, description: "\u0411\u0435\u0441\u043A\u043E\u043D\u0435\u0447\u043D\u043E\u0435 \u0442\u0435\u0447\u0435\u043D\u0438\u0435 \u0432\u0440\u0435\u043C\u0435\u043D\u0438", primeOnly: false },
-  { name: "\u041F\u0435\u0440\u0432\u043E\u0437\u0434\u0430\u043D\u043D\u044B\u0439 \u0425\u0430\u043E\u0441", emoji: "\u{1F4AB}", animationType: "vortex", rarity: "cosmic", stars: 98, price: 96e4, description: "\u0414\u043E \u0441\u043B\u043E\u0432\u0430 \xAB\u0434\u0430 \u0431\u0443\u0434\u0435\u0442 \u0441\u0432\u0435\u0442\xBB \u0431\u044B\u043B \u0425\u0430\u043E\u0441", primeOnly: false },
-  { name: "\u0412\u044B\u0441\u0448\u0438\u0439 \u0420\u0430\u0437\u0443\u043C", emoji: "\u{1F52E}", animationType: "supernova", rarity: "cosmic", stars: 110, price: 11e5, description: "\u0421\u043E\u0437\u043D\u0430\u043D\u0438\u0435, \u043F\u0440\u043E\u043D\u0438\u0437\u044B\u0432\u0430\u044E\u0449\u0435\u0435 \u0432\u0441\u0451 \u0441\u0443\u0449\u0435\u0435", primeOnly: false },
-  // ── PRIME EXCLUSIVE ────────────────────────────────────────────────────
-  { name: "\u041A\u043E\u0440\u043E\u043D\u0430 Prime", emoji: "\u{1F451}", animationType: "magic", rarity: "epic", stars: 10, price: 1e4, description: "\u042D\u043A\u0441\u043A\u043B\u044E\u0437\u0438\u0432\u043D\u0430\u044F \u043A\u043E\u0440\u043E\u043D\u0430 \u0434\u043B\u044F \u0438\u0437\u0431\u0440\u0430\u043D\u043D\u044B\u0445 Prime-\u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u043E\u0432", primeOnly: true },
-  { name: "\u041F\u0443\u043B\u044C\u0441 \u0421\u0435\u0440\u0434\u0446\u0430", emoji: "\u{1F49C}", animationType: "hearts", rarity: "legendary", stars: 18, price: 6e4, description: "\u0411\u044C\u044E\u0449\u0438\u0439\u0441\u044F \u043F\u0443\u043B\u044C\u0441 \u2014 \u0441\u0438\u043C\u0432\u043E\u043B \u0432\u0435\u0447\u043D\u043E\u0439 \u0441\u0432\u044F\u0437\u0438 Prime", primeOnly: true },
-  { name: "\u0417\u0432\u0435\u0437\u0434\u0430 Prime", emoji: "\u2B50", animationType: "stars", rarity: "legendary", stars: 22, price: 11e4, description: "\u042D\u043A\u0441\u043A\u043B\u044E\u0437\u0438\u0432\u043D\u0430\u044F \u0437\u0432\u0435\u0437\u0434\u0430 \u2014 \u0442\u043E\u043B\u044C\u043A\u043E \u0434\u043B\u044F Prime-\u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u043E\u0432", primeOnly: true },
-  { name: "\u0412\u0441\u0435\u043B\u0435\u043D\u0441\u043A\u0438\u0439 \u041E\u0433\u043E\u043D\u044C", emoji: "\u{1F525}", animationType: "flame", rarity: "cosmic", stars: 80, price: 6e5, description: "\u041E\u0433\u043E\u043D\u044C, \u0447\u0442\u043E \u0433\u043E\u0440\u0438\u0442 \u0432\u0435\u0447\u043D\u043E \u2014 \u043E\u0441\u043E\u0431\u044B\u0439 \u0434\u0430\u0440 Prime", primeOnly: true },
-  { name: "\u0421\u0430\u043F\u0444\u0438\u0440\u043E\u0432\u044B\u0439 \u0422\u0440\u043E\u043D", emoji: "\u{1F48E}", animationType: "galaxy", rarity: "cosmic", stars: 85, price: 24e4, description: "\u0422\u0440\u043E\u043D \u0438\u0437 \u0441\u0430\u043F\u0444\u0438\u0440\u0430 \u0434\u043B\u044F \u0438\u0441\u0442\u0438\u043D\u043D\u044B\u0445 Prime-\u043D\u0435\u0431\u043E\u0436\u0438\u0442\u0435\u043B\u0435\u0439", primeOnly: true }
-];
 var SYSTEM_USERS = [
   {
     username: "creater_messenger",
@@ -152629,26 +152512,6 @@ var SYSTEM_USERS = [
   // nova_ai bot user intentionally removed — AI feature is disabled
 ];
 async function runSeed() {
-  if (GIFT_CATALOG.length > 0) {
-    const values = GIFT_CATALOG.map(
-      (item) => sql`(${item.name}, ${item.emoji}, ${item.animationType}, ${item.rarity},
-           ${item.stars}, ${item.price}, ${item.description}, ${item.primeOnly})`
-    );
-    await db.execute(sql`
-      INSERT INTO gift_items (name, emoji, animation_type, rarity, stars, price, description, prime_only)
-      VALUES ${sql.join(values, sql`, `)}
-      ON CONFLICT (name) DO UPDATE SET
-        emoji          = EXCLUDED.emoji,
-        animation_type = EXCLUDED.animation_type,
-        rarity         = EXCLUDED.rarity,
-        stars          = EXCLUDED.stars,
-        price          = EXCLUDED.price,
-        description    = EXCLUDED.description,
-        prime_only     = EXCLUDED.prime_only
-    `);
-    const total = await db.execute(sql`SELECT COUNT(*) as cnt FROM gift_items`);
-    console.log(`[seed] Gift catalog: ${total.rows[0].cnt} items`);
-  }
   for (const u of SYSTEM_USERS) {
     const rows = await db.execute(sql`SELECT id FROM users WHERE username = ${u.username} LIMIT 1`);
     if (rows.rows.length === 0) {
@@ -152849,6 +152712,18 @@ db.execute(sql`
     CONSTRAINT push_subscriptions_endpoint_unique UNIQUE(endpoint)
   )
 `).catch(() => {
+});
+db.execute(sql`
+  CREATE TABLE IF NOT EXISTS fcm_tokens (
+    id         SERIAL PRIMARY KEY,
+    user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token      TEXT NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    CONSTRAINT fcm_tokens_token_unique UNIQUE(token)
+  )
+`).then(
+  () => db.execute(sql`CREATE INDEX IF NOT EXISTS idx_fcm_tokens_user_id ON fcm_tokens(user_id)`)
+).catch(() => {
 });
 db.execute(sql`
   CREATE TABLE IF NOT EXISTS contact_requests (
