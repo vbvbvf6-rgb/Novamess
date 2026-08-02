@@ -25,9 +25,7 @@
     <meta name="apple-mobile-web-app-title" content="Nova" />
     <meta name="msapplication-TileColor" content="#ff6b35" />
     <meta name="msapplication-TileImage" content="/icon-192.png" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Шрифты не грузим с внешних CDN — они заблокированы в РФ. Используем системный стек. -->
     <!-- Preconnect to backend so TCP+TLS is ready before JS fires requests -->
     <meta name="x-api-url" content="%VITE_API_URL%" />
   </head>
