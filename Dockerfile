@@ -14,7 +14,14 @@ COPY lib/api-client-react/package.json  ./lib/api-client-react/
 COPY artifacts/api-server/package.json  ./artifacts/api-server/
 COPY artifacts/pulse/package.json       ./artifacts/pulse/
 
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --frozen-lockfile --force
+
+# Keep both Linux libc bindings available. Some Pxxl builders run on glibc
+# while their runtime image uses musl, and npm/pnpm can otherwise omit the
+# optional package that lightningcss selects at runtime.
+RUN cd artifacts/pulse \
+  && node -e "require.resolve('lightningcss-linux-x64-gnu')" \
+  && node -e "require.resolve('lightningcss-linux-x64-musl')"
 
 COPY tsconfig.json tsconfig.base.json* ./
 COPY lib/ ./lib/

@@ -670,6 +670,13 @@ importers:
       zod:
         specifier: 'catalog:'
         version: 3.25.76
+    optionalDependencies:
+      lightningcss-linux-x64-gnu:
+        specifier: 1.31.1
+        version: 1.31.1
+      lightningcss-linux-x64-musl:
+        specifier: 1.31.1
+        version: 1.31.1
 
   lib/api-client-react:
     dependencies:
