@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, timestamp, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { usersTable } from "./users";
@@ -11,6 +11,11 @@ export const postsTable = pgTable("posts", {
   topic: text("topic"),
   likesCount: integer("likes_count").notNull().default(0),
   commentsCount: integer("comments_count").notNull().default(0),
+  moderationStatus: text("moderation_status"),
+  moderationReason: text("moderation_reason"),
+  moderationConfidence: integer("moderation_confidence"),
+  moderationCategories: text("moderation_categories"),
+  moderationScannedAt: timestamp("moderation_scanned_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

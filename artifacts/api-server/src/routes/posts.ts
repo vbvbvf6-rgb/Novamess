@@ -58,19 +58,11 @@ router.get("/posts", async (req, res) => {
   try {
     const uid = req.currentUserId;
 
-    const isAdminRow = await db.execute(sql`SELECT is_admin FROM users WHERE id = ${uid}`);
-    const isAdmin = !!(isAdminRow.rows[0] as any)?.is_admin;
-
     const posts = await db.select().from(postsTable).orderBy(desc(postsTable.createdAt)).limit(100);
 
-    const visible = posts.filter((p: any) => {
-      if (isAdmin) return true;
-      if ((p as any).moderationStatus === 'rejected') {
-        // Rejected posts are hidden from everyone in the main feed
-        return false;
-      }
-      return true;
-    });
+    // A rejected post is never a published feed item, including for admins.
+    // Admin moderation screens query moderation data separately.
+    const visible = posts.filter((p: any) => (p as any).moderationStatus !== "rejected");
 
     const built = await Promise.all(visible.map(p => buildPost(p.id, uid)));
     res.json(built.filter(Boolean));
@@ -86,19 +78,13 @@ router.post("/posts", async (req, res) => {
     const { text, imageUrl, topic } = req.body;
     if (!text && !imageUrl) return res.status(400).json({ error: "text or image required" });
 
-    // ── Admin bypass: skip all moderation ────────────────────────────────────
+    // Admins may bypass AI/local moderation, but never the explicit banword
+    // list. A blocked word must never be published from any account.
     const isAdminRow = await db.execute(sql`SELECT is_admin FROM users WHERE id = ${uid}`);
     const isAdmin = !!(isAdminRow.rows[0] as any)?.is_admin;
-    if (isAdmin) {
-      const [post] = await db.insert(postsTable).values({
-        userId: uid, text, imageUrl, topic: topic || null,
-      }).returning();
-      const built = await buildPost(post.id, uid);
-      return res.status(201).json(built);
-    }
 
     // ── Strike check: auto-mute after 3 blocked posts in 24h ─────────────────
-    if (await isUserFeedMuted(uid)) {
+    if (!isAdmin && await isUserFeedMuted(uid)) {
       return res.status(429).json({
         error: "Вы временно ограничены в публикациях из-за нарушений правил. Ограничение снимается через 24 часа.",
         code: "FEED_MUTED",
@@ -123,6 +109,16 @@ router.post("/posts", async (req, res) => {
           categories: ["banned_word"],
         });
       }
+    }
+
+    // Admins bypass the remaining automated moderation layers, but the
+    // explicit admin-managed banword list above is always enforced.
+    if (isAdmin) {
+      const [post] = await db.insert(postsTable).values({
+        userId: uid, text, imageUrl, topic: topic || null,
+      }).returning();
+      const built = await buildPost(post.id, uid);
+      return res.status(201).json(built);
     }
 
     // ── Custom banned words check ─────────────────────────────────────────────

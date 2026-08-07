@@ -591,19 +591,23 @@ function PostCard({ post, onAppealSubmitted, onTopicClick }: { post: Post & { ap
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-card border border-border rounded-2xl overflow-hidden"
+        className="post-card group bg-card border border-border rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:shadow-primary/5 transition-shadow duration-300"
       >
+        <div className="h-1 bg-gradient-to-r from-primary via-cyan-400 to-violet-500 opacity-70" />
         <div className="flex items-center gap-3 p-4 pb-3">
           <button
             onClick={() => post.author?.id && setLocation(`/user/${post.author.id}`)}
-            className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold shrink-0 overflow-hidden hover:opacity-85 transition-opacity"
-            style={{ backgroundColor: post.author?.avatarColor || "#333" }}
+            className="w-11 h-11 rounded-full p-[2px] bg-gradient-to-br from-primary via-cyan-400 to-violet-500 shrink-0 hover:scale-105 transition-transform"
           >
-            {post.author?.avatarUrl ? (
-              <img src={post.author.avatarUrl} alt="" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
-            ) : (
-              (post.author?.displayName || "U")[0].toUpperCase()
-            )}
+            <span className="w-full h-full rounded-full flex items-center justify-center overflow-hidden text-white font-bold bg-card">
+              {post.author?.avatarUrl ? (
+                <img src={post.author.avatarUrl} alt="" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+              ) : (
+                <span style={{ backgroundColor: post.author?.avatarColor || "#333" }} className="w-full h-full flex items-center justify-center">
+                  {(post.author?.displayName || "U")[0].toUpperCase()}
+                </span>
+              )}
+            </span>
           </button>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5">
@@ -650,14 +654,14 @@ function PostCard({ post, onAppealSubmitted, onTopicClick }: { post: Post & { ap
           </DropdownMenu>
         </div>
 
-        <div className="px-4 pb-3">
-          <p className="text-sm leading-relaxed whitespace-pre-wrap">{post.text}</p>
+        <div className="px-4 pb-4">
+          <p className="text-[15px] leading-7 whitespace-pre-wrap break-words">{post.text}</p>
           {(post as any).topic && (() => {
             const t = TOPICS.find(tp => tp.id === (post as any).topic);
             return t ? (
               <button
                 onClick={() => onTopicClick?.(t.id)}
-                className={`mt-2 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold border bg-gradient-to-r ${t.color} transition-opacity hover:opacity-80 ${onTopicClick ? "cursor-pointer" : "cursor-default"}`}
+                className={`mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border bg-gradient-to-r ${t.color} transition-all hover:opacity-80 hover:translate-y-[-1px] ${onTopicClick ? "cursor-pointer" : "cursor-default"}`}
               >
                 {t.emoji} {t.label}
               </button>
@@ -666,15 +670,15 @@ function PostCard({ post, onAppealSubmitted, onTopicClick }: { post: Post & { ap
         </div>
 
         {post.imageUrl && (
-          <div className="border-t border-b border-border relative group cursor-pointer" onClick={() => setLightboxImg(post.imageUrl!)}>
-            <img src={post.imageUrl} alt="" className="w-full max-h-80 object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
-            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-              <ZoomIn size={28} className="text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
+          <div className="mx-3 mb-3 rounded-xl overflow-hidden border border-border/70 relative group/image cursor-pointer" onClick={() => setLightboxImg(post.imageUrl!)}>
+            <img src={post.imageUrl} alt="" className="w-full max-h-[30rem] object-cover transition-transform duration-500 group-hover/image:scale-[1.02]" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+            <div className="absolute inset-0 bg-black/0 group-hover/image:bg-black/20 transition-colors flex items-center justify-center">
+              <ZoomIn size={28} className="text-white opacity-0 group-hover/image:opacity-100 transition-opacity drop-shadow-lg" />
             </div>
           </div>
         )}
 
-        <div className="flex items-center gap-1 px-4 py-2.5 border-t border-border">
+        <div className="flex items-center gap-1 px-4 py-3 border-t border-border/70 bg-secondary/15">
           <button
             onClick={handleLike}
             className={`flex items-center gap-1.5 text-sm transition-colors group px-2.5 py-1.5 rounded-xl hover:bg-red-500/10 ${

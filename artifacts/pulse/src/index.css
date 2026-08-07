@@ -346,6 +346,15 @@
   box-shadow: 0 4px 24px rgba(0,0,0,0.04), 0 1px 6px rgba(0,0,0,0.02);
 }
 
+/* Feed cards have a little more depth than utility cards. */
+.post-card {
+  background-image: linear-gradient(145deg, hsl(var(--card) / 0.98), hsl(var(--card) / 0.92));
+}
+
+.dark .post-card {
+  background-image: linear-gradient(145deg, hsl(222 29% 12%), hsl(224 28% 9%));
+}
+
 .dark .glass-card {
   background: hsl(var(--card) / 0.55);
   backdrop-filter: blur(28px) saturate(160%);

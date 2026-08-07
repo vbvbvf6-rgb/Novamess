@@ -68,6 +68,13 @@ catalog:
 
 autoInstallPeers: false
 
+# Keep both libc variants in the lockfile so builds can run on Replit's glibc
+# image and on Alpine/musl hosting without missing native optional packages.
+supportedArchitectures:
+  libc:
+    - glibc
+    - musl
+
 onlyBuiltDependencies:
   - '@swc/core'
   - esbuild
@@ -107,8 +114,6 @@ overrides:
   "lightningcss>lightningcss-freebsd-x64": "-"
   "lightningcss>lightningcss-linux-arm-gnueabihf": "-"
   "lightningcss>lightningcss-linux-arm64-gnu": "-"
-  "lightningcss>lightningcss-linux-arm64-musl": "-"
-  "lightningcss>lightningcss-linux-x64-musl": "-"
   "lightningcss>lightningcss-win32-arm64-msvc": "-"
   "lightningcss>lightningcss-win32-x64-msvc": "-"
   "@tailwindcss/oxide>@tailwindcss/oxide-android-arm64": "-"
