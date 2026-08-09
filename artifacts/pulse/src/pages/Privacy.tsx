@@ -15,15 +15,15 @@ export default function Privacy() {
     updated: { en: "Last updated", ru: "Последнее обновление" },
     intro: {
       en: 'This Privacy Policy describes how Aura Messenger ("Aura", "we", "us") collects, uses, stores, and protects your personal information. Aura is a global service — this policy complies with GDPR (EU), CCPA (California), and other applicable international privacy frameworks.',
-      ru: "Настоящая Политика конфиденциальности описывает, как Aura Messenger («Aura», «мы») собирает, использует, хранит и защищает вашу персональную информацию. Aura — глобальный сервис; настоящая политика соответствует GDPR (ЕС), CCPA (Калифорния), ФЗ-152 (Россия) и другим применимым международным стандартам.",
+      ru: "Настоящая Политика конфиденциальности описывает, как Nova Messenger («Nova», «мы») собирает, использует, хранит и защищает вашу персональную информацию. Nova — глобальный сервис; настоящая политика соответствует GDPR (ЕС), CCPA (Калифорния), ФЗ-152 (Россия) и другим применимым международным стандартам.",
     },
   };
 
   const sections = [
     {
       id: "1",
-      en: { title: "Data Controller", body: "Aura Messenger operates as the data controller for information you provide when using the Service. Contact us through the in-app Support section for any data-related inquiries." },
-      ru: { title: "Оператор данных", body: "Aura Messenger выступает оператором данных в отношении информации, предоставленной вами при использовании Сервиса. По вопросам обработки данных обращайтесь через раздел «Поддержка» в приложении." },
+      en: { title: "Data Controller", body: "Nova Messenger operates as the data controller for information you provide when using the Service. Contact us through the in-app Support section for any data-related inquiries." },
+      ru: { title: "Оператор данных", body: "Nova Messenger выступает оператором данных в отношении информации, предоставленной вами при использовании Сервиса. По вопросам обработки данных обращайтесь через раздел «Поддержка» в приложении." },
     },
     {
       id: "2",
