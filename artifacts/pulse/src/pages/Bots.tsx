@@ -7,6 +7,7 @@ import {
   BookOpen, Play, Download, Hash, List, Keyboard, Clock, ArrowRight, CheckCircle2
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useLocation } from "wouter";
 import { useAppContext } from "@/contexts/AppContext";
 
@@ -663,6 +664,8 @@ const STEPS = [
 ];
 
 export default function Bots() {
+  const { lang } = useLanguage();
+  const en = lang === "en";
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const { setSelectedChatId } = useAppContext() as any;
@@ -718,15 +721,15 @@ export default function Bots() {
       });
       const data = await res.json();
       if (res.ok) {
-        toast({ title: `Бот @${data.username} создан!`, description: "Токен сгенерирован и готов к использованию" });
+        toast({ title: en ? `Bot @${data.username} created!` : `Бот @${data.username} создан!`, description: en ? "Token generated and ready to use" : "Токен сгенерирован и готов к использованию" });
         setShowCreate(false);
         setNewName(""); setNewUsername(""); setNewDesc("");
         await fetchBots();
       } else {
-        toast({ title: "Ошибка", description: data.error, variant: "destructive" });
+        toast({ title: en ? "Error" : "Ошибка", description: data.error, variant: "destructive" });
       }
     } catch {
-      toast({ title: "Ошибка сети", variant: "destructive" });
+      toast({ title: en ? "Network error" : "Ошибка сети", variant: "destructive" });
     }
     setCreating(false);
   };
@@ -737,15 +740,15 @@ export default function Bots() {
     try {
       const res = await fetch(`/api/bots/${bot.bot_user_id}`, { method: "DELETE", headers: getUserIdHeader() });
       if (res.ok || res.status === 204) {
-        toast({ title: `Бот @${bot.username} удалён` });
+        toast({ title: en ? `Bot @${bot.username} deleted` : `Бот @${bot.username} удалён` });
         setBots(prev => prev.filter(b => b.bot_user_id !== bot.bot_user_id));
         if (selectedBot?.bot_user_id === bot.bot_user_id) setSelectedBot(null);
       } else {
         const d = await res.json();
-        toast({ title: "Ошибка", description: d.error, variant: "destructive" });
+        toast({ title: en ? "Error" : "Ошибка", description: d.error, variant: "destructive" });
       }
     } catch {
-      toast({ title: "Ошибка сети", variant: "destructive" });
+      toast({ title: en ? "Network error" : "Ошибка сети", variant: "destructive" });
     }
     setDeletingId(null);
   };
@@ -759,10 +762,10 @@ export default function Bots() {
         const data = await res.json();
         setBots(prev => prev.map(b => b.bot_user_id === bot.bot_user_id ? { ...b, token: data.token } : b));
         if (selectedBot?.bot_user_id === bot.bot_user_id) setSelectedBot(prev => prev ? { ...prev, token: data.token } : null);
-        toast({ title: "Токен обновлён", description: "Старый токен больше не действителен" });
+        toast({ title: en ? "Token regenerated" : "Токен обновлён", description: en ? "The old token is no longer valid" : "Старый токен больше не действителен" });
       }
     } catch {
-      toast({ title: "Ошибка сети", variant: "destructive" });
+      toast({ title: en ? "Network error" : "Ошибка сети", variant: "destructive" });
     }
     setRegenerating(null);
   };
@@ -777,11 +780,11 @@ export default function Bots() {
       });
       if (res.ok) {
         await fetchBots();
-        toast({ title: "Бот обновлён" });
+        toast({ title: en ? "Bot updated" : "Бот обновлён" });
         setEditBot(null);
       }
     } catch {
-      toast({ title: "Ошибка сети", variant: "destructive" });
+      toast({ title: en ? "Network error" : "Ошибка сети", variant: "destructive" });
     }
   };
 
@@ -799,10 +802,10 @@ export default function Bots() {
       });
       if (res.ok) {
         setBots(prev => prev.map(b => b.bot_user_id === botId ? { ...b, avatar_url: compressed } : b));
-        toast({ title: "Фото обновлено" });
+         toast({ title: en ? "Photo updated" : "Фото обновлено" });
       }
     } catch {
-      toast({ title: "Ошибка загрузки фото", variant: "destructive" });
+      toast({ title: en ? "Photo upload failed" : "Ошибка загрузки фото", variant: "destructive" });
     }
     setUploadingAvatar(null);
     e.target.value = "";
@@ -819,14 +822,14 @@ export default function Bots() {
       });
       if (res.ok) {
         setBots(prev => prev.map(b => b.bot_user_id === codeBot.bot_user_id ? { ...b, inline_code: codeText.trim() || null, code_lang: codeLang } : b));
-        toast({ title: "Код сохранён", description: codeText.trim() ? `Бот будет выполнять ${codeLang === "javascript" ? "JavaScript" : "Python"} код при получении сообщений` : "Встроенный код удалён" });
+        toast({ title: en ? "Code saved" : "Код сохранён", description: codeText.trim() ? (en ? `The bot will run ${codeLang === "javascript" ? "JavaScript" : "Python"} code when messages arrive` : `Бот будет выполнять ${codeLang === "javascript" ? "JavaScript" : "Python"} код при получении сообщений`) : (en ? "Inline code removed" : "Встроенный код удалён") });
         setCodeBot(null);
       } else {
         const d = await res.json();
-        toast({ title: "Ошибка", description: d.error, variant: "destructive" });
+        toast({ title: en ? "Error" : "Ошибка", description: d.error, variant: "destructive" });
       }
     } catch {
-      toast({ title: "Ошибка сети", variant: "destructive" });
+      toast({ title: en ? "Network error" : "Ошибка сети", variant: "destructive" });
     }
     setSavingCode(false);
   };
@@ -847,7 +850,7 @@ export default function Bots() {
         }, 80);
       }
     } catch {
-      toast({ title: "Ошибка открытия чата", variant: "destructive" });
+      toast({ title: en ? "Could not open chat" : "Ошибка открытия чата", variant: "destructive" });
     }
   };
 
@@ -858,7 +861,7 @@ export default function Bots() {
     a.href = URL.createObjectURL(blob);
     a.download = "pulse_bot.py";
     a.click();
-    toast({ title: "pulse_bot.py скачан", description: "Положите файл рядом со своим скриптом" });
+    toast({ title: en ? "pulse_bot.py downloaded" : "pulse_bot.py скачан", description: en ? "Place the file next to your script" : "Положите файл рядом со своим скриптом" });
   };
 
   const host = window.location.origin;
@@ -884,7 +887,7 @@ export default function Bots() {
               </div>
               <div>
                 <h1 className="text-2xl font-black text-foreground">Nova</h1>
-                <p className="text-sm text-muted-foreground mt-0.5">Платформа для разработчиков ботов</p>
+                 <p className="text-sm text-muted-foreground mt-0.5">{en ? "A platform for bot developers" : "Платформа для разработчиков ботов"}</p>
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
@@ -892,13 +895,13 @@ export default function Bots() {
                 onClick={() => setActiveTab("bots")}
                 className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${activeTab === "bots" ? "bg-violet-500 text-white shadow-[0_0_15px_rgba(139,92,246,0.4)]" : "text-muted-foreground hover:text-foreground hover:bg-white/5"}`}
               >
-                Мои боты
+                 {en ? "My Bots" : "Мои боты"}
               </button>
               <button
                 onClick={() => setActiveTab("sdk")}
                 className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${activeTab === "sdk" ? "bg-violet-500 text-white shadow-[0_0_15px_rgba(139,92,246,0.4)]" : "text-muted-foreground hover:text-foreground hover:bg-white/5"}`}
               >
-                Внешний SDK
+                 {en ? "External SDK" : "Внешний SDK"}
               </button>
             </div>
           </div>

@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { maybeResetQuests } from "@/utils/questTracker";
 import { useQuery } from "@tanstack/react-query";
 import { useGetMe } from "@workspace/api-client-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 /* ─── Types ─────────────────────────────────────────────────────────── */
 type Tab = "quests" | "events" | "leaderboard";
@@ -97,10 +98,10 @@ const EVENT_EMOJIS = ["🎉", "💻", "🎙️", "🎮", "🔒", "🌟", "🚀",
 function eventColor(id: number) { return EVENT_COLORS[id % EVENT_COLORS.length]; }
 function eventEmoji(id: number) { return EVENT_EMOJIS[id % EVENT_EMOJIS.length]; }
 
-function formatEventDate(dateStr?: string): string {
+function formatEventDate(dateStr: string | undefined, lang: "ru" | "en"): string {
   if (!dateStr) return "";
   try {
-    return new Date(dateStr).toLocaleDateString("ru-RU", {
+    return new Date(dateStr).toLocaleDateString(lang === "en" ? "en-US" : "ru-RU", {
       day: "numeric", month: "long", hour: "2-digit", minute: "2-digit",
     });
   } catch { return dateStr; }
@@ -108,6 +109,8 @@ function formatEventDate(dateStr?: string): string {
 
 /* ─── Component ─────────────────────────────────────────────────────── */
 export default function Events() {
+  const { lang } = useLanguage();
+  const en = lang === "en";
   const [, navigate] = useLocation();
   const [tab, setTab] = useState<Tab>("quests");
   const [completed, setCompleted] = useState<Set<string>>(loadCompleted);
@@ -203,7 +206,7 @@ export default function Events() {
       icon: <MessageCircle size={18} />,
       title: "Отправь 5 сообщений",
       desc: "Напиши что-нибудь в любом чате",
-      reward: 42, rewardIcon: "💎",
+      reward: 42, rewardIcon: "✦",
       progress: progress["q1"] ?? 0, total: 5,
       completed: completed.has("q1"),
       color: "from-sky-500 to-blue-600",
@@ -213,7 +216,7 @@ export default function Events() {
       icon: <Phone size={18} />,
       title: "Совершить звонок",
       desc: "Позвони любому контакту",
-      reward: 63, rewardIcon: "💎",
+      reward: 63, rewardIcon: "✦",
       progress: progress["q2"] ?? 0, total: 1,
       completed: completed.has("q2"),
       color: "from-green-500 to-emerald-600",
@@ -223,7 +226,7 @@ export default function Events() {
       icon: <Heart size={18} />,
       title: "Поставь 3 реакции",
       desc: "Отреагируй на сообщения друзей",
-      reward: 34, rewardIcon: "💎",
+      reward: 34, rewardIcon: "✦",
       progress: progress["q3"] ?? 0, total: 3,
       completed: completed.has("q3"),
       color: "from-rose-500 to-pink-600",
@@ -233,7 +236,7 @@ export default function Events() {
       icon: <UserPlus size={18} />,
       title: "Добавить 3 контакта",
       desc: "Расширь свою сеть за неделю",
-      reward: 170, rewardIcon: "💎",
+      reward: 170, rewardIcon: "✦",
       progress: progress["q5"] ?? 0, total: 3,
       completed: completed.has("q5"),
       color: "from-violet-500 to-indigo-600",
@@ -243,7 +246,7 @@ export default function Events() {
       icon: <Phone size={18} />,
       title: "5 звонков за неделю",
       desc: "Общайся голосом с разными людьми",
-      reward: 255, rewardIcon: "💎",
+      reward: 255, rewardIcon: "✦",
       progress: progress["q6"] ?? 0, total: 5,
       completed: completed.has("q6"),
       color: "from-teal-500 to-cyan-600",
@@ -253,7 +256,7 @@ export default function Events() {
       icon: <Trophy size={18} />,
       title: "Войти 7 дней подряд",
       desc: "Не прерывай серию заходов",
-      reward: 425, rewardIcon: "💎",
+      reward: 425, rewardIcon: "✦",
       progress: progress["q7"] ?? 0, total: 7,
       completed: completed.has("q7"),
       color: "from-yellow-500 to-amber-600",
@@ -263,7 +266,7 @@ export default function Events() {
       icon: <Swords size={18} />,
       title: "Принять участие в событии",
       desc: "Зарегистрируйся на любое событие",
-      reward: 340, rewardIcon: "💎",
+      reward: 340, rewardIcon: "✦",
       progress: joined.size > 0 ? 1 : 0, total: 1,
       completed: completed.has("q8") || joined.size > 0,
       color: "from-fuchsia-500 to-purple-600",
@@ -273,7 +276,7 @@ export default function Events() {
       icon: <Crown size={18} />,
       title: "Топ-10 таблицы лидеров",
       desc: "Попади в десятку лучших игроков",
-      reward: 850, rewardIcon: "💎",
+      reward: 850, rewardIcon: "✦",
       progress: progress["q9"] ?? 0, total: 1,
       completed: completed.has("q9"),
       color: "from-orange-400 to-red-600",
@@ -332,7 +335,7 @@ export default function Events() {
         }
         if (r.status === 402) {
           const data = await r.json().catch(() => ({}));
-          alert(data.error || "Недостаточно искр");
+          alert(data.error || (en ? "Not enough Nova" : "Недостаточно Nova"));
         }
       }
     } catch {
@@ -364,8 +367,8 @@ export default function Events() {
                 <CalendarDays size={18} className="text-white" />
               </div>
               <div>
-                <h1 className="text-lg font-black text-foreground leading-tight">События</h1>
-                <p className="text-xs text-muted-foreground">{doneCount}/{QUESTS.length} заданий выполнено</p>
+                 <h1 className="text-lg font-black text-foreground leading-tight">{en ? "Events" : "События"}</h1>
+                 <p className="text-xs text-muted-foreground">{doneCount}/{QUESTS.length} {en ? "quests completed" : "заданий выполнено"}</p>
               </div>
             </div>
             {/* Gem balance */}
@@ -376,7 +379,7 @@ export default function Events() {
               transition={{ duration: 0.35 }}
               className="flex items-center gap-1.5 bg-cyan-500/10 border border-cyan-500/20 px-3 py-1.5 rounded-full"
             >
-              <Diamond size={13} className="text-cyan-400" />
+               <span className="text-sm font-black text-cyan-400">✦</span>
               <span className="text-sm font-black text-cyan-400">{((me as any)?.balance !== undefined ? (me as any).balance : sparks).toLocaleString()}</span>
             </motion.div>
           </div>
@@ -384,9 +387,9 @@ export default function Events() {
           {/* Tab bar */}
           <div className="flex gap-1 -mx-1 px-1">
             {([
-              { id: "quests",      label: "Задания",  icon: <Target size={13}/> },
-              { id: "events",      label: "События",  icon: <CalendarDays size={13}/> },
-              { id: "leaderboard", label: "Топ",      icon: <Trophy size={13}/> },
+               { id: "quests",      label: en ? "Quests" : "Задания",  icon: <Target size={13}/> },
+               { id: "events",      label: en ? "Events" : "События",  icon: <CalendarDays size={13}/> },
+               { id: "leaderboard", label: en ? "Top" : "Топ",      icon: <Trophy size={13}/> },
             ] as { id: Tab; label: string; icon: React.ReactNode }[]).map(t => (
               <button
                 key={t.id}
@@ -419,8 +422,8 @@ export default function Events() {
                       <Flame size={20} className="text-white" />
                     </div>
                     <div>
-                      <p className="text-sm font-black text-foreground">{streakDays}-дневная серия 🔥</p>
-                      <p className="text-xs text-muted-foreground">Войди завтра, чтобы не потерять серию</p>
+                       <p className="text-sm font-black text-foreground">{en ? `${streakDays}-day streak 🔥` : `${streakDays}-дневная серия 🔥`}</p>
+                       <p className="text-xs text-muted-foreground">{en ? "Come back tomorrow to keep your streak" : "Войди завтра, чтобы не потерять серию"}</p>
                     </div>
                     <div className="ml-auto flex gap-1">
                       {Array.from({ length: 7 }).map((_, i) => (
@@ -436,10 +439,10 @@ export default function Events() {
                 {/* Quest filter pills */}
                 <div className="flex gap-2 overflow-x-auto scrollbar-none -mx-4 px-4 pb-0.5">
                   {([
-                    { id: "all",     label: "Все" },
-                    { id: "daily",   label: "Ежедневные" },
-                    { id: "weekly",  label: "Еженедельные" },
-                    { id: "special", label: "Особые" },
+                     { id: "all",     label: en ? "All" : "Все" },
+                     { id: "daily",   label: en ? "Daily" : "Ежедневные" },
+                     { id: "weekly",  label: en ? "Weekly" : "Еженедельные" },
+                     { id: "special", label: en ? "Special" : "Особые" },
                   ] as { id: typeof questFilter; label: string }[]).map(f => (
                     <button
                       key={f.id}
@@ -461,7 +464,7 @@ export default function Events() {
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <TrendingUp size={14} className="text-primary" />
-                      <span className="text-xs font-bold text-foreground">Общий прогресс</span>
+                       <span className="text-xs font-bold text-foreground">{en ? "Overall progress" : "Общий прогресс"}</span>
                     </div>
                     <span className="text-xs font-black text-primary">{Math.round((doneCount / QUESTS.length) * 100)}%</span>
                   </div>
@@ -474,8 +477,8 @@ export default function Events() {
                     />
                   </div>
                   <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
-                    <span>{doneCount} выполнено</span>
-                    <span>{QUESTS.length - doneCount} осталось</span>
+                     <span>{doneCount} {en ? "completed" : "выполнено"}</span>
+                     <span>{QUESTS.length - doneCount} {en ? "left" : "осталось"}</span>
                   </div>
                 </div>
 
@@ -483,8 +486,7 @@ export default function Events() {
                 <div className="flex items-start gap-2 bg-primary/5 border border-primary/15 rounded-xl px-3 py-2.5">
                   <Info size={13} className="text-primary mt-0.5 shrink-0" />
                   <p className="text-[11px] text-muted-foreground leading-relaxed">
-                    Прогресс обновляется автоматически, когда ты выполняешь действия в приложении.
-                    Ежедневные задания сбрасываются в полночь.
+                     {en ? "Progress updates automatically as you use the app. Daily quests reset at midnight." : "Прогресс обновляется автоматически, когда ты выполняешь действия в приложении. Ежедневные задания сбрасываются в полночь."}
                   </p>
                 </div>
 
@@ -515,7 +517,7 @@ export default function Events() {
                           quest.type === "weekly"  ? "bg-violet-500/15 text-violet-400" :
                                                      "bg-amber-500/15 text-amber-400"
                         )}>
-                          {quest.type === "daily" ? "день" : quest.type === "weekly" ? "неделя" : "особое"}
+                           {quest.type === "daily" ? (en ? "day" : "день") : quest.type === "weekly" ? (en ? "week" : "неделя") : (en ? "special" : "особое")}
                         </div>
 
                         <div className="p-4">
@@ -566,7 +568,7 @@ export default function Events() {
                                 onClick={() => claimReward(quest)}
                                 className="flex-1 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-black shadow-[0_2px_12px_rgba(245,158,11,0.4)] hover:shadow-[0_4px_16px_rgba(245,158,11,0.5)] transition-all"
                               >
-                                {isClaiming ? "✓ Получено!" : `🎁 Забрать награду ${quest.rewardIcon}${quest.reward}`}
+                                 {isClaiming ? (en ? "✓ Claimed!" : "✓ Получено!") : `🎁 ${en ? "Claim reward" : "Забрать награду"} ${quest.rewardIcon}${quest.reward}`}
                               </motion.button>
                             </div>
                           )}
@@ -574,7 +576,7 @@ export default function Events() {
                           {quest.completed && (
                             <div className="flex items-center gap-1.5 mt-2 text-xs text-emerald-500 font-semibold">
                               <CheckCircle2 size={12} />
-                              <span>Выполнено · +{quest.reward} 💎 получено</span>
+                               <span>{en ? "Completed" : "Выполнено"} · +{quest.reward} ✦</span>
                             </div>
                           )}
                         </div>
@@ -611,8 +613,8 @@ export default function Events() {
                     <Lock size={16} className="text-muted-foreground" />
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-muted-foreground">Новые задания скоро</p>
-                    <p className="text-xs text-muted-foreground">Обновление каждый понедельник</p>
+                     <p className="text-sm font-bold text-muted-foreground">{en ? "New quests soon" : "Новые задания скоро"}</p>
+                     <p className="text-xs text-muted-foreground">{en ? "Updated every Monday" : "Обновление каждый понедельник"}</p>
                   </div>
                   <Sparkles size={14} className="ml-auto text-muted-foreground" />
                 </div>
@@ -627,13 +629,13 @@ export default function Events() {
                   <div className="flex items-center justify-between bg-violet-500/10 border border-violet-500/25 rounded-2xl px-4 py-3">
                     <div className="flex items-center gap-2 text-violet-400">
                       <Settings size={14} />
-                      <span className="text-xs font-bold">Панель администратора</span>
+                       <span className="text-xs font-bold">{en ? "Admin Panel" : "Панель администратора"}</span>
                     </div>
                     <button
                       onClick={() => navigate("/admin")}
                       className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-500 text-white rounded-xl text-xs font-bold hover:bg-violet-600 transition-colors"
                     >
-                      <Plus size={12} /> Создать событие
+                       <Plus size={12} /> {en ? "Create event" : "Создать событие"}
                     </button>
                   </div>
                 )}
@@ -658,16 +660,16 @@ export default function Events() {
                     <div className="w-16 h-16 rounded-2xl bg-violet-500/10 flex items-center justify-center mb-4">
                       <CalendarDays size={28} className="text-violet-400" />
                     </div>
-                    <p className="text-base font-black text-foreground mb-1">Событий пока нет</p>
+                     <p className="text-base font-black text-foreground mb-1">{en ? "No events yet" : "Событий пока нет"}</p>
                     <p className="text-sm text-muted-foreground max-w-[220px] leading-relaxed">
-                      Здесь появятся мероприятия, хакатоны и встречи сообщества.
+                       {en ? "Community events, hackathons, and meetups will appear here." : "Здесь появятся мероприятия, хакатоны и встречи сообщества."}
                     </p>
                     {(me as any)?.isAdmin && (
                       <button
                         onClick={() => navigate("/admin")}
                         className="mt-5 flex items-center gap-2 px-5 py-2.5 bg-violet-500 text-white rounded-2xl text-sm font-bold hover:bg-violet-600 transition-colors shadow-lg shadow-violet-500/30"
                       >
-                        <Plus size={15} /> Создать первое событие
+                         <Plus size={15} /> {en ? "Create first event" : "Создать первое событие"}
                       </button>
                     )}
                   </div>
@@ -678,7 +680,7 @@ export default function Events() {
                       <div className="space-y-2">
                         <div className="flex items-center gap-2">
                           <Flame size={13} className="text-orange-500" />
-                          <span className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Активные события</span>
+                           <span className="text-xs font-bold text-muted-foreground uppercase tracking-wide">{en ? "Active events" : "Активные события"}</span>
                         </div>
                         <div className="flex gap-3 overflow-x-auto scrollbar-none -mx-4 px-4 pb-1">
                           {apiEvents.slice(0, 3).map(event => (
@@ -691,14 +693,14 @@ export default function Events() {
                               <p className="font-black text-base leading-tight mb-2 pr-8">{event.title}</p>
                               {event.start_at && (
                                 <div className="flex items-center gap-1.5 text-xs opacity-80 mb-3">
-                                  <Clock size={11} />{formatEventDate(event.start_at)}
+                                 <Clock size={11} />{formatEventDate(event.start_at, lang)}
                                 </div>
                               )}
                               <button
                                 onClick={() => toggleJoin(event.id)}
                                 className="mt-1 w-full py-2 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs font-bold transition-colors border border-white/20"
                               >
-                                {joined.has(event.id) ? "✓ Вы участвуете" : "Участвовать"}
+                                 {joined.has(event.id) ? (en ? "✓ You're in" : "✓ Вы участвуете") : (en ? "Join" : "Участвовать")}
                               </button>
                             </motion.div>
                           ))}
@@ -734,13 +736,13 @@ export default function Events() {
                                 {event.start_at && (
                                   <span className="flex items-center gap-1.5">
                                     <Clock size={12} className="text-primary/70" />
-                                    Начало: {formatEventDate(event.start_at)}
+                                     {en ? "Starts" : "Начало"}: {formatEventDate(event.start_at, lang)}
                                   </span>
                                 )}
                                 {event.end_at && (
                                   <span className="flex items-center gap-1.5">
                                     <Clock size={12} className="text-rose-400/70" />
-                                    Конец: {formatEventDate(event.end_at)}
+                                     {en ? "Ends" : "Конец"}: {formatEventDate(event.end_at, lang)}
                                   </span>
                                 )}
                               </div>
@@ -773,9 +775,9 @@ export default function Events() {
                                       : "bg-primary text-primary-foreground hover:opacity-90 shadow-[0_2px_10px_rgba(139,92,246,0.25)]"
                                 )}
                               >
-                                {joined.has(event.id) ? "✓ Участвую" : event.event_type === "giveaway"
-                                  ? `🎁 Участвовать${(event.cost || 0) > 0 ? ` · ${event.cost} ✨` : ""}`
-                                  : "Участвовать"}
+                                 {joined.has(event.id) ? (en ? "✓ You're in" : "✓ Участвую") : event.event_type === "giveaway"
+                                   ? `🎁 ${en ? "Join" : "Участвовать"}${(event.cost || 0) > 0 ? ` · ${event.cost} ✦` : ""}`
+                                   : (en ? "Join" : "Участвовать")}
                               </button>
                               {(event.participant_count || 0) > 0 && (
                                 <div className="px-3 py-2 rounded-xl border border-secondary bg-secondary text-[10px] font-bold text-muted-foreground flex items-center gap-1">
@@ -784,7 +786,7 @@ export default function Events() {
                               )}
                               {!(event.participant_count || 0) && (
                                 <div className="px-3 py-2 rounded-xl border border-amber-500/25 bg-amber-500/10 text-[10px] font-bold text-amber-400 flex items-center gap-1">
-                                  <Zap size={10} className="fill-amber-400" />Бонус
+                                   <Zap size={10} className="fill-amber-400" />{en ? "Bonus" : "Бонус"}
                                 </div>
                               )}
                             </div>
@@ -809,8 +811,8 @@ export default function Events() {
                 ) : leaderboard.length === 0 ? (
                   <div className="text-center py-16 text-muted-foreground">
                     <Trophy size={40} className="mx-auto mb-3 opacity-20" />
-                    <p className="font-bold">Пока никого нет</p>
-                    <p className="text-sm mt-1">Пополни баланс — попади в топ!</p>
+                     <p className="font-bold">{en ? "No one here yet" : "Пока никого нет"}</p>
+                     <p className="text-sm mt-1">{en ? "Top up your balance to reach the leaderboard!" : "Пополни баланс — попади в топ!"}</p>
                   </div>
                 ) : (
                   <>
@@ -818,8 +820,8 @@ export default function Events() {
                     {leaderboard.length >= 3 && (
                       <div className="relative bg-gradient-to-b from-violet-500/10 to-transparent border border-violet-500/15 rounded-2xl p-4 pb-6">
                         <div className="text-center mb-4">
-                          <p className="text-xs font-black text-muted-foreground uppercase tracking-widest">Таблица лидеров</p>
-                          <p className="text-[10px] text-muted-foreground mt-0.5">Обновляется каждую минуту</p>
+                           <p className="text-xs font-black text-muted-foreground uppercase tracking-widest">{en ? "Leaderboard" : "Таблица лидеров"}</p>
+                           <p className="text-[10px] text-muted-foreground mt-0.5">{en ? "Updated every minute" : "Обновляется каждую минуту"}</p>
                         </div>
                         <div className="flex items-end justify-center gap-3">
                           {/* 2nd */}
@@ -894,7 +896,7 @@ export default function Events() {
                             <div className="flex-1 min-w-0">
                               <p className={cn("text-sm font-bold truncate", isMe && "text-primary")}>
                                 {user.display_name || user.username}
-                                {isMe && <span className="ml-1.5 text-[10px] font-normal opacity-60">(ты)</span>}
+                                {isMe && <span className="ml-1.5 text-[10px] font-normal opacity-60">({en ? "you" : "ты"})</span>}
                               </p>
                               <div className="flex items-center gap-1 mt-0.5">
                                 <Zap size={9} className="text-amber-400 fill-amber-400" />
@@ -914,13 +916,13 @@ export default function Events() {
                       const pct = top3Score > 0 ? Math.min(100, (myScore / top3Score) * 100) : 0;
                       return (
                         <div className="bg-card border border-border rounded-2xl p-4">
-                          <p className="text-xs text-muted-foreground mb-2 font-semibold">Твой прогресс</p>
+                           <p className="text-xs text-muted-foreground mb-2 font-semibold">{en ? "Your progress" : "Твой прогресс"}</p>
                           <div className="flex items-center gap-3">
                             <div className="flex-1">
                               <div className="flex justify-between text-xs mb-1">
-                                <span className="text-muted-foreground">До топ-3</span>
+                                 <span className="text-muted-foreground">{en ? "To top 3" : "До топ-3"}</span>
                                 <span className="font-bold text-foreground">
-                                  {top3Score > myScore ? `${(top3Score - myScore).toLocaleString()} ✨` : "Ты в топ-3! 🎉"}
+                                   {top3Score > myScore ? `${(top3Score - myScore).toLocaleString()} ✦` : (en ? "You're in the top 3! 🎉" : "Ты в топ-3! 🎉")}
                                 </span>
                               </div>
                               <div className="h-2 bg-secondary rounded-full overflow-hidden">
@@ -936,7 +938,7 @@ export default function Events() {
                               <p className="font-black text-foreground text-base">
                                 {myIdx >= 0 ? `#${myIdx + 1}` : "—"}
                               </p>
-                              <p>место</p>
+                               <p>{en ? "place" : "место"}</p>
                             </div>
                           </div>
                         </div>

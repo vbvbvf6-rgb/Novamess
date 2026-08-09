@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useGetMe } from "@workspace/api-client-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const TASK_CONFIGS: Record<string, { color: string; icon: React.ReactNode }> = {
   daily_login:    { color: "from-yellow-500 to-amber-500",   icon: <Zap size={20} className="text-white" /> },
@@ -83,6 +84,9 @@ async function verifyTask(taskId: string): Promise<{ ok: boolean; reason?: strin
 
 export default function Wallet() {
   const { toast } = useToast();
+  const { lang } = useLanguage();
+  const en = lang === "en";
+  const currency = "Nova ✦";
   const { data: me } = useGetMe();
   const [balance, setBalance] = useState(0);
   const [walletAddress, setWalletAddress] = useState("");
@@ -207,10 +211,10 @@ export default function Wallet() {
         const updated = [newTx, ...txHistory].slice(0, 50);
         setTxHistory(updated);
         localStorage.setItem(txKey, JSON.stringify(updated));
-        toast({ title: `+${data.bonus} 💎 Кристалл!`, description: "Ежедневный бонус зачислен. Возвращайся завтра!" });
+        toast({ title: `+${data.bonus} ${currency}`, description: en ? "Daily bonus added. Come back tomorrow!" : "Ежедневный бонус зачислен. Возвращайся завтра!" });
         setShowBonusModal(false);
       } else {
-        toast({ title: "Бонус недоступен", description: data.error || "Попробуйте позже", variant: "destructive" });
+        toast({ title: en ? "Bonus unavailable" : "Бонус недоступен", description: data.error || (en ? "Try again later" : "Попробуйте позже"), variant: "destructive" });
         if (res.status === 409) {
           const today = new Date().toDateString();
           localStorage.setItem(bonusKey, today);
@@ -219,7 +223,7 @@ export default function Wallet() {
         }
       }
     } catch {
-      toast({ title: "Ошибка сети", variant: "destructive" });
+      toast({ title: en ? "Network error" : "Ошибка сети", variant: "destructive" });
     }
     setBonusLoading(false);
   };
@@ -239,7 +243,7 @@ export default function Wallet() {
       const res = await fetch("/api/wallet/buy", {
         method: "POST",
         headers: { "Content-Type": "application/json", ...getUserIdHeader() },
-        body: JSON.stringify({ amount: pkg.spark, packageLabel: `${pkg.label} (${pkg.spark} 💎)`, priceLabel: pkg.price }),
+        body: JSON.stringify({ amount: pkg.spark, packageLabel: `${pkg.label} (${pkg.spark} ${currency})`, priceLabel: pkg.price }),
       });
       const data = await res.json();
       if (res.ok && data.success) {
@@ -249,13 +253,13 @@ export default function Wallet() {
         const updated = [newTx, ...txHistory].slice(0, 50);
         setTxHistory(updated);
         localStorage.setItem(txKey, JSON.stringify(updated));
-        toast({ title: `+${pkg.spark.toLocaleString("ru")} 💎 Кристалл!`, description: `Пакет «${pkg.label}» успешно зачислен` });
+        toast({ title: `+${pkg.spark.toLocaleString(en ? "en-US" : "ru")} ${currency}`, description: en ? `${pkg.label} package added successfully` : `Пакет «${pkg.label}» успешно зачислен` });
         setTimeout(() => { setShowBuyModal(false); setBoughtPackage(null); }, 1800);
       } else {
-        toast({ title: "Ошибка покупки", description: data.error || "Попробуйте позже", variant: "destructive" });
+        toast({ title: en ? "Purchase failed" : "Ошибка покупки", description: data.error || (en ? "Try again later" : "Попробуйте позже"), variant: "destructive" });
       }
     } catch {
-      toast({ title: "Ошибка сети", variant: "destructive" });
+      toast({ title: en ? "Network error" : "Ошибка сети", variant: "destructive" });
     }
     setBuyingPackage(null);
   };
@@ -269,11 +273,11 @@ export default function Wallet() {
   const handleSend = async () => {
     const amount = Number(sendAmount);
     if (!sendAddress.trim() || isNaN(amount) || amount <= 0) {
-      toast({ title: "Укажите адрес и сумму", variant: "destructive" });
+      toast({ title: en ? "Enter an address and amount" : "Укажите адрес и сумму", variant: "destructive" });
       return;
     }
     if (amount > balance) {
-      toast({ title: "Недостаточно Кристаллов", description: `Ваш баланс: ${balance} 💎`, variant: "destructive" });
+      toast({ title: en ? "Not enough Nova" : "Недостаточно Nova", description: `${en ? "Your balance" : "Ваш баланс"}: ${balance} ${currency}`, variant: "destructive" });
       return;
     }
     setIsSending(true);
@@ -286,19 +290,19 @@ export default function Wallet() {
       const data = await res.json();
       if (res.ok && data.success) {
         setBalance(data.balance);
-        const newTx: TxEntry = { id: `send-${Date.now()}`, type: "spend", amount, label: `Перевод → ${data.recipient}`, time: new Date() };
+        const newTx: TxEntry = { id: `send-${Date.now()}`, type: "spend", amount, label: `${en ? "Transfer" : "Перевод"} → ${data.recipient}`, time: new Date() };
         const updated = [newTx, ...txHistory].slice(0, 50);
         setTxHistory(updated);
         localStorage.setItem(txKey, JSON.stringify(updated));
-        toast({ title: "Перевод выполнен!", description: `${amount} 💎 отправлено ${data.recipient}` });
+        toast({ title: en ? "Transfer complete!" : "Перевод выполнен!", description: `${amount} ${currency} ${en ? "sent to" : "отправлено"} ${data.recipient}` });
         setShowSendModal(false);
         setSendAddress("");
         setSendAmount("");
       } else {
-        toast({ title: "Ошибка перевода", description: data.error || "Попробуйте снова", variant: "destructive" });
+        toast({ title: en ? "Transfer failed" : "Ошибка перевода", description: data.error || (en ? "Try again" : "Попробуйте снова"), variant: "destructive" });
       }
     } catch {
-      toast({ title: "Ошибка сети", variant: "destructive" });
+      toast({ title: en ? "Network error" : "Ошибка сети", variant: "destructive" });
     }
     setIsSending(false);
   };
@@ -306,11 +310,11 @@ export default function Wallet() {
   const timeAgo = (date: Date) => {
     const diff = Date.now() - date.getTime();
     const mins = Math.floor(diff / 60000);
-    if (mins < 1) return "только что";
-    if (mins < 60) return `${mins} мин. назад`;
+    if (mins < 1) return en ? "just now" : "только что";
+    if (mins < 60) return en ? `${mins} min ago` : `${mins} мин. назад`;
     const hours = Math.floor(mins / 60);
-    if (hours < 24) return `${hours} ч. назад`;
-    return `${Math.floor(hours / 24)} д. назад`;
+    if (hours < 24) return en ? `${hours} hr ago` : `${hours} ч. назад`;
+    return en ? `${Math.floor(hours / 24)}d ago` : `${Math.floor(hours / 24)} д. назад`;
   };
 
   const doneCount = completedTasks.filter(id => effectiveTasks.some(t => t.id === id)).length;
@@ -324,10 +328,10 @@ export default function Wallet() {
           <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg, rgba(6,182,212,0.18), rgba(249,115,22,0.08))", border: "1px solid rgba(6,182,212,0.25)" }}>
             <Diamond size={17} className="text-cyan-400" fill="currentColor" />
           </div>
-          <h1 className="text-xl font-black text-foreground">Кошелёк</h1>
+          <h1 className="text-xl font-black text-foreground">{en ? "Wallet" : "Кошелёк"}</h1>
         </div>
         <div className="flex items-center gap-1.5 text-sm font-black relative z-10 px-3 py-1.5 rounded-2xl" style={{ background: "linear-gradient(135deg, rgba(234,179,8,0.15), rgba(249,115,22,0.1))", border: "1px solid rgba(6,182,212,0.25)", color: "#22d3ee" }}>
-          <span className="text-sm">💎</span> {Number(balance).toLocaleString()}
+          <span className="text-sm">✦</span> {Number(balance).toLocaleString(en ? "en-US" : "ru")}
         </div>
       </header>
 
@@ -344,16 +348,16 @@ export default function Wallet() {
             <div className="absolute bottom-0 left-0 w-28 h-28 rounded-full opacity-20 pointer-events-none"
               style={{ background: "radial-gradient(circle, #0891b2, transparent)", transform: "translate(-35%, 35%)" }} />
 
-            <p className="text-xs text-foreground/50 uppercase tracking-widest mb-1 relative z-10">Баланс Кристаллов</p>
+            <p className="text-xs text-foreground/50 uppercase tracking-widest mb-1 relative z-10">{en ? "Nova balance" : "Баланс Nova"}</p>
             <div className="flex items-end gap-2 mb-4 relative z-10">
-              <span className="text-5xl font-black tracking-tight">{Number(balance).toLocaleString("ru")}</span>
-              <Diamond size={32} className="text-cyan-400 mb-1 fill-cyan-400" />
+              <span className="text-5xl font-black tracking-tight">{Number(balance).toLocaleString(en ? "en-US" : "ru")}</span>
+              <span className="text-4xl font-black text-cyan-400 mb-1">✦</span>
             </div>
 
             <div className="mb-4 relative z-10">
               <div className="flex justify-between text-xs text-foreground/50 mb-1.5">
-                <span>Прогресс дня</span>
-                <span>{doneCount}/{effectiveTasks.length} задач</span>
+                <span>{en ? "Daily progress" : "Прогресс дня"}</span>
+                <span>{doneCount}/{effectiveTasks.length} {en ? "tasks" : "задач"}</span>
               </div>
               <div className="h-1.5 bg-foreground/10 rounded-full overflow-hidden">
                 <motion.div
@@ -368,8 +372,8 @@ export default function Wallet() {
 
             <div className="bg-foreground/[0.06] rounded-xl px-3 py-2 flex items-center justify-between mb-4 relative z-10 border border-foreground/10">
               <div>
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">Адрес кошелька</p>
-                <p className="font-mono text-sm font-bold text-foreground">{walletAddress || "PULSE-000001"}</p>
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">{en ? "Wallet address" : "Адрес кошелька"}</p>
+                <p className="font-mono text-sm font-bold text-foreground">{walletAddress || "NOVA-000001"}</p>
               </div>
               <button onClick={handleCopyAddress} className="p-1.5 rounded-lg hover:bg-foreground/10 transition text-foreground/50 hover:text-foreground">
                 {addressCopied ? <Check size={15} className="text-green-400" /> : <Copy size={15} />}
@@ -378,16 +382,16 @@ export default function Wallet() {
 
             <div className="grid grid-cols-2 gap-2 relative z-10">
               <button onClick={() => setShowReceiveModal(true)} className="py-2.5 rounded-xl bg-foreground/8 hover:bg-foreground/15 transition text-sm font-semibold flex items-center justify-center gap-1.5">
-                <ArrowDownLeft size={15} /> Получить
+                 <ArrowDownLeft size={15} /> {en ? "Receive" : "Получить"}
               </button>
               <button onClick={() => setShowSendModal(true)} className="py-2.5 rounded-xl bg-foreground/8 hover:bg-foreground/15 transition text-sm font-semibold flex items-center justify-center gap-1.5">
-                <Send size={15} /> Отправить
+                 <Send size={15} /> {en ? "Send" : "Отправить"}
               </button>
               <button onClick={() => setShowBuyModal(true)} className="py-2.5 rounded-xl hover:opacity-90 transition text-sm font-semibold text-white flex items-center justify-center gap-1.5" style={{ background: "linear-gradient(135deg, #059669, #22d3ee)" }}>
-                <ShoppingCart size={15} /> Купить
+                 <ShoppingCart size={15} /> {en ? "Buy" : "Купить"}
               </button>
               <button onClick={() => setShowBonusModal(true)} className={`py-2.5 rounded-xl hover:opacity-90 transition text-sm font-semibold text-white flex items-center justify-center gap-1.5 ${bonusClaimed ? "opacity-50 cursor-not-allowed" : ""}`} style={{ background: "linear-gradient(135deg, #22d3ee, #7c3aed)" }}>
-                <Zap size={15} fill="white" /> {bonusClaimed ? "Завтра" : "Бонус"}
+                 <Zap size={15} fill="white" /> {bonusClaimed ? (en ? "Tomorrow" : "Завтра") : (en ? "Bonus" : "Бонус")}
               </button>
             </div>
           </motion.div>
@@ -399,8 +403,8 @@ export default function Wallet() {
                 <Shield size={20} className="text-purple-400" />
               </div>
               <div className="flex-1">
-                <p className="font-bold text-sm">Панель администратора</p>
-                <p className="text-xs text-muted-foreground">Управление балансами пользователей</p>
+                <p className="font-bold text-sm">{en ? "Admin Panel" : "Панель администратора"}</p>
+                <p className="text-xs text-muted-foreground">{en ? "Manage user balances" : "Управление балансами пользователей"}</p>
               </div>
               <ChevronRight size={16} className="text-muted-foreground group-hover:text-foreground transition-colors" />
             </motion.a>
@@ -412,7 +416,7 @@ export default function Wallet() {
                 className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-semibold transition-all ${
                   tab === t ? "bg-background text-foreground shadow-sm border border-border" : "text-muted-foreground hover:text-foreground"
                 }`}>
-                {t === "tasks" ? <><TrendingUp size={14} /> Задания</> : <><History size={14} /> История</>}
+                 {t === "tasks" ? <><TrendingUp size={14} /> {en ? "Tasks" : "Задания"}</> : <><History size={14} /> {en ? "History" : "История"}</>}
               </button>
             ))}
           </div>
@@ -474,7 +478,7 @@ export default function Wallet() {
                   <div className="text-center text-muted-foreground py-16">
                     <History size={44} className="mx-auto mb-3 opacity-20" />
                     <p className="font-semibold">Нет транзакций</p>
-                    <p className="text-sm opacity-60 mt-1">Выполни задания чтобы заработать 💎 Кристаллы</p>
+                    <p className="text-sm opacity-60 mt-1">{en ? "Complete tasks to earn Nova ✦" : "Выполни задания чтобы заработать Nova ✦"}</p>
                   </div>
                 ) : (
                   txHistory.map((tx, i) => {
@@ -490,7 +494,7 @@ export default function Wallet() {
                           <p className="text-xs text-muted-foreground">{timeAgo(tx.time)}</p>
                         </div>
                         <span className={`text-sm font-bold shrink-0 ${isPositive ? "text-green-400" : "text-red-400"}`}>
-                          {isPositive ? "+" : "-"}{Math.abs(tx.amount)} 💎
+                           {isPositive ? "+" : "-"}{Math.abs(tx.amount)} ✦
                         </span>
                       </motion.div>
                     );
@@ -511,22 +515,22 @@ export default function Wallet() {
             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
               onClick={(e) => e.stopPropagation()} className="bg-card border border-border rounded-3xl p-6 w-full max-w-sm shadow-2xl">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-foreground">Получить Искру</h3>
+                 <h3 className="text-lg font-bold text-foreground">{en ? "Receive Nova" : "Получить Nova"}</h3>
                 <button onClick={() => setShowReceiveModal(false)} className="text-muted-foreground hover:text-foreground transition-colors">
                   <X size={20} />
                 </button>
               </div>
               <div className="flex flex-col items-center gap-4">
                 <div className="w-20 h-20 rounded-2xl bg-primary/10 border border-primary/30 flex items-center justify-center">
-                  <span className="text-4xl">💎</span>
+                   <span className="text-4xl">✦</span>
                 </div>
                 <div className="text-center">
-                  <p className="text-sm text-muted-foreground mb-1">Ваш адрес кошелька</p>
+                   <p className="text-sm text-muted-foreground mb-1">{en ? "Your wallet address" : "Ваш адрес кошелька"}</p>
                   <div className="bg-background border border-border rounded-xl px-4 py-3 font-mono text-sm text-foreground select-all break-all text-center">
-                    {walletAddress || `PULSE-${uid ? uid.toString().padStart(6, "0") : "000000"}`}
+                   {walletAddress || `NOVA-${uid ? uid.toString().padStart(6, "0") : "000000"}`}
                   </div>
                 </div>
-                <p className="text-xs text-muted-foreground text-center">Передайте этот адрес отправителю для получения Кристаллов</p>
+                 <p className="text-xs text-muted-foreground text-center">{en ? "Share this address to receive Nova" : "Передайте этот адрес отправителю для получения Nova"}</p>
                 <button onClick={() => {
                   const addr = walletAddress || `PULSE-${uid ? uid.toString().padStart(6, "0") : "000000"}`;
                   navigator.clipboard?.writeText(addr);
@@ -534,7 +538,7 @@ export default function Wallet() {
                   setTimeout(() => setAddressCopied(false), 2000);
                   setShowReceiveModal(false);
                 }} className="w-full py-3 bg-primary rounded-xl text-sm font-semibold text-white">
-                  Скопировать адрес
+                   {en ? "Copy address" : "Скопировать адрес"}
                 </button>
               </div>
             </motion.div>
@@ -551,20 +555,20 @@ export default function Wallet() {
             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
               onClick={(e) => e.stopPropagation()} className="bg-card border border-border rounded-3xl p-6 w-full max-w-sm shadow-2xl max-h-[90dvh] overflow-y-auto">
               <div className="flex items-center justify-between mb-5">
-                <h3 className="text-lg font-bold text-foreground">Отправить Кристаллы</h3>
+                 <h3 className="text-lg font-bold text-foreground">{en ? "Send Nova" : "Отправить Nova"}</h3>
                 <button onClick={() => setShowSendModal(false)} className="text-muted-foreground hover:text-foreground transition-colors"><X size={20} /></button>
               </div>
               <div className="space-y-4">
                 <div>
-                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Адрес получателя</label>
+                   <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">{en ? "Recipient address" : "Адрес получателя"}</label>
                   <input type="text" value={sendAddress} onChange={e => setSendAddress(e.target.value)} placeholder="PULSE-000001"
                     className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-primary transition-colors" autoCapitalize="characters" />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Сумма 💎</label>
+                   <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">{en ? "Amount ✦" : "Сумма Nova ✦"}</label>
                   <input type="number" inputMode="numeric" value={sendAmount} onChange={e => setSendAmount(e.target.value)} onKeyDown={e => { if (["e", "E", "+", "-"].includes(e.key)) e.preventDefault(); }} placeholder="100" min={1} max={balance}
                     className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-primary transition-colors" />
-                  <p className="text-xs text-muted-foreground mt-1">Доступно: {balance.toLocaleString()} 💎</p>
+                   <p className="text-xs text-muted-foreground mt-1">{en ? "Available" : "Доступно"}: {balance.toLocaleString()} ✦</p>
                 </div>
                 <button disabled={isSending || !sendAddress.trim() || !sendAmount} onClick={handleSend}
                   className="w-full py-3 rounded-xl font-bold text-white text-sm transition-all disabled:opacity-50"
@@ -587,8 +591,8 @@ export default function Wallet() {
               onClick={(e) => e.stopPropagation()} className="bg-card border border-border rounded-3xl p-5 w-full max-w-sm shadow-2xl max-h-[90dvh] overflow-y-auto">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h3 className="text-lg font-bold text-foreground">Купить Кристаллы 💎</h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">Выберите пакет пополнения</p>
+                  <h3 className="text-lg font-bold text-foreground">{en ? "Buy Nova ✦" : "Купить Nova ✦"}</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">{en ? "Choose a top-up package" : "Выберите пакет пополнения"}</p>
                 </div>
                 <button onClick={() => setShowBuyModal(false)} className="text-muted-foreground hover:text-foreground transition-colors"><X size={20} /></button>
               </div>
@@ -600,8 +604,8 @@ export default function Wallet() {
                       <Check size={28} className="text-green-400" />
                     </motion.div>
                     <div className="text-center">
-                      <p className="font-bold text-foreground">Кристаллы зачислены!</p>
-                      <p className="text-sm text-muted-foreground mt-1">Пакет «{boughtPackage}» успешно куплен</p>
+                      <p className="font-bold text-foreground">{en ? "Nova added!" : "Nova зачислены!"}</p>
+                      <p className="text-sm text-muted-foreground mt-1">{en ? `${boughtPackage} package purchased successfully` : `Пакет «${boughtPackage}» успешно куплен`}</p>
                     </div>
                   </motion.div>
                 ) : (
@@ -611,7 +615,7 @@ export default function Wallet() {
                         onClick={() => handleBuyPackage(pkg)} disabled={buyingPackage !== null}
                         className="relative rounded-2xl p-3.5 text-left border border-border overflow-hidden disabled:opacity-60 transition-all bg-secondary hover:bg-secondary/80">
                         {pkg.popular && (
-                          <span className="absolute top-2 right-2 text-[9px] font-black uppercase tracking-wider bg-violet-500 text-white px-1.5 py-0.5 rounded-full">ХИТ</span>
+                          <span className="absolute top-2 right-2 text-[9px] font-black uppercase tracking-wider bg-violet-500 text-white px-1.5 py-0.5 rounded-full">{en ? "POPULAR" : "ХИТ"}</span>
                         )}
                         <div className={`w-8 h-8 rounded-xl bg-gradient-to-br ${pkg.color} flex items-center justify-center mb-2.5`}>
                           {buyingPackage === pkg.id
@@ -619,16 +623,16 @@ export default function Wallet() {
                             : <Diamond size={15} className="text-white" fill="white" />}
                         </div>
                         <p className="font-black text-base text-foreground leading-none mb-0.5">{pkg.spark.toLocaleString("ru")}</p>
-                        <p className="text-[10px] text-muted-foreground mb-2">💎 Кристаллы</p>
+                        <p className="text-[10px] text-muted-foreground mb-2">✦ Nova</p>
                         <div className={`w-full py-1.5 rounded-lg bg-gradient-to-r ${pkg.color} text-white text-xs font-bold text-center`}>
-                          {buyingPackage === pkg.id ? "Покупка..." : pkg.price}
+                          {buyingPackage === pkg.id ? (en ? "Buying..." : "Покупка...") : pkg.price}
                         </div>
                       </motion.button>
                     ))}
                   </motion.div>
                 )}
               </AnimatePresence>
-              <p className="text-[10px] text-muted-foreground text-center mt-3">Кристаллы зачисляются мгновенно после нажатия кнопки</p>
+              <p className="text-[10px] text-muted-foreground text-center mt-3">{en ? "Nova is added instantly after purchase" : "Nova зачисляется мгновенно после нажатия кнопки"}</p>
             </motion.div>
           </motion.div>
         )}
@@ -643,31 +647,31 @@ export default function Wallet() {
             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
               onClick={(e) => e.stopPropagation()} className="bg-card border border-border rounded-3xl p-6 w-full max-w-sm shadow-2xl">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-foreground">Ежедневный бонус</h3>
+                <h3 className="text-lg font-bold text-foreground">{en ? "Daily bonus" : "Ежедневный бонус"}</h3>
                 <button onClick={() => setShowBonusModal(false)} className="text-muted-foreground hover:text-foreground transition-colors"><X size={20} /></button>
               </div>
               <div className="flex flex-col items-center gap-4 py-2">
                 <motion.div animate={bonusClaimed ? {} : { scale: [1, 1.08, 1] }} transition={{ repeat: Infinity, duration: 2 }}
                   className="w-24 h-24 rounded-3xl flex items-center justify-center"
                   style={{ background: "linear-gradient(135deg, #22d3ee22, #7c3aed22)", border: "2px solid #7c3aed44" }}>
-                  <span className="text-5xl">💎</span>
+                  <span className="text-5xl">✦</span>
                 </motion.div>
                 <div className="text-center">
-                  <p className="text-3xl font-black text-foreground">+10 Кристаллов</p>
-                  <p className="text-sm text-muted-foreground mt-1">Бесплатно каждый день, без покупок</p>
+                  <p className="text-3xl font-black text-foreground">+10 Nova ✦</p>
+                  <p className="text-sm text-muted-foreground mt-1">{en ? "Free every day, no purchase required" : "Бесплатно каждый день, без покупок"}</p>
                 </div>
                 {bonusClaimed ? (
                   <div className="w-full py-3 rounded-xl bg-green-500/15 border border-green-500/30 text-center text-sm font-semibold text-green-400">
-                    Уже получен сегодня — возвращайся завтра!
+                     {en ? "Already claimed today — come back tomorrow!" : "Уже получен сегодня — возвращайся завтра!"}
                   </div>
                 ) : (
                   <button disabled={bonusLoading} onClick={handleDailyBonus}
                     className="w-full py-3 rounded-xl font-bold text-white text-sm transition-all disabled:opacity-60"
                     style={{ background: "linear-gradient(135deg, #22d3ee, #7c3aed)" }}>
-                    {bonusLoading ? "Получение..." : "Забрать бонус"}
+                     {bonusLoading ? (en ? "Claiming..." : "Получение...") : (en ? "Claim bonus" : "Забрать бонус")}
                   </button>
                 )}
-                <p className="text-xs text-muted-foreground text-center">Новый бонус доступен каждый день в 00:00</p>
+                 <p className="text-xs text-muted-foreground text-center">{en ? "A new bonus is available every day at 00:00" : "Новый бонус доступен каждый день в 00:00"}</p>
               </div>
             </motion.div>
           </motion.div>

@@ -15,6 +15,11 @@ const translations = {
     "nav.admin": "Админ-панель",
     "nav.leaderboard": "Рейтинг",
     "nav.events": "События",
+    "nav.clans": "Кланы",
+    "nav.bots": "Боты",
+    "nav.changelog": "Что нового",
+    "currency.name": "Nova",
+    "currency.symbol": "✦",
 
     // User menu dropdown
     "menu.myProfile": "Мой профиль",
@@ -239,6 +244,11 @@ const translations = {
     "nav.admin": "Admin Panel",
     "nav.leaderboard": "Top Users",
     "nav.events": "Events",
+    "nav.clans": "Clans",
+    "nav.bots": "Bots",
+    "nav.changelog": "What's New",
+    "currency.name": "Nova",
+    "currency.symbol": "✦",
 
     // User menu dropdown
     "menu.myProfile": "My Profile",

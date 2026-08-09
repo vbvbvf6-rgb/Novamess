@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Newspaper, RefreshCw, Rocket, Calendar, Tag } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface AppUpdate {
   id: number;
@@ -13,6 +14,7 @@ interface AppUpdate {
 }
 
 export default function Changelog() {
+  const { lang } = useLanguage();
   const [updates, setUpdates] = useState<AppUpdate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -35,7 +37,7 @@ export default function Changelog() {
 
   const formatDate = (iso: string | null) => {
     if (!iso) return null;
-    return new Date(iso).toLocaleDateString("ru-RU", {
+    return new Date(iso).toLocaleDateString(lang === "en" ? "en-US" : "ru-RU", {
       day: "numeric", month: "long", year: "numeric",
     });
   };
@@ -52,8 +54,8 @@ export default function Changelog() {
             <Newspaper size={18} className="text-violet-400" />
           </div>
           <div>
-            <h1 className="font-bold text-base leading-tight">Что нового</h1>
-            <p className="text-xs text-muted-foreground">История обновлений Nova</p>
+            <h1 className="font-bold text-base leading-tight">{lang === "en" ? "What's New" : "Что нового"}</h1>
+            <p className="text-xs text-muted-foreground">{lang === "en" ? "Nova release history" : "История обновлений Nova"}</p>
           </div>
         </div>
         <button
@@ -73,16 +75,16 @@ export default function Changelog() {
           </div>
         ) : error ? (
           <div className="text-center py-16">
-            <p className="text-muted-foreground text-sm">Не удалось загрузить обновления</p>
-            <button onClick={load} className="mt-3 text-sm text-primary hover:underline">Повторить</button>
+            <p className="text-muted-foreground text-sm">{lang === "en" ? "Could not load updates" : "Не удалось загрузить обновления"}</p>
+            <button onClick={load} className="mt-3 text-sm text-primary hover:underline">{lang === "en" ? "Try again" : "Повторить"}</button>
           </div>
         ) : updates.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center gap-3">
             <div className="w-16 h-16 rounded-2xl bg-violet-500/10 flex items-center justify-center">
               <Rocket size={28} className="text-violet-400" />
             </div>
-            <p className="font-semibold text-foreground">Обновлений пока нет</p>
-            <p className="text-sm text-muted-foreground max-w-xs">Здесь будет появляться история выпусков Nova — что исправили, что добавили.</p>
+            <p className="font-semibold text-foreground">{lang === "en" ? "No updates yet" : "Обновлений пока нет"}</p>
+            <p className="text-sm text-muted-foreground max-w-xs">{lang === "en" ? "Nova release notes will appear here." : "Здесь будет появляться история выпусков Nova — что исправили, что добавили."}</p>
           </div>
         ) : (
           <div className="relative">
@@ -126,7 +128,7 @@ export default function Changelog() {
                             </span>
                             {i === 0 && (
                               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                                Последнее
+                                {lang === "en" ? "Latest" : "Последнее"}
                               </span>
                             )}
                           </div>
