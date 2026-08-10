@@ -596,7 +596,7 @@ export default function Events() {
                                   animate={{ y: -12 }}
                                   transition={{ duration: 0.5 }}
                                   className="text-3xl"
-                                >✨</motion.div>
+                                >✦</motion.div>
                                 <span className="text-white font-black text-lg">+{quest.reward}</span>
                               </div>
                             </motion.div>
@@ -834,7 +834,7 @@ export default function Events() {
                             <p className="text-[10px] font-bold text-muted-foreground text-center leading-tight max-w-[56px] truncate">
                               {leaderboard[1].display_name || leaderboard[1].username}
                             </p>
-                            <span className="text-[10px] text-muted-foreground">{Number(leaderboard[1].balance ?? 0).toLocaleString()} ✨</span>
+                            <span className="text-[10px] text-muted-foreground">{Number(leaderboard[1].balance ?? 0).toLocaleString()} ✦</span>
                           </div>
                           {/* 1st */}
                           <div className="flex flex-col items-center gap-1.5 -mt-4">
@@ -846,7 +846,7 @@ export default function Events() {
                             <p className="text-[10px] font-bold text-foreground text-center leading-tight max-w-[64px] truncate">
                               {leaderboard[0].display_name || leaderboard[0].username}
                             </p>
-                            <span className="text-[10px] text-amber-400 font-bold">{Number(leaderboard[0].balance ?? 0).toLocaleString()} ✨</span>
+                            <span className="text-[10px] text-amber-400 font-bold">{Number(leaderboard[0].balance ?? 0).toLocaleString()} ✦</span>
                           </div>
                           {/* 3rd */}
                           <div className="flex flex-col items-center gap-1.5">
@@ -858,7 +858,7 @@ export default function Events() {
                             <p className="text-[10px] font-bold text-muted-foreground text-center leading-tight max-w-[56px] truncate">
                               {leaderboard[2].display_name || leaderboard[2].username}
                             </p>
-                            <span className="text-[10px] text-muted-foreground">{Number(leaderboard[2].balance ?? 0).toLocaleString()} ✨</span>
+                            <span className="text-[10px] text-muted-foreground">{Number(leaderboard[2].balance ?? 0).toLocaleString()} ✦</span>
                           </div>
                         </div>
                       </div>

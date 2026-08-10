@@ -427,7 +427,7 @@ export default function Wallet() {
                 {hasPrime && (
                   <div className="flex items-center gap-2 px-3 py-2 bg-yellow-500/10 border border-yellow-500/20 rounded-xl">
                     <Crown size={14} className="text-yellow-400 shrink-0" />
-                    <span className="text-xs text-yellow-300 font-semibold">Prime: 2× Искры за каждое задание</span>
+                    <span className="text-xs text-yellow-300 font-semibold">{en ? "Prime: 2× Nova for every task" : "Prime: 2× Nova за каждое задание"}</span>
                     <span className="ml-auto text-[10px] bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 rounded-full px-2 py-0.5 font-bold">×2</span>
                   </div>
                 )}
