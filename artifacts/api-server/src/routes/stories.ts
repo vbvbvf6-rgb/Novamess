@@ -115,6 +115,22 @@ router.post("/stories/:storyId/view", async (req, res) => {
     if (!story) return res.status(404).json({ error: "Story not found" });
     if (story.userId === uid) return res.json({ ok: true });
 
+    // Keep the privacy rule enforced even if a client tries to open a
+    // story directly instead of receiving it through GET /stories.
+    const [outgoing, incoming] = await Promise.all([
+      db.select({ id: contactsTable.id })
+        .from(contactsTable)
+        .where(and(eq(contactsTable.userId, uid), eq(contactsTable.contactId, story.userId)))
+        .limit(1),
+      db.select({ id: contactsTable.id })
+        .from(contactsTable)
+        .where(and(eq(contactsTable.userId, story.userId), eq(contactsTable.contactId, uid)))
+        .limit(1),
+    ]);
+    if (outgoing.length === 0 || incoming.length === 0) {
+      return res.status(403).json({ error: "Story is visible only to mutual contacts" });
+    }
+
     const existing = await db.select()
       .from(storyViewsTable)
       .where(and(eq(storyViewsTable.storyId, storyId), eq(storyViewsTable.viewerId, uid)))

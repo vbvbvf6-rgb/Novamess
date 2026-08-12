@@ -209,9 +209,12 @@ export default function Stories() {
   return (
     <div className="flex-1 flex flex-col h-full bg-background overflow-hidden relative">
       <header className="border-b border-border flex items-center px-6 justify-between bg-card/80 backdrop-blur-md z-10 shrink-0" style={{ minHeight: "calc(4rem + env(safe-area-inset-top, 0px))", paddingTop: "env(safe-area-inset-top, 0px)" }}>
-        <h1 className="text-xl font-bold flex items-center gap-2">
-          <Play className="text-primary" size={20} /> Статус
-        </h1>
+        <div>
+          <h1 className="text-xl font-bold flex items-center gap-2">
+            <Play className="text-primary" size={20} /> Статус
+          </h1>
+          <p className="text-[11px] text-muted-foreground mt-0.5 ml-7">Только для взаимных контактов</p>
+        </div>
         <button
           onClick={() => setShowCreate(true)}
           className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors"
@@ -388,7 +391,7 @@ export default function Stories() {
                   {storyImageUrls.length ? `Выбрать ещё фото (${storyImageUrls.length})` : "Выбрать фото с устройства"}
                 </button>
                 <p className="text-[11px] text-muted-foreground text-center">
-                  Можно выбрать любое количество фотографий. Видео в статусе недоступно.
+                   Можно выбрать любое количество фотографий — одно, десять или больше. Видео в статусе недоступно.
                 </p>
                 {storyImageUrls.length > 0 && (
                   <div className="flex flex-wrap gap-1.5">

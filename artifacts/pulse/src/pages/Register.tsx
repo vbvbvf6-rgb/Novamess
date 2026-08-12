@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Link, useSearch, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { Eye, EyeOff, Camera, KeyRound, HelpCircle, ArrowLeft, Mail, ShieldCheck } from "lucide-react";
+import { Eye, EyeOff, Camera, KeyRound, HelpCircle, ArrowLeft, Mail, ShieldCheck, Check } from "lucide-react";
 import PulseLogo from "@/components/PulseLogo";
 
 async function compressAvatar(file: File): Promise<string> {
@@ -456,19 +456,29 @@ export default function Register({ onLogin }: RegisterProps) {
         >
           <div className="flex flex-col items-center mb-6">
             <div className="w-full mb-5">
-              <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground mb-2">
-                <span className={formStep >= 1 ? "text-primary" : ""}>Профиль</span>
-                <span className={formStep >= 2 ? "text-primary" : ""}>Данные</span>
-                <span className={formStep >= 3 ? "text-primary" : ""}>Защита</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                {[1, 2, 3].map((item) => (
-                  <div
-                    key={item}
-                    className={`h-1.5 flex-1 rounded-full transition-colors duration-300 ${
-                      formStep >= item ? "bg-primary shadow-[0_0_12px_rgba(234,88,12,0.45)]" : "bg-secondary"
-                    }`}
-                  />
+              <div className="relative flex items-start justify-between">
+                <div className="absolute left-[8%] right-[8%] top-4 h-1 rounded-full bg-secondary" />
+                <div
+                  className="absolute left-[8%] top-4 h-1 rounded-full bg-primary shadow-[0_0_12px_rgba(234,88,12,0.45)] transition-all duration-500"
+                  style={{ width: `${Math.max(0, (formStep - 1) * 42)}%` }}
+                />
+                {[
+                  ["Профиль", 1],
+                  ["Данные", 2],
+                  ["Защита", 3],
+                ].map(([label, item]) => (
+                  <div key={item} className="relative z-10 flex w-1/3 flex-col items-center gap-2">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 text-xs font-black transition-all duration-300 ${
+                      formStep >= item
+                        ? "bg-primary border-primary text-primary-foreground shadow-[0_0_18px_rgba(234,88,12,0.35)]"
+                        : "bg-card border-border text-muted-foreground"
+                    }`}>
+                      {formStep > item ? <Check size={14} strokeWidth={3} /> : item}
+                    </div>
+                    <span className={`text-[10px] font-black uppercase tracking-[0.12em] ${formStep >= item ? "text-primary" : "text-muted-foreground"}`}>
+                      {label}
+                    </span>
+                  </div>
                 ))}
               </div>
               <p className="text-center text-xs text-muted-foreground mt-2">Шаг {formStep} из 3</p>

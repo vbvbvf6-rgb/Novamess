@@ -592,10 +592,10 @@ export default function UserProfile() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-3xl overflow-hidden bg-card border border-border"
+            className="rounded-[2rem] overflow-hidden bg-card border border-border shadow-[0_18px_60px_rgba(0,0,0,0.18)]"
           >
             <div
-              className="h-24 w-full relative"
+              className="h-32 w-full relative"
               style={{
                 background: (user as any).hasPrime
                   ? (user as any).primeTier === "prime_plus"
@@ -628,8 +628,8 @@ export default function UserProfile() {
               )}
             </div>
 
-            <div className="px-6 pb-6">
-              <div className="flex flex-col items-center -mt-14 mb-5">
+            <div className="px-5 pb-7">
+              <div className="flex flex-col items-center -mt-16 mb-5">
                 <motion.div whileHover={{ scale: 1.05 }} className="relative">
                   {(user as any).hasPrime && (
                     <motion.div
@@ -645,7 +645,7 @@ export default function UserProfile() {
                     />
                   )}
                   <div
-                    className="w-28 h-28 rounded-full flex items-center justify-center text-white text-4xl font-black overflow-hidden border-4 border-card shadow-xl relative z-10"
+                    className="w-32 h-32 rounded-full flex items-center justify-center text-white text-4xl font-black overflow-hidden border-4 border-card shadow-2xl relative z-10"
                     style={{ backgroundColor: user.avatarColor || "#3B82F6" }}
                   >
                     {user.avatarUrl ? (
@@ -671,15 +671,6 @@ export default function UserProfile() {
                     >
                       <MessageSquare size={18} />
                     </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.08 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => setShowBeg(true)}
-                      className="w-11 h-11 rounded-full bg-yellow-500/10 flex items-center justify-center text-yellow-400 hover:bg-yellow-500/20 transition-colors border border-yellow-500/20"
-                      title="Попросить Кристаллы"
-                    >
-                      <HandCoins size={18} />
-                    </motion.button>
                     {isContact ? (
                       <motion.button
                         whileHover={{ scale: 1.08 }}
@@ -704,10 +695,10 @@ export default function UserProfile() {
                 )}
               </div>
 
-              <div>
-                <div className="flex items-center gap-2 flex-wrap">
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-2 flex-wrap">
                   <h2
-                    className="text-2xl font-black"
+                    className="text-2xl md:text-3xl font-black tracking-tight"
                     style={(user as any).hasPrime ? {
                       background: (user as any).primeTier === "prime_plus"
                         ? "linear-gradient(90deg, #a855f7, #38bdf8)"
@@ -744,8 +735,12 @@ export default function UserProfile() {
                     <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-green-500/15 text-green-400 border border-green-500/30">Вы</span>
                   )}
                 </div>
-                <p className="text-muted-foreground text-sm mt-0.5">@{user.username}</p>
-                {user.bio && <p className="text-sm mt-3 leading-relaxed text-foreground/80">{user.bio}</p>}
+                <p className="text-muted-foreground text-sm mt-1">@{user.username}</p>
+                <div className="mt-3 flex items-center justify-center gap-2 text-xs text-muted-foreground">
+                  <span className={`w-2 h-2 rounded-full ${statusCfg.color}`} />
+                  <span>{statusCfg.label}</span>
+                </div>
+                {user.bio && <p className="text-sm mt-4 leading-relaxed text-foreground/80 max-w-lg mx-auto">{user.bio}</p>}
               </div>
             </div>
           </motion.div>

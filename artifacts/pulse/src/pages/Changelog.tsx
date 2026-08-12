@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Newspaper, RefreshCw, Rocket, Calendar, Tag, Sparkles, ArrowUpRight } from "lucide-react";
+import { Newspaper, RefreshCw, Rocket, Calendar, Tag, Sparkles, ArrowUpRight, ShieldCheck, Layers3 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 interface AppUpdate {
@@ -70,21 +70,30 @@ export default function Changelog() {
 
       {/* Content */}
       <div className="flex-1 px-4 py-6 max-w-2xl mx-auto w-full">
-        <div className="mb-6 rounded-3xl border border-violet-500/20 bg-gradient-to-br from-violet-500/10 via-card to-primary/5 p-5 relative overflow-hidden">
-          <div className="absolute -right-8 -top-10 text-violet-400/10">
-            <Sparkles size={150} />
+        <div className="mb-6 rounded-[2rem] border border-violet-500/25 bg-gradient-to-br from-violet-500/15 via-card to-primary/10 p-5 relative overflow-hidden shadow-[0_18px_60px_rgba(124,58,237,0.12)]">
+          <div className="absolute -right-10 -top-12 text-violet-400/10">
+            <Sparkles size={170} />
           </div>
-          <div className="relative">
-            <p className="text-[11px] uppercase tracking-[0.18em] text-violet-300 font-black mb-2">
-              {lang === "en" ? "Keep up with Nova" : "Будьте в курсе Nova"}
-            </p>
-            <h2 className="text-2xl font-black tracking-tight">
+          <div className="absolute right-5 bottom-5 flex gap-2 opacity-80">
+            <div className="w-9 h-9 rounded-xl bg-background/30 border border-white/10 flex items-center justify-center">
+              <ShieldCheck size={16} className="text-emerald-300" />
+            </div>
+            <div className="w-9 h-9 rounded-xl bg-background/30 border border-white/10 flex items-center justify-center">
+              <Layers3 size={16} className="text-violet-300" />
+            </div>
+          </div>
+          <div className="relative max-w-[82%]">
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-violet-400/10 border border-violet-300/20 px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] text-violet-200 font-black mb-3">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+              {lang === "en" ? "Nova updates" : "Обновления Nova"}
+            </div>
+            <h2 className="text-2xl md:text-3xl font-black tracking-tight leading-tight">
               {lang === "en" ? "Fresh ideas, better conversations." : "Новые идеи для лучших разговоров."}
             </h2>
-            <p className="text-sm text-muted-foreground mt-2 max-w-md leading-relaxed">
+            <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
               {lang === "en"
-                ? "See what we improved and discover the features that make Nova feel more personal."
-                : "Здесь появляются важные изменения и функции, которые делают Nova удобнее и приятнее."}
+                ? "A living log of the improvements that make Nova feel more personal."
+                : "Живая история изменений, которые делают Nova удобнее, красивее и безопаснее."}
             </p>
             <div className="mt-4 inline-flex items-center gap-1.5 text-xs font-bold text-violet-300">
               <ArrowUpRight size={14} />
@@ -110,7 +119,7 @@ export default function Changelog() {
             <p className="text-sm text-muted-foreground max-w-xs">{lang === "en" ? "Nova release notes will appear here." : "Здесь будет появляться история выпусков Nova — что исправили, что добавили."}</p>
           </div>
         ) : (
-          <div className="relative">
+            <div className="relative pb-3">
             {/* Vertical timeline line */}
             <div className="absolute left-[19px] top-6 bottom-6 w-px bg-border" />
 
@@ -138,7 +147,7 @@ export default function Changelog() {
 
                     {/* Card */}
                     <div className={`flex-1 pb-2 ${i === 0 ? "pb-0" : ""}`}>
-                      <div className={`bg-card border rounded-2xl p-4 ${i === 0 ? "border-violet-500/30 shadow-md shadow-violet-500/10" : "border-border"}`}>
+                      <div className={`bg-card/90 backdrop-blur-sm border rounded-2xl p-4 transition-all hover:border-violet-400/40 ${i === 0 ? "border-violet-500/30 shadow-md shadow-violet-500/10" : "border-border"}`}>
                         {/* Version + date */}
                         <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
                           <div className="flex items-center gap-2">
