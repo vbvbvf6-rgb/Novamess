@@ -802,7 +802,7 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
             <img
               src={message.mediaUrl || ""}
               alt="photo"
-              className="max-w-[280px] max-h-[320px] object-cover block w-full cursor-zoom-in"
+            className="max-w-full w-auto max-h-[360px] object-contain block cursor-zoom-in"
               onClick={() => setLightbox({ urls: [message.mediaUrl || ""], idx: 0 })}
               onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
             />
@@ -840,7 +840,7 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
         const extra = albumUrls.length - 4;
         const isThree = visibleCount === 3;
         return (
-          <div className="rounded-xl overflow-hidden -mx-1 -mt-1 mb-1">
+          <div className="rounded-xl overflow-hidden -mx-1 -mt-1 mb-1 max-w-full">
             {isThree ? (
               <div className="flex flex-col gap-[1px]">
                 <div className="relative overflow-hidden bg-secondary" style={{ aspectRatio: "16/9" }}>
@@ -1630,14 +1630,16 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[9999] bg-black/90 flex items-center justify-center"
+            className="fixed inset-0 z-[9999] bg-black/95 flex items-center justify-center overflow-hidden overscroll-none"
             onClick={() => setLightbox(null)}
-            onTouchStart={(e) => {
+              onTouchStart={(e) => {
+               e.stopPropagation();
               const t = e.touches[0];
               (e.currentTarget as any)._swipeStartX = t.clientX;
               (e.currentTarget as any)._swipeStartY = t.clientY;
             }}
-            onTouchEnd={(e) => {
+              onTouchEnd={(e) => {
+               e.stopPropagation();
               const startX = (e.currentTarget as any)._swipeStartX ?? 0;
               const startY = (e.currentTarget as any)._swipeStartY ?? 0;
               const dx = e.changedTouches[0].clientX - startX;
@@ -1689,7 +1691,7 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
               transition={{ duration: 0.18 }}
               src={lightbox.urls[lightbox.idx]}
               alt="photo"
-              className="max-w-[95vw] max-h-[90vh] object-contain rounded-lg shadow-2xl"
+              className="max-w-[calc(100vw-2rem)] max-h-[calc(100dvh-5rem)] w-auto h-auto object-contain rounded-lg shadow-2xl select-none"
               onClick={(e) => e.stopPropagation()}
               onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
             />

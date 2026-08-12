@@ -261,6 +261,25 @@
   touch-action: pan-x;
 }
 
+/* SDK instructions and other wide content must stack before tablet widths.
+   This guard also protects older cached Tailwind builds on narrow phones. */
+@media (max-width: 767px) {
+  .bots-sdk-steps {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  .bots-sdk-steps > * {
+    width: 100%;
+    min-width: 0;
+  }
+  .bots-sdk-steps p,
+  .bots-sdk-steps h2,
+  .bots-sdk-steps span {
+    overflow-wrap: anywhere;
+    word-break: normal;
+  }
+}
+
 /* ── Landscape phone layout ─────────────────────────────────────────────── */
 @media (max-width: 767px) and (orientation: landscape) {
   /* No BottomNav in landscape — minimal bottom padding everywhere */

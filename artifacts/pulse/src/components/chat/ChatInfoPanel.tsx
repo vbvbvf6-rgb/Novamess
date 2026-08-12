@@ -9,6 +9,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { getGetChatsQueryKey } from "@workspace/api-client-react";
 import { useAppContext } from "@/contexts/AppContext";
 import { useLastSeen } from "@/hooks/useLastSeen";
+import { useLocation } from "wouter";
 
 function compressAvatar(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -130,6 +131,7 @@ export function ChatInfoPanel({
 }: ChatInfoPanelProps) {
   const queryClient = useQueryClient();
   const { currentUserId, setSelectedChatId, userStatusMap } = useAppContext();
+  const [, setLocation] = useLocation();
   const [tab, setTab] = useState<Tab>("basic");
 
   const [members, setMembers] = useState<Member[]>([]);
@@ -740,7 +742,13 @@ export function ChatInfoPanel({
                       return (
                       <div
                         key={m.userId}
-                        className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl hover:bg-secondary/50 transition-colors group"
+                        className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl hover:bg-secondary/50 transition-colors group cursor-pointer"
+                        onClick={() => {
+                          if (m.userId !== currentUserId) {
+                            onClose();
+                            setLocation(`/user/${m.userId}`);
+                          }
+                        }}
                       >
                         <AvatarCircle
                           name={m.user.displayName}
@@ -770,7 +778,7 @@ export function ChatInfoPanel({
                             <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 [@media(hover:none)]:opacity-100 transition-all">
                               {m.role === "admin" ? (
                                 <button
-                                  onClick={() => handlePromoteMember(m.userId, "member")}
+                                  onClick={(e) => { e.stopPropagation(); handlePromoteMember(m.userId, "member"); }}
                                   title="Снять права админа"
                                   className="p-1.5 rounded-lg text-muted-foreground hover:text-yellow-500 hover:bg-yellow-500/10 transition-all"
                                 >
@@ -778,7 +786,7 @@ export function ChatInfoPanel({
                                 </button>
                               ) : (
                                 <button
-                                  onClick={() => handlePromoteMember(m.userId, "admin")}
+                                  onClick={(e) => { e.stopPropagation(); handlePromoteMember(m.userId, "admin"); }}
                                   title="Назначить администратором"
                                   className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all"
                                 >

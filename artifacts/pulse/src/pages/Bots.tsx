@@ -1140,9 +1140,9 @@ export default function Bots() {
                   <Zap size={16} className="text-violet-400" />
                    <h2 className="font-bold text-foreground text-base">{en ? "External Python SDK — for advanced use cases" : "Внешний Python SDK — для продвинутых сценариев"}</h2>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
+                <div className="bots-sdk-steps grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
                   {STEPS.map((step, i) => (
-                    <div key={step.num} className="flex gap-3">
+                     <div key={step.num} className="flex gap-3 min-w-0">
                       <div className="flex flex-col items-center gap-1 shrink-0">
                         <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-white shadow-[0_0_12px_rgba(139,92,246,0.4)]">
                           {step.icon}
@@ -1151,7 +1151,7 @@ export default function Bots() {
                           <div className="w-px flex-1 bg-gradient-to-b from-violet-500/40 to-transparent mt-1" />
                         )}
                       </div>
-                      <div className="pb-4">
+                       <div className="pb-4 min-w-0 break-words [overflow-wrap:anywhere]">
                         <div className="flex items-center gap-2 mb-1">
                            <span className="text-[10px] font-black text-violet-400 uppercase tracking-wider">{en ? "Step" : "Шаг"} {step.num}</span>
                         </div>

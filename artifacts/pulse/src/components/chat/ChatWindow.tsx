@@ -1592,8 +1592,20 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
             </motion.button>
           </motion.div>
         ) : filteredMessages?.length === 0 ? (
-          <div className="h-full flex items-center justify-center text-muted-foreground text-[15px] font-medium">
-            {searchQuery ? t("chat.noSearchResults") : t("chat.noMessages")}
+          <div className="h-full flex items-center justify-center px-8">
+            {searchQuery ? (
+              <p className="text-muted-foreground text-[15px] font-medium">{t("chat.noSearchResults")}</p>
+            ) : (
+              <div className="text-center max-w-xs">
+                <div className="w-14 h-14 rounded-2xl bg-primary/10 border border-primary/15 mx-auto mb-4 flex items-center justify-center">
+                  <MessageSquare size={25} className="text-primary" />
+                </div>
+                <p className="text-foreground font-bold text-base">Начало чата</p>
+                <p className="text-muted-foreground text-sm mt-1 leading-relaxed">
+                  Здесь появятся ваши сообщения. Напишите первым, чтобы начать общение.
+                </p>
+              </div>
+            )}
           </div>
         ) : (
           <div className="max-w-3xl mx-auto w-full space-y-6 flex flex-col justify-end min-h-full">
