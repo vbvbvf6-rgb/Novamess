@@ -78,7 +78,7 @@ export default function Stories() {
   const [showCreate, setShowCreate] = useState(false);
   const [storyText, setStoryText] = useState("");
   const [storyBg, setStoryBg] = useState("#1a1a2e");
-  const [storyImageUrl, setStoryImageUrl] = useState("");
+  const [storyImageUrls, setStoryImageUrls] = useState<string[]>([]);
   const [storyImageCaption, setStoryImageCaption] = useState("");
   const [storyType, setStoryType] = useState<"text" | "image">("text");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -116,12 +116,12 @@ export default function Stories() {
   }, [viewingGroup?.user?.id, viewingIndex]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files ?? []);
+    if (!files.length) return;
     e.target.value = "";
-    const compressed = await compressStoryImage(file);
-    if (compressed) {
-      setStoryImageUrl(compressed);
+    const compressedImages = (await Promise.all(files.map(file => compressStoryImage(file)))).filter(Boolean);
+    if (compressedImages.length) {
+      setStoryImageUrls(compressedImages);
     } else {
       toast({ title: "Ошибка", description: "Не удалось загрузить изображение. Попробуйте другой файл.", variant: "destructive" });
     }
@@ -129,22 +129,25 @@ export default function Stories() {
 
   const handleCreateStory = async () => {
     if (storyType === "text" && !storyText.trim()) return;
-    if (storyType === "image" && !storyImageUrl.trim()) return;
+    if (storyType === "image" && storyImageUrls.length === 0) return;
     setIsSubmitting(true);
     setCreateError("");
     try {
-      await createStoryMutation.mutateAsync({
-        data: {
-          type: storyType,
-          text: storyType === "text" ? storyText.trim() : (storyImageCaption.trim() || undefined),
-          backgroundColor: storyBg,
-          mediaUrl: storyType === "image" ? storyImageUrl.trim() : undefined,
-        }
-      });
+      const imagesToPublish = storyType === "image" ? storyImageUrls : [undefined];
+      for (const mediaUrl of imagesToPublish) {
+        await createStoryMutation.mutateAsync({
+          data: {
+            type: storyType,
+            text: storyType === "text" ? storyText.trim() : (storyImageCaption.trim() || undefined),
+            backgroundColor: storyBg,
+            mediaUrl,
+          }
+        });
+      }
       queryClient.invalidateQueries({ queryKey: getGetStoriesQueryKey() });
       setShowCreate(false);
       setStoryText("");
-      setStoryImageUrl("");
+      setStoryImageUrls([]);
       setStoryImageCaption("");
       setStoryBg("#1a1a2e");
       setStoryType("text");
@@ -325,13 +328,28 @@ export default function Stories() {
             </div>
 
             <div
-              className="w-full h-40 rounded-2xl flex items-center justify-center relative overflow-hidden border border-border"
+              className="w-full min-h-40 rounded-2xl flex items-center justify-center relative overflow-hidden border border-border p-2"
               style={{ backgroundColor: storyBg }}
             >
               {storyType === "text" && storyText ? (
                 <p className="text-white font-bold text-lg text-center px-4 drop-shadow-lg">{storyText}</p>
-              ) : storyType === "image" && storyImageUrl ? (
-                <img src={storyImageUrl} alt="" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+              ) : storyType === "image" && storyImageUrls.length > 0 ? (
+                <div className={`w-full grid gap-1.5 ${storyImageUrls.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
+                  {storyImageUrls.slice(0, 6).map((url, index) => (
+                    <img
+                      key={`${url}-${index}`}
+                      src={url}
+                      alt=""
+                      className={`w-full ${storyImageUrls.length === 1 ? "h-40" : "h-20"} object-cover rounded-xl`}
+                      onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                    />
+                  ))}
+                  {storyImageUrls.length > 6 && (
+                    <div className="absolute bottom-3 right-3 rounded-full bg-black/60 text-white text-xs font-bold px-2.5 py-1">
+                      +{storyImageUrls.length - 6}
+                    </div>
+                  )}
+                </div>
               ) : (
                 <p className="text-white/40 text-sm">{storyType === "text" ? "Предпросмотр текста" : "Предпросмотр изображения"}</p>
               )}
@@ -353,6 +371,7 @@ export default function Stories() {
                   ref={fileInputRef}
                   type="file"
                   accept="image/*"
+                  multiple
                   onChange={handleFileChange}
                   className="hidden"
                 />
@@ -362,8 +381,29 @@ export default function Stories() {
                   className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-dashed border-primary/40 text-sm font-medium text-primary hover:bg-primary/5 hover:border-primary transition-all"
                 >
                   <Upload size={16} />
-                  {storyImageUrl ? "Сменить фото" : "Выбрать фото с устройства"}
+                  {storyImageUrls.length ? `Выбрать ещё фото (${storyImageUrls.length})` : "Выбрать фото с устройства"}
                 </button>
+                <p className="text-[11px] text-muted-foreground text-center">
+                  Можно выбрать любое количество фотографий. Видео в статусе недоступно.
+                </p>
+                {storyImageUrls.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {storyImageUrls.map((url, index) => (
+                      <button
+                        key={`${url}-${index}`}
+                        type="button"
+                        onClick={() => setStoryImageUrls(prev => prev.filter((_, i) => i !== index))}
+                        className="relative w-12 h-12 rounded-lg overflow-hidden border border-border group"
+                        title="Удалить фото"
+                      >
+                        <img src={url} alt="" className="w-full h-full object-cover" />
+                        <span className="absolute inset-0 bg-black/55 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                          <X size={14} />
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
                 <textarea
                   value={storyImageCaption}
                   onChange={e => setStoryImageCaption(e.target.value)}

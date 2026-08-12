@@ -1323,7 +1323,7 @@ components:
           type: string
         type:
           type: string
-          enum: [image, video, text]
+          enum: [image, text]
         text:
           type: string
           nullable: true
@@ -1373,7 +1373,7 @@ components:
           type: string
         type:
           type: string
-          enum: [image, video, text]
+          enum: [image, text]
         text:
           type: string
         backgroundColor:

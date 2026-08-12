@@ -13,8 +13,6 @@ import {
 import {
   ArrowLeft,
   MessageSquare,
-  Phone,
-  Video,
   UserPlus,
   UserMinus,
   MoreVertical,
@@ -410,7 +408,7 @@ export default function UserProfile() {
   const params = useParams<{ userId: string }>();
   const userId = Number(params.userId);
   const [, setLocation] = useLocation();
-  const { setSelectedChatId, startCall } = useAppContext();
+  const { setSelectedChatId } = useAppContext();
   const queryClient = useQueryClient();
   const [isStartingChat, setIsStartingChat] = useState(false);
   const [showBeg, setShowBeg] = useState(false);
@@ -631,7 +629,7 @@ export default function UserProfile() {
             </div>
 
             <div className="px-6 pb-6">
-              <div className="flex items-end justify-between -mt-14 mb-4">
+              <div className="flex flex-col items-center -mt-14 mb-5">
                 <motion.div whileHover={{ scale: 1.05 }} className="relative">
                   {(user as any).hasPrime && (
                     <motion.div
@@ -662,7 +660,7 @@ export default function UserProfile() {
                 </motion.div>
 
                 {!isMe && (
-                  <div className="flex items-center gap-2 pb-1 overflow-x-auto scrollbar-none flex-nowrap">
+                  <div className="flex items-center justify-center gap-2 mt-4 overflow-x-auto scrollbar-none flex-nowrap max-w-full">
                     <motion.button
                       whileHover={{ scale: 1.08 }}
                       whileTap={{ scale: 0.95 }}
@@ -672,24 +670,6 @@ export default function UserProfile() {
                       title="Send message"
                     >
                       <MessageSquare size={18} />
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.08 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => startCall(userId, null, "audio")}
-                      className="w-11 h-11 rounded-full bg-secondary flex items-center justify-center text-foreground hover:bg-secondary/80 transition-colors"
-                      title="Voice call"
-                    >
-                      <Phone size={18} />
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.08 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => startCall(userId, null, "video")}
-                      className="w-11 h-11 rounded-full bg-secondary flex items-center justify-center text-foreground hover:bg-secondary/80 transition-colors"
-                      title="Video call"
-                    >
-                      <Video size={18} />
                     </motion.button>
                     <motion.button
                       whileHover={{ scale: 1.08 }}

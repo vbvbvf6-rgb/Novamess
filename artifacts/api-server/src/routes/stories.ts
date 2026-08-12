@@ -11,12 +11,24 @@ router.get("/stories", async (req, res) => {
   try {
     const uid = req.currentUserId;
     const now = new Date();
-    const contacts = await db
+    const outgoingContacts = await db
       .select({ contactId: contactsTable.contactId })
       .from(contactsTable)
       .where(eq(contactsTable.userId, uid));
 
-    const contactIds = [uid, ...contacts.map(c => c.contactId)];
+    // Stories are private to mutual contacts: both users must have added
+    // each other. The author's own stories are always visible to themselves.
+    const outgoingIds = outgoingContacts.map(c => c.contactId);
+    const incomingContacts = outgoingIds.length > 0
+      ? await db
+          .select({ userId: contactsTable.userId })
+          .from(contactsTable)
+          .where(and(
+            eq(contactsTable.contactId, uid),
+            inArray(contactsTable.userId, outgoingIds),
+          ))
+      : [];
+    const contactIds = [uid, ...incomingContacts.map(c => c.userId)];
 
     const stories = await db.select().from(storiesTable)
       .where(and(
@@ -60,6 +72,12 @@ router.post("/stories", async (req, res) => {
   try {
     const uid = req.currentUserId;
     const body = CreateStoryBody.parse(req.body);
+    if (body.type !== "text" && body.type !== "image") {
+      return res.status(400).json({ error: "В статусе можно публиковать только текст и фотографии." });
+    }
+    if (body.type === "image" && (!body.mediaUrl || /^data:video\//i.test(body.mediaUrl) || /\.(mp4|webm|mov|avi|mkv)(?:[?#]|$)/i.test(body.mediaUrl))) {
+      return res.status(400).json({ error: "Видео нельзя публиковать в статусе. Выберите изображение." });
+    }
     if (body.text) {
       const banwords = await getBanwords();
       const hit = findBanword(body.text, banwords);

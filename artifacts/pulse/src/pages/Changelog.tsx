@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Newspaper, RefreshCw, Rocket, Calendar, Tag } from "lucide-react";
+import { Newspaper, RefreshCw, Rocket, Calendar, Tag, Sparkles, ArrowUpRight } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 interface AppUpdate {
@@ -46,15 +46,16 @@ export default function Changelog() {
     <div className="flex-1 flex flex-col w-full min-h-[var(--app-h,100vh)] bg-background overflow-y-auto scrollbar-none">
       {/* Header */}
       <div
-        className="shrink-0 border-b border-border bg-card/80 backdrop-blur-xl px-5 flex items-center justify-between"
+        className="shrink-0 border-b border-border bg-card/80 backdrop-blur-xl px-5 flex items-center justify-between relative overflow-hidden"
         style={{ minHeight: "calc(4rem + env(safe-area-inset-top,0px))", paddingTop: "env(safe-area-inset-top,0px)" }}
       >
+        <div className="absolute inset-0 bg-gradient-to-r from-violet-500/10 via-transparent to-primary/5 pointer-events-none" />
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-violet-500/10 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-violet-500/20 to-primary/10 border border-violet-400/20 flex items-center justify-center shadow-lg shadow-violet-500/10">
             <Newspaper size={18} className="text-violet-400" />
           </div>
           <div>
-            <h1 className="font-bold text-base leading-tight">{lang === "en" ? "What's New" : "Что нового"}</h1>
+            <h1 className="font-black text-base leading-tight">{lang === "en" ? "What's New" : "Что нового"}</h1>
             <p className="text-xs text-muted-foreground">{lang === "en" ? "Nova release history" : "История обновлений Nova"}</p>
           </div>
         </div>
@@ -68,7 +69,29 @@ export default function Changelog() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 px-4 py-5 max-w-2xl mx-auto w-full">
+      <div className="flex-1 px-4 py-6 max-w-2xl mx-auto w-full">
+        <div className="mb-6 rounded-3xl border border-violet-500/20 bg-gradient-to-br from-violet-500/10 via-card to-primary/5 p-5 relative overflow-hidden">
+          <div className="absolute -right-8 -top-10 text-violet-400/10">
+            <Sparkles size={150} />
+          </div>
+          <div className="relative">
+            <p className="text-[11px] uppercase tracking-[0.18em] text-violet-300 font-black mb-2">
+              {lang === "en" ? "Keep up with Nova" : "Будьте в курсе Nova"}
+            </p>
+            <h2 className="text-2xl font-black tracking-tight">
+              {lang === "en" ? "Fresh ideas, better conversations." : "Новые идеи для лучших разговоров."}
+            </h2>
+            <p className="text-sm text-muted-foreground mt-2 max-w-md leading-relaxed">
+              {lang === "en"
+                ? "See what we improved and discover the features that make Nova feel more personal."
+                : "Здесь появляются важные изменения и функции, которые делают Nova удобнее и приятнее."}
+            </p>
+            <div className="mt-4 inline-flex items-center gap-1.5 text-xs font-bold text-violet-300">
+              <ArrowUpRight size={14} />
+              {lang === "en" ? "Updated regularly" : "Обновляется регулярно"}
+            </div>
+          </div>
+        </div>
         {loading ? (
           <div className="flex justify-center py-16">
             <RefreshCw size={24} className="animate-spin text-muted-foreground" />
@@ -79,8 +102,8 @@ export default function Changelog() {
             <button onClick={load} className="mt-3 text-sm text-primary hover:underline">{lang === "en" ? "Try again" : "Повторить"}</button>
           </div>
         ) : updates.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center gap-3">
-            <div className="w-16 h-16 rounded-2xl bg-violet-500/10 flex items-center justify-center">
+            <div className="flex flex-col items-center justify-center py-16 text-center gap-3 rounded-3xl border border-dashed border-border bg-card/30">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500/20 to-primary/10 flex items-center justify-center">
               <Rocket size={28} className="text-violet-400" />
             </div>
             <p className="font-semibold text-foreground">{lang === "en" ? "No updates yet" : "Обновлений пока нет"}</p>

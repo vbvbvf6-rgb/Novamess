@@ -4,7 +4,6 @@ import { Link, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import {
   MessageCircle,
-  Phone,
   Users,
   History,
   UserCircle,
@@ -234,7 +233,6 @@ export function Sidebar({ mobileSidebarOpen, onMobileClose, onMobileOpen, onOpen
 
   const NAV_ITEMS: Array<{ href: string; icon: any; label: string; soon?: boolean }> = [
     { href: "/",             icon: MessageCircle,  label: t("nav.chats") },
-    { href: "/calls",        icon: Phone,          label: t("nav.calls") },
     { href: "/feed",         icon: Rss,            label: t("nav.feed") },
     { href: "/contacts",     icon: Users,          label: t("nav.contacts") },
     { href: "/stories",      icon: History,        label: t("nav.stories") },
