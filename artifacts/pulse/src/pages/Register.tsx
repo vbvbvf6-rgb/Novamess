@@ -59,6 +59,7 @@ export default function Register({ onLogin }: RegisterProps) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const [formStep, setFormStep] = useState<1 | 2 | 3>(1);
   const [step, setStep] = useState<"form" | "verify">("form");
   const [emailDelivered, setEmailDelivered] = useState(true);
   const [pendingUserId, setPendingUserId] = useState<number | null>(null);
@@ -90,8 +91,62 @@ export default function Register({ onLogin }: RegisterProps) {
     }
   }, [search]);
 
+  const validateStep = (targetStep: 1 | 2 | 3) => {
+    setError("");
+    if (targetStep === 1) {
+      if (!username.trim()) {
+        setError("Введите никнейм");
+        return false;
+      }
+      if (username.trim().length < 3) {
+        setError("Никнейм должен быть не менее 3 символов");
+        return false;
+      }
+      if (!/^[a-zA-Z0-9_]+$/.test(username.trim())) {
+        setError("Никнейм может содержать только буквы, цифры и _");
+        return false;
+      }
+    }
+    if (targetStep === 2) {
+      if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+        setError("Неверный формат email");
+        return false;
+      }
+      if (!password) {
+        setError("Введите пароль");
+        return false;
+      }
+      if (password.length < 8) {
+        setError("Пароль должен быть не менее 8 символов");
+        return false;
+      }
+      if (password !== confirmPassword) {
+        setError("Пароли не совпадают");
+        return false;
+      }
+    }
+    if (targetStep === 3) {
+      const finalQuestion = useCustomQuestion ? customQuestion.trim() : securityQuestion;
+      if (!finalQuestion) {
+        setError("Выберите или введите контрольный вопрос");
+        return false;
+      }
+      if (!securityAnswer.trim()) {
+        setError("Введите ответ на контрольный вопрос");
+        return false;
+      }
+    }
+    return true;
+  };
+
+  const handleNextStep = () => {
+    if (!validateStep(formStep)) return;
+    if (formStep < 3) setFormStep((current) => (current + 1) as 1 | 2 | 3);
+  };
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateStep(1) || !validateStep(2) || !validateStep(3)) return;
     if (!username.trim() || !password) {
       setError("Заполните все поля");
       return;
@@ -400,6 +455,26 @@ export default function Register({ onLogin }: RegisterProps) {
           className="w-full"
         >
           <div className="flex flex-col items-center mb-6">
+            <div className="w-full mb-5">
+              <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground mb-2">
+                <span className={formStep >= 1 ? "text-primary" : ""}>Профиль</span>
+                <span className={formStep >= 2 ? "text-primary" : ""}>Данные</span>
+                <span className={formStep >= 3 ? "text-primary" : ""}>Защита</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                {[1, 2, 3].map((item) => (
+                  <div
+                    key={item}
+                    className={`h-1.5 flex-1 rounded-full transition-colors duration-300 ${
+                      formStep >= item ? "bg-primary shadow-[0_0_12px_rgba(234,88,12,0.45)]" : "bg-secondary"
+                    }`}
+                  />
+                ))}
+              </div>
+              <p className="text-center text-xs text-muted-foreground mt-2">Шаг {formStep} из 3</p>
+            </div>
+            {formStep === 1 && (
+              <>
             <input
               ref={avatarInputRef}
               type="file"
@@ -434,9 +509,17 @@ export default function Register({ onLogin }: RegisterProps) {
               </div>
             </button>
             <p className="text-[11px] text-muted-foreground/60 mt-2">Нажмите, чтобы добавить фото</p>
+              </>
+            )}
           </div>
 
-          <form onSubmit={handleRegister} className="space-y-4">
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            if (formStep < 3) handleNextStep();
+            else void handleRegister(e);
+          }} className="space-y-4">
+            {formStep === 1 && (
+              <>
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider pl-1">Никнейм</label>
               <input
@@ -449,7 +532,11 @@ export default function Register({ onLogin }: RegisterProps) {
                 className="w-full bg-card/50 border border-border rounded-2xl px-5 py-3 sm:py-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-[15px] font-medium"
               />
             </div>
+              </>
+            )}
 
+            {formStep === 2 && (
+              <>
             <div className="space-y-1.5">
               <div className="flex items-center gap-2 pl-1">
                 <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Email</label>
@@ -501,7 +588,11 @@ export default function Register({ onLogin }: RegisterProps) {
                 className="w-full bg-card/50 border border-border rounded-2xl px-5 py-3 sm:py-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-[15px] font-medium"
               />
             </div>
+              </>
+            )}
 
+            {formStep === 3 && (
+              <>
             {/* ── Security question for password recovery ── */}
             <div className="bg-secondary/30 border border-border rounded-2xl p-4 space-y-3">
               <div className="flex items-center gap-2 mb-0.5">
@@ -581,6 +672,8 @@ export default function Register({ onLogin }: RegisterProps) {
               </div>
               <p className="text-[11px] text-muted-foreground/70 pl-1">Введите код друга, который пригласил вас</p>
             </div>
+              </>
+            )}
 
             <AnimatePresence>
               {error && (
@@ -595,13 +688,24 @@ export default function Register({ onLogin }: RegisterProps) {
               )}
             </AnimatePresence>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-primary text-primary-foreground font-black py-3 sm:py-4 rounded-2xl hover:bg-primary/90 transition-all disabled:opacity-50 hover:shadow-[0_0_30px_rgba(255,85,0,0.3)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-none text-[15px] mt-2"
-            >
-              {loading ? "Создаём..." : "Создать аккаунт"}
-            </button>
+            <div className="flex gap-3 mt-2">
+              {formStep > 1 && (
+                <button
+                  type="button"
+                  onClick={() => { setError(""); setFormStep((current) => (current - 1) as 1 | 2 | 3); }}
+                  className="px-5 py-3 sm:py-4 rounded-2xl border border-border text-sm font-bold text-muted-foreground hover:bg-secondary transition-colors"
+                >
+                  <ArrowLeft size={16} className="inline mr-1.5 -mt-0.5" /> Назад
+                </button>
+              )}
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex-1 bg-primary text-primary-foreground font-black py-3 sm:py-4 rounded-2xl hover:bg-primary/90 transition-all disabled:opacity-50 hover:shadow-[0_0_30px_rgba(255,85,0,0.3)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-none text-[15px]"
+              >
+                {loading ? "Создаём..." : formStep < 3 ? "Продолжить" : "Создать аккаунт"}
+              </button>
+            </div>
           </form>
 
           <div className="mt-6 text-center">

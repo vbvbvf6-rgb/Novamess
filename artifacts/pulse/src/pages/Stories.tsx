@@ -119,10 +119,14 @@ export default function Stories() {
     const files = Array.from(e.target.files ?? []);
     if (!files.length) return;
     e.target.value = "";
-    const compressedImages = (await Promise.all(files.map(file => compressStoryImage(file)))).filter(Boolean);
+    const imageFiles = files.filter(file => file.type.startsWith("image/"));
+    if (imageFiles.length !== files.length) {
+      toast({ title: "Видео недоступно", description: "В статус можно добавлять только фотографии.", variant: "destructive" });
+    }
+    const compressedImages = (await Promise.all(imageFiles.map(file => compressStoryImage(file)))).filter(Boolean);
     if (compressedImages.length) {
-      setStoryImageUrls(compressedImages);
-    } else {
+      setStoryImageUrls(prev => [...prev, ...compressedImages]);
+    } else if (imageFiles.length > 0) {
       toast({ title: "Ошибка", description: "Не удалось загрузить изображение. Попробуйте другой файл.", variant: "destructive" });
     }
   };
@@ -340,7 +344,7 @@ export default function Stories() {
                       key={`${url}-${index}`}
                       src={url}
                       alt=""
-                      className={`w-full ${storyImageUrls.length === 1 ? "h-40" : "h-20"} object-cover rounded-xl`}
+                      className={`w-full ${storyImageUrls.length === 1 ? "h-48 object-contain bg-black/20" : "h-20 object-cover"} rounded-xl`}
                       onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
                     />
                   ))}
@@ -442,7 +446,7 @@ export default function Stories() {
               </button>
               <button
                 onClick={handleCreateStory}
-                disabled={isSubmitting || (storyType === "text" ? !storyText.trim() : !storyImageUrl)}
+                disabled={isSubmitting || (storyType === "text" ? !storyText.trim() : !storyImageUrls.length)}
                 className="flex-1 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-bold hover:bg-primary/90 transition-colors disabled:opacity-50"
               >
                 {isSubmitting ? "Публикую..." : "Опубликовать"}
