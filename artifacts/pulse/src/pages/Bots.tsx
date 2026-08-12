@@ -870,7 +870,7 @@ export default function Bots() {
   const exampleCode = EXAMPLES[activeExample].code(firstToken, host);
 
   return (
-    <div className="flex-1 flex flex-col w-full min-h-[var(--app-h,100vh)] overflow-y-auto bg-background scrollbar-none">
+    <div className="flex-1 flex flex-col min-w-0 w-full min-h-[var(--app-h,100vh)] overflow-y-auto bg-background scrollbar-none">
       <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarFileChange} />
 
       {/* Header */}
@@ -879,18 +879,18 @@ export default function Bots() {
           <div className="absolute top-0 left-1/4 w-72 h-72 bg-violet-500/10 rounded-full blur-3xl" />
           <div className="absolute bottom-0 right-1/4 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl" />
         </div>
-        <div className="relative px-6 pb-6" style={{ paddingTop: "max(2rem, calc(1.5rem + env(safe-area-inset-top, 0px)))" }}>
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex items-center gap-4">
+        <div className="relative px-4 sm:px-6 pb-6" style={{ paddingTop: "max(2rem, calc(1.5rem + env(safe-area-inset-top, 0px)))" }}>
+          <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
+            <div className="flex items-center gap-3 sm:gap-4 min-w-0">
               <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-[0_0_30px_rgba(139,92,246,0.4)]">
                 <Bot size={28} className="text-white" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <h1 className="text-2xl font-black text-foreground">Nova</h1>
-                 <p className="text-sm text-muted-foreground mt-0.5">{en ? "A platform for bot developers" : "Платформа для разработчиков ботов"}</p>
+                 <p className="text-sm text-muted-foreground mt-0.5 max-w-[220px]">{en ? "A platform for bot developers" : "Платформа для разработчиков ботов"}</p>
               </div>
             </div>
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-2 shrink-0 flex-wrap">
               <button
                 onClick={() => setActiveTab("bots")}
                 className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${activeTab === "bots" ? "bg-violet-500 text-white shadow-[0_0_15px_rgba(139,92,246,0.4)]" : "text-muted-foreground hover:text-foreground hover:bg-white/5"}`}
@@ -908,7 +908,7 @@ export default function Bots() {
         </div>
       </div>
 
-      <div className="p-6 space-y-5">
+      <div className="p-4 sm:p-6 space-y-5 min-w-0">
         <AnimatePresence mode="wait">
 
           {/* ── MY BOTS TAB ── */}
@@ -1140,7 +1140,7 @@ export default function Bots() {
                   <Zap size={16} className="text-violet-400" />
                    <h2 className="font-bold text-foreground text-base">{en ? "External Python SDK — for advanced use cases" : "Внешний Python SDK — для продвинутых сценариев"}</h2>
                 </div>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
                   {STEPS.map((step, i) => (
                     <div key={step.num} className="flex gap-3">
                       <div className="flex flex-col items-center gap-1 shrink-0">
@@ -1246,7 +1246,7 @@ export default function Bots() {
               </div>
 
               {/* Two-column: API reference + Decorators */}
-              <div className="grid grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                 {/* API Methods */}
                 <div className="bg-card rounded-2xl border border-border p-5">
                   <div className="flex items-center gap-2 mb-4">

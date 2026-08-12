@@ -316,7 +316,7 @@ export default function Stories() {
       </div>
 
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
-        <DialogContent className="sm:max-w-sm" aria-describedby={undefined}>
+        <DialogContent className="sm:max-w-sm max-h-[90dvh] overflow-y-auto" aria-describedby={undefined}>
           <DialogTitle>Новая история</DialogTitle>
           <div className="space-y-4">
             <div className="flex gap-2">
@@ -391,10 +391,10 @@ export default function Stories() {
                   {storyImageUrls.length ? `Выбрать ещё фото (${storyImageUrls.length})` : "Выбрать фото с устройства"}
                 </button>
                 <p className="text-[11px] text-muted-foreground text-center">
-                   Можно выбрать любое количество фотографий — одно, десять или больше. Видео в статусе недоступно.
+                   Можно выбрать до 20 фотографий. Превью прокручивается внутри окна, не перекрывая страницу.
                 </p>
                 {storyImageUrls.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto pr-1 scrollbar-thin">
                     {storyImageUrls.map((url, index) => (
                       <button
                         key={`${url}-${index}`}

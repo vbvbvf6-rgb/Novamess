@@ -669,6 +669,10 @@ export function ChatList() {
                   ? "📊 Голосование"
                   : `[${lastMessage.type}]`
                 : "Нет сообщений";
+              const draftText = (() => {
+                try { return localStorage.getItem(`pulse-draft-${chat.id}`)?.trim() || ""; } catch { return ""; }
+              })();
+              const hasDraft = !lastMessage && !!draftText;
 
               return (
                 <button
@@ -732,7 +736,7 @@ export function ChatList() {
                     <div className="flex justify-between items-center gap-3">
                       <div className={cn(
                         "text-[13px] truncate flex-1 min-w-0 font-medium",
-                        chat.unreadCount > 0 ? "text-foreground" : "text-muted-foreground"
+                        hasDraft ? "text-primary" : chat.unreadCount > 0 ? "text-foreground" : "text-muted-foreground"
                       )}>
                         <AnimatePresence mode="wait" initial={false}>
                           {typingByChat[chat.id]?.length > 0 ? (
@@ -763,6 +767,11 @@ export function ChatList() {
                                   </>
                                 );
                               })()}
+                            </motion.span>
+                          ) : hasDraft ? (
+                            <motion.span key="draft" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-1 truncate">
+                              <span className="font-bold">Черновик:</span>
+                              <span className="truncate">{draftText}</span>
                             </motion.span>
                           ) : (
                             <motion.span

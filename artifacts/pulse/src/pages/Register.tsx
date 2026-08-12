@@ -458,9 +458,11 @@ export default function Register({ onLogin }: RegisterProps) {
             <div className="w-full mb-5">
               <div className="relative flex items-start justify-between">
                 <div className="absolute left-[8%] right-[8%] top-4 h-1 rounded-full bg-secondary" />
-                <div
-                  className="absolute left-[8%] top-4 h-1 rounded-full bg-primary shadow-[0_0_12px_rgba(234,88,12,0.45)] transition-all duration-500"
-                  style={{ width: `${Math.max(0, (formStep - 1) * 42)}%` }}
+                <motion.div
+                  initial={false}
+                  animate={{ width: `${Math.max(0, (formStep - 1) * 42)}%` }}
+                  transition={{ duration: 0.45, ease: "easeInOut" }}
+                  className="absolute left-[8%] top-4 h-1 rounded-full bg-primary shadow-[0_0_12px_rgba(234,88,12,0.45)]"
                 />
                 {[
                   ["Профиль", 1],
@@ -468,13 +470,17 @@ export default function Register({ onLogin }: RegisterProps) {
                   ["Защита", 3],
                 ].map(([label, item]) => (
                   <div key={item} className="relative z-10 flex w-1/3 flex-col items-center gap-2">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 text-xs font-black transition-all duration-300 ${
+                    <motion.div
+                      animate={formStep === item ? { scale: [1, 1.12, 1] } : { scale: 1 }}
+                      transition={{ duration: 0.45 }}
+                      className={`w-8 h-8 rounded-full flex items-center justify-center border-2 text-xs font-black transition-all duration-300 ${
                       formStep >= item
                         ? "bg-primary border-primary text-primary-foreground shadow-[0_0_18px_rgba(234,88,12,0.35)]"
                         : "bg-card border-border text-muted-foreground"
-                    }`}>
+                      }`}
+                    >
                       {formStep > item ? <Check size={14} strokeWidth={3} /> : item}
-                    </div>
+                    </motion.div>
                     <span className={`text-[10px] font-black uppercase tracking-[0.12em] ${formStep >= item ? "text-primary" : "text-muted-foreground"}`}>
                       {label}
                     </span>
