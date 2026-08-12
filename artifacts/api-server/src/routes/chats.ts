@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, chatsTable, chatMembersTable, usersTable, messagesTable, reactionsTable, pinnedMessagesTable } from "@workspace/db";
-import { eq, and, desc, inArray, count, gt, ne, sql } from "drizzle-orm";
+import { eq, and, desc, inArray, count, gt, ne, lte, sql } from "drizzle-orm";
 import { CreateChatBody, UpdateChatBody, AddChatMemberBody } from "@workspace/api-zod";
 import { broadcastToChat, setTyping, stopTyping } from "../lib/sse";
 import { offloadDataUrl } from "../lib/objectStorage";
@@ -566,6 +566,31 @@ router.delete("/chats/:chatId", async (req, res) => {
   }
 });
 
+// Clear a conversation without removing the conversation itself. This is
+// intentionally available for direct chats and for group/channel members;
+// deleting the chat row would remove it for everyone and is a different
+// destructive action.
+router.delete("/chats/:chatId/messages", async (req, res) => {
+  try {
+    const chatId = Number(req.params.chatId);
+    const uid = req.currentUserId;
+    const membership = await db.query.chatMembersTable.findFirst({
+      where: and(eq(chatMembersTable.chatId, chatId), eq(chatMembersTable.userId, uid)),
+    });
+    if (!membership) return res.status(403).json({ error: "Нет доступа к этому чату" });
+
+    await db.execute(sql`DELETE FROM pinned_messages WHERE chat_id = ${chatId}`).catch(() => {});
+    const deleted = await db.delete(messagesTable)
+      .where(eq(messagesTable.chatId, chatId))
+      .returning({ id: messagesTable.id });
+    broadcastToChat(chatId, "chat-cleared", { chatId });
+    res.json({ success: true, deletedCount: deleted.length });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Не удалось очистить чат" });
+  }
+});
+
 router.get("/chats/:chatId/members", async (req, res) => {
   try {
     const requesterId = req.currentUserId;
@@ -777,6 +802,13 @@ router.patch("/chats/:chatId/auto-delete", async (req, res) => {
     const { timer } = req.body;
     const timerVal = timer === null || timer === 0 ? null : Number(timer);
     await db.update(chatsTable).set({ autoDeleteTimer: timerVal }).where(eq(chatsTable.id, chatId));
+    if (timerVal) {
+      const cutoff = new Date(Date.now() - timerVal * 1000);
+      const deleted = await db.delete(messagesTable)
+        .where(and(eq(messagesTable.chatId, chatId), lte(messagesTable.createdAt, cutoff)))
+        .returning({ id: messagesTable.id });
+      if (deleted.length) broadcastToChat(chatId, "chat-cleared", { chatId, deletedCount: deleted.length });
+    }
     const uid = req.currentUserId;
     const chat = await buildChat(chatId, uid);
     res.json(chat);

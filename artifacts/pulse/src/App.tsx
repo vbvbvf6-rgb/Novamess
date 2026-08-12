@@ -728,9 +728,28 @@ function App() {
 
     es.addEventListener("maintenance", handleMaintenance);
     es.addEventListener("banned", handleBanned);
+    const handleSessionsRevoked = (e: MessageEvent) => {
+      // The current device is deliberately kept by the server. All other
+      // open tabs/devices receive this event and clear themselves immediately.
+      try {
+        const payload = JSON.parse(e.data) as { keepSessionId?: string | null };
+        const tokenPart = sessionStorage.getItem("pulse-token")?.split(".")[1];
+        const currentSid = tokenPart ? JSON.parse(atob(tokenPart.replace(/-/g, "+").replace(/_/g, "/"))).sid : null;
+        if (payload.keepSessionId && currentSid === payload.keepSessionId) return;
+      } catch {}
+      es.close();
+      sessionStorage.removeItem("pulse-user-id");
+      sessionStorage.removeItem("pulse-user");
+      sessionStorage.removeItem("pulse-token");
+      sessionStorage.removeItem("pulse-tab-owned");
+      queryClient.clear();
+      setUserId(null);
+    };
+    es.addEventListener("sessions-revoked", handleSessionsRevoked);
     return () => {
       es.removeEventListener("maintenance", handleMaintenance);
       es.removeEventListener("banned", handleBanned);
+      es.removeEventListener("sessions-revoked", handleSessionsRevoked);
       es.close();
     };
   }, [userId]);

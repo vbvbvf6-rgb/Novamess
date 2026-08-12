@@ -1579,6 +1579,10 @@ export default function Settings() {
   const [sessions, setSessions] = useState<Array<{id:string;device:string;ip:string;createdAt:string;lastActiveAt:string;isCurrent:boolean}>>([]);
   const [sessionsLoading, setSessionsLoading] = useState(false);
   const [showSessions, setShowSessions] = useState(false);
+  const [creatorTasks, setCreatorTasks] = useState<Array<{ platform: string; submission_url: string; status: string }>>([]);
+  const [creatorUrl, setCreatorUrl] = useState({ youtube: "", tiktok: "" });
+  const [creatorLoading, setCreatorLoading] = useState<string | null>(null);
+  const [biometricEnabled, setBiometricEnabled] = useState(() => localStorage.getItem("nova-biometric-enabled") === "1");
 
   const loadSessions = async () => {
     setSessionsLoading(true);
@@ -1600,6 +1604,63 @@ export default function Settings() {
     await fetch("/api/auth/sessions", { method: "DELETE", headers: token ? { Authorization: `Bearer ${token}` } : {} });
     await loadSessions();
     toast({ title: lang === "ru" ? "Все другие сессии завершены" : "All other sessions terminated" });
+  };
+
+  useEffect(() => {
+    const token = sessionStorage.getItem("pulse-token");
+    if (!token) return;
+    fetch("/api/users/me/creator-verifications", { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.ok ? r.json() : [])
+      .then(d => setCreatorTasks(Array.isArray(d) ? d : []))
+      .catch(() => {});
+  }, []);
+
+  const submitCreatorTask = async (platform: "youtube" | "tiktok") => {
+    const url = creatorUrl[platform].trim();
+    if (!url) return;
+    setCreatorLoading(platform);
+    try {
+      const token = sessionStorage.getItem("pulse-token");
+      const res = await fetch("/api/users/me/creator-verifications", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ platform, submissionUrl: url }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Ошибка");
+      setCreatorTasks(prev => [...prev.filter(item => item.platform !== platform), { platform, submission_url: url, status: "pending" }]);
+      toast({ title: lang === "ru" ? "Задание отправлено" : "Task submitted", description: lang === "ru" ? "После проверки появится значок платформы." : "The platform badge appears after review." });
+    } catch (err: any) {
+      toast({ title: err?.message || "Ошибка", variant: "destructive" });
+    } finally {
+      setCreatorLoading(null);
+    }
+  };
+
+  const setupBiometric = async () => {
+    if (!window.PublicKeyCredential || !navigator.credentials) {
+      toast({ title: lang === "ru" ? "Биометрия не поддерживается" : "Biometrics are not supported", variant: "destructive" });
+      return;
+    }
+    try {
+      const challenge = crypto.getRandomValues(new Uint8Array(32));
+      const credential = await navigator.credentials.create({
+        publicKey: {
+          challenge,
+          rp: { name: "Nova Messenger" },
+          user: { id: crypto.getRandomValues(new Uint8Array(16)), name: (user as any)?.username || "nova-user", displayName: (user as any)?.displayName || "Nova user" },
+          pubKeyCredParams: [{ type: "public-key", alg: -7 }, { type: "public-key", alg: -257 }],
+          authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required" },
+          timeout: 60000,
+        },
+      });
+      if (!credential) throw new Error("cancelled");
+      localStorage.setItem("nova-biometric-enabled", "1");
+      setBiometricEnabled(true);
+      toast({ title: lang === "ru" ? "Face ID / отпечаток подключён" : "Face ID / fingerprint enabled" });
+    } catch {
+      toast({ title: lang === "ru" ? "Не удалось подключить биометрию" : "Could not enable biometrics", variant: "destructive" });
+    }
   };
 
   // Account deletion
@@ -2528,6 +2589,40 @@ export default function Settings() {
                 <TwoFaSection user={user} toast={toast} lang={lang}/>
                 <ScreenLockSection lang={lang} toast={toast}/>
                 <SecurityQuestionSection lang={lang} toast={toast}/>
+              </Section>
+
+              <Section title={lang === "ru" ? "Дополнительная верификация" : "Additional verification"} icon={<BadgeCheck size={13}/>}>
+                <div className="p-4 border-b border-border/50">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-violet-500/10 text-violet-400 rounded-xl"><Fingerprint size={18}/></div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">{lang === "ru" ? "Face ID или отпечаток" : "Face ID or fingerprint"}</p>
+                      <p className="text-xs text-muted-foreground">{lang === "ru" ? "Защита этого устройства через системную биометрию" : "Protect this device with platform biometrics"}</p>
+                    </div>
+                    <Switch checked={biometricEnabled} onCheckedChange={v => v ? setupBiometric() : (() => { localStorage.removeItem("nova-biometric-enabled"); setBiometricEnabled(false); })()} />
+                  </div>
+                </div>
+                <div className="p-4 space-y-4">
+                  <div>
+                    <p className="text-sm font-medium">YouTube</p>
+                    <p className="text-xs text-muted-foreground mt-1">Создай видео о Nova, опубликуй его и отправь ссылку. После ручной проверки будет выдан значок платформы.</p>
+                    <div className="flex gap-2 mt-3">
+                      <Input value={creatorUrl.youtube} onChange={e => setCreatorUrl(v => ({ ...v, youtube: e.target.value }))} placeholder="https://youtube.com/..." className="bg-background" />
+                      <button onClick={() => submitCreatorTask("youtube")} disabled={creatorLoading === "youtube"} className="px-3 rounded-xl bg-red-500 text-white text-xs font-bold disabled:opacity-50">{creatorLoading === "youtube" ? "..." : "Отправить"}</button>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">TikTok</p>
+                    <p className="text-xs text-muted-foreground mt-1">Опубликуй ролик с Nova и пришли ссылку на него для проверки.</p>
+                    <div className="flex gap-2 mt-3">
+                      <Input value={creatorUrl.tiktok} onChange={e => setCreatorUrl(v => ({ ...v, tiktok: e.target.value }))} placeholder="https://tiktok.com/@..." className="bg-background" />
+                      <button onClick={() => submitCreatorTask("tiktok")} disabled={creatorLoading === "tiktok"} className="px-3 rounded-xl bg-black text-white text-xs font-bold border border-border disabled:opacity-50">{creatorLoading === "tiktok" ? "..." : "Отправить"}</button>
+                    </div>
+                  </div>
+                  {creatorTasks.map(task => (
+                    <p key={task.platform} className="text-xs text-amber-400">⏳ {task.platform === "youtube" ? "YouTube" : "TikTok"}: заявка на проверке</p>
+                  ))}
+                </div>
               </Section>
 
               {/* Data & Privacy section */}

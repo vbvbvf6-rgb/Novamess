@@ -5,6 +5,7 @@ import { createHash, randomUUID } from "node:crypto";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { EFFECTIVE_JWT_SECRET, sanitizeString, invalidateSessionCache } from "../app";
+import { broadcastToUser } from "../lib/sse";
 import { generateTotpSecret, verifyTotp, buildTotpUri } from "../lib/totp";
 import { sendVerificationEmail, sendPasswordResetEmail, isMailerConfigured } from "../lib/mailer";
 
@@ -1026,6 +1027,9 @@ router.delete("/auth/sessions", async (req, res) => {
     for (const row of (toDelete as any).rows ?? toDelete) {
       invalidateSessionCache(row.id);
     }
+    // Notify every open tab/device immediately. The database revocation is
+    // still the source of truth for clients that reconnect later.
+    broadcastToUser(uid, "sessions-revoked", { keepSessionId: currentSid });
     res.json({ success: true });
   } catch (err) {
     req.log.error(err);

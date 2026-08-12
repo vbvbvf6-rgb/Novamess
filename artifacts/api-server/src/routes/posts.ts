@@ -13,6 +13,11 @@ async function buildPost(postId: number, currentUserId: number) {
   const post = await db.query.postsTable.findFirst({ where: eq(postsTable.id, postId) });
   if (!post) return null;
   const author = await db.query.usersTable.findFirst({ where: eq(usersTable.id, post.userId) });
+  let authorWithBadges: any = author;
+  try {
+    const badgeRows = await db.execute(sql`SELECT is_developer FROM users WHERE id = ${post.userId} LIMIT 1`);
+    authorWithBadges = { ...author, isDeveloper: !!(badgeRows.rows[0] as any)?.is_developer };
+  } catch {}
   const likeRow = await db.query.postLikesTable.findFirst({
     where: and(eq(postLikesTable.postId, postId), eq(postLikesTable.userId, currentUserId))
   });
@@ -25,7 +30,7 @@ async function buildPost(postId: number, currentUserId: number) {
 
   return {
     ...post,
-    author: author ?? null,
+    author: authorWithBadges ?? null,
     isLiked: !!likeRow,
     appeal,
   };

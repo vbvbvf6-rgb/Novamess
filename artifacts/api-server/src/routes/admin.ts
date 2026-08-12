@@ -15,6 +15,17 @@ db.execute(sql`ALTER TABLE bot_tokens ADD COLUMN IF NOT EXISTS code_lang TEXT NO
 db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_banned BOOLEAN NOT NULL DEFAULT FALSE`).catch(() => {});
 db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS ban_reason TEXT`).catch(() => {});
 db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS ban_expires_at TIMESTAMP WITH TIME ZONE`).catch(() => {});
+db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_developer BOOLEAN NOT NULL DEFAULT FALSE`).catch(() => {});
+db.execute(sql`CREATE TABLE IF NOT EXISTS creator_verifications (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  platform TEXT NOT NULL CHECK (platform IN ('youtube', 'tiktok')),
+  submission_url TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  reviewed_at TIMESTAMP WITH TIME ZONE,
+  UNIQUE (user_id, platform)
+)`).catch(() => {});
 db.execute(sql`ALTER TABLE posts ADD COLUMN IF NOT EXISTS moderation_scanned_at TIMESTAMP WITH TIME ZONE`).catch(() => {});
 db.execute(sql`CREATE TABLE IF NOT EXISTS deleted_accounts (
   username TEXT PRIMARY KEY,
@@ -75,10 +86,21 @@ async function requireAdmin(req: any, res: any, next: any) {
   next();
 }
 
+// Keep this lightweight endpoint separate from the first admin data request.
+// The frontend uses it to decide whether to render the panel, and older
+// versions of the imported app were calling a route that did not exist.
+router.get("/admin/check", async (req, res) => {
+  try {
+    res.json({ isAdmin: await isAdminUser(req.currentUserId) });
+  } catch {
+    res.json({ isAdmin: false });
+  }
+});
+
 router.get("/admin/users", requireAdmin, async (req, res) => {
   try {
     const rows = await db.execute(
-      sql`SELECT id, username, display_name, avatar_color, avatar_url, status, balance, created_at, is_verified, is_admin, is_bot, has_prime, is_banned, ban_reason, ban_expires_at FROM users ORDER BY id`
+      sql`SELECT id, username, display_name, avatar_color, avatar_url, status, balance, created_at, is_verified, is_developer, is_admin, is_bot, has_prime, is_banned, ban_reason, ban_expires_at FROM users ORDER BY id`
     );
     res.json(rows.rows);
   } catch (err) {
@@ -225,6 +247,18 @@ router.post("/admin/set-verified", requireAdmin, async (req, res) => {
     const { userId, isVerified } = req.body;
     if (!userId) return res.status(400).json({ error: "Укажите userId" });
     await db.execute(sql`UPDATE users SET is_verified = ${!!isVerified} WHERE id = ${Number(userId)}`);
+    res.json({ success: true });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Ошибка сервера" });
+  }
+});
+
+router.post("/admin/set-developer", requireAdmin, async (req, res) => {
+  try {
+    const { userId, isDeveloper } = req.body;
+    if (!userId) return res.status(400).json({ error: "Укажите userId" });
+    await db.execute(sql`UPDATE users SET is_developer = ${!!isDeveloper} WHERE id = ${Number(userId)}`);
     res.json({ success: true });
   } catch (err) {
     req.log.error(err);

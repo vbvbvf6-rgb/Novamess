@@ -319,6 +319,8 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
   const messageRefs = useRef<Record<number, HTMLDivElement | null>>({});
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showClearDialog, setShowClearDialog] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
   const [botTyping, setBotTyping] = useState(false);
   const [typingUsers, setTypingUsers] = useState<{ userId: number; displayName: string; typingType: string }[]>([]);
   const [showAutoDeleteMenu, setShowAutoDeleteMenu] = useState(false);
@@ -341,9 +343,6 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
   const [showCreateGroupDialog, setShowCreateGroupDialog] = useState(false);
   const [createGroupName, setCreateGroupName] = useState("");
   const [creatingGroup, setCreatingGroup] = useState(false);
-  const [summaryOpen, setSummaryOpen] = useState(false);
-  const [summaryText, setSummaryText] = useState("");
-  const [summaryLoading, setSummaryLoading] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showThemePicker, setShowThemePicker] = useState(false);
   const [activeThemeId, setActiveThemeId] = useState<string | null>(() => {
@@ -492,10 +491,12 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
       });
     });
 
-    es.addEventListener("message-deleted", () => {
+    const refreshMessages = () => {
       queryClient.invalidateQueries({ queryKey: getGetMessagesQueryKey({ chatId }) });
       queryClient.invalidateQueries({ queryKey: getGetChatsQueryKey() });
-    });
+    };
+    es.addEventListener("message-deleted", refreshMessages);
+    es.addEventListener("chat-cleared", refreshMessages);
 
     es.addEventListener("messages-read", () => {
       // Someone read messages in this chat — re-fetch so sender's ✓ → ✓✓
@@ -689,35 +690,6 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
     };
   }, []);
 
-  const handleSummarize = async () => {
-    if (!messages || messages.length === 0) return;
-    setSummaryOpen(true);
-    setSummaryText("");
-    setSummaryLoading(true);
-    try {
-      const token = sessionStorage.getItem("pulse-token");
-      const payload = messages.slice(-50).map((m: any) => ({
-        senderName: m.senderName || m.sender?.displayName || "Пользователь",
-        text: m.text || "",
-      }));
-      const resp = await fetch("/api/ai/summarize", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { "Authorization": `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({ messages: payload }),
-      });
-      const data = await resp.json();
-      if (!resp.ok) throw new Error(data.error || "Ошибка");
-      setSummaryText(data.summary);
-    } catch (err: any) {
-      setSummaryText("Не удалось получить резюме. Попробуйте позже.");
-    } finally {
-      setSummaryLoading(false);
-    }
-  };
-
   const handleOpenGroupCall = async (type: "audio" | "video") => {
     setShowGroupCallModal(type);
     setGroupCallSelected(new Set());
@@ -842,6 +814,25 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
     } catch {}
     setIsDeleting(false);
     setShowDeleteDialog(false);
+  };
+
+  const handleClearChat = async () => {
+    setIsClearing(true);
+    try {
+      const res = await fetch(`/api/chats/${chatId}/messages`, {
+        method: "DELETE",
+        headers: getCWAuthHeaders(),
+      });
+      if (!res.ok) throw new Error("clear failed");
+      await queryClient.invalidateQueries({ queryKey: getGetMessagesQueryKey({ chatId }) });
+      queryClient.invalidateQueries({ queryKey: getGetChatsQueryKey() });
+      toast({ title: "Личный чат очищен", description: "Сообщения удалены у всех участников." });
+    } catch {
+      toast({ title: "Не удалось очистить чат", variant: "destructive" });
+    } finally {
+      setIsClearing(false);
+      setShowClearDialog(false);
+    }
   };
 
   const handleSetAutoDelete = async (seconds: number | null) => {
@@ -1208,12 +1199,6 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
                   <span className="font-semibold">Фон чата</span>
                   {activeThemeId && <div className="ml-auto w-3.5 h-3.5 rounded-full border border-white/30 shadow-sm" style={{ background: activeTheme?.preview ?? "transparent" }} />}
                 </DropdownMenuItem>
-                {chat.type === "direct" && messages && messages.length > 3 && (
-                  <DropdownMenuItem onClick={handleSummarize} className="rounded-xl cursor-pointer py-2.5">
-                    <Sparkles size={18} className="mr-3 text-primary" />
-                    <span className="font-semibold">Резюме чата</span>
-                  </DropdownMenuItem>
-                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleToggleMute} className="rounded-xl cursor-pointer py-2.5">
                   {chat.isMuted ? (
@@ -1262,6 +1247,10 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
                     </DropdownMenuItem>
                   </>
                 )}
+                <DropdownMenuItem onClick={() => setShowClearDialog(true)} className="rounded-xl cursor-pointer py-2.5">
+                  <MessageSquare size={18} className="mr-3 text-amber-400" />
+                  <span className="font-semibold">Очистить чат</span>
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   className="text-destructive focus:text-destructive rounded-xl cursor-pointer py-2.5"
@@ -1913,33 +1902,6 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
         )}
       </AnimatePresence>
 
-      {summaryOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={() => setSummaryOpen(false)}>
-          <div className="relative w-full max-w-md bg-card border border-border rounded-3xl shadow-2xl p-6" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
-                <Sparkles size={20} className="text-primary" />
-              </div>
-              <div>
-                <p className="font-bold text-base">Резюме чата</p>
-                <p className="text-xs text-muted-foreground">На основе последних сообщений</p>
-              </div>
-              <button onClick={() => setSummaryOpen(false)} className="ml-auto w-8 h-8 flex items-center justify-center rounded-full hover:bg-secondary transition-colors">
-                <X size={16} />
-              </button>
-            </div>
-            {summaryLoading ? (
-              <div className="flex items-center gap-3 py-4">
-                <div className="w-4 h-4 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-                <span className="text-sm text-muted-foreground">AI анализирует переписку…</span>
-              </div>
-            ) : (
-              <p className="text-sm text-foreground/90 leading-relaxed">{summaryText}</p>
-            )}
-          </div>
-        </div>
-      )}
-
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent className="max-w-sm rounded-[24px]">
           <AlertDialogHeader>
@@ -1963,6 +1925,26 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
             <AlertDialogCancel className="w-full h-14 rounded-xl border-border hover:bg-secondary font-bold text-[15px] sm:mt-0">
               Отмена
             </AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={showClearDialog} onOpenChange={setShowClearDialog}>
+        <AlertDialogContent className="max-w-sm rounded-[24px]">
+          <AlertDialogHeader>
+            <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mx-auto mb-4">
+              <MessageSquare size={28} className="text-amber-400" />
+            </div>
+            <AlertDialogTitle className="text-center">Очистить чат?</AlertDialogTitle>
+            <AlertDialogDescription className="text-center">
+              Все сообщения будут удалены у всех участников. Сам чат останется в списке.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col sm:flex-col gap-2 mt-6">
+            <AlertDialogAction onClick={handleClearChat} disabled={isClearing} className="w-full h-12 rounded-xl bg-amber-500 hover:bg-amber-600 text-black font-bold">
+              {isClearing ? "Очищаем..." : "Очистить сообщения"}
+            </AlertDialogAction>
+            <AlertDialogCancel className="w-full h-12 rounded-xl">Отмена</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -2145,18 +2127,15 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
                   {t("chat.searchMessages")}
                 </button>
 
-                {/* Summary */}
-                {chat.type === "direct" && messages && messages.length > 3 && (
-                  <button
-                    onClick={() => { setShowMobileMenu(false); handleSummarize(); }}
-                    className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-secondary transition-colors font-semibold"
-                  >
-                    <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                      <Sparkles size={18} className="text-primary" />
-                    </div>
-                    Резюме чата
-                  </button>
-                )}
+                <button
+                  onClick={() => { setShowMobileMenu(false); setShowClearDialog(true); }}
+                  className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-amber-500/10 transition-colors font-semibold"
+                >
+                  <div className="w-9 h-9 rounded-xl bg-amber-500/10 flex items-center justify-center shrink-0">
+                    <MessageSquare size={18} className="text-amber-400" />
+                  </div>
+                  Очистить чат
+                </button>
 
                 <div className="h-px bg-border my-1 mx-2" />
 

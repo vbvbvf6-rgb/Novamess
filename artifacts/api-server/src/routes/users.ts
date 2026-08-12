@@ -12,19 +12,55 @@ router.get("/users/me", async (req, res) => {
     const uid = req.currentUserId;
     const user = await db.query.usersTable.findFirst({ where: eq(usersTable.id, uid) });
     if (!user) return res.status(404).json({ error: "User not found" });
-    const rows = await db.execute(sql`SELECT balance, username_changed_at, has_prime, prime_tier, prime_expires_at, age_verified, is_admin, is_bot FROM users WHERE id = ${uid}`);
+    const rows = await db.execute(sql`SELECT balance, username_changed_at, has_prime, prime_tier, prime_expires_at, age_verified, is_admin, is_developer, is_bot FROM users WHERE id = ${uid}`);
     const row = rows.rows[0] as any;
     const balance = row ? Number(row.balance) : 0;
     const hasPrime = row?.has_prime === true || row?.has_prime === "t" || row?.has_prime === 1;
     const primeTier: string | null = row?.prime_tier ?? null;
     const ageVerified = row?.age_verified === true || row?.age_verified === "t" || row?.age_verified === 1;
     const isAdmin = row?.is_admin === true || row?.is_admin === "t" || row?.is_admin === 1;
+    const isDeveloper = row?.is_developer === true || row?.is_developer === "t" || row?.is_developer === 1;
     const isBot = row?.is_bot === true || row?.is_bot === "t" || row?.is_bot === 1;
     const popularity = 0;
-    res.json({ ...user, balance, hasPrime, primeTier, primeExpiresAt: row?.prime_expires_at ?? null, usernameChangedAt: row?.username_changed_at ?? null, ageVerified, isAdmin, isBot, popularity });
+    res.json({ ...user, balance, hasPrime, primeTier, primeExpiresAt: row?.prime_expires_at ?? null, usernameChangedAt: row?.username_changed_at ?? null, ageVerified, isAdmin, isDeveloper, isBot, popularity });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.get("/users/me/creator-verifications", async (req, res) => {
+  try {
+    const rows = await db.execute(sql`
+      SELECT platform, submission_url, status, created_at
+      FROM creator_verifications WHERE user_id = ${req.currentUserId}
+      ORDER BY platform
+    `);
+    res.json(rows.rows);
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Не удалось загрузить задания" });
+  }
+});
+
+router.post("/users/me/creator-verifications", async (req, res) => {
+  try {
+    const platform = String(req.body?.platform || "");
+    const url = String(req.body?.submissionUrl || "").trim();
+    const allowed = platform === "youtube" || platform === "tiktok";
+    if (!allowed || !/^https?:\/\//i.test(url)) {
+      return res.status(400).json({ error: "Укажите корректную ссылку на YouTube или TikTok" });
+    }
+    await db.execute(sql`
+      INSERT INTO creator_verifications (user_id, platform, submission_url, status)
+      VALUES (${req.currentUserId}, ${platform}, ${url}, 'pending')
+      ON CONFLICT (user_id, platform)
+      DO UPDATE SET submission_url = EXCLUDED.submission_url, status = 'pending', created_at = NOW(), reviewed_at = NULL
+    `);
+    res.json({ success: true, status: "pending" });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Не удалось отправить задание" });
   }
 });
 

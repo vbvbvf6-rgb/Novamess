@@ -20,6 +20,7 @@ interface AdminUser {
   balance: number;
   created_at: string;
   is_verified: boolean;
+  is_developer: boolean;
   is_admin: boolean;
   is_bot: boolean;
   has_prime: boolean;
@@ -1014,6 +1015,21 @@ export default function Admin() {
         setUsers(prev => prev.map(u => u.id === target.id ? { ...u, is_verified: !target.is_verified } : u));
         setSelectedUser(prev => prev?.id === target.id ? { ...prev, is_verified: !target.is_verified } : prev);
       }
+    } catch { showToast("Ошибка", "err"); }
+  };
+
+  const handleToggleDeveloper = async (target: AdminUser) => {
+    try {
+      const next = !target.is_developer;
+      const res = await fetch("/api/admin/set-developer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...getHeader() },
+        body: JSON.stringify({ userId: target.id, isDeveloper: next }),
+      });
+      if (!res.ok) throw new Error("failed");
+      showToast(`${next ? "🧑‍💻 Developer выдан" : "Developer снят"}: @${target.username}`, "ok");
+      setUsers(prev => prev.map(u => u.id === target.id ? { ...u, is_developer: next } : u));
+      setSelectedUser(prev => prev?.id === target.id ? { ...prev, is_developer: next } : prev);
     } catch { showToast("Ошибка", "err"); }
   };
 

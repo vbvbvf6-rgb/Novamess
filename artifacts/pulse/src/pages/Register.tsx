@@ -471,8 +471,12 @@ export default function Register({ onLogin }: RegisterProps) {
                 ].map(([label, item]) => (
                   <div key={item} className="relative z-10 flex w-1/3 flex-col items-center gap-2">
                     <motion.div
-                      animate={formStep === item ? { scale: [1, 1.12, 1] } : { scale: 1 }}
-                      transition={{ duration: 0.45 }}
+                      animate={formStep === item
+                        ? { scale: [1, 1.12, 1] }
+                        : formStep > item && item < 3
+                          ? { scale: [0.82, 1.18, 1] }
+                          : { scale: 1 }}
+                      transition={{ duration: formStep > item && item < 3 ? 0.5 : 0.45 }}
                       className={`w-8 h-8 rounded-full flex items-center justify-center border-2 text-xs font-black transition-all duration-300 ${
                       formStep >= item
                         ? "bg-primary border-primary text-primary-foreground shadow-[0_0_18px_rgba(234,88,12,0.35)]"

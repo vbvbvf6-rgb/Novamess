@@ -38,6 +38,14 @@ function AdminBadge() {
   );
 }
 
+function DeveloperBadge() {
+  return (
+    <span title="Разработчик Nova" className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-violet-500/12 border border-violet-400/25 text-violet-300 shrink-0">
+      <span>◆</span> DEV
+    </span>
+  );
+}
+
 function ImageLightbox({ src, onClose }: { src: string; onClose: () => void }) {
   useEffect(() => {
     const prev = document.body.style.overflow;
@@ -500,6 +508,7 @@ function PostCard({ post, onAppealSubmitted, onTopicClick }: { post: Post & { ap
 
   const isVerified = (post.author as any)?.isVerified;
   const isAdmin = (post.author as any)?.isAdmin === true;
+  const isDeveloper = (post.author as any)?.isDeveloper === true;
 
   const handleReportPost = async () => {
     if (!reportReason || reportLoading) return;
@@ -619,6 +628,7 @@ function PostCard({ post, onAppealSubmitted, onTopicClick }: { post: Post & { ap
               </button>
               {isVerified && <VerifiedBadge />}
               {isAdmin && <AdminBadge />}
+              {isDeveloper && <DeveloperBadge />}
             </div>
             <p className="text-xs text-muted-foreground truncate">
               @{post.author?.username} · {fDTN(new Date(post.createdAt), { addSuffix: true, locale: ru })}
@@ -655,7 +665,9 @@ function PostCard({ post, onAppealSubmitted, onTopicClick }: { post: Post & { ap
         </div>
 
         <div className="px-4 pb-4">
-          <p className="text-[15px] leading-7 whitespace-pre-wrap break-words">{post.text}</p>
+          <div className="rounded-xl bg-secondary/30 border border-border/40 px-3.5 py-3">
+            <p className="text-[15px] leading-7 whitespace-pre-wrap break-words">{post.text}</p>
+          </div>
           {(post as any).topic && (() => {
             const t = TOPICS.find(tp => tp.id === (post as any).topic);
             return t ? (
