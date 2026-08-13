@@ -85,6 +85,30 @@ function signPending2faToken(userId: number): string {
   return jwt.sign({ userId, pending2fa: true }, EFFECTIVE_JWT_SECRET, { expiresIn: PENDING_2FA_TTL });
 }
 
+// The sessions table is created during server bootstrap. Login can arrive
+// before that async bootstrap finishes on a fresh/imported database, so make
+// the small prerequisite idempotently here as well instead of issuing a JWT
+// that can never be validated.
+let sessionTableReady: Promise<void> | null = null;
+async function ensureSessionTable() {
+  if (!sessionTableReady) {
+    sessionTableReady = db.execute(sql`
+      CREATE TABLE IF NOT EXISTS user_sessions (
+        id TEXT PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        device TEXT NOT NULL DEFAULT 'Unknown',
+        ip_address TEXT NOT NULL DEFAULT 'unknown',
+        created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+        last_active_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+      )
+    `).then(() => undefined).catch((err) => {
+      sessionTableReady = null;
+      throw err;
+    });
+  }
+  return sessionTableReady;
+}
+
 router.post("/auth/login", async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -184,11 +208,15 @@ router.post("/auth/login", async (req, res) => {
     const ip = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.ip || "unknown";
     const deviceName = ua.length > 200 ? ua.slice(0, 200) : ua;
     try {
+      await ensureSessionTable();
       await db.execute(sql`
         INSERT INTO user_sessions (id, user_id, device, ip_address, created_at, last_active_at)
         VALUES (${sessionId}, ${user.id}, ${deviceName}, ${ip}, NOW(), NOW())
       `);
-    } catch { /* table may not exist yet, non-fatal */ }
+    } catch (err) {
+      req.log.error({ err }, "Could not create login session");
+      return res.status(503).json({ error: "Сервис входа ещё запускается. Повторите через несколько секунд." });
+    }
 
     if (user.totp_enabled) {
       const pendingToken = signPending2faToken(user.id);
@@ -881,11 +909,15 @@ router.post("/auth/reset-password-final", async (req, res) => {
     try {
       const ua = req.headers["user-agent"] || "Unknown";
       const ip = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.ip || "unknown";
+      await ensureSessionTable();
       await db.execute(sql`
         INSERT INTO user_sessions (id, user_id, device, ip_address, created_at, last_active_at)
         VALUES (${sessionId}, ${payload.userId}, ${ua.slice(0, 200)}, ${ip}, NOW(), NOW())
       `);
-    } catch { /* non-fatal */ }
+    } catch (err) {
+      req.log.error({ err }, "Could not create reset-password session");
+      return res.status(503).json({ error: "Сервис входа ещё запускается. Повторите через несколько секунд." });
+    }
 
     const token = signToken(payload.userId, sessionId);
     res.json({

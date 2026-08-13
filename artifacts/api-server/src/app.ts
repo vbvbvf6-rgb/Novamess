@@ -253,7 +253,7 @@ const PUBLIC_API_PATHS = [
 // ── Session validity cache — avoids DB hit on every request ──────────────
 // Maps sessionId → { valid: boolean, expires: timestamp }
 const sessionCache = new Map<string, { valid: boolean; expires: number }>();
-const SESSION_CACHE_TTL = 30_000; // 30 seconds
+const SESSION_CACHE_TTL = 2_000; // revocations should be reflected almost immediately
 
 async function isSessionValid(sid: string): Promise<boolean> {
   const now = Date.now();

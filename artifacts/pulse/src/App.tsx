@@ -697,6 +697,7 @@ function App() {
     if (!token) return;
     const url = `/api/users/me/events?_token=${encodeURIComponent(token)}`;
     const es = new EventSource(url);
+    const channel = "BroadcastChannel" in window ? new BroadcastChannel("nova-session-events") : null;
 
     const handleMaintenance = (e: MessageEvent) => {
       try {
@@ -752,11 +753,20 @@ function App() {
       queryClient.clear();
       setUserId(null);
     };
+    const handleLocalSessionsRevoked = () => handleSessionsRevoked({ data: JSON.stringify({ keepSessionId: null }) } as MessageEvent);
+    const handleStorageSessionsRevoked = (e: StorageEvent) => {
+      if (e.key === "nova-sessions-revoked-at" && e.newValue) handleLocalSessionsRevoked();
+    };
     es.addEventListener("sessions-revoked", handleSessionsRevoked);
+    channel?.addEventListener("message", handleLocalSessionsRevoked);
+    window.addEventListener("storage", handleStorageSessionsRevoked);
     return () => {
       es.removeEventListener("maintenance", handleMaintenance);
       es.removeEventListener("banned", handleBanned);
       es.removeEventListener("sessions-revoked", handleSessionsRevoked);
+      channel?.removeEventListener("message", handleLocalSessionsRevoked);
+      channel?.close();
+      window.removeEventListener("storage", handleStorageSessionsRevoked);
       es.close();
     };
   }, [userId]);

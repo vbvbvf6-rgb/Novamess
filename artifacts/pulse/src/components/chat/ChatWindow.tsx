@@ -346,9 +346,6 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
   const [replyTo, setReplyTo] = useState<Message | null>(null);
   const [editMessage, setEditMessage] = useState<Message | null>(null);
   const [showInfoPanel, setShowInfoPanel] = useState(false);
-  const [smartReplies, setSmartReplies] = useState<string[]>([]);
-  const [smartRepliesFor, setSmartRepliesFor] = useState<number | null>(null);
-  const [smartReplyPending, setSmartReplyPending] = useState(false);
   const [pinnedMsgDismissed, setPinnedMsgDismissed] = useState<number | null>(null);
   const [pinnedMsgIndex, setPinnedMsgIndex] = useState<number>(0);
   const [announcementDismissed, setAnnouncementDismissed] = useState<boolean>(() => {
@@ -633,42 +630,6 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
   }, [chatId]);
 
   const botDisplayName = (chat?.otherUser as any)?.displayName || "Bot";
-
-  useEffect(() => {
-    if (!messages || messages.length === 0) return;
-    const last = messages[messages.length - 1];
-    if (!last || last.senderId === currentUserId) {
-      setSmartReplies([]);
-      setSmartRepliesFor(null);
-      return;
-    }
-    if (last.id === smartRepliesFor) return;
-    if (last.type !== "text" || !last.text) {
-      setSmartReplies([]);
-      setSmartRepliesFor(null);
-      return;
-    }
-    const timer = setTimeout(async () => {
-      setSmartReplyPending(true);
-      try {
-        const token = sessionStorage.getItem("pulse-token");
-        const headers: Record<string, string> = { "Content-Type": "application/json" };
-        if (token) headers["Authorization"] = `Bearer ${token}`;
-        const res = await fetch("/api/ai/smart-replies", {
-          method: "POST",
-          headers,
-          body: JSON.stringify({ lastMessage: last.text, chatContext: last.text }),
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setSmartReplies(data.suggestions || []);
-          setSmartRepliesFor(last.id);
-        }
-      } catch {}
-      setSmartReplyPending(false);
-    }, 800);
-    return () => clearTimeout(timer);
-  }, [messages?.length, currentUserId]);
 
   const handlePinMessage = async (msg: Message) => {
     try {
@@ -1758,55 +1719,6 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
         </AnimatePresence>
       </div>
 
-      {/* Smart reply chips */}
-      <AnimatePresence>
-        {smartReplies.length > 0 && !replyTo && !editMessage && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            className="flex items-center gap-2 px-4 py-2 overflow-x-auto scrollbar-none shrink-0"
-          >
-            <MessageSquare size={14} className="text-primary shrink-0" />
-            {smartReplyPending ? (
-              <div className="flex gap-1.5">
-                {[1, 2, 3].map(i => (
-                  <div key={i} className="h-8 w-20 rounded-full bg-secondary animate-pulse" />
-                ))}
-              </div>
-            ) : (
-              smartReplies.map((reply, i) => (
-                <motion.button
-                  key={i}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: i * 0.05 }}
-                  onClick={async () => {
-                    setSmartReplies([]);
-                    const token = sessionStorage.getItem("pulse-token");
-                    const headers: Record<string, string> = { "Content-Type": "application/json" };
-                    if (token) headers["Authorization"] = `Bearer ${token}`;
-                    await fetch(`/api/messages`, {
-                      method: "POST",
-                      headers,
-                      body: JSON.stringify({ chatId, text: reply, type: "text" }),
-                    });
-                    queryClient.invalidateQueries({ queryKey: getGetMessagesQueryKey({ chatId }) });
-                    queryClient.invalidateQueries({ queryKey: getGetChatsQueryKey() });
-                    setTimeout(() => {
-                      if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-                    }, 100);
-                  }}
-                  className="px-3.5 py-1.5 rounded-full border border-primary/30 bg-primary/5 text-primary text-[13px] font-bold whitespace-nowrap hover:bg-primary/15 hover:border-primary/60 transition-all hover:scale-105 active:scale-95 shrink-0"
-                >
-                  {reply}
-                </motion.button>
-              ))
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       <ChatInput
         chatId={chatId}
         replyTo={replyTo}
@@ -1818,7 +1730,6 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
         isChannel={isChannel}
         isChannelAdmin={isChannelAdmin}
         onMessageSent={() => {
-          setSmartReplies([]);
           if (isBot) startBotTypingPoll();
           setTimeout(() => {
             if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;

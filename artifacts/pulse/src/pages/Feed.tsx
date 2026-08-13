@@ -600,9 +600,9 @@ function PostCard({ post, onAppealSubmitted, onTopicClick }: { post: Post & { ap
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="post-card group bg-card/90 border border-border/70 rounded-2xl overflow-hidden shadow-sm hover:border-primary/20 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300"
+        className="post-card group bg-card/95 border border-border/70 rounded-[22px] overflow-hidden shadow-sm hover:border-primary/20 hover:shadow-md hover:shadow-primary/5 transition-all duration-300"
       >
-        <div className="flex items-center gap-3 p-4 pb-3 bg-secondary/10">
+        <div className="flex items-center gap-3 p-4 pb-3 bg-gradient-to-r from-secondary/15 to-transparent">
           <button
             onClick={() => post.author?.id && setLocation(`/user/${post.author.id}`)}
             className="w-11 h-11 rounded-full p-[2px] bg-gradient-to-br from-primary via-cyan-400 to-violet-500 shrink-0 hover:scale-105 transition-transform"
@@ -664,8 +664,8 @@ function PostCard({ post, onAppealSubmitted, onTopicClick }: { post: Post & { ap
         </div>
 
         <div className="px-4 pb-4">
-          <div className="rounded-xl bg-secondary/30 border border-border/40 px-3.5 py-3">
-            <p className="text-[15px] leading-7 whitespace-pre-wrap break-words">{post.text}</p>
+          <div className="rounded-2xl bg-background/45 border border-border/35 px-4 py-3.5">
+            <p className="text-[15px] leading-7 whitespace-pre-wrap break-words text-foreground/95">{post.text}</p>
           </div>
           {(post as any).topic && (() => {
             const t = TOPICS.find(tp => tp.id === (post as any).topic);
@@ -681,7 +681,7 @@ function PostCard({ post, onAppealSubmitted, onTopicClick }: { post: Post & { ap
         </div>
 
         {post.imageUrl && (
-          <div className="mx-3 mb-3 rounded-xl overflow-hidden border border-border/70 relative group/image cursor-pointer" onClick={() => setLightboxImg(post.imageUrl!)}>
+          <div className="mx-3 mb-3 rounded-2xl overflow-hidden border border-border/70 relative group/image cursor-pointer bg-secondary/20" onClick={() => setLightboxImg(post.imageUrl!)}>
             <img src={post.imageUrl} alt="" className="w-full max-h-[30rem] object-cover transition-transform duration-500 group-hover/image:scale-[1.02]" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
             <div className="absolute inset-0 bg-black/0 group-hover/image:bg-black/20 transition-colors flex items-center justify-center">
               <ZoomIn size={28} className="text-white opacity-0 group-hover/image:opacity-100 transition-opacity drop-shadow-lg" />

@@ -1613,6 +1613,12 @@ export default function Settings() {
     // Other tabs/devices receive the server-side SSE event. Keep this tab
     // authenticated and refresh its local account/session state immediately.
     window.dispatchEvent(new CustomEvent("pulse:sessions-revoked"));
+    localStorage.setItem("nova-sessions-revoked-at", String(Date.now()));
+    if ("BroadcastChannel" in window) {
+      const channel = new BroadcastChannel("nova-session-events");
+      channel.postMessage({ type: "sessions-revoked" });
+      channel.close();
+    }
     toast({ title: lang === "ru" ? "Все другие сессии завершены" : "All other sessions terminated" });
   };
 
