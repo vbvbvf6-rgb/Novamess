@@ -194,8 +194,20 @@ export function Sidebar({ mobileSidebarOpen, onMobileClose, onMobileOpen, onOpen
   const [showEvents, setShowEvents] = useState(() => localStorage.getItem("pulse-show-events") !== "false");
 
   useEffect(() => {
-    setIsAdmin((me as any)?.isAdmin === true);
-  }, [me]);
+    const token = sessionStorage.getItem("pulse-token");
+    if (!token) {
+      setIsAdmin(false);
+      return;
+    }
+
+    // Use the same source of truth as the admin page. This endpoint also
+    // recognizes bootstrap administrators in imported databases where the
+    // users/me projection may still have a stale isAdmin value.
+    fetch("/api/admin/check", { headers: { Authorization: `Bearer ${token}` } })
+      .then((response) => response.ok ? response.json() : { isAdmin: false })
+      .then((data) => setIsAdmin(data.isAdmin === true))
+      .catch(() => setIsAdmin((me as any)?.isAdmin === true));
+  }, [me, currentUserId]);
 
   useEffect(() => {
     const handler = () => setShowEvents(localStorage.getItem("pulse-show-events") === "true");

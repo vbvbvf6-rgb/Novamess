@@ -1,8 +1,8 @@
 import { Router } from "express";
-import { db, callsTable, usersTable } from "@workspace/db";
+import { db, callsTable, usersTable, messagesTable } from "@workspace/db";
 import { eq, or, desc, sql } from "drizzle-orm";
 import { InitiateCallBody, UpdateCallStatusBody } from "@workspace/api-zod";
-import { broadcastToUser } from "../lib/sse";
+import { broadcastToChat, broadcastToUser } from "../lib/sse";
 import { sendPushToUser } from "./push.js";
 
 const router = Router();
@@ -124,6 +124,51 @@ async function buildCall(call: typeof callsTable.$inferSelect) {
   return { ...call, caller, callee };
 }
 
+function callMessageText(call: typeof callsTable.$inferSelect): string {
+  return JSON.stringify({
+    callId: call.id,
+    callType: call.type,
+    status: call.status,
+    durationSeconds: call.durationSeconds ?? null,
+  });
+}
+
+/**
+ * Keep a compact, normal chat message for every call. The calls table remains
+ * the source of truth for the call UI/history, while this message makes the
+ * event visible in the direct conversation for both participants.
+ */
+async function createCallChatMessage(call: typeof callsTable.$inferSelect) {
+  if (!call.chatId || !call.callerId) return;
+  try {
+    const [message] = await db.insert(messagesTable).values({
+      chatId: call.chatId,
+      senderId: call.callerId,
+      type: "call",
+      text: callMessageText(call),
+    }).returning({ id: messagesTable.id });
+    broadcastToChat(call.chatId, "new-message", { messageId: message.id, chatId: call.chatId });
+  } catch {
+    // A call must still work if an imported database has an older messages
+    // table or a transient chat-message write fails.
+  }
+}
+
+async function updateCallChatMessage(call: typeof callsTable.$inferSelect) {
+  if (!call.chatId) return;
+  try {
+    const marker = `%"callId":${call.id}%`;
+    await db.execute(sql`
+      UPDATE messages
+      SET text = ${callMessageText(call)}, updated_at = NOW()
+      WHERE chat_id = ${call.chatId}
+        AND type = 'call'
+        AND text LIKE ${marker}
+    `);
+    broadcastToChat(call.chatId, "call-message-updated", { callId: call.id, chatId: call.chatId });
+  } catch {}
+}
+
 router.get("/calls", async (req, res) => {
   try {
     const uid = req.currentUserId;
@@ -174,6 +219,8 @@ router.post("/calls", async (req, res) => {
       broadcastToUser(uid, "call-declined", declinedBuilt);
       return res.status(201).json(declinedBuilt);
     }
+
+    await createCallChatMessage(call);
 
     if (built.calleeId) {
       broadcastToUser(built.calleeId, "incoming-call", built);
@@ -233,6 +280,7 @@ router.put("/calls/:callId", async (req, res) => {
     }
     const [updated] = await db.update(callsTable).set(updateData).where(eq(callsTable.id, callId)).returning();
     const built = await buildCall(updated);
+    await updateCallChatMessage(updated);
 
     if (body.status === "active" && built.callerId) {
       broadcastToUser(built.callerId, "call-accepted", built);

@@ -7,7 +7,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getGetMessagesQueryKey, getGetChatsQueryKey } from "@workspace/api-client-react";
 import { cn } from "@/lib/utils";
-import { Check, CheckCheck, Clock, X, Info, Play, Pause, Mic, Reply, Pencil, Trash2, Copy, SmilePlus, Languages, Pin, PinOff, BarChart2, Eye, Crown, Wand2, MessageSquare, Shield, Sparkles, Forward, Search, Download } from "lucide-react";
+import { Check, CheckCheck, Clock, X, Info, Play, Pause, Mic, Phone, Reply, Pencil, Trash2, Copy, SmilePlus, Languages, Pin, PinOff, BarChart2, Eye, Crown, Wand2, MessageSquare, Shield, Sparkles, Forward, Search, Download } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   AlertDialog,
@@ -1047,8 +1047,48 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
           </a>
         );
       }
-      case "call":
-        return <p className="text-[15px] font-bold italic opacity-80">📞 Звонок завершён</p>;
+      case "call": {
+        let callData: { status?: string; durationSeconds?: number | null; callType?: string } = {};
+        try {
+          callData = JSON.parse(message.text || "{}");
+        } catch {
+          // Keep rendering legacy call messages created before call metadata
+          // was stored in the chat message.
+        }
+
+        const duration = Number(callData.durationSeconds || 0);
+        const durationLabel = duration > 0
+          ? `${Math.floor(duration / 60)}:${String(duration % 60).padStart(2, "0")}`
+          : "";
+        const statusLabel =
+          callData.status === "declined" ? (isMine ? "Отменён" : "Отклонён") :
+          callData.status === "missed" ? (isMine ? "Не отвечен" : "Пропущен") :
+          callData.status === "active" ? "Идёт звонок" :
+          callData.status === "ended" ? (durationLabel || "Завершён") :
+          "Звонок…";
+
+        return (
+          <div className="flex items-center gap-3 min-w-[190px]">
+            <div className={cn(
+              "w-11 h-11 rounded-full flex items-center justify-center shrink-0 shadow-sm",
+              isMine ? "bg-white text-primary" : "bg-primary text-white"
+            )}>
+              <Phone size={22} strokeWidth={2.5} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[15px] font-bold leading-tight">
+                {isMine ? "Исходящий звонок" : "Входящий звонок"}
+              </p>
+              <p className={cn(
+                "text-[14px] leading-tight mt-1",
+                isMine ? "text-primary-foreground/75" : "text-muted-foreground"
+              )}>
+                {statusLabel}
+              </p>
+            </div>
+          </div>
+        );
+      }
       default:
         return <p className="text-[15px] font-medium">[{message.type}] {message.text}</p>;
     }

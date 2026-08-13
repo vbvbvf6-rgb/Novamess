@@ -576,6 +576,7 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
     };
     es.addEventListener("message-deleted", refreshMessages);
     es.addEventListener("chat-cleared", refreshMessages);
+    es.addEventListener("call-message-updated", refreshMessages);
 
     es.addEventListener("messages-read", () => {
       // Someone read messages in this chat — re-fetch so sender's ✓ → ✓✓

@@ -147436,6 +147436,42 @@ async function buildCall(call) {
   const callee = call.calleeId ? await db.query.usersTable.findFirst({ where: eq(usersTable.id, call.calleeId) }) : null;
   return { ...call, caller, callee };
 }
+function callMessageText(call) {
+  return JSON.stringify({
+    callId: call.id,
+    callType: call.type,
+    status: call.status,
+    durationSeconds: call.durationSeconds ?? null
+  });
+}
+async function createCallChatMessage(call) {
+  if (!call.chatId || !call.callerId) return;
+  try {
+    const [message] = await db.insert(messagesTable).values({
+      chatId: call.chatId,
+      senderId: call.callerId,
+      type: "call",
+      text: callMessageText(call)
+    }).returning({ id: messagesTable.id });
+    broadcastToChat(call.chatId, "new-message", { messageId: message.id, chatId: call.chatId });
+  } catch {
+  }
+}
+async function updateCallChatMessage(call) {
+  if (!call.chatId) return;
+  try {
+    const marker = `%"callId":${call.id}%`;
+    await db.execute(sql`
+      UPDATE messages
+      SET text = ${callMessageText(call)}, updated_at = NOW()
+      WHERE chat_id = ${call.chatId}
+        AND type = 'call'
+        AND text LIKE ${marker}
+    `);
+    broadcastToChat(call.chatId, "call-message-updated", { callId: call.id, chatId: call.chatId });
+  } catch {
+  }
+}
 router9.get("/calls", async (req, res) => {
   try {
     const uid = req.currentUserId;
@@ -147483,6 +147519,7 @@ router9.post("/calls", async (req, res) => {
       broadcastToUser(uid, "call-declined", declinedBuilt);
       return res.status(201).json(declinedBuilt);
     }
+    await createCallChatMessage(call);
     if (built.calleeId) {
       broadcastToUser(built.calleeId, "incoming-call", built);
       const callerName = built.caller?.displayName || built.caller?.username || "\u041D\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043D\u044B\u0439";
@@ -147538,6 +147575,7 @@ router9.put("/calls/:callId", async (req, res) => {
     }
     const [updated] = await db.update(callsTable).set(updateData).where(eq(callsTable.id, callId)).returning();
     const built = await buildCall(updated);
+    await updateCallChatMessage(updated);
     if (body.status === "active" && built.callerId) {
       broadcastToUser(built.callerId, "call-accepted", built);
     } else if (body.status === "declined" && built.callerId) {
