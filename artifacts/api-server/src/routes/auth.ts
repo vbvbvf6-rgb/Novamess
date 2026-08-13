@@ -328,7 +328,7 @@ router.get("/auth/2fa/setup", async (req, res) => {
   try {
     const uid = req.currentUserId;
     const rows = await db.execute(
-      sql`SELECT username, totp_enabled FROM users WHERE id = ${uid} LIMIT 1`
+      sql`SELECT username, totp_enabled, totp_secret FROM users WHERE id = ${uid} LIMIT 1`
     );
     const user = rows.rows[0] as any;
     if (!user) return res.status(404).json({ error: "Пользователь не найден" });
@@ -336,8 +336,13 @@ router.get("/auth/2fa/setup", async (req, res) => {
       return res.status(400).json({ error: "2FA уже включена" });
     }
 
-    const secret = generateTotpSecret();
-    await db.execute(sql`UPDATE users SET totp_secret = ${secret} WHERE id = ${uid}`);
+    // Keep one pending secret stable while the user scans the QR code.
+    // Re-generating it on every setup request makes the authenticator key
+    // appear to change whenever the settings page is reopened.
+    const secret = String(user.totp_secret || generateTotpSecret());
+    if (!user.totp_secret) {
+      await db.execute(sql`UPDATE users SET totp_secret = ${secret} WHERE id = ${uid}`);
+    }
 
     const uri = buildTotpUri(secret, user.username);
     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(uri)}`;

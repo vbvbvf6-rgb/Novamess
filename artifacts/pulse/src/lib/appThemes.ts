@@ -109,6 +109,40 @@ export const APP_THEMES: AppTheme[] = [
       "--border": "24 35% 87%", "--input": "24 35% 87%", "--ring": "12 86% 55%",
     },
   },
+  {
+    id: "mint",
+    name: "Мятная",
+    emoji: "🍃",
+    mode: "light",
+    preview: "linear-gradient(135deg, #ecfdf5, #a7f3d0)",
+    vars: {
+      "--background": "155 45% 97%", "--foreground": "164 35% 13%",
+      "--card": "0 0% 100%", "--card-foreground": "164 35% 13%", "--card-border": "155 28% 84%",
+      "--popover": "0 0% 100%", "--popover-foreground": "164 35% 13%", "--popover-border": "155 28% 84%",
+      "--primary": "158 64% 40%", "--primary-foreground": "0 0% 100%",
+      "--secondary": "155 35% 90%", "--secondary-foreground": "164 35% 18%",
+      "--muted": "155 30% 91%", "--muted-foreground": "160 18% 42%",
+      "--accent": "158 64% 40%", "--accent-foreground": "0 0% 100%",
+      "--border": "155 28% 84%", "--input": "155 28% 84%", "--ring": "158 64% 40%",
+    },
+  },
+  {
+    id: "sapphire",
+    name: "Сапфир",
+    emoji: "💠",
+    mode: "dark",
+    preview: "linear-gradient(135deg, #172554, #2563eb)",
+    vars: {
+      "--background": "224 55% 7%", "--foreground": "215 30% 96%",
+      "--card": "224 48% 11%", "--card-foreground": "215 30% 96%", "--card-border": "223 40% 21%",
+      "--popover": "224 48% 11%", "--popover-foreground": "215 30% 96%", "--popover-border": "223 40% 21%",
+      "--primary": "217 91% 60%", "--primary-foreground": "0 0% 100%",
+      "--secondary": "224 38% 17%", "--secondary-foreground": "215 30% 93%",
+      "--muted": "224 38% 16%", "--muted-foreground": "218 20% 64%",
+      "--accent": "217 91% 60%", "--accent-foreground": "0 0% 100%",
+      "--border": "223 40% 21%", "--input": "223 40% 21%", "--ring": "217 91% 60%",
+    },
+  },
 ];
 
 const CSS_VAR_KEYS = [

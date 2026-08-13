@@ -143567,15 +143567,17 @@ router2.get("/auth/2fa/setup", async (req, res) => {
   try {
     const uid = req.currentUserId;
     const rows = await db.execute(
-      sql`SELECT username, totp_enabled FROM users WHERE id = ${uid} LIMIT 1`
+      sql`SELECT username, totp_enabled, totp_secret FROM users WHERE id = ${uid} LIMIT 1`
     );
     const user = rows.rows[0];
     if (!user) return res.status(404).json({ error: "\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D" });
     if (user.totp_enabled) {
       return res.status(400).json({ error: "2FA \u0443\u0436\u0435 \u0432\u043A\u043B\u044E\u0447\u0435\u043D\u0430" });
     }
-    const secret = generateTotpSecret();
-    await db.execute(sql`UPDATE users SET totp_secret = ${secret} WHERE id = ${uid}`);
+    const secret = String(user.totp_secret || generateTotpSecret());
+    if (!user.totp_secret) {
+      await db.execute(sql`UPDATE users SET totp_secret = ${secret} WHERE id = ${uid}`);
+    }
     const uri = buildTotpUri(secret, user.username);
     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(uri)}`;
     res.json({ secret, uri, qrUrl });
@@ -144417,6 +144419,19 @@ router4.post("/users/me/creator-verifications", async (req, res) => {
     const allowed = platform2 === "youtube" || platform2 === "tiktok";
     if (!allowed || !/^https?:\/\//i.test(url2)) {
       return res.status(400).json({ error: "\u0423\u043A\u0430\u0436\u0438\u0442\u0435 \u043A\u043E\u0440\u0440\u0435\u043A\u0442\u043D\u0443\u044E \u0441\u0441\u044B\u043B\u043A\u0443 \u043D\u0430 YouTube \u0438\u043B\u0438 TikTok" });
+    }
+    let parsedUrl;
+    try {
+      parsedUrl = new URL(url2);
+    } catch {
+      return res.status(400).json({ error: "\u0421\u0441\u044B\u043B\u043A\u0430 \u0438\u043C\u0435\u0435\u0442 \u043D\u0435\u0432\u0435\u0440\u043D\u044B\u0439 \u0444\u043E\u0440\u043C\u0430\u0442" });
+    }
+    const hostname2 = parsedUrl.hostname.toLowerCase().replace(/^www\./, "");
+    const validHost = platform2 === "youtube" ? hostname2 === "youtube.com" || hostname2 === "youtu.be" || hostname2 === "m.youtube.com" : hostname2 === "tiktok.com" || hostname2 === "vm.tiktok.com" || hostname2 === "m.tiktok.com";
+    if (!validHost || !parsedUrl.pathname || parsedUrl.pathname === "/") {
+      return res.status(400).json({
+        error: platform2 === "youtube" ? "\u041D\u0443\u0436\u043D\u0430 \u0441\u0441\u044B\u043B\u043A\u0430 \u043D\u0430 \u043A\u043E\u043D\u043A\u0440\u0435\u0442\u043D\u043E\u0435 \u043F\u0443\u0431\u043B\u0438\u0447\u043D\u043E\u0435 \u0432\u0438\u0434\u0435\u043E YouTube" : "\u041D\u0443\u0436\u043D\u0430 \u0441\u0441\u044B\u043B\u043A\u0430 \u043D\u0430 \u043A\u043E\u043D\u043A\u0440\u0435\u0442\u043D\u044B\u0439 \u043F\u0443\u0431\u043B\u0438\u0447\u043D\u044B\u0439 \u0440\u043E\u043B\u0438\u043A TikTok"
+      });
     }
     await db.execute(sql`
       INSERT INTO creator_verifications (user_id, platform, submission_url, status)

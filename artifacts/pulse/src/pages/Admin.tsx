@@ -1900,7 +1900,7 @@ export default function Admin() {
 
         {/* Force-reload: release update to users */}
         <div className="bg-card border border-border rounded-2xl overflow-hidden">
-          <div className="p-4 flex items-center gap-3 flex-wrap">
+          <div className="p-4 flex flex-col sm:flex-row sm:items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
               <Wifi size={18} className="text-blue-400" />
             </div>
@@ -1912,12 +1912,12 @@ export default function Admin() {
                   : "⚪ Баннер обновления скрыт — пользователи не видят кнопку обновления"}
               </p>
             </div>
-            <div className="flex gap-2 shrink-0">
+            <div className="w-full sm:w-auto flex gap-2 shrink-0">
               {forceReloadActive ? (
                 <button
                   onClick={() => handleForceReload(false)}
                   disabled={forceReloadLoading}
-                  className="px-4 py-2 rounded-xl bg-secondary text-muted-foreground text-sm font-bold hover:bg-secondary/70 transition-colors disabled:opacity-50 flex items-center gap-2"
+                  className="w-full sm:w-auto justify-center px-4 py-2 rounded-xl bg-secondary text-muted-foreground text-sm font-bold hover:bg-secondary/70 transition-colors disabled:opacity-50 flex items-center gap-2"
                 >
                   {forceReloadLoading ? <RefreshCw size={13} className="animate-spin" /> : <ToggleRight size={13} />}
                   Скрыть баннер
@@ -1926,7 +1926,7 @@ export default function Admin() {
                 <button
                   onClick={() => handleForceReload(true)}
                   disabled={forceReloadLoading}
-                  className="px-4 py-2 rounded-xl bg-blue-500 text-white text-sm font-bold hover:bg-blue-600 transition-colors disabled:opacity-50 flex items-center gap-2 shadow-[0_4px_14px_rgba(59,130,246,0.3)]"
+                  className="w-full sm:w-auto justify-center px-4 py-2 rounded-xl bg-blue-500 text-white text-sm font-bold hover:bg-blue-600 transition-colors disabled:opacity-50 flex items-center gap-2 shadow-[0_4px_14px_rgba(59,130,246,0.3)]"
                 >
                   {forceReloadLoading ? <RefreshCw size={13} className="animate-spin" /> : <Rocket size={13} />}
                   Показать баннер обновления
@@ -2115,7 +2115,7 @@ export default function Admin() {
                           <p className="text-[11px] text-muted-foreground">@{item.username} · {new Date(item.created_at).toLocaleDateString("ru-RU")}</p>
                           <a href={item.submission_url} target="_blank" rel="noreferrer" className="mt-1 block truncate text-xs text-primary hover:underline">{item.submission_url}</a>
                         </div>
-                        {item.status === "pending" && (
+                        {item.status === "pending" ? (
                           <div className="flex gap-1 shrink-0">
                             <button
                               onClick={() => reviewCreatorVerification(item, "approved")}
@@ -2134,6 +2134,21 @@ export default function Admin() {
                               <X size={15} />
                             </button>
                           </div>
+                        ) : (
+                          <button
+                            onClick={() => reviewCreatorVerification(item, item.status === "approved" ? "rejected" : "approved")}
+                            disabled={creatorActionId === item.id}
+                            className={`shrink-0 px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-colors disabled:opacity-50 ${
+                              item.status === "approved"
+                                ? "bg-red-500/10 text-red-400 hover:bg-red-500/20"
+                                : "bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25"
+                            }`}
+                            title={item.status === "approved" ? "Снять значок" : "Выдать значок снова"}
+                          >
+                            {creatorActionId === item.id
+                              ? <RefreshCw size={12} className="animate-spin" />
+                              : item.status === "approved" ? "Снять значок" : "Выдать снова"}
+                          </button>
                         )}
                       </div>
                     </div>
