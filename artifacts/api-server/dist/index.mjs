@@ -59715,6 +59715,9 @@ var init_users = __esm({
       isBot: boolean("is_bot").notNull().default(false),
       isVerified: boolean("is_verified").notNull().default(false),
       isAdmin: boolean("is_admin").notNull().default(false),
+      isDeveloper: boolean("is_developer").notNull().default(false),
+      isYoutubeCreator: boolean("is_youtube_creator").notNull().default(false),
+      isTiktokCreator: boolean("is_tiktok_creator").notNull().default(false),
       ageGroup: text("age_group"),
       passwordHash: text("password_hash"),
       balance: numeric("balance").notNull().default("0"),
@@ -144376,7 +144379,7 @@ router4.get("/users/me", async (req, res) => {
     const uid = req.currentUserId;
     const user = await db.query.usersTable.findFirst({ where: eq(usersTable.id, uid) });
     if (!user) return res.status(404).json({ error: "User not found" });
-    const rows = await db.execute(sql`SELECT balance, username_changed_at, has_prime, prime_tier, prime_expires_at, age_verified, is_admin, is_developer, is_bot FROM users WHERE id = ${uid}`);
+    const rows = await db.execute(sql`SELECT balance, username_changed_at, has_prime, prime_tier, prime_expires_at, age_verified, is_admin, is_developer, is_youtube_creator, is_tiktok_creator, is_bot FROM users WHERE id = ${uid}`);
     const row = rows.rows[0];
     const balance = row ? Number(row.balance) : 0;
     const hasPrime = row?.has_prime === true || row?.has_prime === "t" || row?.has_prime === 1;
@@ -144384,9 +144387,11 @@ router4.get("/users/me", async (req, res) => {
     const ageVerified = row?.age_verified === true || row?.age_verified === "t" || row?.age_verified === 1;
     const isAdmin3 = row?.is_admin === true || row?.is_admin === "t" || row?.is_admin === 1;
     const isDeveloper = row?.is_developer === true || row?.is_developer === "t" || row?.is_developer === 1;
+    const isYoutubeCreator = row?.is_youtube_creator === true || row?.is_youtube_creator === "t" || row?.is_youtube_creator === 1;
+    const isTiktokCreator = row?.is_tiktok_creator === true || row?.is_tiktok_creator === "t" || row?.is_tiktok_creator === 1;
     const isBot = row?.is_bot === true || row?.is_bot === "t" || row?.is_bot === 1;
     const popularity = 0;
-    res.json({ ...user, balance, hasPrime, primeTier, primeExpiresAt: row?.prime_expires_at ?? null, usernameChangedAt: row?.username_changed_at ?? null, ageVerified, isAdmin: isAdmin3, isDeveloper, isBot, popularity });
+    res.json({ ...user, balance, hasPrime, primeTier, primeExpiresAt: row?.prime_expires_at ?? null, usernameChangedAt: row?.username_changed_at ?? null, ageVerified, isAdmin: isAdmin3, isDeveloper, isYoutubeCreator, isTiktokCreator, popularity });
   } catch (err2) {
     req.log.error(err2);
     res.status(500).json({ error: "Internal server error" });
@@ -145047,7 +145052,8 @@ async function buildChatsForUser(uid) {
     db.execute(sql`
       SELECT cm.chat_id, cm.user_id, cm.role, cm.last_read_at, cm.last_delivered_at,
         u.display_name, u.avatar_color, u.avatar_url, u.username,
-        u.status, u.is_verified, u.is_bot, u.is_admin,
+        u.status, u.is_verified, u.is_bot, u.is_admin, u.is_developer,
+        u.is_youtube_creator, u.is_tiktok_creator,
         u.has_prime, u.prime_tier, u.prime_expires_at
       FROM chat_members cm
       JOIN users u ON u.id = cm.user_id
@@ -145164,6 +145170,9 @@ async function buildChatsForUser(uid) {
           isVerified: other.is_verified,
           isBot: other.is_bot,
           isAdmin: other.is_admin,
+          isDeveloper: other.is_developer,
+          isYoutubeCreator: other.is_youtube_creator,
+          isTiktokCreator: other.is_tiktok_creator,
           hasPrime: !!hasPrime,
           primeTier: hasPrime ? other.prime_tier : null
         };
@@ -145194,7 +145203,10 @@ async function buildChatsForUser(uid) {
           status: m3.status,
           isVerified: m3.is_verified,
           isBot: m3.is_bot,
-          isAdmin: m3.is_admin
+          isAdmin: m3.is_admin,
+          isDeveloper: m3.is_developer,
+          isYoutubeCreator: m3.is_youtube_creator,
+          isTiktokCreator: m3.is_tiktok_creator
         }
       })),
       otherUser,
@@ -148235,6 +148247,10 @@ db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS ban_expires_at TIMESTA
 });
 db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_developer BOOLEAN NOT NULL DEFAULT FALSE`).catch(() => {
 });
+db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_youtube_creator BOOLEAN NOT NULL DEFAULT FALSE`).catch(() => {
+});
+db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_tiktok_creator BOOLEAN NOT NULL DEFAULT FALSE`).catch(() => {
+});
 db.execute(sql`CREATE TABLE IF NOT EXISTS creator_verifications (
   id SERIAL PRIMARY KEY,
   user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -148474,6 +148490,62 @@ router12.post("/admin/set-developer", requireAdmin, async (req, res) => {
   } catch (err2) {
     req.log.error(err2);
     res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
+  }
+});
+router12.get("/admin/creator-verifications", requireAdmin, async (req, res) => {
+  try {
+    const status = String(req.query.status || "pending");
+    const validStatuses = ["pending", "approved", "rejected", "all"];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ error: "\u041D\u0435\u0432\u0435\u0440\u043D\u044B\u0439 \u0441\u0442\u0430\u0442\u0443\u0441" });
+    }
+    const statusFilter = status === "all" ? sql`` : sql`AND cv.status = ${status}`;
+    const rows = await db.execute(sql`
+      SELECT cv.id, cv.user_id, cv.platform, cv.submission_url, cv.status,
+             cv.created_at, cv.reviewed_at, u.username, u.display_name,
+             u.avatar_color, u.avatar_url
+      FROM creator_verifications cv
+      JOIN users u ON u.id = cv.user_id
+      WHERE 1 = 1 ${statusFilter}
+      ORDER BY CASE WHEN cv.status = 'pending' THEN 0 ELSE 1 END, cv.created_at DESC
+      LIMIT 200
+    `);
+    res.json(rows.rows);
+  } catch (err2) {
+    req.log.error(err2);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u0437\u0430\u044F\u0432\u043A\u0438" });
+  }
+});
+router12.post("/admin/creator-verifications/:id/review", requireAdmin, async (req, res) => {
+  try {
+    const verificationId = Number(req.params.id);
+    const status = String(req.body?.status || "");
+    if (!Number.isInteger(verificationId) || !["approved", "rejected"].includes(status)) {
+      return res.status(400).json({ error: "\u0423\u043A\u0430\u0436\u0438\u0442\u0435 \u043A\u043E\u0440\u0440\u0435\u043A\u0442\u043D\u044B\u0439 \u0440\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442 \u043F\u0440\u043E\u0432\u0435\u0440\u043A\u0438" });
+    }
+    const rows = await db.execute(sql`
+      SELECT user_id, platform
+      FROM creator_verifications
+      WHERE id = ${verificationId}
+      LIMIT 1
+    `);
+    const item = rows.rows[0];
+    if (!item) return res.status(404).json({ error: "\u0417\u0430\u044F\u0432\u043A\u0430 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u0430" });
+    await db.execute(sql`
+      UPDATE creator_verifications
+      SET status = ${status}, reviewed_at = NOW()
+      WHERE id = ${verificationId}
+    `);
+    const badgeColumn = item.platform === "youtube" ? sql`is_youtube_creator` : sql`is_tiktok_creator`;
+    await db.execute(sql`
+      UPDATE users
+      SET ${badgeColumn} = ${status === "approved"}
+      WHERE id = ${Number(item.user_id)}
+    `);
+    res.json({ success: true, status });
+  } catch (err2) {
+    req.log.error(err2);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0441\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C \u0440\u0435\u0448\u0435\u043D\u0438\u0435" });
   }
 });
 router12.post("/admin/set-admin", requireAdmin, async (req, res) => {

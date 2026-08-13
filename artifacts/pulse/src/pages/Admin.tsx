@@ -427,6 +427,25 @@ export default function Admin() {
   const [botCodeLang, setBotCodeLang] = useState<"python" | "javascript">("python");
   const [savingBotCode, setSavingBotCode] = useState(false);
 
+  // Creator verification review
+  interface CreatorVerification {
+    id: number;
+    user_id: number;
+    platform: "youtube" | "tiktok";
+    submission_url: string;
+    status: "pending" | "approved" | "rejected";
+    created_at: string;
+    reviewed_at: string | null;
+    username: string;
+    display_name: string;
+    avatar_color: string;
+    avatar_url: string | null;
+  }
+  const [showCreatorPanel, setShowCreatorPanel] = useState(false);
+  const [creatorVerifications, setCreatorVerifications] = useState<CreatorVerification[]>([]);
+  const [creatorLoading, setCreatorLoading] = useState(false);
+  const [creatorActionId, setCreatorActionId] = useState<number | null>(null);
+
   // DB Cleanup
   const [showDbCleanPanel, setShowDbCleanPanel] = useState(false);
   const [dbStats, setDbStats] = useState<Record<string, number> | null>(null);
@@ -803,6 +822,37 @@ export default function Admin() {
       } else { showToast("Ошибка сохранения", "err"); }
     } catch { showToast("Ошибка соединения", "err"); }
     setSavingBotCode(false);
+  };
+
+  const fetchCreatorVerifications = async () => {
+    setCreatorLoading(true);
+    try {
+      const res = await fetch("/api/admin/creator-verifications?status=all", { headers: getHeader() });
+      if (res.ok) setCreatorVerifications(await res.json());
+    } catch {}
+    setCreatorLoading(false);
+  };
+
+  const reviewCreatorVerification = async (item: CreatorVerification, status: "approved" | "rejected") => {
+    setCreatorActionId(item.id);
+    try {
+      const res = await fetch(`/api/admin/creator-verifications/${item.id}/review`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...getHeader() },
+        body: JSON.stringify({ status }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        showToast(data.error || "Не удалось сохранить решение", "err");
+        return;
+      }
+      setCreatorVerifications(prev => prev.map(v => v.id === item.id ? { ...v, status } : v));
+      showToast(status === "approved" ? "✅ Значок выдан" : "Заявка отклонена", status === "approved" ? "ok" : "err");
+    } catch {
+      showToast("Ошибка соединения", "err");
+    } finally {
+      setCreatorActionId(null);
+    }
   };
 
   // ── DB cleanup handlers ───────────────────────────────────────────────────
@@ -1998,6 +2048,96 @@ export default function Admin() {
                       {savingBotCode ? <RefreshCw size={13} className="animate-spin" /> : <Play size={13} />} Сохранить код
                     </button>
                   </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Database Cleanup */}
+        {/* Creator verification review */}
+        <div className="bg-card border border-border rounded-2xl overflow-hidden">
+          <button
+            onClick={() => {
+              setShowCreatorPanel(v => !v);
+              if (!showCreatorPanel) fetchCreatorVerifications();
+            }}
+            className="w-full p-4 flex items-center justify-between hover:bg-secondary/50 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-red-500/10 flex items-center justify-center">
+                <BadgeCheck size={18} className="text-red-400" />
+              </div>
+              <div className="text-left">
+                <p className="font-semibold text-sm">Значки YouTube / TikTok</p>
+                <p className="text-xs text-muted-foreground">Проверка видео и выдача значка автору</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {creatorVerifications.filter(v => v.status === "pending").length > 0 && (
+                <span className="px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400 text-[10px] font-black">
+                  {creatorVerifications.filter(v => v.status === "pending").length}
+                </span>
+              )}
+              {showCreatorPanel ? <ChevronDown size={16} className="text-muted-foreground" /> : <ChevronRight size={16} className="text-muted-foreground" />}
+            </div>
+          </button>
+          {showCreatorPanel && (
+            <div className="border-t border-border p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-muted-foreground">Видео о Nova, ссылка и ручная проверка правил сообщества</p>
+                <button onClick={fetchCreatorVerifications} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1">
+                  <RefreshCw size={11} className={creatorLoading ? "animate-spin" : ""} /> Обновить
+                </button>
+              </div>
+              {creatorLoading ? (
+                <div className="py-5 flex justify-center"><RefreshCw size={18} className="animate-spin text-muted-foreground" /></div>
+              ) : creatorVerifications.length === 0 ? (
+                <p className="py-5 text-center text-sm text-muted-foreground">Заявок пока нет</p>
+              ) : (
+                <div className="space-y-2">
+                  {creatorVerifications.map(item => (
+                    <div key={item.id} className="rounded-xl border border-border bg-background p-3">
+                      <div className="flex items-start gap-3">
+                        <div className="w-9 h-9 rounded-full shrink-0 flex items-center justify-center text-white font-bold overflow-hidden" style={{ backgroundColor: item.avatar_color }}>
+                          {item.avatar_url ? <img src={item.avatar_url} alt="" className="w-full h-full object-cover" /> : item.display_name[0]?.toUpperCase()}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-semibold text-sm truncate">{item.display_name}</p>
+                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${item.platform === "youtube" ? "bg-red-500/15 text-red-400" : "bg-black/20 text-foreground border border-border"}`}>
+                              {item.platform === "youtube" ? "YouTube" : "TikTok"}
+                            </span>
+                            <span className={`text-[10px] font-bold ${item.status === "pending" ? "text-amber-400" : item.status === "approved" ? "text-emerald-400" : "text-red-400"}`}>
+                              {item.status === "pending" ? "на проверке" : item.status === "approved" ? "одобрено" : "отклонено"}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-muted-foreground">@{item.username} · {new Date(item.created_at).toLocaleDateString("ru-RU")}</p>
+                          <a href={item.submission_url} target="_blank" rel="noreferrer" className="mt-1 block truncate text-xs text-primary hover:underline">{item.submission_url}</a>
+                        </div>
+                        {item.status === "pending" && (
+                          <div className="flex gap-1 shrink-0">
+                            <button
+                              onClick={() => reviewCreatorVerification(item, "approved")}
+                              disabled={creatorActionId === item.id}
+                              className="p-2 rounded-lg bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 disabled:opacity-50"
+                              title="Выдать значок"
+                            >
+                              <CheckCircle2 size={15} />
+                            </button>
+                            <button
+                              onClick={() => reviewCreatorVerification(item, "rejected")}
+                              disabled={creatorActionId === item.id}
+                              className="p-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 disabled:opacity-50"
+                              title="Отклонить"
+                            >
+                              <X size={15} />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>

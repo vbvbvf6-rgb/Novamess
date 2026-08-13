@@ -201,7 +201,8 @@ async function buildChatsForUser(uid: number) {
     db.execute(sql`
       SELECT cm.chat_id, cm.user_id, cm.role, cm.last_read_at, cm.last_delivered_at,
         u.display_name, u.avatar_color, u.avatar_url, u.username,
-        u.status, u.is_verified, u.is_bot, u.is_admin,
+        u.status, u.is_verified, u.is_bot, u.is_admin, u.is_developer,
+        u.is_youtube_creator, u.is_tiktok_creator,
         u.has_prime, u.prime_tier, u.prime_expires_at
       FROM chat_members cm
       JOIN users u ON u.id = cm.user_id
@@ -318,6 +319,9 @@ async function buildChatsForUser(uid: number) {
           isVerified: other.is_verified,
           isBot: other.is_bot,
           isAdmin: other.is_admin,
+          isDeveloper: other.is_developer,
+          isYoutubeCreator: other.is_youtube_creator,
+          isTiktokCreator: other.is_tiktok_creator,
           hasPrime: !!hasPrime,
           primeTier: hasPrime ? other.prime_tier : null,
         };
@@ -342,6 +346,9 @@ async function buildChatsForUser(uid: number) {
           id: m.user_id, displayName: m.display_name, avatarColor: m.avatar_color,
           avatarUrl: m.avatar_url, username: m.username, status: m.status,
           isVerified: m.is_verified, isBot: m.is_bot, isAdmin: m.is_admin,
+          isDeveloper: m.is_developer,
+          isYoutubeCreator: m.is_youtube_creator,
+          isTiktokCreator: m.is_tiktok_creator,
         },
       })),
       otherUser,

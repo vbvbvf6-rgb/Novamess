@@ -32,6 +32,20 @@ export function ScreenLock({ children }: ScreenLockProps) {
     return () => window.removeEventListener("pulse-lock", handler);
   }, []);
 
+  // Treat leaving the app as leaving a real messenger: clear the unlocked
+  // session while the document is hidden, so the next return requires PIN or
+  // the platform authenticator again.
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState !== "hidden") return;
+      if (localStorage.getItem("pulse-screen-lock-enabled") !== "true") return;
+      sessionStorage.removeItem("pulse-unlocked");
+      setLocked(true);
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, []);
+
   const unlockWithBiometric = async () => {
     if (biometricLoading) return;
     setBiometricLoading(true);

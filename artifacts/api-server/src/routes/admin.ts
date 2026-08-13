@@ -19,6 +19,8 @@ db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_banned BOOLEAN NOT 
 db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS ban_reason TEXT`).catch(() => {});
 db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS ban_expires_at TIMESTAMP WITH TIME ZONE`).catch(() => {});
 db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_developer BOOLEAN NOT NULL DEFAULT FALSE`).catch(() => {});
+db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_youtube_creator BOOLEAN NOT NULL DEFAULT FALSE`).catch(() => {});
+db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_tiktok_creator BOOLEAN NOT NULL DEFAULT FALSE`).catch(() => {});
 db.execute(sql`CREATE TABLE IF NOT EXISTS creator_verifications (
   id SERIAL PRIMARY KEY,
   user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -274,6 +276,67 @@ router.post("/admin/set-developer", requireAdmin, async (req, res) => {
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Ошибка сервера" });
+  }
+});
+
+router.get("/admin/creator-verifications", requireAdmin, async (req, res) => {
+  try {
+    const status = String(req.query.status || "pending");
+    const validStatuses = ["pending", "approved", "rejected", "all"];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ error: "Неверный статус" });
+    }
+    const statusFilter = status === "all" ? sql`` : sql`AND cv.status = ${status}`;
+    const rows = await db.execute(sql`
+      SELECT cv.id, cv.user_id, cv.platform, cv.submission_url, cv.status,
+             cv.created_at, cv.reviewed_at, u.username, u.display_name,
+             u.avatar_color, u.avatar_url
+      FROM creator_verifications cv
+      JOIN users u ON u.id = cv.user_id
+      WHERE 1 = 1 ${statusFilter}
+      ORDER BY CASE WHEN cv.status = 'pending' THEN 0 ELSE 1 END, cv.created_at DESC
+      LIMIT 200
+    `);
+    res.json(rows.rows);
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Не удалось загрузить заявки" });
+  }
+});
+
+router.post("/admin/creator-verifications/:id/review", requireAdmin, async (req, res) => {
+  try {
+    const verificationId = Number(req.params.id);
+    const status = String(req.body?.status || "");
+    if (!Number.isInteger(verificationId) || !["approved", "rejected"].includes(status)) {
+      return res.status(400).json({ error: "Укажите корректный результат проверки" });
+    }
+
+    const rows = await db.execute(sql`
+      SELECT user_id, platform
+      FROM creator_verifications
+      WHERE id = ${verificationId}
+      LIMIT 1
+    `);
+    const item = rows.rows[0] as any;
+    if (!item) return res.status(404).json({ error: "Заявка не найдена" });
+
+    await db.execute(sql`
+      UPDATE creator_verifications
+      SET status = ${status}, reviewed_at = NOW()
+      WHERE id = ${verificationId}
+    `);
+
+    const badgeColumn = item.platform === "youtube" ? sql`is_youtube_creator` : sql`is_tiktok_creator`;
+    await db.execute(sql`
+      UPDATE users
+      SET ${badgeColumn} = ${status === "approved"}
+      WHERE id = ${Number(item.user_id)}
+    `);
+    res.json({ success: true, status });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Не удалось сохранить решение" });
   }
 });
 

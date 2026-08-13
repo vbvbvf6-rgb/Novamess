@@ -1067,6 +1067,9 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
   const otherUserLastSeen = _otherUserLastSeen;
   const otherUserStatus = _otherUserStatus;
   const isVerified = chat.type === "direct" && (chat.otherUser as any)?.isVerified;
+  const isDeveloper = chat.type === "direct" && (chat.otherUser as any)?.isDeveloper;
+  const isYoutubeCreator = chat.type === "direct" && (chat.otherUser as any)?.isYoutubeCreator;
+  const isTiktokCreator = chat.type === "direct" && (chat.otherUser as any)?.isTiktokCreator;
   const isChannel = _isChannel;
   const myMemberRole = (chat.members as any[])?.find((m: any) => m.userId === currentUserId)?.role;
   const isChannelAdmin = isChannel && (myMemberRole === "owner" || myMemberRole === "admin");
@@ -1142,6 +1145,21 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
                   <circle cx="12" cy="12" r="12" fill="currentColor" className="text-primary"/>
                   <path d="M7 12l3.5 3.5L17 8" stroke="currentColor" className="text-primary-foreground" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
+              )}
+              {isDeveloper && (
+                <span className="shrink-0 text-[10px] font-black px-1.5 py-0.5 rounded-full bg-violet-500/15 text-violet-300 border border-violet-500/30">
+                  DEV
+                </span>
+              )}
+              {isYoutubeCreator && (
+                <span className="shrink-0 text-[10px] font-black px-1.5 py-0.5 rounded-full bg-red-500/15 text-red-400 border border-red-500/30">
+                  YT
+                </span>
+              )}
+              {isTiktokCreator && (
+                <span className="shrink-0 text-[10px] font-black px-1.5 py-0.5 rounded-full bg-black/20 text-foreground border border-border">
+                  TT
+                </span>
               )}
               {isChannel && (
                 <svg className="shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none">

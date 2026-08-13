@@ -12,7 +12,7 @@ router.get("/users/me", async (req, res) => {
     const uid = req.currentUserId;
     const user = await db.query.usersTable.findFirst({ where: eq(usersTable.id, uid) });
     if (!user) return res.status(404).json({ error: "User not found" });
-    const rows = await db.execute(sql`SELECT balance, username_changed_at, has_prime, prime_tier, prime_expires_at, age_verified, is_admin, is_developer, is_bot FROM users WHERE id = ${uid}`);
+    const rows = await db.execute(sql`SELECT balance, username_changed_at, has_prime, prime_tier, prime_expires_at, age_verified, is_admin, is_developer, is_youtube_creator, is_tiktok_creator, is_bot FROM users WHERE id = ${uid}`);
     const row = rows.rows[0] as any;
     const balance = row ? Number(row.balance) : 0;
     const hasPrime = row?.has_prime === true || row?.has_prime === "t" || row?.has_prime === 1;
@@ -20,9 +20,11 @@ router.get("/users/me", async (req, res) => {
     const ageVerified = row?.age_verified === true || row?.age_verified === "t" || row?.age_verified === 1;
     const isAdmin = row?.is_admin === true || row?.is_admin === "t" || row?.is_admin === 1;
     const isDeveloper = row?.is_developer === true || row?.is_developer === "t" || row?.is_developer === 1;
+    const isYoutubeCreator = row?.is_youtube_creator === true || row?.is_youtube_creator === "t" || row?.is_youtube_creator === 1;
+    const isTiktokCreator = row?.is_tiktok_creator === true || row?.is_tiktok_creator === "t" || row?.is_tiktok_creator === 1;
     const isBot = row?.is_bot === true || row?.is_bot === "t" || row?.is_bot === 1;
     const popularity = 0;
-    res.json({ ...user, balance, hasPrime, primeTier, primeExpiresAt: row?.prime_expires_at ?? null, usernameChangedAt: row?.username_changed_at ?? null, ageVerified, isAdmin, isDeveloper, isBot, popularity });
+    res.json({ ...user, balance, hasPrime, primeTier, primeExpiresAt: row?.prime_expires_at ?? null, usernameChangedAt: row?.username_changed_at ?? null, ageVerified, isAdmin, isDeveloper, isYoutubeCreator, isTiktokCreator, popularity });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });

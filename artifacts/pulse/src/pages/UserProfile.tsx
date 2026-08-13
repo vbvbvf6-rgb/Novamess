@@ -728,6 +728,21 @@ export default function UserProfile() {
                       <path d="M7 12l3.5 3.5L17 8" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   )}
+                  {(user as any).isDeveloper && (
+                    <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-violet-500/15 text-violet-300 border border-violet-500/30">
+                      DEV
+                    </span>
+                  )}
+                  {(user as any).isYoutubeCreator && (
+                    <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-red-500/15 text-red-400 border border-red-500/30">
+                      YouTube
+                    </span>
+                  )}
+                  {(user as any).isTiktokCreator && (
+                    <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-black/20 text-foreground border border-border">
+                      TikTok
+                    </span>
+                  )}
                   {!(user as any).hasPrime && isContact && (
                     <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/30">Контакт</span>
                   )}

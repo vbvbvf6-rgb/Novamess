@@ -2660,7 +2660,14 @@ export default function Settings() {
                     </div>
                   </div>
                   {creatorTasks.map(task => (
-                    <p key={task.platform} className="text-xs text-amber-400">⏳ {task.platform === "youtube" ? "YouTube" : "TikTok"}: заявка на проверке</p>
+                    <p
+                      key={task.platform}
+                      className={`text-xs ${task.status === "approved" ? "text-emerald-400" : task.status === "rejected" ? "text-destructive" : "text-amber-400"}`}
+                    >
+                      {task.status === "approved" ? "✓" : task.status === "rejected" ? "×" : "⏳"}{" "}
+                      {task.platform === "youtube" ? "YouTube" : "TikTok"}:{" "}
+                      {task.status === "approved" ? "значок выдан" : task.status === "rejected" ? "заявка отклонена, можно отправить новую ссылку" : "заявка на проверке"}
+                    </p>
                   ))}
                 </div>
               </Section>
