@@ -375,8 +375,8 @@ function TwoFaSection({ user, toast, lang }: { user: any; toast: any; lang: stri
   );
 }
 
-function ScreenLockSection({ lang, toast }: { lang: string; toast: any }) {
-  const [pinEnabled, setPinEnabled] = useState(() => localStorage.getItem("pulse-screen-lock-enabled") === "true");
+function ScreenLockSection({ lang, toast, biometricEnabled }: { lang: string; toast: any; biometricEnabled: boolean }) {
+  const [pinEnabled, setPinEnabled] = useState(() => !!localStorage.getItem("pulse-screen-lock-pin"));
   const [showSetup, setShowSetup] = useState(false);
   const [mode, setMode] = useState<"set" | "disable">("set");
   const [newPin, setNewPin] = useState("");
@@ -398,7 +398,8 @@ function ScreenLockSection({ lang, toast }: { lang: string; toast: any }) {
     const stored = localStorage.getItem("pulse-screen-lock-pin") || "";
     if (hashPin(oldPin) !== stored) { setErr(lang === "ru" ? "Неверный PIN" : "Incorrect PIN"); return; }
     localStorage.removeItem("pulse-screen-lock-pin");
-    localStorage.removeItem("pulse-screen-lock-enabled");
+    localStorage.removeItem("pulse-screen-lock-pin-length");
+    localStorage.setItem("pulse-screen-lock-enabled", biometricEnabled ? "true" : "false");
     setPinEnabled(false); setShowSetup(false); setOldPin(""); setErr("");
     toast({ title: lang === "ru" ? "Блокировка отключена" : "Screen lock disabled" });
   };
@@ -415,17 +416,23 @@ function ScreenLockSection({ lang, toast }: { lang: string; toast: any }) {
         <div className="p-2 bg-violet-500/10 text-violet-500 rounded-xl"><Fingerprint size={18} /></div>
         <div className="flex-1">
           <p className="text-sm font-medium">{lang === "ru" ? "Блокировка экрана" : "Screen lock"}</p>
-          <p className="text-xs text-muted-foreground">{pinEnabled ? (lang === "ru" ? "PIN-код установлен ✓" : "PIN set ✓") : (lang === "ru" ? "Не установлена" : "Not set")}</p>
+          <p className="text-xs text-muted-foreground">
+            {pinEnabled
+              ? (lang === "ru" ? "PIN-код установлен ✓" : "PIN set ✓")
+              : biometricEnabled
+                ? (lang === "ru" ? "Face ID / отпечаток включён ✓" : "Face ID / fingerprint enabled ✓")
+                : (lang === "ru" ? "Не установлена" : "Not set")}
+          </p>
         </div>
         <button
           onClick={() => { setShowSetup(v => !v); setMode(pinEnabled ? "disable" : "set"); setErr(""); }}
           className={`shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${pinEnabled ? "bg-destructive/10 text-destructive hover:bg-destructive/20" : "bg-violet-500/10 text-violet-500 hover:bg-violet-500/20"}`}
         >
-          {pinEnabled ? (lang === "ru" ? "Изменить / Выкл." : "Change / Off") : (lang === "ru" ? "Включить" : "Enable")}
+          {pinEnabled ? (lang === "ru" ? "Изменить / Выкл." : "Change / Off") : (lang === "ru" ? "Включить PIN" : "Enable PIN")}
         </button>
       </div>
 
-      {pinEnabled && (
+      {(pinEnabled || biometricEnabled) && (
         <button onClick={handleLockNow} className="w-full py-2 rounded-xl border border-border text-xs font-semibold text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors flex items-center justify-center gap-2">
           <Lock size={13} /> {lang === "ru" ? "Заблокировать сейчас" : "Lock now"}
         </button>
@@ -1671,6 +1678,10 @@ export default function Settings() {
     }
     try {
       await registerBiometric({ username: (user as any)?.username, displayName: (user as any)?.displayName });
+      // Biometric-only setup must also activate the app lock. ScreenLock
+      // uses this flag when the app returns from the background.
+      localStorage.setItem("pulse-screen-lock-enabled", "true");
+      sessionStorage.removeItem("pulse-unlocked");
       setBiometricEnabled(true);
       toast({ title: lang === "ru" ? "Face ID / отпечаток подключён" : "Face ID / fingerprint enabled" });
     } catch {
@@ -1684,6 +1695,10 @@ export default function Settings() {
     } else {
       disableBiometric();
       setBiometricEnabled(false);
+      if (!localStorage.getItem("pulse-screen-lock-pin")) {
+        localStorage.setItem("pulse-screen-lock-enabled", "false");
+        sessionStorage.setItem("pulse-unlocked", "true");
+      }
       toast({ title: lang === "ru" ? "Биометрия отключена" : "Biometrics disabled" });
     }
   };
@@ -2627,7 +2642,7 @@ export default function Settings() {
                 </div>
 
                 <TwoFaSection user={user} toast={toast} lang={lang}/>
-                <ScreenLockSection lang={lang} toast={toast}/>
+                <ScreenLockSection lang={lang} toast={toast} biometricEnabled={biometricEnabled}/>
                 <SecurityQuestionSection lang={lang} toast={toast}/>
               </Section>
 
@@ -2637,7 +2652,7 @@ export default function Settings() {
                     <div className="p-2 bg-violet-500/10 text-violet-400 rounded-xl"><Fingerprint size={18}/></div>
                     <div className="flex-1">
                       <p className="text-sm font-medium">{lang === "ru" ? "Face ID или отпечаток" : "Face ID or fingerprint"}</p>
-                      <p className="text-xs text-muted-foreground">{lang === "ru" ? "Защита этого устройства через системную биометрию" : "Protect this device with platform biometrics"}</p>
+                      <p className="text-xs text-muted-foreground">{lang === "ru" ? "При открытии Nova будет запрашивать Face ID или отпечаток" : "Nova will request Face ID or fingerprint when opening"}</p>
                     </div>
                     <Switch checked={biometricEnabled} onCheckedChange={toggleBiometric} />
                   </div>
@@ -2645,7 +2660,7 @@ export default function Settings() {
                 <div className="p-4 space-y-4">
                   <div>
                     <p className="text-sm font-medium">YouTube</p>
-                    <p className="text-xs text-muted-foreground mt-1">Создай видео о Nova, опубликуй его и отправь ссылку. После ручной проверки будет выдан значок платформы.</p>
+                    <p className="text-xs text-muted-foreground mt-1">Задание: опубликуй оригинальное публичное видео о Nova от 15 секунд, добавь #NovaMessenger и пришли ссылку. Администратор проверит ролик вручную.</p>
                     <div className="flex gap-2 mt-3">
                       <Input value={creatorUrl.youtube} onChange={e => setCreatorUrl(v => ({ ...v, youtube: e.target.value }))} placeholder="https://youtube.com/..." className="bg-background" />
                       <button onClick={() => submitCreatorTask("youtube")} disabled={creatorLoading === "youtube"} className="px-3 rounded-xl bg-red-500 text-white text-xs font-bold disabled:opacity-50">{creatorLoading === "youtube" ? "..." : "Отправить"}</button>
@@ -2653,7 +2668,7 @@ export default function Settings() {
                   </div>
                   <div>
                     <p className="text-sm font-medium">TikTok</p>
-                    <p className="text-xs text-muted-foreground mt-1">Опубликуй ролик с Nova и пришли ссылку на него для проверки.</p>
+                    <p className="text-xs text-muted-foreground mt-1">Задание: опубликуй оригинальный публичный ролик о Nova, добавь #NovaMessenger и пришли ссылку. После ручной проверки появится значок TikTok.</p>
                     <div className="flex gap-2 mt-3">
                       <Input value={creatorUrl.tiktok} onChange={e => setCreatorUrl(v => ({ ...v, tiktok: e.target.value }))} placeholder="https://tiktok.com/@..." className="bg-background" />
                       <button onClick={() => submitCreatorTask("tiktok")} disabled={creatorLoading === "tiktok"} className="px-3 rounded-xl bg-black text-white text-xs font-bold border border-border disabled:opacity-50">{creatorLoading === "tiktok" ? "..." : "Отправить"}</button>

@@ -314,8 +314,20 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const secretChatStorageKey = currentUserId
+    ? `nova-secret-chat-${currentUserId}-${chatId}`
+    : `nova-secret-chat-${chatId}`;
+  const [secretChat, setSecretChat] = useState(() => localStorage.getItem(secretChatStorageKey) === "1");
+  const [secretUnlocked, setSecretUnlocked] = useState(false);
+  const [secretPin, setSecretPin] = useState("");
+  const [secretError, setSecretError] = useState("");
+  const [secretUnlockLoading, setSecretUnlockLoading] = useState(false);
+  const screenLock = useScreenLock();
   const { data: chat, isLoading: isChatLoading, isError: isChatError, isFetching: isChatFetching, refetch: refetchChat } = useGetChatById(chatId, { query: { enabled: !!chatId, retry: (failureCount: number, err: any) => { if (err?.response?.status === 404) return false; return failureCount < 2; } } as any });
-  const { data: messages, isLoading: isMessagesLoading } = useGetMessages({ chatId }, { query: { enabled: !!chatId } as any });
+  const { data: messages, isLoading: isMessagesLoading } = useGetMessages(
+    { chatId },
+    { query: { enabled: !!chatId && (!secretChat || secretUnlocked) } as any },
+  );
   const { data: me } = useGetMe();
   const [calling, setCalling] = useState(false);
   const markAsRead = useMarkChatAsRead();
@@ -361,12 +373,6 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
   const [createGroupName, setCreateGroupName] = useState("");
   const [creatingGroup, setCreatingGroup] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
-  const [secretChat, setSecretChat] = useState(() => chatId ? localStorage.getItem(`nova-secret-chat-${chatId}`) === "1" : false);
-  const [secretUnlocked, setSecretUnlocked] = useState(false);
-  const [secretPin, setSecretPin] = useState("");
-  const [secretError, setSecretError] = useState("");
-  const [secretUnlockLoading, setSecretUnlockLoading] = useState(false);
-  const screenLock = useScreenLock();
   const [showThemePicker, setShowThemePicker] = useState(false);
   const [activeThemeId, setActiveThemeId] = useState<string | null>(() => {
     if (!chatId) return null;
@@ -379,11 +385,14 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
   const activeTheme = CHAT_THEMES.find(t => t.id === activeThemeId) ?? null;
 
   useEffect(() => {
-    setSecretChat(chatId ? localStorage.getItem(`nova-secret-chat-${chatId}`) === "1" : false);
+    setSecretChat(localStorage.getItem(secretChatStorageKey) === "1");
     setSecretUnlocked(false);
     setSecretPin("");
     setSecretError("");
-  }, [chatId]);
+    if (localStorage.getItem(secretChatStorageKey) === "1") {
+      queryClient.removeQueries({ queryKey: getGetMessagesQueryKey({ chatId }) });
+    }
+  }, [chatId, secretChatStorageKey, queryClient]);
 
   const handleThemeSelect = (themeId: string | null) => {
     setActiveThemeId(themeId);
@@ -413,8 +422,12 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
     setSecretPin("");
     setSecretError("");
     if (chatId) {
-      if (next) localStorage.setItem(`nova-secret-chat-${chatId}`, "1");
-      else localStorage.removeItem(`nova-secret-chat-${chatId}`);
+      if (next) {
+        localStorage.setItem(secretChatStorageKey, "1");
+        queryClient.removeQueries({ queryKey: getGetMessagesQueryKey({ chatId }) });
+      } else {
+        localStorage.removeItem(secretChatStorageKey);
+      }
     }
     toast({
       title: next ? "Секретный чат включён" : "Секретный чат выключен",
@@ -429,6 +442,7 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
       setSecretUnlockLoading(false);
       if (ok) {
         setSecretUnlocked(true);
+        void queryClient.invalidateQueries({ queryKey: getGetMessagesQueryKey({ chatId }) });
         return;
       }
       setSecretError("Не удалось подтвердить личность. Используйте PIN-код.");
@@ -437,6 +451,7 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
     if (screenLock.verifyPin(secretPin)) {
       setSecretUnlocked(true);
       setSecretPin("");
+      void queryClient.invalidateQueries({ queryKey: getGetMessagesQueryKey({ chatId }) });
     } else {
       setSecretError("Неверный PIN-код");
       setSecretPin("");

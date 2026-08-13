@@ -53,6 +53,24 @@ router.post("/users/me/creator-verifications", async (req, res) => {
     if (!allowed || !/^https?:\/\//i.test(url)) {
       return res.status(400).json({ error: "Укажите корректную ссылку на YouTube или TikTok" });
     }
+
+    let parsedUrl: URL;
+    try {
+      parsedUrl = new URL(url);
+    } catch {
+      return res.status(400).json({ error: "Ссылка имеет неверный формат" });
+    }
+    const hostname = parsedUrl.hostname.toLowerCase().replace(/^www\./, "");
+    const validHost = platform === "youtube"
+      ? hostname === "youtube.com" || hostname === "youtu.be" || hostname === "m.youtube.com"
+      : hostname === "tiktok.com" || hostname === "vm.tiktok.com" || hostname === "m.tiktok.com";
+    if (!validHost || !parsedUrl.pathname || parsedUrl.pathname === "/") {
+      return res.status(400).json({
+        error: platform === "youtube"
+          ? "Нужна ссылка на конкретное публичное видео YouTube"
+          : "Нужна ссылка на конкретный публичный ролик TikTok",
+      });
+    }
     await db.execute(sql`
       INSERT INTO creator_verifications (user_id, platform, submission_url, status)
       VALUES (${req.currentUserId}, ${platform}, ${url}, 'pending')
