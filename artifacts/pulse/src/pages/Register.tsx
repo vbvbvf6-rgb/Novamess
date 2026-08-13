@@ -464,11 +464,11 @@ export default function Register({ onLogin }: RegisterProps) {
                   transition={{ duration: 0.45, ease: "easeInOut" }}
                   className="absolute left-[8%] top-4 h-1 rounded-full bg-primary shadow-[0_0_12px_rgba(234,88,12,0.45)]"
                 />
-                {[
+                {([
                   ["Профиль", 1],
                   ["Данные", 2],
                   ["Защита", 3],
-                ].map(([label, item]) => (
+                ] as const).map(([label, item]) => (
                   <div key={item} className="relative z-10 flex w-1/3 flex-col items-center gap-2">
                     <motion.div
                       animate={formStep === item

@@ -556,6 +556,9 @@ router.delete("/chats/:chatId", async (req, res) => {
     if (!isDirect && membership.role !== "owner" && membership.role !== "admin") return res.status(403).json({ error: "Only chat owners can delete chats" });
     // Clean up pinned messages first
     await db.execute(sql`DELETE FROM pinned_messages WHERE chat_id = ${chatId}`).catch(() => {});
+    await db.execute(sql`DELETE FROM poll_votes WHERE poll_id IN (SELECT id FROM polls WHERE message_id IN (SELECT id FROM messages WHERE chat_id = ${chatId}))`).catch(() => {});
+    await db.execute(sql`DELETE FROM polls WHERE message_id IN (SELECT id FROM messages WHERE chat_id = ${chatId})`).catch(() => {});
+    await db.execute(sql`DELETE FROM reactions WHERE message_id IN (SELECT id FROM messages WHERE chat_id = ${chatId})`).catch(() => {});
     await db.delete(messagesTable).where(eq(messagesTable.chatId, chatId));
     await db.delete(chatMembersTable).where(eq(chatMembersTable.chatId, chatId));
     await db.delete(chatsTable).where(eq(chatsTable.id, chatId));
@@ -580,6 +583,12 @@ router.delete("/chats/:chatId/messages", async (req, res) => {
     if (!membership) return res.status(403).json({ error: "Нет доступа к этому чату" });
 
     await db.execute(sql`DELETE FROM pinned_messages WHERE chat_id = ${chatId}`).catch(() => {});
+    // These tables reference messages without ON DELETE CASCADE in older
+    // imported databases, so remove dependants explicitly before the bulk
+    // delete. This makes the visible "Очистить чат" action reliable.
+    await db.execute(sql`DELETE FROM poll_votes WHERE poll_id IN (SELECT id FROM polls WHERE message_id IN (SELECT id FROM messages WHERE chat_id = ${chatId}))`).catch(() => {});
+    await db.execute(sql`DELETE FROM polls WHERE message_id IN (SELECT id FROM messages WHERE chat_id = ${chatId})`).catch(() => {});
+    await db.execute(sql`DELETE FROM reactions WHERE message_id IN (SELECT id FROM messages WHERE chat_id = ${chatId})`).catch(() => {});
     const deleted = await db.delete(messagesTable)
       .where(eq(messagesTable.chatId, chatId))
       .returning({ id: messagesTable.id });
@@ -814,6 +823,9 @@ router.patch("/chats/:chatId/auto-delete", async (req, res) => {
     await db.update(chatsTable).set({ autoDeleteTimer: timerVal }).where(eq(chatsTable.id, chatId));
     if (timerVal) {
       const cutoff = new Date(Date.now() - timerVal * 1000);
+      await db.execute(sql`DELETE FROM poll_votes WHERE poll_id IN (SELECT id FROM polls WHERE message_id IN (SELECT id FROM messages WHERE chat_id = ${chatId} AND created_at <= ${cutoff}))`).catch(() => {});
+      await db.execute(sql`DELETE FROM polls WHERE message_id IN (SELECT id FROM messages WHERE chat_id = ${chatId} AND created_at <= ${cutoff})`).catch(() => {});
+      await db.execute(sql`DELETE FROM reactions WHERE message_id IN (SELECT id FROM messages WHERE chat_id = ${chatId} AND created_at <= ${cutoff})`).catch(() => {});
       const deleted = await db.delete(messagesTable)
         .where(and(eq(messagesTable.chatId, chatId), lte(messagesTable.createdAt, cutoff)))
         .returning({ id: messagesTable.id });

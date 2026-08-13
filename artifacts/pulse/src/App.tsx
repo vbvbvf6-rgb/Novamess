@@ -741,6 +741,9 @@ function App() {
         if (payload.revokedSessionId && payload.revokedSessionId !== currentSid) return;
         if (payload.keepSessionId && currentSid === payload.keepSessionId) return;
       } catch {}
+      // Do not leave the revoked JWT in the saved-account switcher. Without
+      // this, a reload could immediately restore the invalidated session.
+      if (userId !== null) removeAccount(userId);
       es.close();
       sessionStorage.removeItem("pulse-user-id");
       sessionStorage.removeItem("pulse-user");

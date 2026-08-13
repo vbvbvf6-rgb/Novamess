@@ -40,6 +40,18 @@ async function isChatMember(chatId: number, userId: number): Promise<boolean> {
 async function deleteExpiredMessages(chatId: number, timerSeconds: number | null | undefined) {
   if (!timerSeconds || !Number.isFinite(Number(timerSeconds)) || Number(timerSeconds) <= 0) return [];
   const cutoff = new Date(Date.now() - Number(timerSeconds) * 1000);
+  // Imported databases may not have cascade FKs for reactions/polls. Resolve
+  // message ids first and delete dependent rows explicitly so auto-delete
+  // works for both old and newly created messages.
+  const candidates = await db.execute(sql`
+    SELECT id FROM messages
+    WHERE chat_id = ${chatId} AND created_at <= ${cutoff}
+  `);
+  const ids = (candidates.rows as Array<{ id: number }>).map(row => Number(row.id));
+  if (!ids.length) return [];
+  await db.execute(sql`DELETE FROM poll_votes WHERE poll_id IN (SELECT id FROM polls WHERE message_id IN (${sql.join(ids.map(id => sql`${id}`), sql`, `)}))`).catch(() => {});
+  await db.execute(sql`DELETE FROM polls WHERE message_id IN (${sql.join(ids.map(id => sql`${id}`), sql`, `)})`).catch(() => {});
+  await db.execute(sql`DELETE FROM reactions WHERE message_id IN (${sql.join(ids.map(id => sql`${id}`), sql`, `)})`).catch(() => {});
   return db.delete(messagesTable).where(
     and(eq(messagesTable.chatId, chatId), lte(messagesTable.createdAt, cutoff))
   ).returning({ id: messagesTable.id });

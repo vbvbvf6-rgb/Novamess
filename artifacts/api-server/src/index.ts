@@ -200,6 +200,11 @@ setInterval(async () => {
     const chats = await db.execute(sql`SELECT id, auto_delete_timer FROM chats WHERE auto_delete_timer IS NOT NULL AND auto_delete_timer > 0`);
     for (const chat of chats.rows as any[]) {
       const cutoff = new Date(Date.now() - Number(chat.auto_delete_timer) * 1000);
+      // Clean dependent records first; older imported schemas did not define
+      // cascade behavior for reactions and poll records.
+      await db.execute(sql`DELETE FROM poll_votes WHERE poll_id IN (SELECT id FROM polls WHERE message_id IN (SELECT id FROM messages WHERE chat_id = ${Number(chat.id)} AND created_at <= ${cutoff}))`).catch(() => {});
+      await db.execute(sql`DELETE FROM polls WHERE message_id IN (SELECT id FROM messages WHERE chat_id = ${Number(chat.id)} AND created_at <= ${cutoff})`).catch(() => {});
+      await db.execute(sql`DELETE FROM reactions WHERE message_id IN (SELECT id FROM messages WHERE chat_id = ${Number(chat.id)} AND created_at <= ${cutoff})`).catch(() => {});
       const deleted = await db.delete(messagesTable).where(
         and(eq(messagesTable.chatId, Number(chat.id)), lte(messagesTable.createdAt, cutoff))
       ).returning({ id: messagesTable.id });

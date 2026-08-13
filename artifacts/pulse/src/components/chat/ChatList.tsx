@@ -638,6 +638,7 @@ export function ChatList() {
               const hasPrime = chat.type === "direct" && (chat.otherUser as any)?.hasPrime;
               const isPrimePlus = hasPrime && (chat.otherUser as any)?.primeTier === "prime_plus";
               const isAdmin = chat.type === "direct" && (chat.otherUser as any)?.isAdmin;
+              const isSecret = localStorage.getItem(`nova-secret-chat-${chat.id}`) === "1";
 
               const otherUserId = chat.type === "direct" ? (chat.otherUser as any)?.id : null;
               const displayName =
@@ -645,7 +646,9 @@ export function ChatList() {
                   ? (contactNicknames.get(otherUserId) || (chat.otherUser as any)?.displayName || chat.name || "Неизвестный")
                   : (chat.name || (chat.type === "channel" ? "Канал" : "Группа"));
 
-              const lastMsgText = lastMessage
+              const lastMsgText = isSecret
+                ? "🔒 Секретный чат"
+                : lastMessage
                 ? (lastMessage as any).isDeleted
                   ? "🗑 Сообщение удалено"
                   : lastMessage.type === "text"

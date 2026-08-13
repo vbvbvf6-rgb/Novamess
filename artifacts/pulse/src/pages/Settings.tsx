@@ -11,7 +11,7 @@ import {
   EyeOff, Phone, Globe, Type, Download, Trash2, Copy, Check, ChevronDown,
   ChevronRight, User, Radio, BellOff, Volume2, VolumeX, Clock, MessageSquare,
   PhoneCall, Monitor, Zap, AlertTriangle, X, Flame, Upload, Camera, Crown,
-  ShieldCheck, QrCode, Fingerprint, LogIn, HelpCircle, RefreshCw,
+  ShieldCheck, BadgeCheck, QrCode, Fingerprint, LogIn, HelpCircle, RefreshCw,
   Battery, FolderOpen, ArrowLeft, Mic, Headphones, Bot,
   SlidersHorizontal, Layers, Calendar, Play, FileText, MapPin, Mail, SendHorizonal
 } from "lucide-react";
@@ -1601,8 +1601,18 @@ export default function Settings() {
   };
   const revokeAllOther = async () => {
     const token = sessionStorage.getItem("pulse-token");
-    await fetch("/api/auth/sessions", { method: "DELETE", headers: token ? { Authorization: `Bearer ${token}` } : {} });
+    const res = await fetch("/api/auth/sessions", {
+      method: "DELETE",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!res.ok) {
+      toast({ title: lang === "ru" ? "Не удалось завершить сессии" : "Could not terminate sessions", variant: "destructive" });
+      return;
+    }
     await loadSessions();
+    // Other tabs/devices receive the server-side SSE event. Keep this tab
+    // authenticated and refresh its local account/session state immediately.
+    window.dispatchEvent(new CustomEvent("pulse:sessions-revoked"));
     toast({ title: lang === "ru" ? "Все другие сессии завершены" : "All other sessions terminated" });
   };
 
@@ -1858,17 +1868,6 @@ export default function Settings() {
     setLinkCopied(true);
     setTimeout(() => setLinkCopied(false), 2000);
     toast({ title: t("settings.linkCopied"), description: t("settings.linkCopiedDesc") });
-  };
-
-  const handleEndSessions = () => {
-    const token = sessionStorage.getItem("pulse-token");
-    const userId = sessionStorage.getItem("pulse-user-id");
-    const tabOwned = sessionStorage.getItem("pulse-tab-owned");
-    sessionStorage.clear();
-    if (token) sessionStorage.setItem("pulse-token", token);
-    if (userId) sessionStorage.setItem("pulse-user-id", userId);
-    if (tabOwned) sessionStorage.setItem("pulse-tab-owned", tabOwned);
-    toast({ title: lang === "ru" ? "Готово" : "Done", description: lang === "ru" ? "Все другие сессии завершены." : "All other sessions ended." });
   };
 
   const handleChangeUsername = async () => {

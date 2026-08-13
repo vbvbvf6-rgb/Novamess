@@ -97,7 +97,13 @@ export default function Admin() {
   const [hasAccess, setHasAccess] = useState(false);
 
   useEffect(() => {
-    fetch("/api/admin/check", { headers: getHeader() })
+    const token = sessionStorage.getItem("pulse-token");
+    if (!token) {
+      setHasAccess(false);
+      setAccessChecked(true);
+      return;
+    }
+    fetch("/api/admin/check", { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.json())
       .then(d => { setHasAccess(d.isAdmin === true); setAccessChecked(true); })
       .catch(() => { setHasAccess(false); setAccessChecked(true); });

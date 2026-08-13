@@ -600,10 +600,9 @@ function PostCard({ post, onAppealSubmitted, onTopicClick }: { post: Post & { ap
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="post-card group bg-card border border-border rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:shadow-primary/5 transition-shadow duration-300"
+        className="post-card group bg-card/90 border border-border/70 rounded-2xl overflow-hidden shadow-sm hover:border-primary/20 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300"
       >
-        <div className="h-1 bg-gradient-to-r from-primary via-cyan-400 to-violet-500 opacity-70" />
-        <div className="flex items-center gap-3 p-4 pb-3">
+        <div className="flex items-center gap-3 p-4 pb-3 bg-secondary/10">
           <button
             onClick={() => post.author?.id && setLocation(`/user/${post.author.id}`)}
             className="w-11 h-11 rounded-full p-[2px] bg-gradient-to-br from-primary via-cyan-400 to-violet-500 shrink-0 hover:scale-105 transition-transform"

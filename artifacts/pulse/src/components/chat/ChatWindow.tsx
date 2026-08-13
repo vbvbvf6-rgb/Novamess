@@ -49,6 +49,24 @@ interface ChatTheme {
 
 const CHAT_THEMES: ChatTheme[] = [
   {
+    id: "lavender", name: "Лаванда", emoji: "💜", tier: "prime",
+    bg: { background: "linear-gradient(160deg, #faf5ff 0%, #f5f3ff 52%, #eef2ff 100%)" },
+    bubble: { background: "linear-gradient(135deg, #a78bfa, #818cf8)", boxShadow: "0 2px 12px rgba(129,140,248,0.18)" },
+    preview: "linear-gradient(135deg, #a78bfa, #818cf8)",
+  },
+  {
+    id: "mint", name: "Мята", emoji: "🍃", tier: "prime",
+    bg: { background: "linear-gradient(160deg, #f0fdfa 0%, #ecfdf5 52%, #f0f9ff 100%)" },
+    bubble: { background: "linear-gradient(135deg, #14b8a6, #22c55e)", boxShadow: "0 2px 12px rgba(20,184,166,0.18)" },
+    preview: "linear-gradient(135deg, #14b8a6, #22c55e)",
+  },
+  {
+    id: "peach", name: "Персик", emoji: "🍑", tier: "prime",
+    bg: { background: "linear-gradient(160deg, #fff7ed 0%, #ffedd5 52%, #fef3c7 100%)" },
+    bubble: { background: "linear-gradient(135deg, #fb923c, #f97316)", boxShadow: "0 2px 12px rgba(249,115,22,0.18)" },
+    preview: "linear-gradient(135deg, #fb923c, #f97316)",
+  },
+  {
     id: "sunset", name: "Закат", emoji: "🌅", tier: "prime",
     bg: { background: "linear-gradient(160deg, #fff5f0 0%, #fff0e6 40%, #fef3c7 100%)" },
     bubble: { background: "linear-gradient(135deg, #3b82f6, #60a5fa)", boxShadow: "0 2px 12px rgba(59,130,246,0.2)" },
@@ -344,6 +362,7 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
   const [createGroupName, setCreateGroupName] = useState("");
   const [creatingGroup, setCreatingGroup] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [secretChat, setSecretChat] = useState(() => chatId ? localStorage.getItem(`nova-secret-chat-${chatId}`) === "1" : false);
   const [showThemePicker, setShowThemePicker] = useState(false);
   const [activeThemeId, setActiveThemeId] = useState<string | null>(() => {
     if (!chatId) return null;
@@ -355,6 +374,10 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
   const isPrimePlusUser = (me as any)?.primeTier === "prime_plus";
   const activeTheme = CHAT_THEMES.find(t => t.id === activeThemeId) ?? null;
 
+  useEffect(() => {
+    setSecretChat(chatId ? localStorage.getItem(`nova-secret-chat-${chatId}`) === "1" : false);
+  }, [chatId]);
+
   const handleThemeSelect = (themeId: string | null) => {
     setActiveThemeId(themeId);
     if (themeId && chatId) {
@@ -363,6 +386,18 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
       localStorage.removeItem(`aura-theme-${chatId}`);
     }
     setShowThemePicker(false);
+  };
+  const handleToggleSecretChat = () => {
+    const next = !secretChat;
+    setSecretChat(next);
+    if (chatId) {
+      if (next) localStorage.setItem(`nova-secret-chat-${chatId}`, "1");
+      else localStorage.removeItem(`nova-secret-chat-${chatId}`);
+    }
+    toast({
+      title: next ? "Секретный чат включён" : "Секретный чат выключен",
+      description: next ? "Содержимое и уведомления этого диалога скрываются на устройстве." : "Чат снова отображается обычно.",
+    });
   };
   const [groupCallMembers, setGroupCallMembers] = useState<any[]>([]);
   const [groupCallLoading, setGroupCallLoading] = useState(false);
@@ -1199,6 +1234,11 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
                   <span className="font-semibold">Фон чата</span>
                   {activeThemeId && <div className="ml-auto w-3.5 h-3.5 rounded-full border border-white/30 shadow-sm" style={{ background: activeTheme?.preview ?? "transparent" }} />}
                 </DropdownMenuItem>
+                 <DropdownMenuItem onClick={handleToggleSecretChat} className="rounded-xl cursor-pointer py-2.5">
+                   <Lock size={18} className={`mr-3 ${secretChat ? "text-emerald-400" : "text-muted-foreground"}`} />
+                   <span className="font-semibold">{secretChat ? "Отключить секретный чат" : "Секретный чат"}</span>
+                   {secretChat && <Check size={15} className="ml-auto text-emerald-400" />}
+                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleToggleMute} className="rounded-xl cursor-pointer py-2.5">
                   {chat.isMuted ? (
@@ -2135,6 +2175,16 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
                     <MessageSquare size={18} className="text-amber-400" />
                   </div>
                   Очистить чат
+                </button>
+                <button
+                  onClick={() => { setShowMobileMenu(false); handleToggleSecretChat(); }}
+                  className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-emerald-500/10 transition-colors font-semibold"
+                >
+                  <div className="w-9 h-9 rounded-xl bg-emerald-500/10 flex items-center justify-center shrink-0">
+                    <Lock size={18} className={secretChat ? "text-emerald-400" : "text-muted-foreground"} />
+                  </div>
+                  {secretChat ? "Отключить секретный чат" : "Секретный чат"}
+                  {secretChat && <Check size={15} className="ml-auto text-emerald-400" />}
                 </button>
 
                 <div className="h-px bg-border my-1 mx-2" />

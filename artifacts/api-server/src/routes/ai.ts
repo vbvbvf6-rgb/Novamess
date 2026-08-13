@@ -108,45 +108,6 @@ router.post("/ai/chat", async (req, res) => {
   }
 });
 
-router.post("/ai/summarize", async (req, res) => {
-  try {
-    const { messages } = req.body;
-    if (!Array.isArray(messages) || messages.length === 0) {
-      return res.status(400).json({ error: "Нет сообщений для резюме" });
-    }
-    const snippet = messages
-      .slice(-30)
-      .map((m: any) => `${m.senderName || "Пользователь"}: ${m.text || ""}`)
-      .filter((s: string) => s.trim().length > 5)
-      .join("\n");
-    if (!snippet.trim()) return res.status(400).json({ error: "Недостаточно текста для резюме" });
-
-    const systemPrompt = "Ты — помощник-аналитик в мессенджере Aether. Составь краткое резюме переписки (2-4 предложения). Выдели главные темы и итоги. Отвечай ТОЛЬКО на русском языке. Будь чётким и лаконичным.";
-    const apiKey = process.env["DEEP_SEEK"];
-    const userMsg = `Вот переписка:\n${snippet}\n\nСоставь краткое резюме.`;
-
-    const tasks: Promise<string | undefined>[] = [
-      callPollinations(systemPrompt, userMsg, [], "mistral"),
-      callPollinations(systemPrompt, userMsg, [], "phi"),
-    ];
-    if (apiKey) {
-      tasks.unshift(
-        callOpenRouter(apiKey, "openai/gpt-4o-mini", [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userMsg },
-        ]),
-      );
-    }
-
-    const reply = await raceFirst(tasks);
-    if (!reply) return res.status(502).json({ error: "AI не ответил. Попробуйте позже." });
-    res.json({ summary: reply });
-  } catch (err) {
-    req.log.error(err);
-    res.status(500).json({ error: "Ошибка сервера" });
-  }
-});
-
 router.get("/ai/bot-user", async (req, res) => {
   try {
     const rows = await db.execute(
