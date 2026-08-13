@@ -3,6 +3,7 @@ import { io, Socket } from "socket.io-client";
 import { Call } from "@workspace/api-client-react";
 import { getSavedAccounts, SavedAccount, MAX_ACCOUNTS } from "@/lib/accounts";
 import { toast } from "@/hooks/use-toast";
+import { applyAppTheme } from "@/lib/appThemes";
 
 // ICE servers are fetched from the API at call-start time so that TURN
 // credentials live only on the server and are never baked into the JS bundle.
@@ -146,17 +147,29 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
 
   // ── theme ─────────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (isDark) {
-      document.documentElement.classList.add("dark");
-      document.documentElement.classList.remove("light");
-    } else {
-      document.documentElement.classList.remove("dark");
-      document.documentElement.classList.add("light");
-    }
+    const savedTheme = localStorage.getItem("pulse-app-theme");
+    const themeId = savedTheme || (isDark ? "dark" : "light");
+    applyAppTheme(themeId);
     localStorage.setItem("pulse-theme", isDark ? "dark" : "light");
   }, [isDark]);
 
-  const toggleTheme = () => setIsDark((p) => !p);
+  const toggleTheme = () => {
+    const next = !isDark;
+    localStorage.setItem("pulse-app-theme", next ? "dark" : "light");
+    setIsDark(next);
+  };
+
+  useEffect(() => {
+    const handleThemeChange = (event: Event) => {
+      const themeId = (event as CustomEvent<string>).detail;
+      const theme = themeId === "dark" ? true : themeId === "light" ? false : isDark;
+      localStorage.setItem("pulse-app-theme", themeId);
+      applyAppTheme(themeId);
+      setIsDark(theme);
+    };
+    window.addEventListener("pulse:app-theme", handleThemeChange);
+    return () => window.removeEventListener("pulse:app-theme", handleThemeChange);
+  }, [isDark]);
   const logout = () => { onLogout(); };
 
   const getUserHeaders = useCallback((): Record<string, string> => {

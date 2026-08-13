@@ -15,6 +15,8 @@ import { ChannelThread } from "./ChannelThread";
 import { useLocation } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { useScreenLock } from "@/hooks/useScreenLock";
+import { authenticateBiometric, isBiometricEnabled } from "@/lib/biometric";
 import { format } from "date-fns";
 import { ru as ruLocale } from "date-fns/locale";
 import {
@@ -360,6 +362,11 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
   const [creatingGroup, setCreatingGroup] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [secretChat, setSecretChat] = useState(() => chatId ? localStorage.getItem(`nova-secret-chat-${chatId}`) === "1" : false);
+  const [secretUnlocked, setSecretUnlocked] = useState(false);
+  const [secretPin, setSecretPin] = useState("");
+  const [secretError, setSecretError] = useState("");
+  const [secretUnlockLoading, setSecretUnlockLoading] = useState(false);
+  const screenLock = useScreenLock();
   const [showThemePicker, setShowThemePicker] = useState(false);
   const [activeThemeId, setActiveThemeId] = useState<string | null>(() => {
     if (!chatId) return null;
@@ -373,6 +380,9 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
 
   useEffect(() => {
     setSecretChat(chatId ? localStorage.getItem(`nova-secret-chat-${chatId}`) === "1" : false);
+    setSecretUnlocked(false);
+    setSecretPin("");
+    setSecretError("");
   }, [chatId]);
 
   const handleThemeSelect = (themeId: string | null) => {
@@ -386,7 +396,22 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
   };
   const handleToggleSecretChat = () => {
     const next = !secretChat;
+    if (next && chat?.type !== "direct") {
+      toast({ title: "Секретный режим доступен только для личных чатов", variant: "destructive" });
+      return;
+    }
+    if (next && !isBiometricEnabled() && !screenLock.isEnabled()) {
+      toast({
+        title: "Сначала включите защиту экрана",
+        description: "Включите PIN или Face ID в Настройки → Конфиденциальность.",
+        variant: "destructive",
+      });
+      return;
+    }
     setSecretChat(next);
+    setSecretUnlocked(!next);
+    setSecretPin("");
+    setSecretError("");
     if (chatId) {
       if (next) localStorage.setItem(`nova-secret-chat-${chatId}`, "1");
       else localStorage.removeItem(`nova-secret-chat-${chatId}`);
@@ -395,6 +420,27 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
       title: next ? "Секретный чат включён" : "Секретный чат выключен",
       description: next ? "Содержимое и уведомления этого диалога скрываются на устройстве." : "Чат снова отображается обычно.",
     });
+  };
+  const unlockSecretChat = async () => {
+    setSecretError("");
+    if (isBiometricEnabled()) {
+      setSecretUnlockLoading(true);
+      const ok = await authenticateBiometric();
+      setSecretUnlockLoading(false);
+      if (ok) {
+        setSecretUnlocked(true);
+        return;
+      }
+      setSecretError("Не удалось подтвердить личность. Используйте PIN-код.");
+      return;
+    }
+    if (screenLock.verifyPin(secretPin)) {
+      setSecretUnlocked(true);
+      setSecretPin("");
+    } else {
+      setSecretError("Неверный PIN-код");
+      setSecretPin("");
+    }
   };
   const [groupCallMembers, setGroupCallMembers] = useState<any[]>([]);
   const [groupCallLoading, setGroupCallLoading] = useState(false);
@@ -500,6 +546,7 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
             if (!rawIcon) return undefined;
             try { return new URL(rawIcon, window.location.origin).toString(); } catch { return undefined; }
           })();
+          if (secretChat) return;
           const notifBody = chatType === "direct" ? body : `${senderName}: ${body}`;
 
           notify(notifTitle, {
@@ -972,6 +1019,44 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
         >
           Назад
         </button>
+      </div>
+    );
+  }
+
+  if (secretChat && !secretUnlocked) {
+    return (
+      <div className="flex-1 h-full flex flex-col items-center justify-center bg-background p-6">
+        <div className="w-full max-w-sm rounded-3xl border border-emerald-500/20 bg-card p-7 text-center shadow-xl">
+          <div className="mx-auto mb-4 w-16 h-16 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+            <Lock size={30} />
+          </div>
+          <h2 className="text-xl font-bold">Секретный чат</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Сообщения и уведомления скрыты. Подтвердите доступ, чтобы открыть переписку.
+          </p>
+          {!isBiometricEnabled() && (
+            <input
+              value={secretPin}
+              onChange={event => { setSecretPin(event.target.value.replace(/\D/g, "").slice(0, 8)); setSecretError(""); }}
+              onKeyDown={event => event.key === "Enter" && void unlockSecretChat()}
+              inputMode="numeric"
+              type="password"
+              placeholder="PIN-код"
+              className="mt-5 w-full rounded-2xl border border-border bg-background px-4 py-3 text-center text-lg tracking-[0.35em] outline-none focus:border-primary"
+            />
+          )}
+          {secretError && <p className="mt-3 text-xs text-destructive">{secretError}</p>}
+          <button
+            onClick={() => void unlockSecretChat()}
+            disabled={secretUnlockLoading || (!isBiometricEnabled() && secretPin.length < 4)}
+            className="mt-5 w-full rounded-2xl bg-primary px-4 py-3 font-bold text-primary-foreground disabled:opacity-50"
+          >
+            {secretUnlockLoading ? "Проверяем…" : isBiometricEnabled() ? "Открыть с Face ID / отпечатком" : "Открыть чат"}
+          </button>
+          <button onClick={() => setSelectedChatId(null)} className="mt-3 text-sm text-muted-foreground hover:text-foreground">
+            Назад к чатам
+          </button>
+        </div>
       </div>
     );
   }

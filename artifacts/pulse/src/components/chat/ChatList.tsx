@@ -772,9 +772,9 @@ export function ChatList() {
                               })()}
                             </motion.span>
                           ) : hasDraft ? (
-                            <motion.span key="draft" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-1 truncate">
-                              <span className="font-bold">Черновик:</span>
-                              <span className="truncate">{draftText}</span>
+                            <motion.span key="draft" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-1 min-w-0 overflow-hidden">
+                              <span className="font-bold shrink-0">Черновик:</span>
+                              <span className="min-w-0 truncate">{draftText}</span>
                             </motion.span>
                           ) : (
                             <motion.span

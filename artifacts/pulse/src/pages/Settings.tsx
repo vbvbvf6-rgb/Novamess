@@ -34,6 +34,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import type { Lang } from "@/i18n/translations";
+import { APP_THEMES, applyAppTheme } from "@/lib/appThemes";
+import { disableBiometric, isBiometricSupported, registerBiometric } from "@/lib/biometric";
 
 const AVATAR_COLORS = [
   "#000000","#3B82F6","#EC4899","#10B981","#F59E0B","#8B5CF6",
@@ -1442,9 +1444,18 @@ export default function Settings() {
 
   // Prime theme
   const [primeTheme, setPrimeTheme] = useState(() => localStorage.getItem("pulse-prime-theme") || "cyan");
+  const [appTheme, setAppTheme] = useState(() => localStorage.getItem("pulse-app-theme") || "light");
   useEffect(() => {
     if ((user as any)?.hasPrime) applyPrimeTheme(primeTheme);
   }, [(user as any)?.hasPrime, primeTheme]);
+
+  const handleAppThemeSelect = (themeId: string) => {
+    setAppTheme(themeId);
+    localStorage.setItem("pulse-app-theme", themeId);
+    applyAppTheme(themeId);
+    window.dispatchEvent(new CustomEvent("pulse:app-theme", { detail: themeId }));
+    toast({ title: lang === "ru" ? "Тема применена" : "Theme applied" });
+  };
 
   // Avatar file upload
   const avatarFileRef = useRef<HTMLInputElement>(null);
@@ -1654,28 +1665,26 @@ export default function Settings() {
   };
 
   const setupBiometric = async () => {
-    if (!window.PublicKeyCredential || !navigator.credentials) {
+    if (!isBiometricSupported()) {
       toast({ title: lang === "ru" ? "Биометрия не поддерживается" : "Biometrics are not supported", variant: "destructive" });
       return;
     }
     try {
-      const challenge = crypto.getRandomValues(new Uint8Array(32));
-      const credential = await navigator.credentials.create({
-        publicKey: {
-          challenge,
-          rp: { name: "Nova Messenger" },
-          user: { id: crypto.getRandomValues(new Uint8Array(16)), name: (user as any)?.username || "nova-user", displayName: (user as any)?.displayName || "Nova user" },
-          pubKeyCredParams: [{ type: "public-key", alg: -7 }, { type: "public-key", alg: -257 }],
-          authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required" },
-          timeout: 60000,
-        },
-      });
-      if (!credential) throw new Error("cancelled");
-      localStorage.setItem("nova-biometric-enabled", "1");
+      await registerBiometric({ username: (user as any)?.username, displayName: (user as any)?.displayName });
       setBiometricEnabled(true);
       toast({ title: lang === "ru" ? "Face ID / отпечаток подключён" : "Face ID / fingerprint enabled" });
     } catch {
       toast({ title: lang === "ru" ? "Не удалось подключить биометрию" : "Could not enable biometrics", variant: "destructive" });
+    }
+  };
+
+  const toggleBiometric = (enabled: boolean) => {
+    if (enabled) {
+      setupBiometric();
+    } else {
+      disableBiometric();
+      setBiometricEnabled(false);
+      toast({ title: lang === "ru" ? "Биометрия отключена" : "Biometrics disabled" });
     }
   };
 
@@ -2223,6 +2232,32 @@ export default function Settings() {
                 </div>
               </Section>
 
+              <Section title={lang === "ru" ? "Тема интерфейса" : "Interface theme"} icon={<Palette size={13}/>}>
+                <div className="p-4">
+                  <p className="text-xs text-muted-foreground mb-3">
+                    {lang === "ru" ? "Выберите цветовую палитру Nova для этого устройства." : "Choose a Nova color palette for this device."}
+                  </p>
+                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                    {APP_THEMES.map(theme => (
+                      <button
+                        key={theme.id}
+                        onClick={() => handleAppThemeSelect(theme.id)}
+                        className={`relative flex flex-col items-center gap-1.5 rounded-xl p-2 border transition-all ${
+                          appTheme === theme.id
+                            ? "border-primary bg-primary/10 scale-[1.03] shadow-md shadow-primary/15"
+                            : "border-border/60 bg-card hover:border-primary/40 hover:bg-secondary"
+                        }`}
+                        title={theme.name}
+                      >
+                        <span className="w-9 h-9 rounded-full ring-2 ring-white/10 shadow-sm" style={{ background: theme.preview }} />
+                        <span className="text-[10px] leading-tight font-medium text-center truncate max-w-full">{theme.emoji} {theme.name}</span>
+                        {appTheme === theme.id && <CheckCircle size={12} className="absolute top-1 right-1 text-primary" />}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </Section>
+
               <Section title={lang==="ru"?"Email-адрес":"Email address"} icon={<Mail size={13}/>}>
                 <EmailVerificationSection
                   user={user}
@@ -2604,7 +2639,7 @@ export default function Settings() {
                       <p className="text-sm font-medium">{lang === "ru" ? "Face ID или отпечаток" : "Face ID or fingerprint"}</p>
                       <p className="text-xs text-muted-foreground">{lang === "ru" ? "Защита этого устройства через системную биометрию" : "Protect this device with platform biometrics"}</p>
                     </div>
-                    <Switch checked={biometricEnabled} onCheckedChange={v => v ? setupBiometric() : (() => { localStorage.removeItem("nova-biometric-enabled"); setBiometricEnabled(false); })()} />
+                    <Switch checked={biometricEnabled} onCheckedChange={toggleBiometric} />
                   </div>
                 </div>
                 <div className="p-4 space-y-4">

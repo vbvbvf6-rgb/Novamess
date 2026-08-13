@@ -964,6 +964,8 @@ export default function Admin() {
     setShowEditProfile(false);
     setEditDisplayName(user.display_name);
     setEditBio("");
+  };
+
   useEffect(() => {
     if (activeTab === "stats" && selectedUser) {
       fetchUserStats(selectedUser.id);

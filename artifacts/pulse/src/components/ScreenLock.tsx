@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Lock, Zap, Eye, EyeOff, KeyRound, ArrowLeft } from "lucide-react";
+import { Lock, Zap, Eye, EyeOff, KeyRound, ArrowLeft, Fingerprint } from "lucide-react";
 import { useScreenLock } from "@/hooks/useScreenLock";
+import { authenticateBiometric, isBiometricEnabled } from "@/lib/biometric";
 
 interface ScreenLockProps {
   children: React.ReactNode;
@@ -22,12 +23,36 @@ export function ScreenLock({ children }: ScreenLockProps) {
   const [resetLoading, setResetLoading] = useState(false);
   const [resetError, setResetError] = useState("");
   const [resetSuccess, setResetSuccess] = useState(false);
+  const [biometricLoading, setBiometricLoading] = useState(false);
+  const [biometricError, setBiometricError] = useState("");
 
   useEffect(() => {
     const handler = () => setLocked(true);
     window.addEventListener("pulse-lock", handler);
     return () => window.removeEventListener("pulse-lock", handler);
   }, []);
+
+  const unlockWithBiometric = async () => {
+    if (biometricLoading) return;
+    setBiometricLoading(true);
+    setBiometricError("");
+    const ok = await authenticateBiometric();
+    if (ok) {
+      sessionStorage.setItem("pulse-unlocked", "true");
+      setLocked(false);
+      setPin("");
+    } else {
+      setBiometricError("Не удалось подтвердить личность. Используйте PIN-код.");
+    }
+    setBiometricLoading(false);
+  };
+
+  useEffect(() => {
+    if (locked && isBiometricEnabled()) {
+      const id = window.setTimeout(() => { void unlockWithBiometric(); }, 250);
+      return () => window.clearTimeout(id);
+    }
+  }, [locked]);
 
   const doUnlock = (candidate: string) => {
     if (verifyPin(candidate)) {
@@ -227,6 +252,20 @@ export function ScreenLock({ children }: ScreenLockProps) {
                     />
                   ))}
                 </div>
+
+                {isBiometricEnabled() && (
+                  <div className="w-full space-y-2">
+                    <button
+                      onClick={unlockWithBiometric}
+                      disabled={biometricLoading}
+                      className="w-full py-3 rounded-2xl bg-violet-500/15 border border-violet-400/30 text-violet-300 font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-60"
+                    >
+                      <Fingerprint size={18} />
+                      {biometricLoading ? "Проверяем…" : "Разблокировать Face ID / отпечатком"}
+                    </button>
+                    {biometricError && <p className="text-xs text-red-400 text-center">{biometricError}</p>}
+                  </div>
+                )}
 
                 {!pinLengthKnown && pin.length >= 4 && (
                   <button
