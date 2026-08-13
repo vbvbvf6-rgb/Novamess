@@ -152754,11 +152754,17 @@ var port = Number(rawPort);
 if (Number.isNaN(port) || port <= 0) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
 }
-if (process.env.NODE_ENV === "production") {
-  const dockerPath = path2.join(process.cwd(), "migrations");
-  const nativePath = path2.join(process.cwd(), "lib/db/drizzle");
-  const migrationsFolder = fs2.existsSync(dockerPath) ? dockerPath : nativePath;
+{
+  const migrationCandidates = [
+    path2.join(process.cwd(), "migrations"),
+    path2.join(process.cwd(), "lib/db/drizzle"),
+    path2.resolve(process.cwd(), "../../lib/db/drizzle")
+  ];
+  const migrationsFolder = migrationCandidates.find((candidate) => fs2.existsSync(candidate));
   try {
+    if (!migrationsFolder) {
+      throw new Error(`Migrations folder not found. Tried: ${migrationCandidates.join(", ")}`);
+    }
     const tableCheck = await db.execute(sql`
       SELECT 1 FROM information_schema.tables
       WHERE table_schema = 'public' AND table_name = 'users' LIMIT 1

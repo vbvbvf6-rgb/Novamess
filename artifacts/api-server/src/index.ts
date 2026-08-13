@@ -26,18 +26,27 @@ if (Number.isNaN(port) || port <= 0) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
 }
 
-// ── Auto-migrate on startup (production / Docker only) ────────────────────
+// ── Auto-migrate on startup ──────────────────────────────────────────────
 // Strategy:
 //   • Fresh DB  → run migrate() to create all tables from scratch.
 //   • Existing DB → skip migrate() entirely; schema drift is handled by
 //     the ALTER TABLE IF NOT EXISTS block below, which runs every startup.
 //   This avoids the "relation already exists" error when Drizzle tries to
 //   re-apply CREATE TABLE statements that don't use IF NOT EXISTS.
-if (process.env.NODE_ENV === "production") {
-  const dockerPath = path.join(process.cwd(), "migrations");
-  const nativePath = path.join(process.cwd(), "lib/db/drizzle");
-  const migrationsFolder = fs.existsSync(dockerPath) ? dockerPath : nativePath;
+{
+  // The API workflow runs with cwd=artifacts/api-server, while the native
+  // monorepo migrations live two levels above it. Keep the Docker layout as
+  // the first choice, but also support a fresh imported dev workspace.
+  const migrationCandidates = [
+    path.join(process.cwd(), "migrations"),
+    path.join(process.cwd(), "lib/db/drizzle"),
+    path.resolve(process.cwd(), "../../lib/db/drizzle"),
+  ];
+  const migrationsFolder = migrationCandidates.find((candidate) => fs.existsSync(candidate));
   try {
+    if (!migrationsFolder) {
+      throw new Error(`Migrations folder not found. Tried: ${migrationCandidates.join(", ")}`);
+    }
     // Check whether the DB is already initialised (users table exists)
     const tableCheck = await db.execute(sql`
       SELECT 1 FROM information_schema.tables
