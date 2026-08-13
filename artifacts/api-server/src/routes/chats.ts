@@ -823,13 +823,27 @@ router.patch("/chats/:chatId/auto-delete", async (req, res) => {
     await db.update(chatsTable).set({ autoDeleteTimer: timerVal }).where(eq(chatsTable.id, chatId));
     if (timerVal) {
       const cutoff = new Date(Date.now() - timerVal * 1000);
-      await db.execute(sql`DELETE FROM poll_votes WHERE poll_id IN (SELECT id FROM polls WHERE message_id IN (SELECT id FROM messages WHERE chat_id = ${chatId} AND created_at <= ${cutoff}))`).catch(() => {});
-      await db.execute(sql`DELETE FROM polls WHERE message_id IN (SELECT id FROM messages WHERE chat_id = ${chatId} AND created_at <= ${cutoff})`).catch(() => {});
-      await db.execute(sql`DELETE FROM reactions WHERE message_id IN (SELECT id FROM messages WHERE chat_id = ${chatId} AND created_at <= ${cutoff})`).catch(() => {});
-      const deleted = await db.delete(messagesTable)
-        .where(and(eq(messagesTable.chatId, chatId), lte(messagesTable.createdAt, cutoff)))
-        .returning({ id: messagesTable.id });
-      if (deleted.length) broadcastToChat(chatId, "chat-cleared", { chatId, deletedCount: deleted.length });
+      // Apply the new rule immediately to both sides of the conversation:
+      // old messages are removed when the timer is enabled, and future
+      // messages are removed by the same cutoff in the background worker.
+      const candidates = await db.execute(sql`
+        SELECT id FROM messages
+        WHERE chat_id = ${chatId} AND created_at <= ${cutoff}
+      `);
+      const ids = (candidates.rows as Array<{ id: number }>).map(row => Number(row.id));
+      if (ids.length) {
+        const idList = sql.join(ids.map(id => sql`${id}`), sql`, `);
+        await db.execute(sql`DELETE FROM poll_votes WHERE poll_id IN (SELECT id FROM polls WHERE message_id IN (${idList}))`).catch(() => {});
+        await db.execute(sql`DELETE FROM polls WHERE message_id IN (${idList})`).catch(() => {});
+        await db.execute(sql`DELETE FROM reactions WHERE message_id IN (${idList})`).catch(() => {});
+        const deleted = await db.delete(messagesTable)
+          .where(and(eq(messagesTable.chatId, chatId), lte(messagesTable.createdAt, cutoff)))
+          .returning({ id: messagesTable.id });
+        for (const { id } of deleted) {
+          broadcastToChat(chatId, "message-deleted", { messageId: id, chatId });
+        }
+        broadcastToChat(chatId, "chat-cleared", { chatId, deletedCount: deleted.length });
+      }
     }
     const chat = await buildChat(chatId, uid);
     res.json(chat);

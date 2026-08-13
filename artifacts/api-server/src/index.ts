@@ -197,7 +197,7 @@ setInterval(async () => {
 
 setInterval(async () => {
   try {
-    const chats = await db.execute(sql`SELECT id, auto_delete_timer FROM chats WHERE auto_delete_timer IS NOT NULL AND auto_delete_timer > 0`);
+      const chats = await db.execute(sql`SELECT id, auto_delete_timer FROM chats WHERE auto_delete_timer IS NOT NULL AND auto_delete_timer > 0`);
     for (const chat of chats.rows as any[]) {
       const cutoff = new Date(Date.now() - Number(chat.auto_delete_timer) * 1000);
       // Clean dependent records first; older imported schemas did not define

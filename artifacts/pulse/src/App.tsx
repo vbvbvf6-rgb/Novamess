@@ -757,6 +757,18 @@ function App() {
     const handleStorageSessionsRevoked = (e: StorageEvent) => {
       if (e.key === "nova-sessions-revoked-at" && e.newValue) handleLocalSessionsRevoked();
     };
+    // SSE is the fast path, but a background tab, mobile browser, or a
+    // reverse proxy can pause an EventSource connection. A lightweight
+    // session check makes revocation observable on those clients too.
+    const sessionCheck = window.setInterval(() => {
+      fetch("/api/users/me", { headers: { Authorization: `Bearer ${token}` } })
+        .then(response => {
+          if ([401, 403, 404].includes(response.status)) {
+            handleSessionsRevoked({ data: JSON.stringify({ keepSessionId: null }) } as MessageEvent);
+          }
+        })
+        .catch(() => {});
+    }, 5000);
     es.addEventListener("sessions-revoked", handleSessionsRevoked);
     channel?.addEventListener("message", handleLocalSessionsRevoked);
     window.addEventListener("storage", handleStorageSessionsRevoked);
@@ -767,6 +779,7 @@ function App() {
       channel?.removeEventListener("message", handleLocalSessionsRevoked);
       channel?.close();
       window.removeEventListener("storage", handleStorageSessionsRevoked);
+      window.clearInterval(sessionCheck);
       es.close();
     };
   }, [userId]);

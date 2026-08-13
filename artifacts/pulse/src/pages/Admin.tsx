@@ -9,6 +9,7 @@ import {
   Wrench, Mail, ToggleLeft, ToggleRight, Timer, Database, Swords, Lock, Sparkles, Rocket, Calendar,
   Code2, Bot, Play, Wifi
 } from "lucide-react";
+import { getSavedAccounts } from "@/lib/accounts";
 
 interface AdminUser {
   id: number;
@@ -73,7 +74,10 @@ interface Leaderboard {
 }
 
 function getHeader(): Record<string, string> {
-  const token = sessionStorage.getItem("pulse-token");
+  const currentUserId = Number(sessionStorage.getItem("pulse-user-id") || "0");
+  const token = sessionStorage.getItem("pulse-token")
+    || getSavedAccounts().find(account => account.userId === currentUserId)?.token
+    || getSavedAccounts()[0]?.token;
   return token ? { "Authorization": `Bearer ${token}` } : {};
 }
 
@@ -97,7 +101,7 @@ export default function Admin() {
   const [hasAccess, setHasAccess] = useState(false);
 
   useEffect(() => {
-    const token = sessionStorage.getItem("pulse-token");
+    const token = getHeader()["Authorization"]?.replace(/^Bearer\s+/, "");
     if (!token) {
       setHasAccess(false);
       setAccessChecked(true);

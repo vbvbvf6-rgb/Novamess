@@ -81,10 +81,13 @@ async function isAdminUser(userId: number): Promise<boolean> {
     const user = rows.rows[0] as any;
     // Keep the original bootstrap account reachable even if an imported
     // database was restored with a different numeric id or lost the flag.
+    const rawAdminFlag = String(user?.is_admin ?? "").toLowerCase();
     return user?.username === "creater_messenger"
       || user?.is_admin === true
       || user?.is_admin === "t"
-      || user?.is_admin === 1;
+      || user?.is_admin === 1
+      || rawAdminFlag === "true"
+      || rawAdminFlag === "yes";
   } catch { return false; }
 }
 

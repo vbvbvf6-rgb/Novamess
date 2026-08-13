@@ -483,7 +483,16 @@ export default function Register({ onLogin }: RegisterProps) {
                         : "bg-card border-border text-muted-foreground"
                       }`}
                     >
-                      {formStep > item ? <Check size={14} strokeWidth={3} /> : item}
+                      {formStep > item ? (
+                        <motion.span
+                          initial={{ scale: 0, rotate: -35 }}
+                          animate={{ scale: 1, rotate: 0 }}
+                          transition={{ type: "spring", stiffness: 500, damping: 18 }}
+                          className="flex items-center justify-center"
+                        >
+                          <Check size={14} strokeWidth={3} />
+                        </motion.span>
+                      ) : item}
                     </motion.div>
                     <span className={`text-[10px] font-black uppercase tracking-[0.12em] ${formStep >= item ? "text-primary" : "text-muted-foreground"}`}>
                       {label}

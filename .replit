@@ -60,3 +60,7 @@ GMAIL_APP_PASSWORD = "upefjfrziasysbaz"
 [[ports]]
 localPort = 8080
 externalPort = 80
+
+[[ports]]
+localPort = 23821
+externalPort = 3000

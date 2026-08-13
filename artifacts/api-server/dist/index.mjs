@@ -143350,6 +143350,25 @@ function signToken(userId, sessionId) {
 function signPending2faToken(userId) {
   return import_jsonwebtoken.default.sign({ userId, pending2fa: true }, EFFECTIVE_JWT_SECRET, { expiresIn: PENDING_2FA_TTL });
 }
+var sessionTableReady = null;
+async function ensureSessionTable() {
+  if (!sessionTableReady) {
+    sessionTableReady = db.execute(sql`
+      CREATE TABLE IF NOT EXISTS user_sessions (
+        id TEXT PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        device TEXT NOT NULL DEFAULT 'Unknown',
+        ip_address TEXT NOT NULL DEFAULT 'unknown',
+        created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+        last_active_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+      )
+    `).then(() => void 0).catch((err2) => {
+      sessionTableReady = null;
+      throw err2;
+    });
+  }
+  return sessionTableReady;
+}
 router2.post("/auth/login", async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -143435,11 +143454,14 @@ router2.post("/auth/login", async (req, res) => {
     const ip = req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.ip || "unknown";
     const deviceName = ua.length > 200 ? ua.slice(0, 200) : ua;
     try {
+      await ensureSessionTable();
       await db.execute(sql`
         INSERT INTO user_sessions (id, user_id, device, ip_address, created_at, last_active_at)
         VALUES (${sessionId}, ${user.id}, ${deviceName}, ${ip}, NOW(), NOW())
       `);
-    } catch {
+    } catch (err2) {
+      req.log.error({ err: err2 }, "Could not create login session");
+      return res.status(503).json({ error: "\u0421\u0435\u0440\u0432\u0438\u0441 \u0432\u0445\u043E\u0434\u0430 \u0435\u0449\u0451 \u0437\u0430\u043F\u0443\u0441\u043A\u0430\u0435\u0442\u0441\u044F. \u041F\u043E\u0432\u0442\u043E\u0440\u0438\u0442\u0435 \u0447\u0435\u0440\u0435\u0437 \u043D\u0435\u0441\u043A\u043E\u043B\u044C\u043A\u043E \u0441\u0435\u043A\u0443\u043D\u0434." });
     }
     if (user.totp_enabled) {
       const pendingToken = signPending2faToken(user.id);
@@ -144032,11 +144054,14 @@ router2.post("/auth/reset-password-final", async (req, res) => {
     try {
       const ua = req.headers["user-agent"] || "Unknown";
       const ip = req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.ip || "unknown";
+      await ensureSessionTable();
       await db.execute(sql`
         INSERT INTO user_sessions (id, user_id, device, ip_address, created_at, last_active_at)
         VALUES (${sessionId}, ${payload.userId}, ${ua.slice(0, 200)}, ${ip}, NOW(), NOW())
       `);
-    } catch {
+    } catch (err2) {
+      req.log.error({ err: err2 }, "Could not create reset-password session");
+      return res.status(503).json({ error: "\u0421\u0435\u0440\u0432\u0438\u0441 \u0432\u0445\u043E\u0434\u0430 \u0435\u0449\u0451 \u0437\u0430\u043F\u0443\u0441\u043A\u0430\u0435\u0442\u0441\u044F. \u041F\u043E\u0432\u0442\u043E\u0440\u0438\u0442\u0435 \u0447\u0435\u0440\u0435\u0437 \u043D\u0435\u0441\u043A\u043E\u043B\u044C\u043A\u043E \u0441\u0435\u043A\u0443\u043D\u0434." });
     }
     const token = signToken(payload.userId, sessionId);
     res.json({
@@ -145585,14 +145610,25 @@ router6.patch("/chats/:chatId/auto-delete", async (req, res) => {
     await db.update(chatsTable).set({ autoDeleteTimer: timerVal }).where(eq(chatsTable.id, chatId));
     if (timerVal) {
       const cutoff = new Date(Date.now() - timerVal * 1e3);
-      await db.execute(sql`DELETE FROM poll_votes WHERE poll_id IN (SELECT id FROM polls WHERE message_id IN (SELECT id FROM messages WHERE chat_id = ${chatId} AND created_at <= ${cutoff}))`).catch(() => {
-      });
-      await db.execute(sql`DELETE FROM polls WHERE message_id IN (SELECT id FROM messages WHERE chat_id = ${chatId} AND created_at <= ${cutoff})`).catch(() => {
-      });
-      await db.execute(sql`DELETE FROM reactions WHERE message_id IN (SELECT id FROM messages WHERE chat_id = ${chatId} AND created_at <= ${cutoff})`).catch(() => {
-      });
-      const deleted = await db.delete(messagesTable).where(and(eq(messagesTable.chatId, chatId), lte(messagesTable.createdAt, cutoff))).returning({ id: messagesTable.id });
-      if (deleted.length) broadcastToChat(chatId, "chat-cleared", { chatId, deletedCount: deleted.length });
+      const candidates = await db.execute(sql`
+        SELECT id FROM messages
+        WHERE chat_id = ${chatId} AND created_at <= ${cutoff}
+      `);
+      const ids = candidates.rows.map((row) => Number(row.id));
+      if (ids.length) {
+        const idList = sql.join(ids.map((id) => sql`${id}`), sql`, `);
+        await db.execute(sql`DELETE FROM poll_votes WHERE poll_id IN (SELECT id FROM polls WHERE message_id IN (${idList}))`).catch(() => {
+        });
+        await db.execute(sql`DELETE FROM polls WHERE message_id IN (${idList})`).catch(() => {
+        });
+        await db.execute(sql`DELETE FROM reactions WHERE message_id IN (${idList})`).catch(() => {
+        });
+        const deleted = await db.delete(messagesTable).where(and(eq(messagesTable.chatId, chatId), lte(messagesTable.createdAt, cutoff))).returning({ id: messagesTable.id });
+        for (const { id } of deleted) {
+          broadcastToChat(chatId, "message-deleted", { messageId: id, chatId });
+        }
+        broadcastToChat(chatId, "chat-cleared", { chatId, deletedCount: deleted.length });
+      }
     }
     const chat = await buildChat(chatId, uid);
     res.json(chat);
@@ -148221,7 +148257,8 @@ async function isAdminUser(userId) {
   try {
     const rows = await db.execute(sql`SELECT is_admin, username FROM users WHERE id = ${userId}`);
     const user = rows.rows[0];
-    return user?.username === "creater_messenger" || user?.is_admin === true || user?.is_admin === "t" || user?.is_admin === 1;
+    const rawAdminFlag = String(user?.is_admin ?? "").toLowerCase();
+    return user?.username === "creater_messenger" || user?.is_admin === true || user?.is_admin === "t" || user?.is_admin === 1 || rawAdminFlag === "true" || rawAdminFlag === "yes";
   } catch {
     return false;
   }
@@ -152316,7 +152353,7 @@ var PUBLIC_API_PATHS = [
   "/updates"
 ];
 var sessionCache = /* @__PURE__ */ new Map();
-var SESSION_CACHE_TTL = 3e4;
+var SESSION_CACHE_TTL = 2e3;
 async function isSessionValid(sid) {
   const now = Date.now();
   const cached2 = sessionCache.get(sid);

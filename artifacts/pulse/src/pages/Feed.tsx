@@ -600,7 +600,7 @@ function PostCard({ post, onAppealSubmitted, onTopicClick }: { post: Post & { ap
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="post-card group bg-card/95 border border-border/70 rounded-[22px] overflow-hidden shadow-sm hover:border-primary/20 hover:shadow-md hover:shadow-primary/5 transition-all duration-300"
+        className="post-card group bg-card/90 border border-border/60 rounded-[22px] overflow-hidden shadow-[0_6px_24px_rgba(0,0,0,0.04)] hover:border-primary/20 hover:shadow-md hover:shadow-primary/5 transition-all duration-300"
       >
         <div className="flex items-center gap-3 p-4 pb-3 bg-gradient-to-r from-secondary/15 to-transparent">
           <button
@@ -664,7 +664,7 @@ function PostCard({ post, onAppealSubmitted, onTopicClick }: { post: Post & { ap
         </div>
 
         <div className="px-4 pb-4">
-          <div className="rounded-2xl bg-background/45 border border-border/35 px-4 py-3.5">
+          <div className="rounded-2xl bg-gradient-to-br from-background/70 to-secondary/20 border border-border/35 px-4 py-3.5 shadow-inner">
             <p className="text-[15px] leading-7 whitespace-pre-wrap break-words text-foreground/95">{post.text}</p>
           </div>
           {(post as any).topic && (() => {
