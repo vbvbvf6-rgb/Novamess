@@ -37,6 +37,14 @@ async function isChatMember(chatId: number, userId: number): Promise<boolean> {
   return !!member;
 }
 
+async function deleteExpiredMessages(chatId: number, timerSeconds: number | null | undefined) {
+  if (!timerSeconds || !Number.isFinite(Number(timerSeconds)) || Number(timerSeconds) <= 0) return [];
+  const cutoff = new Date(Date.now() - Number(timerSeconds) * 1000);
+  return db.delete(messagesTable).where(
+    and(eq(messagesTable.chatId, chatId), lte(messagesTable.createdAt, cutoff))
+  ).returning({ id: messagesTable.id });
+}
+
 async function getUserPrimeInfo(userId: number): Promise<{ hasPrime: boolean; isPrimePlus: boolean }> {
   try {
     const row = await db.execute(sql`SELECT has_prime, prime_tier, prime_expires_at FROM users WHERE id = ${userId}`);
@@ -316,15 +324,10 @@ router.get("/messages", async (req, res) => {
     const { isPrimePlus } = await getUserPrimeInfo(uid);
 
     const chat = await db.query.chatsTable.findFirst({ where: eq(chatsTable.id, chatId) });
-    if (chat?.autoDeleteTimer) {
-      const cutoff = new Date(Date.now() - chat.autoDeleteTimer * 1000);
-      const deleted = await db.delete(messagesTable).where(
-        and(eq(messagesTable.chatId, chatId), lte(messagesTable.createdAt, cutoff))
-      ).returning({ id: messagesTable.id });
-      if (deleted.length > 0) {
-        for (const { id } of deleted) {
-          broadcastToChat(chatId, "message-deleted", { messageId: id, chatId });
-        }
+    const deleted = await deleteExpiredMessages(chatId, chat?.autoDeleteTimer);
+    if (deleted.length > 0) {
+      for (const { id } of deleted) {
+        broadcastToChat(chatId, "message-deleted", { messageId: id, chatId });
       }
     }
 
@@ -468,6 +471,13 @@ router.post("/messages", async (req, res) => {
     }
 
     const offloadedMediaUrl = await offloadDataUrl(body.mediaUrl, "messages");
+
+    // Do not wait for the periodic cleanup job when a new message arrives.
+    // This keeps the full history consistent even if the chat was idle.
+    const expiredBeforeInsert = await deleteExpiredMessages(body.chatId, chatInfo?.autoDeleteTimer);
+    for (const { id } of expiredBeforeInsert) {
+      broadcastToChat(body.chatId, "message-deleted", { messageId: id, chatId: body.chatId });
+    }
 
     const [msg] = await db.insert(messagesTable).values({
       chatId: body.chatId,

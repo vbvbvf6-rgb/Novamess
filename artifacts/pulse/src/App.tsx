@@ -732,9 +732,13 @@ function App() {
       // The current device is deliberately kept by the server. All other
       // open tabs/devices receive this event and clear themselves immediately.
       try {
-        const payload = JSON.parse(e.data) as { keepSessionId?: string | null };
+        const payload = JSON.parse(e.data) as { keepSessionId?: string | null; revokedSessionId?: string };
         const tokenPart = sessionStorage.getItem("pulse-token")?.split(".")[1];
-        const currentSid = tokenPart ? JSON.parse(atob(tokenPart.replace(/-/g, "+").replace(/_/g, "/"))).sid : null;
+        const currentSid = tokenPart
+          ? JSON.parse(atob(tokenPart.replace(/-/g, "+").replace(/_/g, "/"))).sid
+          : null;
+        // A single-session revoke only logs out the matching session.
+        if (payload.revokedSessionId && payload.revokedSessionId !== currentSid) return;
         if (payload.keepSessionId && currentSid === payload.keepSessionId) return;
       } catch {}
       es.close();
@@ -853,6 +857,14 @@ function App() {
 
   const handleLogout = () => {
     const currentId = userId;
+    const token = sessionStorage.getItem("pulse-token");
+    if (token) {
+      fetch("/api/auth/logout", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        keepalive: true,
+      }).catch(() => {});
+    }
     sessionStorage.removeItem("pulse-user-id");
     sessionStorage.removeItem("pulse-user");
     sessionStorage.removeItem("pulse-token");

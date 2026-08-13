@@ -8,7 +8,10 @@ import { broadcastToAll } from "../lib/sse";
 
 const router = Router();
 
-const ADMIN_USER_IDS = [4];
+// Keep the bootstrap administrator IDs for older databases where the
+// is_admin flag may not have been backfilled yet. The database flag remains
+// the source of truth for all other administrators.
+const ADMIN_USER_IDS = [1, 4];
 
 // Run once at module load to ensure required columns/tables exist
 db.execute(sql`ALTER TABLE bot_tokens ADD COLUMN IF NOT EXISTS code_lang TEXT NOT NULL DEFAULT 'python'`).catch(() => {});
@@ -74,9 +77,9 @@ db.execute(sql`CREATE TABLE IF NOT EXISTS app_updates (
 async function isAdminUser(userId: number): Promise<boolean> {
   if (ADMIN_USER_IDS.includes(userId)) return true;
   try {
-    const rows = await db.execute(sql`SELECT is_admin FROM users WHERE id = ${userId}`);
+    const rows = await db.execute(sql`SELECT is_admin, username FROM users WHERE id = ${userId}`);
     const user = rows.rows[0] as any;
-    return !!user?.is_admin;
+    return user?.is_admin === true || user?.is_admin === "t" || user?.is_admin === 1;
   } catch { return false; }
 }
 

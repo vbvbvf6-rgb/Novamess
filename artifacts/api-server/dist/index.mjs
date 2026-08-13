@@ -144131,10 +144131,14 @@ router2.delete("/auth/sessions/:id", async (req, res) => {
   try {
     const uid = req.currentUserId;
     const { id } = req.params;
-    await db.execute(sql`
+    const deleted = await db.execute(sql`
       DELETE FROM user_sessions WHERE id = ${id} AND user_id = ${uid}
+      RETURNING id
     `);
     invalidateSessionCache(id);
+    if (deleted.rows.length > 0) {
+      broadcastToUser(uid, "sessions-revoked", { revokedSessionId: id });
+    }
     res.json({ success: true });
   } catch (err2) {
     req.log.error(err2);
@@ -145555,15 +145559,23 @@ router6.post("/chats/:chatId/deliver", async (req, res) => {
 router6.patch("/chats/:chatId/auto-delete", async (req, res) => {
   try {
     const chatId = Number(req.params.chatId);
+    const uid = req.currentUserId;
+    const membership = await db.query.chatMembersTable.findFirst({
+      where: and(eq(chatMembersTable.chatId, chatId), eq(chatMembersTable.userId, uid))
+    });
+    if (!membership) return res.status(403).json({ error: "\u041D\u0435\u0442 \u0434\u043E\u0441\u0442\u0443\u043F\u0430 \u043A \u044D\u0442\u043E\u043C\u0443 \u0447\u0430\u0442\u0443" });
     const { timer } = req.body;
-    const timerVal = timer === null || timer === 0 ? null : Number(timer);
+    const parsedTimer = timer === null || timer === 0 ? null : Number(timer);
+    if (parsedTimer !== null && (!Number.isFinite(parsedTimer) || parsedTimer < 1 || parsedTimer > 30 * 24 * 60 * 60)) {
+      return res.status(400).json({ error: "\u041D\u0435\u043A\u043E\u0440\u0440\u0435\u043A\u0442\u043D\u044B\u0439 \u0442\u0430\u0439\u043C\u0435\u0440 \u0430\u0432\u0442\u043E\u0443\u0434\u0430\u043B\u0435\u043D\u0438\u044F" });
+    }
+    const timerVal = parsedTimer;
     await db.update(chatsTable).set({ autoDeleteTimer: timerVal }).where(eq(chatsTable.id, chatId));
     if (timerVal) {
       const cutoff = new Date(Date.now() - timerVal * 1e3);
       const deleted = await db.delete(messagesTable).where(and(eq(messagesTable.chatId, chatId), lte(messagesTable.createdAt, cutoff))).returning({ id: messagesTable.id });
       if (deleted.length) broadcastToChat(chatId, "chat-cleared", { chatId, deletedCount: deleted.length });
     }
-    const uid = req.currentUserId;
     const chat = await buildChat(chatId, uid);
     res.json(chat);
   } catch (err2) {
@@ -146359,6 +146371,13 @@ async function isChatMember(chatId, userId) {
   });
   return !!member2;
 }
+async function deleteExpiredMessages(chatId, timerSeconds) {
+  if (!timerSeconds || !Number.isFinite(Number(timerSeconds)) || Number(timerSeconds) <= 0) return [];
+  const cutoff = new Date(Date.now() - Number(timerSeconds) * 1e3);
+  return db.delete(messagesTable).where(
+    and(eq(messagesTable.chatId, chatId), lte(messagesTable.createdAt, cutoff))
+  ).returning({ id: messagesTable.id });
+}
 async function getUserPrimeInfo3(userId) {
   try {
     const row = await db.execute(sql`SELECT has_prime, prime_tier, prime_expires_at FROM users WHERE id = ${userId}`);
@@ -146580,15 +146599,10 @@ router8.get("/messages", async (req, res) => {
     }
     const { isPrimePlus } = await getUserPrimeInfo3(uid);
     const chat = await db.query.chatsTable.findFirst({ where: eq(chatsTable.id, chatId) });
-    if (chat?.autoDeleteTimer) {
-      const cutoff = new Date(Date.now() - chat.autoDeleteTimer * 1e3);
-      const deleted = await db.delete(messagesTable).where(
-        and(eq(messagesTable.chatId, chatId), lte(messagesTable.createdAt, cutoff))
-      ).returning({ id: messagesTable.id });
-      if (deleted.length > 0) {
-        for (const { id } of deleted) {
-          broadcastToChat(chatId, "message-deleted", { messageId: id, chatId });
-        }
+    const deleted = await deleteExpiredMessages(chatId, chat?.autoDeleteTimer);
+    if (deleted.length > 0) {
+      for (const { id } of deleted) {
+        broadcastToChat(chatId, "message-deleted", { messageId: id, chatId });
       }
     }
     let query = db.select().from(messagesTable).where(eq(messagesTable.chatId, chatId));
@@ -146707,6 +146721,10 @@ router8.post("/messages", async (req, res) => {
       if (isPrimePlus) allowedEffect = effect;
     }
     const offloadedMediaUrl = await offloadDataUrl(body.mediaUrl, "messages");
+    const expiredBeforeInsert = await deleteExpiredMessages(body.chatId, chatInfo?.autoDeleteTimer);
+    for (const { id } of expiredBeforeInsert) {
+      broadcastToChat(body.chatId, "message-deleted", { messageId: id, chatId: body.chatId });
+    }
     const [msg] = await db.insert(messagesTable).values({
       chatId: body.chatId,
       senderId: uid,
@@ -148102,7 +148120,7 @@ init_src();
 init_drizzle_orm();
 init_bcryptjs();
 var router12 = (0, import_express12.Router)();
-var ADMIN_USER_IDS = [4];
+var ADMIN_USER_IDS = [1, 4];
 db.execute(sql`ALTER TABLE bot_tokens ADD COLUMN IF NOT EXISTS code_lang TEXT NOT NULL DEFAULT 'python'`).catch(() => {
 });
 db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_banned BOOLEAN NOT NULL DEFAULT FALSE`).catch(() => {
@@ -148171,9 +148189,9 @@ db.execute(sql`CREATE TABLE IF NOT EXISTS app_updates (
 async function isAdminUser(userId) {
   if (ADMIN_USER_IDS.includes(userId)) return true;
   try {
-    const rows = await db.execute(sql`SELECT is_admin FROM users WHERE id = ${userId}`);
+    const rows = await db.execute(sql`SELECT is_admin, username FROM users WHERE id = ${userId}`);
     const user = rows.rows[0];
-    return !!user?.is_admin;
+    return user?.is_admin === true || user?.is_admin === "t" || user?.is_admin === 1;
   } catch {
     return false;
   }

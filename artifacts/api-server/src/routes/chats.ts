@@ -799,8 +799,18 @@ router.post("/chats/:chatId/deliver", async (req, res) => {
 router.patch("/chats/:chatId/auto-delete", async (req, res) => {
   try {
     const chatId = Number(req.params.chatId);
+    const uid = req.currentUserId;
+    const membership = await db.query.chatMembersTable.findFirst({
+      where: and(eq(chatMembersTable.chatId, chatId), eq(chatMembersTable.userId, uid)),
+    });
+    if (!membership) return res.status(403).json({ error: "Нет доступа к этому чату" });
+
     const { timer } = req.body;
-    const timerVal = timer === null || timer === 0 ? null : Number(timer);
+    const parsedTimer = timer === null || timer === 0 ? null : Number(timer);
+    if (parsedTimer !== null && (!Number.isFinite(parsedTimer) || parsedTimer < 1 || parsedTimer > 30 * 24 * 60 * 60)) {
+      return res.status(400).json({ error: "Некорректный таймер автоудаления" });
+    }
+    const timerVal = parsedTimer;
     await db.update(chatsTable).set({ autoDeleteTimer: timerVal }).where(eq(chatsTable.id, chatId));
     if (timerVal) {
       const cutoff = new Date(Date.now() - timerVal * 1000);
@@ -809,7 +819,6 @@ router.patch("/chats/:chatId/auto-delete", async (req, res) => {
         .returning({ id: messagesTable.id });
       if (deleted.length) broadcastToChat(chatId, "chat-cleared", { chatId, deletedCount: deleted.length });
     }
-    const uid = req.currentUserId;
     const chat = await buildChat(chatId, uid);
     res.json(chat);
   } catch (err) {

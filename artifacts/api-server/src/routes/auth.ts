@@ -987,10 +987,16 @@ router.delete("/auth/sessions/:id", async (req, res) => {
   try {
     const uid = req.currentUserId;
     const { id } = req.params;
-    await db.execute(sql`
+    const deleted = await db.execute(sql`
       DELETE FROM user_sessions WHERE id = ${id} AND user_id = ${uid}
+      RETURNING id
     `);
     invalidateSessionCache(id);
+    if ((deleted.rows as any[]).length > 0) {
+      // Notify every open connection. The client compares the revoked
+      // session id with its own JWT, so other sessions stay online.
+      broadcastToUser(uid, "sessions-revoked", { revokedSessionId: id });
+    }
     res.json({ success: true });
   } catch (err) {
     req.log.error(err);
