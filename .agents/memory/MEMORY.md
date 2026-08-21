@@ -36,3 +36,4 @@
 - [Context provider self-consume bug](context-provider-self-consume.md) — a component can't call useContext() for a Provider it also renders in its own return; extract the consuming logic into a child rendered inside the Provider.
 - [LightningCSS deployment binaries](lightningcss-deploy.md) — pnpm must retain the musl optional binaries as well as glibc ones for Alpine-style deployments.
 - [Biometric screen lock](biometric-screen-lock.md) — enabling Face ID/fingerprint must also activate app lock; biometric-only mode is valid when no PIN is configured.
+- [PXXL Docker workspace manifests](pxxl-docker-workspace-manifests.md) — copy every pnpm workspace manifest before frozen-lockfile install in the container build.
