@@ -59707,6 +59707,7 @@ var init_users = __esm({
       bio: text("bio"),
       avatarUrl: text("avatar_url"),
       avatarColor: text("avatar_color").notNull().default("#3B82F6"),
+      nicknameStyle: text("nickname_style"),
       status: text("status").notNull().default("offline"),
       statusText: text("status_text"),
       statusAnimation: text("status_animation"),
@@ -60394,8 +60395,6 @@ var init_src = __esm({
       max: 20,
       idleTimeoutMillis: 3e4,
       connectionTimeoutMillis: 1e4,
-      // Force IPv4 — Render free tier does not route IPv6
-      family: 4,
       ...sslConfig
     });
     pool.on("error", (err2) => {
@@ -144381,7 +144380,7 @@ router4.get("/users/me", async (req, res) => {
     const uid = req.currentUserId;
     const user = await db.query.usersTable.findFirst({ where: eq(usersTable.id, uid) });
     if (!user) return res.status(404).json({ error: "User not found" });
-    const rows = await db.execute(sql`SELECT balance, username_changed_at, has_prime, prime_tier, prime_expires_at, age_verified, is_admin, is_developer, is_youtube_creator, is_tiktok_creator, is_bot FROM users WHERE id = ${uid}`);
+    const rows = await db.execute(sql`SELECT balance, username_changed_at, has_prime, prime_tier, prime_expires_at, age_verified, is_admin, is_developer, is_youtube_creator, is_tiktok_creator, is_bot, nickname_style FROM users WHERE id = ${uid}`);
     const row = rows.rows[0];
     const balance = row ? Number(row.balance) : 0;
     const hasPrime = row?.has_prime === true || row?.has_prime === "t" || row?.has_prime === 1;
@@ -144393,10 +144392,41 @@ router4.get("/users/me", async (req, res) => {
     const isTiktokCreator = row?.is_tiktok_creator === true || row?.is_tiktok_creator === "t" || row?.is_tiktok_creator === 1;
     const isBot = row?.is_bot === true || row?.is_bot === "t" || row?.is_bot === 1;
     const popularity = 0;
-    res.json({ ...user, balance, hasPrime, primeTier, primeExpiresAt: row?.prime_expires_at ?? null, usernameChangedAt: row?.username_changed_at ?? null, ageVerified, isAdmin: isAdmin3, isDeveloper, isYoutubeCreator, isTiktokCreator, popularity });
+    res.json({ ...user, nicknameStyle: row?.nickname_style ?? null, balance, hasPrime, primeTier, primeExpiresAt: row?.prime_expires_at ?? null, usernameChangedAt: row?.username_changed_at ?? null, ageVerified, isAdmin: isAdmin3, isDeveloper, isYoutubeCreator, isTiktokCreator, popularity });
   } catch (err2) {
     req.log.error(err2);
     res.status(500).json({ error: "Internal server error" });
+  }
+});
+router4.get("/users/me/nickname-styles", async (req, res) => {
+  try {
+    const rows = await db.execute(sql`
+      SELECT ns.*, uns.id AS inventory_id, uns.source, uns.granted_at,
+             (u.nickname_style = ns.slug) AS equipped
+      FROM user_nickname_styles uns
+      JOIN nickname_styles ns ON ns.id = uns.style_id
+      JOIN users u ON u.id = uns.user_id
+      WHERE uns.user_id = ${req.currentUserId}
+      ORDER BY ns.sort_order, ns.id
+    `);
+    res.json(rows.rows);
+  } catch {
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u0438\u043D\u0432\u0435\u043D\u0442\u0430\u0440\u044C" });
+  }
+});
+router4.post("/users/me/nickname-styles/:styleId/equip", async (req, res) => {
+  try {
+    const styleId = Number(req.params.styleId);
+    const rows = await db.execute(sql`
+      SELECT ns.slug FROM user_nickname_styles uns
+      JOIN nickname_styles ns ON ns.id = uns.style_id
+      WHERE uns.user_id = ${req.currentUserId} AND ns.id = ${styleId}
+    `);
+    if (!rows.rows.length) return res.status(403).json({ error: "\u042D\u0442\u043E\u0433\u043E \u0441\u0442\u0438\u043B\u044F \u043D\u0435\u0442 \u0432 \u0432\u0430\u0448\u0435\u043C \u0438\u043D\u0432\u0435\u043D\u0442\u0430\u0440\u0435" });
+    await db.execute(sql`UPDATE users SET nickname_style = ${rows.rows[0].slug} WHERE id = ${req.currentUserId}`);
+    res.json({ success: true, nicknameStyle: rows.rows[0].slug });
+  } catch {
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u043D\u0430\u0434\u0435\u0442\u044C \u0441\u0442\u0438\u043B\u044C" });
   }
 });
 router4.get("/users/me/creator-verifications", async (req, res) => {
@@ -148266,6 +148296,40 @@ db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_youtube_creator BOO
 });
 db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_tiktok_creator BOOLEAN NOT NULL DEFAULT FALSE`).catch(() => {
 });
+db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS nickname_style TEXT`).catch(() => {
+});
+db.execute(sql`CREATE TABLE IF NOT EXISTS nickname_styles (
+  id SERIAL PRIMARY KEY,
+  slug TEXT NOT NULL UNIQUE,
+  name TEXT NOT NULL,
+  description TEXT NOT NULL DEFAULT '',
+  category TEXT NOT NULL DEFAULT 'common',
+  preview_css TEXT NOT NULL,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  active BOOLEAN NOT NULL DEFAULT TRUE
+)`).catch(() => {
+});
+db.execute(sql`CREATE TABLE IF NOT EXISTS user_nickname_styles (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  style_id INTEGER NOT NULL REFERENCES nickname_styles(id) ON DELETE CASCADE,
+  source TEXT NOT NULL DEFAULT 'admin',
+  granted_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  granted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE (user_id, style_id)
+)`).catch(() => {
+});
+db.execute(sql`
+  INSERT INTO nickname_styles (slug, name, description, category, preview_css, sort_order) VALUES
+  ('gold', 'Золотой', 'Элегантный золотой ник для Prime', 'premium', 'linear-gradient(90deg,#facc15,#f59e0b,#fde68a,#f59e0b)', 1),
+  ('rainbow', 'Радужный', 'Яркий переливающийся градиент', 'premium', 'linear-gradient(90deg,#ef4444,#f59e0b,#22c55e,#06b6d4,#8b5cf6,#ec4899)', 2),
+  ('red-black', 'Красно-чёрный', 'Красный и чёрный перелив для администраторов', 'admin', 'linear-gradient(90deg,#ef4444,#111827,#dc2626,#030712)', 3),
+  ('black-white', 'Чёрно-белый', 'Контрастный чёрно-белый перелив для администраторов', 'admin', 'linear-gradient(90deg,#050505,#f8fafc,#737373,#fff)', 4),
+  ('ocean', 'Океан', 'Спокойный сине-бирюзовый градиент', 'common', 'linear-gradient(90deg,#2563eb,#06b6d4,#22d3ee)', 5),
+  ('violet', 'Фиолетовый', 'Мягкий фиолетовый градиент', 'common', 'linear-gradient(90deg,#7c3aed,#c026d3,#ec4899)', 6)
+  ON CONFLICT (slug) DO NOTHING
+`).catch(() => {
+});
 db.execute(sql`CREATE TABLE IF NOT EXISTS creator_verifications (
   id SERIAL PRIMARY KEY,
   user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -148347,12 +148411,71 @@ router12.get("/admin/check", async (req, res) => {
 router12.get("/admin/users", requireAdmin, async (req, res) => {
   try {
     const rows = await db.execute(
-      sql`SELECT id, username, display_name, avatar_color, avatar_url, status, balance, created_at, is_verified, is_developer, is_admin, is_bot, has_prime, is_banned, ban_reason, ban_expires_at FROM users ORDER BY id`
+      sql`SELECT id, username, display_name, avatar_color, avatar_url, nickname_style, status, balance, created_at, is_verified, is_developer, is_admin, is_bot, has_prime, is_banned, ban_reason, ban_expires_at FROM users ORDER BY id`
     );
     res.json(rows.rows);
   } catch (err2) {
     req.log.error(err2);
     res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
+  }
+});
+router12.get("/admin/nickname-styles", requireAdmin, async (_req, res) => {
+  try {
+    const styles = await db.execute(sql`SELECT * FROM nickname_styles WHERE active = TRUE ORDER BY sort_order, id`);
+    res.json(styles.rows);
+  } catch (err2) {
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u0441\u0442\u0438\u043B\u0438" });
+  }
+});
+router12.get("/admin/users/:userId/nickname-styles", requireAdmin, async (req, res) => {
+  try {
+    const rows = await db.execute(sql`
+      SELECT ns.*, uns.id AS inventory_id, uns.source, uns.granted_at
+      FROM user_nickname_styles uns
+      JOIN nickname_styles ns ON ns.id = uns.style_id
+      WHERE uns.user_id = ${Number(req.params.userId)}
+      ORDER BY ns.sort_order, ns.id
+    `);
+    res.json(rows.rows);
+  } catch {
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u0438\u043D\u0432\u0435\u043D\u0442\u0430\u0440\u044C" });
+  }
+});
+router12.post("/admin/users/:userId/nickname-styles", requireAdmin, async (req, res) => {
+  try {
+    const userId = Number(req.params.userId);
+    const styleId = Number(req.body?.styleId);
+    const source = typeof req.body?.source === "string" ? req.body.source.slice(0, 40) : "admin";
+    if (!Number.isInteger(userId) || !Number.isInteger(styleId)) return res.status(400).json({ error: "\u0423\u043A\u0430\u0436\u0438\u0442\u0435 \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044F \u0438 \u0441\u0442\u0438\u043B\u044C" });
+    const target = await db.execute(sql`SELECT id, username FROM users WHERE id = ${userId}`);
+    if (!target.rows.length) return res.status(404).json({ error: "\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D" });
+    const style = await db.execute(sql`SELECT id, slug, name FROM nickname_styles WHERE id = ${styleId} AND active = TRUE`);
+    if (!style.rows.length) return res.status(404).json({ error: "\u0421\u0442\u0438\u043B\u044C \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D" });
+    await db.execute(sql`
+      INSERT INTO user_nickname_styles (user_id, style_id, source, granted_by)
+      VALUES (${userId}, ${styleId}, ${source}, ${req.currentUserId})
+      ON CONFLICT (user_id, style_id) DO NOTHING
+    `);
+    await db.execute(sql`UPDATE users SET nickname_style = ${String(style.rows[0].slug)} WHERE id = ${userId}`);
+    res.json({ success: true, style: style.rows[0] });
+  } catch (err2) {
+    req.log.error(err2);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0432\u044B\u0434\u0430\u0442\u044C \u0441\u0442\u0438\u043B\u044C" });
+  }
+});
+router12.delete("/admin/users/:userId/nickname-styles/:styleId", requireAdmin, async (req, res) => {
+  try {
+    const userId = Number(req.params.userId);
+    const styleId = Number(req.params.styleId);
+    await db.execute(sql`DELETE FROM user_nickname_styles WHERE user_id = ${userId} AND style_id = ${styleId}`);
+    const active = await db.execute(sql`
+      SELECT ns.slug FROM user_nickname_styles uns JOIN nickname_styles ns ON ns.id = uns.style_id
+      WHERE uns.user_id = ${userId} ORDER BY uns.granted_at DESC LIMIT 1
+    `);
+    await db.execute(sql`UPDATE users SET nickname_style = ${active.rows[0]?.slug ?? null} WHERE id = ${userId}`);
+    res.json({ success: true });
+  } catch {
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0443\u0434\u0430\u043B\u0438\u0442\u044C \u0441\u0442\u0438\u043B\u044C" });
   }
 });
 router12.post("/admin/give-currency", requireAdmin, async (req, res) => {

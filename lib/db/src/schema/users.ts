@@ -9,6 +9,7 @@ export const usersTable = pgTable("users", {
   bio: text("bio"),
   avatarUrl: text("avatar_url"),
   avatarColor: text("avatar_color").notNull().default("#3B82F6"),
+  nicknameStyle: text("nickname_style"),
   status: text("status").notNull().default("offline"),
   statusText: text("status_text"),
   statusAnimation: text("status_animation"),

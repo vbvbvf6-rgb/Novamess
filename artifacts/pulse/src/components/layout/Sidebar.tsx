@@ -124,7 +124,7 @@ function MobileAccountFooter({
           )}
         </div>
         <div className="flex-1 min-w-0 text-left">
-          <p className="text-[14px] font-bold truncate text-foreground leading-tight">{me?.displayName || "..."}</p>
+          <p className={`text-[14px] font-bold truncate leading-tight ${(me as any)?.nicknameStyle ? `nickname-style nickname-style-${(me as any).nicknameStyle}` : "text-foreground"}`}>{me?.displayName || "..."}</p>
           <p className="text-[12px] text-muted-foreground truncate font-medium">@{me?.username || "..."}</p>
         </div>
         <MoreHorizontal size={18} className={cn("text-muted-foreground shrink-0 transition-transform", expanded && "rotate-90")} />
@@ -475,7 +475,7 @@ export function Sidebar({ mobileSidebarOpen, onMobileClose, onMobileOpen, onOpen
               </div>
               <div className="flex-1 min-w-0 text-left">
                 <div className="flex items-center gap-1.5">
-                  <p className="text-[14px] font-bold truncate text-foreground leading-tight">{me?.displayName || "..."}</p>
+                  <p className={`text-[14px] font-bold truncate leading-tight ${(me as any)?.nicknameStyle ? `nickname-style nickname-style-${(me as any).nicknameStyle}` : "text-foreground"}`}>{me?.displayName || "..."}</p>
                   {isAdmin && (
                     <span
                       className="inline-flex items-center gap-0.5 text-[9px] font-black px-1.5 py-0.5 rounded-full leading-none border shrink-0"

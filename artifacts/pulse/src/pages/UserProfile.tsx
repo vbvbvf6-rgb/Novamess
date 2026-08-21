@@ -541,7 +541,7 @@ export default function UserProfile() {
         </button>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
-            <h1 className="font-bold text-base truncate">{user.displayName}</h1>
+            <h1 className={`font-bold text-base truncate ${(user as any).nicknameStyle ? `nickname-style nickname-style-${(user as any).nicknameStyle}` : "text-foreground"}`}>{user.displayName}</h1>
             {(user as any).isVerified && (
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="shrink-0">
                 <circle cx="12" cy="12" r="12" fill="hsl(16 100% 50%)"/>

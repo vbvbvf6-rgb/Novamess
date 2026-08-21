@@ -12,7 +12,7 @@ router.get("/users/me", async (req, res) => {
     const uid = req.currentUserId;
     const user = await db.query.usersTable.findFirst({ where: eq(usersTable.id, uid) });
     if (!user) return res.status(404).json({ error: "User not found" });
-    const rows = await db.execute(sql`SELECT balance, username_changed_at, has_prime, prime_tier, prime_expires_at, age_verified, is_admin, is_developer, is_youtube_creator, is_tiktok_creator, is_bot FROM users WHERE id = ${uid}`);
+    const rows = await db.execute(sql`SELECT balance, username_changed_at, has_prime, prime_tier, prime_expires_at, age_verified, is_admin, is_developer, is_youtube_creator, is_tiktok_creator, is_bot, nickname_style FROM users WHERE id = ${uid}`);
     const row = rows.rows[0] as any;
     const balance = row ? Number(row.balance) : 0;
     const hasPrime = row?.has_prime === true || row?.has_prime === "t" || row?.has_prime === 1;
@@ -24,11 +24,40 @@ router.get("/users/me", async (req, res) => {
     const isTiktokCreator = row?.is_tiktok_creator === true || row?.is_tiktok_creator === "t" || row?.is_tiktok_creator === 1;
     const isBot = row?.is_bot === true || row?.is_bot === "t" || row?.is_bot === 1;
     const popularity = 0;
-    res.json({ ...user, balance, hasPrime, primeTier, primeExpiresAt: row?.prime_expires_at ?? null, usernameChangedAt: row?.username_changed_at ?? null, ageVerified, isAdmin, isDeveloper, isYoutubeCreator, isTiktokCreator, popularity });
+    res.json({ ...user, nicknameStyle: row?.nickname_style ?? null, balance, hasPrime, primeTier, primeExpiresAt: row?.prime_expires_at ?? null, usernameChangedAt: row?.username_changed_at ?? null, ageVerified, isAdmin, isDeveloper, isYoutubeCreator, isTiktokCreator, popularity });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });
   }
+});
+
+router.get("/users/me/nickname-styles", async (req, res) => {
+  try {
+    const rows = await db.execute(sql`
+      SELECT ns.*, uns.id AS inventory_id, uns.source, uns.granted_at,
+             (u.nickname_style = ns.slug) AS equipped
+      FROM user_nickname_styles uns
+      JOIN nickname_styles ns ON ns.id = uns.style_id
+      JOIN users u ON u.id = uns.user_id
+      WHERE uns.user_id = ${req.currentUserId}
+      ORDER BY ns.sort_order, ns.id
+    `);
+    res.json(rows.rows);
+  } catch { res.status(500).json({ error: "Не удалось загрузить инвентарь" }); }
+});
+
+router.post("/users/me/nickname-styles/:styleId/equip", async (req, res) => {
+  try {
+    const styleId = Number(req.params.styleId);
+    const rows = await db.execute(sql`
+      SELECT ns.slug FROM user_nickname_styles uns
+      JOIN nickname_styles ns ON ns.id = uns.style_id
+      WHERE uns.user_id = ${req.currentUserId} AND ns.id = ${styleId}
+    `);
+    if (!rows.rows.length) return res.status(403).json({ error: "Этого стиля нет в вашем инвентаре" });
+    await db.execute(sql`UPDATE users SET nickname_style = ${(rows.rows[0] as any).slug} WHERE id = ${req.currentUserId}`);
+    res.json({ success: true, nicknameStyle: (rows.rows[0] as any).slug });
+  } catch { res.status(500).json({ error: "Не удалось надеть стиль" }); }
 });
 
 router.get("/users/me/creator-verifications", async (req, res) => {

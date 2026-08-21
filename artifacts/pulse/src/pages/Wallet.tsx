@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Diamond, Zap, Copy, Check, Trophy, Star, MessageSquare, Phone,
   History, Shield, ChevronRight, ArrowUpRight, ArrowDownLeft,
-  AlertTriangle, CheckCircle2, TrendingUp, X, Send, ShoppingCart, Crown
+  AlertTriangle, CheckCircle2, TrendingUp, X, Send, ShoppingCart, Crown, Palette
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useGetMe } from "@workspace/api-client-react";
@@ -107,6 +107,9 @@ export default function Wallet() {
   const [showBuyModal, setShowBuyModal] = useState(false);
   const [buyingPackage, setBuyingPackage] = useState<string | null>(null);
   const [boughtPackage, setBoughtPackage] = useState<string | null>(null);
+  interface NicknameStyle { id: number; slug: string; name: string; description: string; category: string; inventory_id: number; equipped: boolean; }
+  const [nicknameStyles, setNicknameStyles] = useState<NicknameStyle[]>([]);
+  const [nicknameLoading, setNicknameLoading] = useState(false);
 
   const uid = Number(sessionStorage.getItem("pulse-user-id") || "0");
   const isAdmin = (me as any)?.isAdmin === true;
@@ -134,8 +137,16 @@ export default function Wallet() {
     } catch {}
   }, []);
 
+  const fetchNicknameStyles = useCallback(async () => {
+    try {
+      const res = await fetch("/api/users/me/nickname-styles", { headers: getUserIdHeader() });
+      if (res.ok) setNicknameStyles(await res.json());
+    } catch {}
+  }, []);
+
   useEffect(() => {
     fetchWallet();
+    fetchNicknameStyles();
     const stored = localStorage.getItem(tasksKey);
     if (stored) { try { setCompletedTasks(JSON.parse(stored)); } catch {} }
     const storedTx = localStorage.getItem(txKey);
@@ -152,7 +163,22 @@ export default function Wallet() {
     }
     const lastBonus = localStorage.getItem(bonusKey);
     if (lastBonus === today) setBonusClaimed(true);
-  }, []);
+  }, [fetchNicknameStyles]);
+
+  const equipNicknameStyle = async (style: NicknameStyle) => {
+    setNicknameLoading(true);
+    try {
+      const res = await fetch(`/api/users/me/nickname-styles/${style.id}/equip`, { method: "POST", headers: getUserIdHeader() });
+      if (res.ok) {
+        setNicknameStyles(prev => prev.map(item => ({ ...item, equipped: item.id === style.id })));
+        toast({ title: `✨ Стиль «${style.name}» активирован` });
+      } else {
+        const data = await res.json();
+        toast({ title: data.error || "Не удалось активировать стиль", variant: "destructive" });
+      }
+    } catch { toast({ title: "Ошибка сети", variant: "destructive" }); }
+    finally { setNicknameLoading(false); }
+  };
 
   const earnTask = async (taskId: string, reward: number, currentCompleted?: string[]) => {
     const completed = currentCompleted ?? completedTasks;
@@ -409,6 +435,31 @@ export default function Wallet() {
               <ChevronRight size={16} className="text-muted-foreground group-hover:text-foreground transition-colors" />
             </motion.a>
           )}
+
+          <motion.section initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="bg-card border border-border rounded-2xl p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Palette size={17} className="text-fuchsia-400" />
+              <div>
+                <h2 className="font-bold text-foreground">Стили никнейма</h2>
+                <p className="text-xs text-muted-foreground">Выданные подарки и награды хранятся здесь</p>
+              </div>
+            </div>
+            {nicknameStyles.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Пока нет выданных стилей</p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {nicknameStyles.map(style => (
+                  <button key={style.id} onClick={() => equipNicknameStyle(style)} disabled={nicknameLoading || style.equipped} className={`flex items-center gap-3 p-3 rounded-xl border text-left transition-colors ${style.equipped ? "border-primary/50 bg-primary/10" : "border-border hover:border-primary/40"}`}>
+                    <span className={`font-bold text-sm nickname-style nickname-style-${style.slug}`}>Ваш ник</span>
+                    <span className="flex-1 min-w-0">
+                      <span className="block text-xs font-semibold text-foreground truncate">{style.name}</span>
+                      <span className="block text-[10px] text-muted-foreground">{style.equipped ? "Активен" : "Нажмите, чтобы надеть"}</span>
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </motion.section>
 
           <div className="flex bg-muted/50 rounded-xl p-1 border border-border">
             {(["tasks", "history"] as const).map(t => (

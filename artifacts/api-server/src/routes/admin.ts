@@ -21,6 +21,36 @@ db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS ban_expires_at TIMESTA
 db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_developer BOOLEAN NOT NULL DEFAULT FALSE`).catch(() => {});
 db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_youtube_creator BOOLEAN NOT NULL DEFAULT FALSE`).catch(() => {});
 db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_tiktok_creator BOOLEAN NOT NULL DEFAULT FALSE`).catch(() => {});
+db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS nickname_style TEXT`).catch(() => {});
+db.execute(sql`CREATE TABLE IF NOT EXISTS nickname_styles (
+  id SERIAL PRIMARY KEY,
+  slug TEXT NOT NULL UNIQUE,
+  name TEXT NOT NULL,
+  description TEXT NOT NULL DEFAULT '',
+  category TEXT NOT NULL DEFAULT 'common',
+  preview_css TEXT NOT NULL,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  active BOOLEAN NOT NULL DEFAULT TRUE
+)`).catch(() => {});
+db.execute(sql`CREATE TABLE IF NOT EXISTS user_nickname_styles (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  style_id INTEGER NOT NULL REFERENCES nickname_styles(id) ON DELETE CASCADE,
+  source TEXT NOT NULL DEFAULT 'admin',
+  granted_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  granted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE (user_id, style_id)
+)`).catch(() => {});
+db.execute(sql`
+  INSERT INTO nickname_styles (slug, name, description, category, preview_css, sort_order) VALUES
+  ('gold', 'Золотой', 'Элегантный золотой ник для Prime', 'premium', 'linear-gradient(90deg,#facc15,#f59e0b,#fde68a,#f59e0b)', 1),
+  ('rainbow', 'Радужный', 'Яркий переливающийся градиент', 'premium', 'linear-gradient(90deg,#ef4444,#f59e0b,#22c55e,#06b6d4,#8b5cf6,#ec4899)', 2),
+  ('red-black', 'Красно-чёрный', 'Красный и чёрный перелив для администраторов', 'admin', 'linear-gradient(90deg,#ef4444,#111827,#dc2626,#030712)', 3),
+  ('black-white', 'Чёрно-белый', 'Контрастный чёрно-белый перелив для администраторов', 'admin', 'linear-gradient(90deg,#050505,#f8fafc,#737373,#fff)', 4),
+  ('ocean', 'Океан', 'Спокойный сине-бирюзовый градиент', 'common', 'linear-gradient(90deg,#2563eb,#06b6d4,#22d3ee)', 5),
+  ('violet', 'Фиолетовый', 'Мягкий фиолетовый градиент', 'common', 'linear-gradient(90deg,#7c3aed,#c026d3,#ec4899)', 6)
+  ON CONFLICT (slug) DO NOTHING
+`).catch(() => {});
 db.execute(sql`CREATE TABLE IF NOT EXISTS creator_verifications (
   id SERIAL PRIMARY KEY,
   user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -113,12 +143,75 @@ router.get("/admin/check", async (req, res) => {
 router.get("/admin/users", requireAdmin, async (req, res) => {
   try {
     const rows = await db.execute(
-      sql`SELECT id, username, display_name, avatar_color, avatar_url, status, balance, created_at, is_verified, is_developer, is_admin, is_bot, has_prime, is_banned, ban_reason, ban_expires_at FROM users ORDER BY id`
+      sql`SELECT id, username, display_name, avatar_color, avatar_url, nickname_style, status, balance, created_at, is_verified, is_developer, is_admin, is_bot, has_prime, is_banned, ban_reason, ban_expires_at FROM users ORDER BY id`
     );
     res.json(rows.rows);
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Ошибка сервера" });
+  }
+});
+
+router.get("/admin/nickname-styles", requireAdmin, async (_req, res) => {
+  try {
+    const styles = await db.execute(sql`SELECT * FROM nickname_styles WHERE active = TRUE ORDER BY sort_order, id`);
+    res.json(styles.rows);
+  } catch (err) {
+    res.status(500).json({ error: "Не удалось загрузить стили" });
+  }
+});
+
+router.get("/admin/users/:userId/nickname-styles", requireAdmin, async (req, res) => {
+  try {
+    const rows = await db.execute(sql`
+      SELECT ns.*, uns.id AS inventory_id, uns.source, uns.granted_at
+      FROM user_nickname_styles uns
+      JOIN nickname_styles ns ON ns.id = uns.style_id
+      WHERE uns.user_id = ${Number(req.params.userId)}
+      ORDER BY ns.sort_order, ns.id
+    `);
+    res.json(rows.rows);
+  } catch {
+    res.status(500).json({ error: "Не удалось загрузить инвентарь" });
+  }
+});
+
+router.post("/admin/users/:userId/nickname-styles", requireAdmin, async (req, res) => {
+  try {
+    const userId = Number(req.params.userId);
+    const styleId = Number(req.body?.styleId);
+    const source = typeof req.body?.source === "string" ? req.body.source.slice(0, 40) : "admin";
+    if (!Number.isInteger(userId) || !Number.isInteger(styleId)) return res.status(400).json({ error: "Укажите пользователя и стиль" });
+    const target = await db.execute(sql`SELECT id, username FROM users WHERE id = ${userId}`);
+    if (!target.rows.length) return res.status(404).json({ error: "Пользователь не найден" });
+    const style = await db.execute(sql`SELECT id, slug, name FROM nickname_styles WHERE id = ${styleId} AND active = TRUE`);
+    if (!style.rows.length) return res.status(404).json({ error: "Стиль не найден" });
+    await db.execute(sql`
+      INSERT INTO user_nickname_styles (user_id, style_id, source, granted_by)
+      VALUES (${userId}, ${styleId}, ${source}, ${req.currentUserId})
+      ON CONFLICT (user_id, style_id) DO NOTHING
+    `);
+    await db.execute(sql`UPDATE users SET nickname_style = ${String((style.rows[0] as any).slug)} WHERE id = ${userId}`);
+    res.json({ success: true, style: style.rows[0] });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Не удалось выдать стиль" });
+  }
+});
+
+router.delete("/admin/users/:userId/nickname-styles/:styleId", requireAdmin, async (req, res) => {
+  try {
+    const userId = Number(req.params.userId);
+    const styleId = Number(req.params.styleId);
+    await db.execute(sql`DELETE FROM user_nickname_styles WHERE user_id = ${userId} AND style_id = ${styleId}`);
+    const active = await db.execute(sql`
+      SELECT ns.slug FROM user_nickname_styles uns JOIN nickname_styles ns ON ns.id = uns.style_id
+      WHERE uns.user_id = ${userId} ORDER BY uns.granted_at DESC LIMIT 1
+    `);
+    await db.execute(sql`UPDATE users SET nickname_style = ${(active.rows[0] as any)?.slug ?? null} WHERE id = ${userId}`);
+    res.json({ success: true });
+  } catch {
+    res.status(500).json({ error: "Не удалось удалить стиль" });
   }
 });
 

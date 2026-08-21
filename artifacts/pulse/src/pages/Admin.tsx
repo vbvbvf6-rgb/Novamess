@@ -25,6 +25,7 @@ interface AdminUser {
   is_admin: boolean;
   is_bot: boolean;
   has_prime: boolean;
+  nickname_style: string | null;
   is_banned: boolean;
   ban_reason: string | null;
   ban_expires_at: string | null;
@@ -123,7 +124,12 @@ export default function Admin() {
   const [giveLoading, setGiveLoading] = useState(false);
   const [toast, setToast] = useState<{ msg: string; type: "ok" | "err" } | null>(null);
   const [search, setSearch] = useState("");
-  const [activeTab, setActiveTab] = useState<"balance" | "password" | "actions" | "stats">("balance");
+  const [activeTab, setActiveTab] = useState<"balance" | "password" | "actions" | "nickname" | "stats">("balance");
+  interface NicknameStyle { id: number; slug: string; name: string; description: string; category: string; preview_css: string; inventory_id?: number; source?: string; }
+  const [nicknameStyles, setNicknameStyles] = useState<NicknameStyle[]>([]);
+  const [userNicknameStyles, setUserNicknameStyles] = useState<NicknameStyle[]>([]);
+  const [nicknameStyleId, setNicknameStyleId] = useState("");
+  const [nicknameLoading, setNicknameLoading] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [pwLoading, setPwLoading] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<AdminUser | null>(null);
@@ -1016,9 +1022,53 @@ export default function Admin() {
     setEditBio("");
   };
 
+  const fetchNicknameData = async (uid: number) => {
+    try {
+      const [stylesRes, inventoryRes] = await Promise.all([
+        fetch("/api/admin/nickname-styles", { headers: getHeader() }),
+        fetch(`/api/admin/users/${uid}/nickname-styles`, { headers: getHeader() }),
+      ]);
+      if (stylesRes.ok) setNicknameStyles(await stylesRes.json());
+      if (inventoryRes.ok) setUserNicknameStyles(await inventoryRes.json());
+    } catch {}
+  };
+
+  const grantNicknameStyle = async () => {
+    if (!selectedUser || !nicknameStyleId) return;
+    setNicknameLoading(true);
+    try {
+      const res = await fetch(`/api/admin/users/${selectedUser.id}/nickname-styles`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...getHeader() },
+        body: JSON.stringify({ styleId: Number(nicknameStyleId), source: "admin" }),
+      });
+      const data = await res.json();
+      if (!res.ok) { showToast(data.error || "Не удалось выдать стиль", "err"); return; }
+      const style = nicknameStyles.find(s => s.id === Number(nicknameStyleId));
+      showToast(`✨ Стиль «${style?.name || "Никнейм"}» выдан`, "ok");
+      setUsers(prev => prev.map(u => u.id === selectedUser.id ? { ...u, nickname_style: style?.slug || null } : u));
+      setSelectedUser(prev => prev ? { ...prev, nickname_style: style?.slug || null } : null);
+      await fetchNicknameData(selectedUser.id);
+    } catch { showToast("Ошибка соединения", "err"); }
+    finally { setNicknameLoading(false); }
+  };
+
+  const removeNicknameStyle = async (style: NicknameStyle) => {
+    if (!selectedUser) return;
+    try {
+      const res = await fetch(`/api/admin/users/${selectedUser.id}/nickname-styles/${style.id}`, { method: "DELETE", headers: getHeader() });
+      if (!res.ok) { showToast("Не удалось убрать стиль", "err"); return; }
+      await fetchNicknameData(selectedUser.id);
+      showToast("Стиль убран из инвентаря", "ok");
+    } catch { showToast("Ошибка соединения", "err"); }
+  };
+
   useEffect(() => {
     if (activeTab === "stats" && selectedUser) {
       fetchUserStats(selectedUser.id);
+    }
+    if (activeTab === "nickname" && selectedUser) {
+      fetchNicknameData(selectedUser.id);
     }
   }, [activeTab, selectedUser]);
 
@@ -3815,7 +3865,7 @@ export default function Admin() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
-                        <p className="font-bold text-foreground">{selectedUser.display_name}</p>
+                        <p className={`font-bold ${selectedUser.nickname_style ? `nickname-style nickname-style-${selectedUser.nickname_style}` : "text-foreground"}`}>{selectedUser.display_name}</p>
                         {selectedUser.is_verified && (
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
                             <circle cx="12" cy="12" r="12" fill="hsl(16 100% 50%)"/>
@@ -3857,13 +3907,13 @@ export default function Admin() {
 
                 {/* Tabs */}
                 <div className="flex border-b border-border overflow-x-auto">
-                  {(["balance", "actions", "password", "stats"] as const).map(t => (
+                  {(["balance", "actions", "password", "nickname", "stats"] as const).map(t => (
                     <button
                       key={t}
                       onClick={() => setActiveTab(t)}
                       className={`flex-1 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors whitespace-nowrap px-2 ${activeTab === t ? "text-primary border-b-2 border-primary" : "text-muted-foreground hover:text-foreground"}`}
                     >
-                      {t === "balance" ? "💎 Баланс" : t === "password" ? "🔐 Пароль" : t === "actions" ? "⚙️ Действия" : "📊 Статистика"}
+                      {t === "balance" ? "💎 Баланс" : t === "password" ? "🔐 Пароль" : t === "actions" ? "⚙️ Действия" : t === "nickname" ? "✨ Ник" : "📊 Статистика"}
                     </button>
                   ))}
                 </div>
@@ -4085,6 +4135,33 @@ export default function Admin() {
                       >
                         <Trash2 size={18} /> Удалить пользователя
                       </button>
+                    </div>
+                  )}
+
+                  {activeTab === "nickname" && (
+                    <div className="space-y-4">
+                      <div>
+                        <p className="font-bold text-foreground">Инвентарь никнейма</p>
+                        <p className="text-xs text-muted-foreground mt-1">Выдача сохраняется у пользователя и сразу применяется к имени.</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <select value={nicknameStyleId} onChange={e => setNicknameStyleId(e.target.value)} className="flex-1 min-w-0 bg-background border border-border rounded-xl px-3 py-2.5 text-sm text-foreground">
+                          <option value="">Выберите стиль</option>
+                          {nicknameStyles.map(style => <option key={style.id} value={style.id}>{style.name} · {style.category}</option>)}
+                        </select>
+                        <button onClick={grantNicknameStyle} disabled={nicknameLoading || !nicknameStyleId} className="px-3 rounded-xl bg-primary text-primary-foreground text-sm font-bold disabled:opacity-50">
+                          {nicknameLoading ? "..." : "Выдать"}
+                        </button>
+                      </div>
+                      <div className="space-y-2">
+                        {userNicknameStyles.length === 0 ? <p className="text-sm text-muted-foreground text-center py-5">Инвентарь пуст</p> : userNicknameStyles.map(style => (
+                          <div key={style.id} className="flex items-center gap-3 rounded-xl border border-border bg-background/50 p-3">
+                            <span className={`font-bold text-sm nickname-style nickname-style-${style.slug}`}>{selectedUser.display_name}</span>
+                            <span className="text-xs text-muted-foreground flex-1">{style.name}</span>
+                            <button onClick={() => removeNicknameStyle(style)} className="p-1.5 text-muted-foreground hover:text-red-400" title="Забрать"><Trash2 size={14} /></button>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
 
