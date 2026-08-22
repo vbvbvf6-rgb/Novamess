@@ -1,0 +1,1267 @@
+11:16:44.661
+Build started
+11:16:44.691
+Build started
+11:16:44.691
+[pxxl] config -> novamess
+| Branch | main |
+| Environment | production |
+| Base directory | / |
+| Install command | corepack enable && corepack prepare pnpm@10.26.1 --activate && pnpm install |
+| | --frozen-lockfile |
+| Build command | PORT=5000 BASE_PATH=/ pnpm --filter @workspace/pulse run build && pnpm |
+| | --filter @workspace/api-server run build |
+| Start command | sh scripts/start-prod.sh |
++----------------------+------------------------------------------------------------------------------+
+Build region: DE
+Build server: self-hosted-build-01 - DE
+Runtime server: staging-runtime-titan-01 - Copenhagen, DK
+11:16:44.691
+Deployment workflow prepared
+11:16:44.710
+Deployment workflow prepared
+11:16:44.711
+Build Configuration Completed
+11:16:44.721
+Build Configuration Completed
+11:16:44.734
+Building with build-server (AMD EPYC 9645 96-Core Processor, 12 vCPU, 31 GB, amd64, Debian GNU/Linux 13 (trixie))
+11:16:44.756
+Building with build-server (AMD EPYC 9645 96-Core Processor, 12 vCPU, 31 GB, amd64, Debian GNU/Linux 13 (trixie))
+11:16:44.756
+Starting PxxlBuilder
+11:16:44.774
+Starting PxxlBuilder
+11:16:45.040
+Dockerfile detected; running its stages in the gVisor build sandbox
+11:16:45.051
+Dockerfile detected; running its stages in the gVisor build sandbox
+11:16:45.051
+Cloning Dockerfile build context
+11:16:45.062
+Cloning Dockerfile build context
+11:16:45.496
+[pxxl] source -> cloning repository for Dockerfile build
+11:16:45.509
+Cloning into '/pxxl-context'...
+11:16:45.528
+[pxxl] source -> cloning repository for Dockerfile build
+11:16:45.529
+Cloning into '/pxxl-context'...
+11:16:53.606
+Updating files: 74% (923/1242)Updating files: 75% (932/1242)Updating files: 76% (944/1242)Updating files: 77% (957/1242)Updating files: 78% (969/1242)Updating files: 79% (982/1242)Updating files: 80% (994/1242)Updating files: 81% (1007/1242)Updating files: 82% (1019/1242)Updating files: 83% (1031/1242)Updating files: 84% (1044/1242)Updating files: 85% (1056/1242)Updating files: 86% (1069/1242)Updating files: 87% (1081/1242)Updating files: 88% (1093/1242)Updating files: 89% (1106/1242)Updating files: 90% (1118/1242)Updating files: 91% (1131/1242)Updating files: 92% (1143/1242)Updating files: 93% (1156/1242)Updating files: 94% (1168/1242)Updating files: 95% (1180/1242)Updating files: 96% (1193/1242)Updating files: 97% (1205/1242)Updating files: 98% (1218/1242)Updating files: 99% (1230/1242)Updating files: 100% (1242/1242)Updating files: 100% (1242/1242), done.
+11:16:53.615
+Updating files: 74% (923/1242)Updating files: 75% (932/1242)Updating files: 76% (944/1242)Updating files: 77% (957/1242)Updating files: 78% (969/1242)Updating files: 79% (982/1242)Updating files: 80% (994/1242)Updating files: 81% (1007/1242)Updating files: 82% (1019/1242)Updating files: 83% (1031/1242)Updating files: 84% (1044/1242)Updating files: 85% (1056/1242)Updating files: 86% (1069/1242)Updating files: 87% (1081/1242)Updating files: 88% (1093/1242)Updating files: 89% (1106/1242)Updating files: 90% (1118/1242)Updating files: 91% (1131/1242)Updating files: 92% (1143/1242)Updating files: 93% (1156/1242)Updating files: 94% (1168/1242)Updating files: 95% (1180/1242)Updating files: 96% (1193/1242)Updating files: 97% (1205/1242)Updating files: 98% (1218/1242)Updating files: 99% (1230/1242)Updating files: 100% (1242/1242)Updating files: 100% (1242/1242), done.
+11:16:54.760
+[pxxl] Dockerfile RUN
+11:16:54.775
+[pxxl] Dockerfile RUN
+11:16:56.694
+added 1 package in 2s
+11:16:56.697
+npm notice
+11:16:56.711
+added 1 package in 2s
+11:16:56.711
+1 package is looking for funding
+11:16:56.715
+npm notice
+11:16:56.715
+npm notice New major version of npm available! 11.17.0 -> 12.0.2
+11:16:56.737
+1 package is looking for funding
+11:16:56.738
+npm notice New major version of npm available! 11.17.0 -> 12.0.2
+11:16:56.738
+run `npm fund` for details
+11:16:56.738
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.0.2
+11:16:56.749
+run `npm fund` for details
+11:16:56.751
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.0.2
+11:16:56.751
+npm notice To update run: npm install -g npm@12.0.2
+11:16:56.756
+npm notice To update run: npm install -g npm@12.0.2
+11:16:56.757
+npm notice
+11:16:56.760
+npm notice
+11:16:56.788
+[pxxl] Dockerfile RUN
+11:16:56.813
+[pxxl] Dockerfile RUN
+11:16:58.852
+WARN  using --force I sure hope you know what you are doing
+11:16:58.867
+WARN  using --force I sure hope you know what you are doing
+11:16:58.867
+Scope: all 9 workspace projects
+11:16:58.890
+Scope: all 9 workspace projects
+11:16:58.902
+Lockfile is up to date, resolution step is skipped
+11:16:58.924
+Lockfile is up to date, resolution step is skipped
+11:16:58.929
+Progress: resolved 1, reused 0, downloaded 0, added 0
+11:16:58.939
+Progress: resolved 1, reused 0, downloaded 0, added 0
+11:16:59.287
+Packages: +604
+11:16:59.295
+Packages: +604
+11:16:59.295
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+11:16:59.301
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+11:17:00.000
+Progress: resolved 604, reused 0, downloaded 20, added 0
+11:17:00.010
+Progress: resolved 604, reused 0, downloaded 20, added 0
+11:17:01.001
+Progress: resolved 604, reused 0, downloaded 70, added 33
+11:17:01.037
+Progress: resolved 604, reused 0, downloaded 70, added 33
+11:17:02.007
+Progress: resolved 604, reused 0, downloaded 200, added 61
+11:17:02.035
+Progress: resolved 604, reused 0, downloaded 200, added 61
+11:17:03.086
+Progress: resolved 604, reused 0, downloaded 308, added 98
+11:17:03.099
+Progress: resolved 604, reused 0, downloaded 308, added 98
+11:17:04.097
+Progress: resolved 604, reused 0, downloaded 400, added 122
+11:17:04.107
+Progress: resolved 604, reused 0, downloaded 400, added 122
+11:17:05.098
+Progress: resolved 604, reused 0, downloaded 431, added 132
+11:17:05.115
+Progress: resolved 604, reused 0, downloaded 431, added 132
+11:17:06.099
+Progress: resolved 604, reused 0, downloaded 496, added 147
+11:17:06.104
+Progress: resolved 604, reused 0, downloaded 496, added 147
+11:17:07.100
+Progress: resolved 604, reused 0, downloaded 538, added 159
+11:17:07.107
+Progress: resolved 604, reused 0, downloaded 538, added 159
+11:17:08.101
+Progress: resolved 604, reused 0, downloaded 598, added 280
+11:17:08.125
+Progress: resolved 604, reused 0, downloaded 598, added 280
+11:17:09.101
+Progress: resolved 604, reused 0, downloaded 599, added 433
+11:17:09.110
+Progress: resolved 604, reused 0, downloaded 599, added 433
+11:17:10.102
+Progress: resolved 604, reused 0, downloaded 601, added 596
+11:17:10.113
+Progress: resolved 604, reused 0, downloaded 601, added 596
+11:17:11.104
+Progress: resolved 604, reused 0, downloaded 604, added 602
+11:17:11.142
+Progress: resolved 604, reused 0, downloaded 604, added 602
+11:17:11.229
+Progress: resolved 604, reused 0, downloaded 604, added 604, done
+11:17:11.236
+Progress: resolved 604, reused 0, downloaded 604, added 604, done
+11:17:11.465
+.../esbuild@0.27.3/node_modules/esbuild postinstall$ node install.js
+11:17:11.481
+.../esbuild@0.27.3/node_modules/esbuild postinstall$ node install.js
+11:17:11.606
+.../esbuild@0.27.3/node_modules/esbuild postinstall: Done
+11:17:11.612
+.../esbuild@0.27.3/node_modules/esbuild postinstall: Done
+11:17:11.908
+dependencies:
+11:17:11.920
+dependencies:
+11:17:11.920
++ @types/compression 1.8.1
+11:17:11.932
++ @types/compression 1.8.1
+11:17:11.932
++ compression 1.8.1
+11:17:11.943
++ compression 1.8.1
+11:17:11.943
++ connect-timeout 1.9.1
+11:17:11.949
++ connect-timeout 1.9.1
+11:17:11.949
+devDependencies:
+11:17:11.956
+devDependencies:
+11:17:11.957
++ prettier 3.8.1
+11:17:11.965
++ prettier 3.8.1
+11:17:11.965
++ typescript 5.9.3
+11:17:11.969
++ typescript 5.9.3
+11:17:11.970
+. preinstall$ sh -c 'rm -f package-lock.json yarn.lock; case "$npm_config_user_agent" in pnpm/*) ;; *) echo "Use pnpm instead" >&2; exit 1 ;; esac'
+11:17:11.972
+. preinstall$ sh -c 'rm -f package-lock.json yarn.lock; case "$npm_config_user_agent" in pnpm/*) ;; *) echo "Use pnpm instead" >&2; exit 1 ;; esac'
+11:17:11.989
+. preinstall: Done
+11:17:11.996
+. preinstall: Done
+11:17:12.237
+Done in 13.7s using pnpm v10.26.1
+11:17:12.243
+Done in 13.7s using pnpm v10.26.1
+11:17:12.447
+[pxxl] Dockerfile RUN
+11:17:12.456
+[pxxl] Dockerfile RUN
+11:17:12.913
+[pxxl] Dockerfile RUN
+11:17:13.687
+> @workspace/api-server@1.0.0 build /workspace/artifacts/api-server
+11:17:13.705
+> @workspace/api-server@1.0.0 build /workspace/artifacts/api-server
+11:17:13.705
+> node ./build.mjs
+11:17:13.710
+> node ./build.mjs
+11:17:13.789
+✘ [ERROR] Could not resolve "@workspace/db"
+11:17:13.795
+✘ [ERROR] Could not resolve "@workspace/db"
+11:17:13.795
+src/index.ts:8:48:
+11:17:13.801
+src/index.ts:8:48:
+11:17:13.801
+8 │ import { db, messagesTable, storiesTable } from "@workspace/db";
+11:17:13.805
+8 │ import { db, messagesTable, storiesTable } from "@workspace/db";
+11:17:13.805
+╵ ~~~~~~~~~~~~~~~
+11:17:13.814
+╵ ~~~~~~~~~~~~~~~
+11:17:13.814
+The module "./src/index.ts" was not found on the file system:
+11:17:13.822
+The module "./src/index.ts" was not found on the file system:
+11:17:13.822
+node_modules/@workspace/db/package.json:7:9:
+11:17:13.827
+node_modules/@workspace/db/package.json:7:9:
+11:17:13.827
+7 │ ".": "./src/index.ts",
+11:17:13.833
+7 │ ".": "./src/index.ts",
+11:17:13.833
+╵ ~~~~~~~~~~~~~~~~
+11:17:13.837
+╵ ~~~~~~~~~~~~~~~~
+11:17:13.837
+You can mark the path "@workspace/db" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+11:17:13.840
+You can mark the path "@workspace/db" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+11:17:13.841
+✘ [ERROR] Could not resolve "@workspace/db"
+11:17:13.844
+✘ [ERROR] Could not resolve "@workspace/db"
+11:17:13.844
+src/seed.ts:1:19:
+11:17:13.863
+src/seed.ts:1:19:
+11:17:13.863
+1 │ import { db } from "@workspace/db";
+11:17:13.883
+1 │ import { db } from "@workspace/db";
+11:17:13.883
+╵ ~~~~~~~~~~~~~~~
+11:17:13.896
+╵ ~~~~~~~~~~~~~~~
+11:17:13.896
+The module "./src/index.ts" was not found on the file system:
+11:17:13.905
+The module "./src/index.ts" was not found on the file system:
+11:17:13.905
+node_modules/@workspace/db/package.json:7:9:
+11:17:13.921
+node_modules/@workspace/db/package.json:7:9:
+11:17:13.921
+7 │ ".": "./src/index.ts",
+11:17:13.930
+7 │ ".": "./src/index.ts",
+11:17:13.930
+╵ ~~~~~~~~~~~~~~~~
+11:17:13.945
+╵ ~~~~~~~~~~~~~~~~
+11:17:13.945
+You can mark the path "@workspace/db" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+11:17:13.953
+You can mark the path "@workspace/db" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+11:17:13.953
+✘ [ERROR] Could not resolve "@workspace/db"
+11:17:13.966
+✘ [ERROR] Could not resolve "@workspace/db"
+11:17:13.966
+src/routes/admin.ts:2:103:
+11:17:13.976
+src/routes/admin.ts:2:103:
+11:17:13.976
+2 │ ...chatMembersTable, callsTable, banwordsTable } from "@workspace/db";
+11:17:13.990
+2 │ ...chatMembersTable, callsTable, banwordsTable } from "@workspace/db";
+11:17:13.990
+╵ ~~~~~~~~~~~~~~~
+11:17:14.014
+╵ ~~~~~~~~~~~~~~~
+11:17:14.014
+The module "./src/index.ts" was not found on the file system:
+11:17:14.026
+The module "./src/index.ts" was not found on the file system:
+11:17:14.026
+node_modules/@workspace/db/package.json:7:9:
+11:17:14.043
+node_modules/@workspace/db/package.json:7:9:
+11:17:14.043
+7 │ ".": "./src/index.ts",
+11:17:14.055
+7 │ ".": "./src/index.ts",
+11:17:14.055
+╵ ~~~~~~~~~~~~~~~~
+11:17:14.078
+╵ ~~~~~~~~~~~~~~~~
+11:17:14.078
+You can mark the path "@workspace/db" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+11:17:14.092
+You can mark the path "@workspace/db" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+11:17:14.092
+✘ [ERROR] Could not resolve "@workspace/db"
+11:17:14.104
+✘ [ERROR] Could not resolve "@workspace/db"
+11:17:14.104
+src/lib/socket.ts:4:19:
+11:17:14.113
+src/lib/socket.ts:4:19:
+11:17:14.113
+4 │ import { db } from "@workspace/db";
+11:17:14.123
+4 │ import { db } from "@workspace/db";
+11:17:14.123
+╵ ~~~~~~~~~~~~~~~
+11:17:14.134
+╵ ~~~~~~~~~~~~~~~
+11:17:14.134
+The module "./src/index.ts" was not found on the file system:
+11:17:14.140
+The module "./src/index.ts" was not found on the file system:
+11:17:14.141
+node_modules/@workspace/db/package.json:7:9:
+11:17:14.157
+node_modules/@workspace/db/package.json:7:9:
+11:17:14.157
+7 │ ".": "./src/index.ts",
+11:17:14.170
+7 │ ".": "./src/index.ts",
+11:17:14.171
+╵ ~~~~~~~~~~~~~~~~
+11:17:14.181
+╵ ~~~~~~~~~~~~~~~~
+11:17:14.181
+You can mark the path "@workspace/db" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+11:17:14.192
+You can mark the path "@workspace/db" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+11:17:14.192
+✘ [ERROR] Could not resolve "@workspace/db"
+11:17:14.206
+✘ [ERROR] Could not resolve "@workspace/db"
+11:17:14.206
+src/lib/banwords.ts:1:19:
+11:17:14.212
+src/lib/banwords.ts:1:19:
+11:17:14.212
+1 │ import { db } from "@workspace/db";
+11:17:14.220
+1 │ import { db } from "@workspace/db";
+11:17:14.220
+╵ ~~~~~~~~~~~~~~~
+11:17:14.227
+╵ ~~~~~~~~~~~~~~~
+11:17:14.227
+The module "./src/index.ts" was not found on the file system:
+11:17:14.239
+The module "./src/index.ts" was not found on the file system:
+11:17:14.239
+node_modules/@workspace/db/package.json:7:9:
+11:17:14.241
+node_modules/@workspace/db/package.json:7:9:
+11:17:14.242
+7 │ ".": "./src/index.ts",
+11:17:14.244
+7 │ ".": "./src/index.ts",
+11:17:14.244
+╵ ~~~~~~~~~~~~~~~~
+11:17:14.248
+╵ ~~~~~~~~~~~~~~~~
+11:17:14.248
+You can mark the path "@workspace/db" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+11:17:14.254
+You can mark the path "@workspace/db" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+11:17:14.254
+✘ [ERROR] Could not resolve "@workspace/db"
+11:17:14.257
+✘ [ERROR] Could not resolve "@workspace/db"
+11:17:14.257
+src/routes/botapi.ts:6:52:
+11:17:14.260
+src/routes/botapi.ts:6:52:
+11:17:14.260
+6 │ import { db, messagesTable, chatMembersTable } from "@workspace/db";
+11:17:14.265
+6 │ import { db, messagesTable, chatMembersTable } from "@workspace/db";
+11:17:14.265
+╵ ~~~~~~~~~~~~~~~
+11:17:14.269
+╵ ~~~~~~~~~~~~~~~
+11:17:14.269
+The module "./src/index.ts" was not found on the file system:
+11:17:14.272
+The module "./src/index.ts" was not found on the file system:
+11:17:14.272
+node_modules/@workspace/db/package.json:7:9:
+11:17:14.275
+node_modules/@workspace/db/package.json:7:9:
+11:17:14.275
+7 │ ".": "./src/index.ts",
+11:17:14.278
+7 │ ".": "./src/index.ts",
+11:17:14.278
+╵ ~~~~~~~~~~~~~~~~
+11:17:14.280
+╵ ~~~~~~~~~~~~~~~~
+11:17:14.280
+You can mark the path "@workspace/db" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+11:17:14.287
+You can mark the path "@workspace/db" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+11:17:14.287
+✘ [ERROR] Could not resolve "@workspace/db"
+11:17:14.292
+✘ [ERROR] Could not resolve "@workspace/db"
+11:17:14.292
+src/routes/prime.ts:2:19:
+11:17:14.296
+src/routes/prime.ts:2:19:
+11:17:14.297
+2 │ import { db } from "@workspace/db";
+11:17:14.305
+2 │ import { db } from "@workspace/db";
+11:17:14.305
+╵ ~~~~~~~~~~~~~~~
+11:17:14.334
+╵ ~~~~~~~~~~~~~~~
+11:17:14.335
+The module "./src/index.ts" was not found on the file system:
+11:17:14.347
+The module "./src/index.ts" was not found on the file system:
+11:17:14.347
+node_modules/@workspace/db/package.json:7:9:
+11:17:14.350
+node_modules/@workspace/db/package.json:7:9:
+11:17:14.350
+7 │ ".": "./src/index.ts",
+11:17:14.359
+7 │ ".": "./src/index.ts",
+11:17:14.359
+╵ ~~~~~~~~~~~~~~~~
+11:17:14.385
+╵ ~~~~~~~~~~~~~~~~
+11:17:15.788
+You can mark the path "@workspace/db" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+11:17:15.796
+You can mark the path "@workspace/db" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+11:17:15.796
+✘ [ERROR] Could not resolve "@workspace/db"
+11:17:15.802
+✘ [ERROR] Could not resolve "@workspace/db"
+11:17:15.802
+src/routes/messages.ts:2:92:
+11:17:15.808
+src/routes/messages.ts:2:92:
+11:17:15.808
+2 │ ...e, usersTable, chatMembersTable, chatsTable } from "@workspace/db";
+11:17:15.810
+2 │ ...e, usersTable, chatMembersTable, chatsTable } from "@workspace/db";
+11:17:15.810
+╵ ~~~~~~~~~~~~~~~
+11:17:15.814
+╵ ~~~~~~~~~~~~~~~
+11:17:15.814
+The module "./src/index.ts" was not found on the file system:
+11:17:15.820
+The module "./src/index.ts" was not found on the file system:
+11:17:15.820
+node_modules/@workspace/db/package.json:7:9:
+11:17:15.827
+node_modules/@workspace/db/package.json:7:9:
+11:17:15.827
+7 │ ".": "./src/index.ts",
+11:17:15.834
+7 │ ".": "./src/index.ts",
+11:17:15.834
+╵ ~~~~~~~~~~~~~~~~
+11:17:15.840
+╵ ~~~~~~~~~~~~~~~~
+11:17:15.840
+You can mark the path "@workspace/db" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+11:17:15.844
+You can mark the path "@workspace/db" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+11:17:15.844
+✘ [ERROR] Could not resolve "@workspace/db"
+11:17:15.850
+✘ [ERROR] Could not resolve "@workspace/db"
+11:17:15.850
+src/routes/qr-auth.ts:2:19:
+11:17:15.856
+src/routes/qr-auth.ts:2:19:
+11:17:15.856
+2 │ import { db } from "@workspace/db";
+11:17:15.863
+2 │ import { db } from "@workspace/db";
+11:17:15.863
+╵ ~~~~~~~~~~~~~~~
+11:17:15.867
+╵ ~~~~~~~~~~~~~~~
+11:17:15.867
+The module "./src/index.ts" was not found on the file system:
+11:17:15.872
+The module "./src/index.ts" was not found on the file system:
+11:17:15.872
+node_modules/@workspace/db/package.json:7:9:
+11:17:15.876
+node_modules/@workspace/db/package.json:7:9:
+11:17:15.876
+7 │ ".": "./src/index.ts",
+11:17:15.881
+7 │ ".": "./src/index.ts",
+11:17:15.881
+╵ ~~~~~~~~~~~~~~~~
+11:17:15.886
+╵ ~~~~~~~~~~~~~~~~
+11:17:15.886
+You can mark the path "@workspace/db" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+11:17:15.893
+You can mark the path "@workspace/db" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+11:17:15.893
+✘ [ERROR] Could not resolve "@workspace/db"
+11:17:15.898
+✘ [ERROR] Could not resolve "@workspace/db"
+11:17:15.898
+src/routes/contacts.ts:2:46:
+11:17:15.902
+src/routes/contacts.ts:2:46:
+11:17:15.902
+2 │ import { db, contactsTable, usersTable } from "@workspace/db";
+11:17:15.906
+2 │ import { db, contactsTable, usersTable } from "@workspace/db";
+11:17:15.906
+╵ ~~~~~~~~~~~~~~~
+11:17:15.910
+╵ ~~~~~~~~~~~~~~~
+11:17:15.910
+The module "./src/index.ts" was not found on the file system:
+11:17:15.914
+The module "./src/index.ts" was not found on the file system:
+11:17:15.914
+node_modules/@workspace/db/package.json:7:9:
+11:17:15.922
+node_modules/@workspace/db/package.json:7:9:
+11:17:15.922
+7 │ ".": "./src/index.ts",
+11:17:15.925
+7 │ ".": "./src/index.ts",
+11:17:15.925
+╵ ~~~~~~~~~~~~~~~~
+11:17:15.929
+╵ ~~~~~~~~~~~~~~~~
+11:17:15.929
+You can mark the path "@workspace/db" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+11:17:15.934
+You can mark the path "@workspace/db" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+11:17:15.934
+✘ [ERROR] Could not resolve "@workspace/db"
+11:17:15.937
+✘ [ERROR] Could not resolve "@workspace/db"
+11:17:15.937
+src/routes/calls.ts:2:58:
+11:17:15.940
+src/routes/calls.ts:2:58:
+11:17:15.940
+2 │ ...{ db, callsTable, usersTable, messagesTable } from "@workspace/db";
+11:17:15.945
+2 │ ...{ db, callsTable, usersTable, messagesTable } from "@workspace/db";
+11:17:15.945
+╵ ~~~~~~~~~~~~~~~
+11:17:15.949
+╵ ~~~~~~~~~~~~~~~
+11:17:15.949
+The module "./src/index.ts" was not found on the file system:
+11:17:15.955
+The module "./src/index.ts" was not found on the file system:
+11:17:15.955
+node_modules/@workspace/db/package.json:7:9:
+11:17:15.962
+node_modules/@workspace/db/package.json:7:9:
+11:17:15.962
+7 │ ".": "./src/index.ts",
+11:17:15.972
+7 │ ".": "./src/index.ts",
+11:17:15.972
+╵ ~~~~~~~~~~~~~~~~
+11:17:15.978
+╵ ~~~~~~~~~~~~~~~~
+11:17:15.978
+You can mark the path "@workspace/db" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+11:17:15.984
+You can mark the path "@workspace/db" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+11:17:15.984
+✘ [ERROR] Could not resolve "@workspace/db"
+11:17:15.989
+✘ [ERROR] Could not resolve "@workspace/db"
+11:17:15.989
+src/routes/support.ts:2:31:
+11:17:15.993
+src/routes/support.ts:2:31:
+11:17:15.993
+2 │ import { db, usersTable } from "@workspace/db";
+11:17:16.000
+2 │ import { db, usersTable } from "@workspace/db";
+11:17:16.000
+╵ ~~~~~~~~~~~~~~~
+11:17:16.004
+╵ ~~~~~~~~~~~~~~~
+11:17:16.004
+The module "./src/index.ts" was not found on the file system:
+11:17:16.013
+The module "./src/index.ts" was not found on the file system:
+11:17:16.013
+node_modules/@workspace/db/package.json:7:9:
+11:17:16.020
+node_modules/@workspace/db/package.json:7:9:
+11:17:16.020
+7 │ ".": "./src/index.ts",
+11:17:16.026
+7 │ ".": "./src/index.ts",
+11:17:16.026
+╵ ~~~~~~~~~~~~~~~~
+11:17:16.033
+╵ ~~~~~~~~~~~~~~~~
+11:17:16.034
+You can mark the path "@workspace/db" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+11:17:16.045
+You can mark the path "@workspace/db" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+11:17:16.045
+✘ [ERROR] Could not resolve "@workspace/api-zod"
+11:17:16.062
+✘ [ERROR] Could not resolve "@workspace/api-zod"
+11:17:16.062
+src/routes/health.ts:2:36:
+11:17:16.076
+src/routes/health.ts:2:36:
+11:17:16.077
+2 │ import { HealthCheckResponse } from "@workspace/api-zod";
+11:17:16.079
+2 │ import { HealthCheckResponse } from "@workspace/api-zod";
+11:17:16.079
+╵ ~~~~~~~~~~~~~~~~~~~~
+11:17:16.081
+╵ ~~~~~~~~~~~~~~~~~~~~
+11:17:16.081
+The module "./src/index.ts" was not found on the file system:
+11:17:16.082
+The module "./src/index.ts" was not found on the file system:
+11:17:16.082
+node_modules/@workspace/api-zod/package.json:7:9:
+11:17:16.086
+node_modules/@workspace/api-zod/package.json:7:9:
+11:17:16.087
+7 │ ".": "./src/index.ts"
+11:17:16.089
+7 │ ".": "./src/index.ts"
+11:17:16.089
+╵ ~~~~~~~~~~~~~~~~
+11:17:16.091
+╵ ~~~~~~~~~~~~~~~~
+11:17:16.091
+You can mark the path "@workspace/api-zod" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+11:17:16.095
+You can mark the path "@workspace/api-zod" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+11:17:16.095
+✘ [ERROR] Could not resolve "@workspace/db"
+11:17:16.098
+✘ [ERROR] Could not resolve "@workspace/db"
+11:17:16.098
+src/routes/stories.ts:2:77:
+11:17:16.101
+src/routes/stories.ts:2:77:
+11:17:16.102
+2 │ ... storyViewsTable, usersTable, contactsTable } from "@workspace/db";
+11:17:16.109
+2 │ ... storyViewsTable, usersTable, contactsTable } from "@workspace/db";
+11:17:16.109
+╵ ~~~~~~~~~~~~~~~
+11:17:16.113
+╵ ~~~~~~~~~~~~~~~
+11:17:16.113
+The module "./src/index.ts" was not found on the file system:
+11:17:16.119
+The module "./src/index.ts" was not found on the file system:
+11:17:16.119
+node_modules/@workspace/db/package.json:7:9:
+11:17:16.123
+node_modules/@workspace/db/package.json:7:9:
+11:17:16.123
+7 │ ".": "./src/index.ts",
+11:17:16.127
+7 │ ".": "./src/index.ts",
+11:17:16.127
+╵ ~~~~~~~~~~~~~~~~
+11:17:16.131
+╵ ~~~~~~~~~~~~~~~~
+11:17:16.131
+You can mark the path "@workspace/db" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+11:17:16.133
+You can mark the path "@workspace/db" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+11:17:17.906
+✘ [ERROR] Could not resolve "@workspace/db"
+11:17:17.919
+✘ [ERROR] Could not resolve "@workspace/db"
+11:17:17.919
+src/routes/users.ts:2:31:
+11:17:17.926
+src/routes/users.ts:2:31:
+11:17:17.926
+2 │ import { db, usersTable } from "@workspace/db";
+11:17:17.935
+2 │ import { db, usersTable } from "@workspace/db";
+11:17:17.935
+╵ ~~~~~~~~~~~~~~~
+11:17:17.949
+╵ ~~~~~~~~~~~~~~~
+11:17:17.949
+The module "./src/index.ts" was not found on the file system:
+11:17:17.960
+The module "./src/index.ts" was not found on the file system:
+11:17:17.960
+node_modules/@workspace/db/package.json:7:9:
+11:17:17.968
+node_modules/@workspace/db/package.json:7:9:
+11:17:17.968
+7 │ ".": "./src/index.ts",
+11:17:17.984
+7 │ ".": "./src/index.ts",
+11:17:17.984
+╵ ~~~~~~~~~~~~~~~~
+11:17:17.992
+╵ ~~~~~~~~~~~~~~~~
+11:17:17.992
+You can mark the path "@workspace/db" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+11:17:18.002
+You can mark the path "@workspace/db" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+11:17:18.002
+✘ [ERROR] Could not resolve "@workspace/db"
+11:17:18.008
+✘ [ERROR] Could not resolve "@workspace/db"
+11:17:18.008
+src/routes/folders.ts:2:19:
+11:17:18.017
+src/routes/folders.ts:2:19:
+11:17:18.017
+2 │ import { db } from "@workspace/db";
+11:17:18.026
+2 │ import { db } from "@workspace/db";
+11:17:18.026
+╵ ~~~~~~~~~~~~~~~
+11:17:18.029
+╵ ~~~~~~~~~~~~~~~
+11:17:18.029
+The module "./src/index.ts" was not found on the file system:
+11:17:18.032
+The module "./src/index.ts" was not found on the file system:
+11:17:18.033
+node_modules/@workspace/db/package.json:7:9:
+11:17:18.037
+node_modules/@workspace/db/package.json:7:9:
+11:17:18.037
+7 │ ".": "./src/index.ts",
+11:17:18.046
+7 │ ".": "./src/index.ts",
+11:17:18.046
+╵ ~~~~~~~~~~~~~~~~
+11:17:18.051
+╵ ~~~~~~~~~~~~~~~~
+11:17:18.051
+You can mark the path "@workspace/db" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+11:17:18.059
+You can mark the path "@workspace/db" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+11:17:18.059
+✘ [ERROR] Could not resolve "@workspace/db"
+11:17:18.059
+/workspace/artifacts/api-server:
+11:17:18.065
+/workspace/artifacts/api-server:
+11:17:18.065
+✘ [ERROR] Could not resolve "@workspace/db"
+11:17:18.065
+src/routes/posts.ts:2:78:
+11:17:18.065
+ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @workspace/api-server@1.0.0 build: `node ./build.mjs`
+11:17:18.071
+src/routes/posts.ts:2:78:
+11:17:18.071
+ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @workspace/api-server@1.0.0 build: `node ./build.mjs`
+11:17:18.071
+Exit status 1
+11:17:18.071
+2 │ ...stLikesTable, postCommentsTable, usersTable } from "@workspace/db";
+11:17:18.076
+Exit status 1
+11:17:18.076
+Build output stream ended unexpectedly
+11:17:18.078
+2 │ ...stLikesTable, postCommentsTable, usersTable } from "@workspace/db";
+11:17:18.078
+╵ ~~~~~~~~~~~~~~~
+11:17:18.081
+Build output stream ended unexpectedly
+11:17:18.082
+╵ ~~~~~~~~~~~~~~~
+11:17:18.083
+The module "./src/index.ts" was not found on the file system:
+11:17:18.087
+The module "./src/index.ts" was not found on the file system:
+11:17:18.087
+node_modules/@workspace/db/package.json:7:9:
+11:17:18.091
+node_modules/@workspace/db/package.json:7:9:
+11:17:18.091
+7 │ ".": "./src/index.ts",
+11:17:18.095
+7 │ ".": "./src/index.ts",
+11:17:18.095
+╵ ~~~~~~~~~~~~~~~~
+11:17:18.102
+╵ ~~~~~~~~~~~~~~~~
+11:17:18.102
+You can mark the path "@workspace/db" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+11:17:18.106
+You can mark the path "@workspace/db" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+11:17:18.106
+✘ [ERROR] Could not resolve "@workspace/db"
+11:17:18.110
+✘ [ERROR] Could not resolve "@workspace/db"
+11:17:18.110
+src/routes/chats.ts:2:113:
+11:17:18.116
+src/routes/chats.ts:2:113:
+11:17:18.116
+2 │ ...sTable, reactionsTable, pinnedMessagesTable } from "@workspace/db";
+11:17:18.121
+2 │ ...sTable, reactionsTable, pinnedMessagesTable } from "@workspace/db";
+11:17:18.121
+╵ ~~~~~~~~~~~~~~~
+11:17:18.125
+╵ ~~~~~~~~~~~~~~~
+11:17:18.125
+The module "./src/index.ts" was not found on the file system:
+11:17:18.135
+The module "./src/index.ts" was not found on the file system:
+11:17:18.135
+node_modules/@workspace/db/package.json:7:9:
+11:17:18.138
+node_modules/@workspace/db/package.json:7:9:
+11:17:18.138
+7 │ ".": "./src/index.ts",
+11:17:18.141
+7 │ ".": "./src/index.ts",
+11:17:18.141
+╵ ~~~~~~~~~~~~~~~~
+11:17:18.144
+╵ ~~~~~~~~~~~~~~~~
+11:17:18.144
+You can mark the path "@workspace/db" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+11:17:18.151
+You can mark the path "@workspace/db" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+11:17:18.151
+✘ [ERROR] Could not resolve "@workspace/db"
+11:17:18.155
+✘ [ERROR] Could not resolve "@workspace/db"
+11:17:18.155
+src/routes/polls.ts:2:52:
+11:17:18.158
+src/routes/polls.ts:2:52:
+11:17:18.158
+2 │ import { db, messagesTable, chatMembersTable } from "@workspace/db";
+11:17:18.162
+2 │ import { db, messagesTable, chatMembersTable } from "@workspace/db";
+11:17:18.162
+╵ ~~~~~~~~~~~~~~~
+11:17:18.168
+╵ ~~~~~~~~~~~~~~~
+11:17:18.168
+The module "./src/index.ts" was not found on the file system:
+11:17:18.182
+The module "./src/index.ts" was not found on the file system:
+11:17:18.182
+node_modules/@workspace/db/package.json:7:9:
+11:17:18.200
+node_modules/@workspace/db/package.json:7:9:
+11:17:18.200
+7 │ ".": "./src/index.ts",
+11:17:18.206
+7 │ ".": "./src/index.ts",
+11:17:18.207
+╵ ~~~~~~~~~~~~~~~~
+11:17:18.222
+╵ ~~~~~~~~~~~~~~~~
+11:17:18.222
+You can mark the path "@workspace/db" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+11:17:18.241
+You can mark the path "@workspace/db" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+11:17:18.241
+✘ [ERROR] Could not resolve "@workspace/db"
+11:17:18.245
+✘ [ERROR] Could not resolve "@workspace/db"
+11:17:18.246
+src/routes/bots.ts:2:19:
+11:17:18.252
+src/routes/bots.ts:2:19:
+11:17:18.252
+2 │ import { db } from "@workspace/db";
+11:17:18.260
+2 │ import { db } from "@workspace/db";
+11:17:18.260
+╵ ~~~~~~~~~~~~~~~
+11:17:18.263
+╵ ~~~~~~~~~~~~~~~
+11:17:18.263
+The module "./src/index.ts" was not found on the file system:
+11:17:18.298
+The module "./src/index.ts" was not found on the file system:
+11:17:18.299
+node_modules/@workspace/db/package.json:7:9:
+11:17:18.315
+node_modules/@workspace/db/package.json:7:9:
+11:17:18.315
+7 │ ".": "./src/index.ts",
+11:17:18.320
+7 │ ".": "./src/index.ts",
+11:17:18.320
+╵ ~~~~~~~~~~~~~~~~
+11:17:18.323
+╵ ~~~~~~~~~~~~~~~~
+11:17:18.323
+You can mark the path "@workspace/db" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+11:17:18.331
+You can mark the path "@workspace/db" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+11:17:18.331
+✘ [ERROR] Could not resolve "@workspace/db"
+11:17:18.338
+✘ [ERROR] Could not resolve "@workspace/db"
+11:17:18.338
+src/routes/wallet.ts:2:59:
+11:17:18.343
+src/routes/wallet.ts:2:59:
+11:17:18.343
+2 │ ... db, usersTable, giftsTable, giftItemsTable } from "@workspace/db";
+11:17:18.349
+2 │ ... db, usersTable, giftsTable, giftItemsTable } from "@workspace/db";
+11:17:18.349
+╵ ~~~~~~~~~~~~~~~
+11:17:18.354
+╵ ~~~~~~~~~~~~~~~
+11:17:18.354
+The module "./src/index.ts" was not found on the file system:
+11:17:18.358
+The module "./src/index.ts" was not found on the file system:
+11:17:18.358
+node_modules/@workspace/db/package.json:7:9:
+11:17:18.360
+node_modules/@workspace/db/package.json:7:9:
+11:17:20.471
+7 │ ".": "./src/index.ts",
+11:17:20.500
+7 │ ".": "./src/index.ts",
+11:17:20.500
+╵ ~~~~~~~~~~~~~~~~
+11:17:20.511
+╵ ~~~~~~~~~~~~~~~~
+11:17:20.511
+You can mark the path "@workspace/db" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+11:17:20.517
+You can mark the path "@workspace/db" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+11:17:20.517
+✘ [ERROR] Could not resolve "@workspace/db"
+11:17:20.528
+✘ [ERROR] Could not resolve "@workspace/db"
+11:17:20.528
+src/routes/auth.ts:2:19:
+11:17:20.540
+src/routes/auth.ts:2:19:
+11:17:20.540
+2 │ import { db } from "@workspace/db";
+11:17:20.548
+2 │ import { db } from "@workspace/db";
+11:17:20.548
+╵ ~~~~~~~~~~~~~~~
+11:17:20.553
+╵ ~~~~~~~~~~~~~~~
+11:17:20.553
+The module "./src/index.ts" was not found on the file system:
+11:17:20.573
+The module "./src/index.ts" was not found on the file system:
+11:17:20.573
+node_modules/@workspace/db/package.json:7:9:
+11:17:20.580
+node_modules/@workspace/db/package.json:7:9:
+11:17:20.580
+7 │ ".": "./src/index.ts",
+11:17:20.587
+7 │ ".": "./src/index.ts",
+11:17:20.587
+╵ ~~~~~~~~~~~~~~~~
+11:17:20.592
+╵ ~~~~~~~~~~~~~~~~
+11:17:20.592
+You can mark the path "@workspace/db" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+11:17:20.598
+You can mark the path "@workspace/db" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+11:17:20.598
+✘ [ERROR] Could not resolve "@workspace/db"
+11:17:20.609
+✘ [ERROR] Could not resolve "@workspace/db"
+11:17:20.609
+src/routes/referral.ts:2:19:
+11:17:20.614
+src/routes/referral.ts:2:19:
+11:17:20.614
+2 │ import { db } from "@workspace/db";
+11:17:20.624
+2 │ import { db } from "@workspace/db";
+11:17:20.624
+╵ ~~~~~~~~~~~~~~~
+11:17:20.632
+╵ ~~~~~~~~~~~~~~~
+11:17:20.632
+The module "./src/index.ts" was not found on the file system:
+11:17:20.642
+The module "./src/index.ts" was not found on the file system:
+11:17:20.642
+node_modules/@workspace/db/package.json:7:9:
+11:17:20.650
+node_modules/@workspace/db/package.json:7:9:
+11:17:20.651
+7 │ ".": "./src/index.ts",
+11:17:20.660
+7 │ ".": "./src/index.ts",
+11:17:20.660
+╵ ~~~~~~~~~~~~~~~~
+11:17:20.668
+╵ ~~~~~~~~~~~~~~~~
+11:17:20.668
+You can mark the path "@workspace/db" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+11:17:20.676
+You can mark the path "@workspace/db" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+11:17:20.676
+✘ [ERROR] Could not resolve "@workspace/db"
+11:17:20.682
+✘ [ERROR] Could not resolve "@workspace/db"
+11:17:20.682
+src/routes/platform-events.ts:2:40:
+11:17:20.691
+src/routes/platform-events.ts:2:40:
+11:17:20.691
+2 │ import { db, platformEventsTable } from "@workspace/db";
+11:17:20.694
+2 │ import { db, platformEventsTable } from "@workspace/db";
+11:17:20.694
+╵ ~~~~~~~~~~~~~~~
+11:17:20.703
+╵ ~~~~~~~~~~~~~~~
+11:17:20.703
+The module "./src/index.ts" was not found on the file system:
+11:17:20.711
+The module "./src/index.ts" was not found on the file system:
+11:17:20.711
+node_modules/@workspace/db/package.json:7:9:
+11:17:20.712
+node_modules/@workspace/db/package.json:7:9:
+11:17:20.713
+7 │ ".": "./src/index.ts",
+11:17:20.722
+7 │ ".": "./src/index.ts",
+11:17:20.722
+╵ ~~~~~~~~~~~~~~~~
+11:17:20.727
+╵ ~~~~~~~~~~~~~~~~
+11:17:20.727
+You can mark the path "@workspace/db" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+11:17:20.736
+You can mark the path "@workspace/db" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+11:17:20.736
+✘ [ERROR] Could not resolve "@workspace/db"
+11:17:20.742
+✘ [ERROR] Could not resolve "@workspace/db"
+11:17:20.742
+src/routes/clans.ts:2:19:
+11:17:20.746
+src/routes/clans.ts:2:19:
+11:17:20.746
+2 │ import { db } from "@workspace/db";
+11:17:20.753
+2 │ import { db } from "@workspace/db";
+11:17:20.753
+╵ ~~~~~~~~~~~~~~~
+11:17:20.757
+╵ ~~~~~~~~~~~~~~~
+11:17:20.757
+The module "./src/index.ts" was not found on the file system:
+11:17:20.762
+The module "./src/index.ts" was not found on the file system:
+11:17:20.762
+node_modules/@workspace/db/package.json:7:9:
+11:17:20.765
+node_modules/@workspace/db/package.json:7:9:
+11:17:20.765
+7 │ ".": "./src/index.ts",
+11:17:20.768
+7 │ ".": "./src/index.ts",
+11:17:20.768
+╵ ~~~~~~~~~~~~~~~~
+11:17:20.780
+╵ ~~~~~~~~~~~~~~~~
+11:17:20.780
+You can mark the path "@workspace/db" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+11:17:20.790
+You can mark the path "@workspace/db" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+11:17:20.790
+✘ [ERROR] Could not resolve "@workspace/db"
+11:17:20.793
+✘ [ERROR] Could not resolve "@workspace/db"
+11:17:20.793
+src/routes/events.ts:8:31:
+11:17:20.797
+src/routes/events.ts:8:31:
+11:17:20.797
+8 │ import { db, usersTable } from "@workspace/db";
+11:17:20.807
+8 │ import { db, usersTable } from "@workspace/db";
+11:17:20.807
+╵ ~~~~~~~~~~~~~~~
+11:17:20.823
+╵ ~~~~~~~~~~~~~~~
+11:17:20.823
+The module "./src/index.ts" was not found on the file system:
+11:17:20.833
+The module "./src/index.ts" was not found on the file system:
+11:17:20.833
+node_modules/@workspace/db/package.json:7:9:
+11:17:20.841
+node_modules/@workspace/db/package.json:7:9:
+11:17:20.841
+7 │ ".": "./src/index.ts",
+11:17:20.848
+7 │ ".": "./src/index.ts",
+11:17:20.848
+╵ ~~~~~~~~~~~~~~~~
+11:17:20.859
+╵ ~~~~~~~~~~~~~~~~
+11:17:20.859
+You can mark the path "@workspace/db" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+11:17:20.873
+You can mark the path "@workspace/db" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+11:17:20.873
+✘ [ERROR] Could not resolve "@workspace/db"
+11:17:20.889
+✘ [ERROR] Could not resolve "@workspace/db"
+11:17:20.889
+src/routes/contact-requests.ts:2:19:
+11:17:20.897
+src/routes/contact-requests.ts:2:19:
+11:17:20.897
+2 │ import { db } from "@workspace/db";
+11:17:20.906
+2 │ import { db } from "@workspace/db";
+11:17:20.906
+╵ ~~~~~~~~~~~~~~~
+11:17:20.912
+╵ ~~~~~~~~~~~~~~~
+11:17:20.912
+The module "./src/index.ts" was not found on the file system:
+11:17:20.918
+The module "./src/index.ts" was not found on the file system:
+11:17:20.918
+node_modules/@workspace/db/package.json:7:9:
+11:17:20.936
+node_modules/@workspace/db/package.json:7:9:
+11:17:20.937
+7 │ ".": "./src/index.ts",
+11:17:20.941
+7 │ ".": "./src/index.ts",
+11:17:20.941
+╵ ~~~~~~~~~~~~~~~~
+11:17:20.944
+╵ ~~~~~~~~~~~~~~~~
+11:17:20.944
+You can mark the path "@workspace/db" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+11:17:20.948
+You can mark the path "@workspace/db" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+11:17:20.948
+Build output stream ended unexpectedly
+11:17:20.953
+Build output stream ended unexpectedly
+11:17:21.006
+The module "./src/index.ts" was not found on the file system:
+node_modules/@workspace/db/package.json:7:9:
+7 │     ".": "./src/index.ts",
+╵          ~~~~~~~~~~~~~~~~
+You can mark the path "@workspace/db" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+✘ [ERROR] Could not resolve "@workspace/db"
+src/routes/clans.ts:2:19:
+2 │ import { db } from "@workspace/db";
+╵                    ~~~~~~~~~~~~~~~
+The module "./src/index.ts" was not found on the file system:
+node_modules/@workspace/db/package.json:7:9:
+7 │     ".": "./src/index.ts",
+╵          ~~~~~~~~~~~~~~~~
+You can mark the path "@workspace/db" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+✘ [ERROR] Could not resolve "@workspace/db"
+src/routes/events.ts:8:31:
+8 │ import { db, usersTable } from "@workspace/db";
+╵                                ~~~~~~~~~~~~~~~
+The module "./src/index.ts" was not found on the file system:
+node_modules/@workspace/db/package.json:7:9:
+7 │     ".": "./src/index.ts",
+╵          ~~~~~~~~~~~~~~~~
+You can mark the path "@workspace/db" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+✘ [ERROR] Could not resolve "@workspace/db"
+src/routes/contact-requests.ts:2:19:
+2 │ import { db } from "@workspace/db";
+╵                    ~~~~~~~~~~~~~~~
+The module "./src/index.ts" was not found on the file system:
+node_modules/@workspace/db/package.json:7:9:
+7 │     ".": "./src/index.ts",
+╵          ~~~~~~~~~~~~~~~~
+You can mark the path "@workspace/db" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+11:17:21.022
+[failure_class=platform_gvisor_sandbox owner=platform] Build sandbox failed: exit status 1
+11:17:21.030
+Oh no, your deployment failed. Check the logs above to see what went wrong.
+11:17:21.041
+Oh no, your deployment failed. Check the logs above to see what went wrong.
+11:17:21.046
+failed
+11:17:21.215
+The build worker reported a failure; inspect the structured build logs for the failing stage
