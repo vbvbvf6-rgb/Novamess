@@ -1,0 +1,265 @@
+19:54:42.666
+[pxxl] config -> novamess
+| Runtime environment | node |
+| Environment | production |
+| Base directory | / |
+| Install command | corepack enable && corepack prepare pnpm@10.26.1 --activate && pnpm install |
+| | --frozen-lockfile |
+| Build command | PORT=5000 BASE_PATH=/ pnpm --filter @workspace/pulse run build && pnpm |
+| | --filter @workspace/api-server run build |
+| Start command | sh scripts/start-prod.sh |
++----------------------+------------------------------------------------------------------------------+
+Build region: DE
+Build server: self-hosted-build-01 - DE
+Runtime server: staging-runtime-titan-01 - Copenhagen, DK
+19:54:47.392
+Build started
+19:54:47.400
+Deployment workflow prepared
+19:54:47.400
+Build started
+19:54:47.407
+Build Configuration Completed
+19:54:47.407
+Deployment workflow prepared
+19:54:47.434
+Build Configuration Completed
+19:54:47.461
+Building with build-server (AMD EPYC 9645 96-Core Processor, 12 vCPU, 31 GB, amd64, Debian GNU/Linux 13 (trixie))
+19:54:47.473
+Starting PxxlBuilder
+19:54:47.473
+Building with build-server (AMD EPYC 9645 96-Core Processor, 12 vCPU, 31 GB, amd64, Debian GNU/Linux 13 (trixie))
+19:54:47.478
+Starting PxxlBuilder
+19:54:51.492
+Dockerfile detected; running its stages in the gVisor build sandbox
+19:54:51.498
+Cloning Dockerfile build context
+19:54:51.498
+Dockerfile detected; running its stages in the gVisor build sandbox
+19:54:51.502
+Cloning Dockerfile build context
+19:54:52.028
+[pxxl] source -> cloning repository for Dockerfile build
+19:54:52.036
+Cloning into '/pxxl-context'...
+19:54:52.078
+[pxxl] source -> cloning repository for Dockerfile build
+19:54:52.079
+Cloning into '/pxxl-context'...
+19:55:00.096
+Updating files: 73% (907/1233)Updating files: 74% (913/1233)Updating files: 75% (925/1233)Updating files: 76% (938/1233)Updating files: 77% (950/1233)Updating files: 78% (962/1233)Updating files: 79% (975/1233)Updating files: 80% (987/1233)Updating files: 81% (999/1233)Updating files: 82% (1012/1233)Updating files: 83% (1024/1233)Updating files: 84% (1036/1233)Updating files: 85% (1049/1233)Updating files: 86% (1061/1233)Updating files: 87% (1073/1233)Updating files: 88% (1086/1233)Updating files: 89% (1098/1233)Updating files: 90% (1110/1233)Updating files: 91% (1123/1233)Updating files: 92% (1135/1233)Updating files: 93% (1147/1233)Updating files: 94% (1160/1233)Updating files: 95% (1172/1233)Updating files: 96% (1184/1233)Updating files: 97% (1197/1233)Updating files: 98% (1209/1233)Updating files: 99% (1221/1233)Updating files: 100% (1233/1233)Updating files: 100% (1233/1233), done.
+19:55:00.101
+Updating files: 73% (907/1233)Updating files: 74% (913/1233)Updating files: 75% (925/1233)Updating files: 76% (938/1233)Updating files: 77% (950/1233)Updating files: 78% (962/1233)Updating files: 79% (975/1233)Updating files: 80% (987/1233)Updating files: 81% (999/1233)Updating files: 82% (1012/1233)Updating files: 83% (1024/1233)Updating files: 84% (1036/1233)Updating files: 85% (1049/1233)Updating files: 86% (1061/1233)Updating files: 87% (1073/1233)Updating files: 88% (1086/1233)Updating files: 89% (1098/1233)Updating files: 90% (1110/1233)Updating files: 91% (1123/1233)Updating files: 92% (1135/1233)Updating files: 93% (1147/1233)Updating files: 94% (1160/1233)Updating files: 95% (1172/1233)Updating files: 96% (1184/1233)Updating files: 97% (1197/1233)Updating files: 98% (1209/1233)Updating files: 99% (1221/1233)Updating files: 100% (1233/1233)Updating files: 100% (1233/1233), done.
+19:55:01.096
+[pxxl] Dockerfile RUN
+19:55:01.101
+[pxxl] Dockerfile RUN
+19:55:03.402
+added 1 package in 2s
+19:55:03.407
+npm notice
+19:55:03.409
+added 1 package in 2s
+19:55:03.409
+1 package is looking for funding
+19:55:03.411
+npm notice
+19:55:03.412
+npm notice New major version of npm available! 11.17.0 -> 12.0.2
+19:55:03.413
+1 package is looking for funding
+19:55:03.413
+run `npm fund` for details
+19:55:03.418
+npm notice New major version of npm available! 11.17.0 -> 12.0.2
+19:55:03.418
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.0.2
+19:55:03.420
+run `npm fund` for details
+19:55:03.422
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.0.2
+19:55:03.422
+npm notice To update run: npm install -g npm@12.0.2
+19:55:03.426
+npm notice
+19:55:03.426
+npm notice To update run: npm install -g npm@12.0.2
+19:55:03.430
+npm notice
+19:55:03.524
+[pxxl] Dockerfile RUN
+19:55:03.529
+[pxxl] Dockerfile RUN
+19:55:06.057
+WARN  using --force I sure hope you know what you are doing
+19:55:06.071
+Scope: all 9 workspace projects
+19:55:06.071
+WARN  using --force I sure hope you know what you are doing
+19:55:06.077
+Scope: all 9 workspace projects
+19:55:06.123
+Lockfile is up to date, resolution step is skipped
+19:55:06.132
+Lockfile is up to date, resolution step is skipped
+19:55:06.154
+Progress: resolved 1, reused 0, downloaded 0, added 0
+19:55:06.162
+Progress: resolved 1, reused 0, downloaded 0, added 0
+19:55:06.429
+Packages: +604
+19:55:06.440
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+19:55:06.440
+Packages: +604
+19:55:06.454
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+19:55:07.256
+Progress: resolved 604, reused 0, downloaded 20, added 3
+19:55:07.262
+Progress: resolved 604, reused 0, downloaded 20, added 3
+19:55:08.330
+Progress: resolved 604, reused 0, downloaded 95, added 31
+19:55:08.336
+Progress: resolved 604, reused 0, downloaded 95, added 31
+19:55:09.339
+Progress: resolved 604, reused 0, downloaded 159, added 48
+19:55:09.345
+Progress: resolved 604, reused 0, downloaded 159, added 48
+19:55:10.339
+Progress: resolved 604, reused 0, downloaded 229, added 64
+19:55:10.347
+Progress: resolved 604, reused 0, downloaded 229, added 64
+19:55:11.340
+Progress: resolved 604, reused 0, downloaded 264, added 72
+19:55:11.344
+Progress: resolved 604, reused 0, downloaded 264, added 72
+19:55:12.342
+Progress: resolved 604, reused 0, downloaded 320, added 87
+19:55:12.349
+Progress: resolved 604, reused 0, downloaded 320, added 87
+19:55:13.342
+Progress: resolved 604, reused 0, downloaded 462, added 129
+19:55:13.347
+Progress: resolved 604, reused 0, downloaded 462, added 129
+19:55:14.342
+Progress: resolved 604, reused 0, downloaded 510, added 141
+19:55:14.347
+Progress: resolved 604, reused 0, downloaded 510, added 141
+19:55:15.343
+Progress: resolved 604, reused 0, downloaded 595, added 160
+19:55:15.349
+Progress: resolved 604, reused 0, downloaded 595, added 160
+19:55:16.344
+Progress: resolved 604, reused 0, downloaded 600, added 309
+19:55:16.352
+Progress: resolved 604, reused 0, downloaded 600, added 309
+19:55:17.345
+Progress: resolved 604, reused 0, downloaded 603, added 566
+19:55:17.353
+Progress: resolved 604, reused 0, downloaded 603, added 566
+19:55:18.220
+Progress: resolved 604, reused 0, downloaded 604, added 604, done
+19:55:18.228
+Progress: resolved 604, reused 0, downloaded 604, added 604, done
+19:55:18.463
+.../esbuild@0.27.3/node_modules/esbuild postinstall$ node install.js
+19:55:18.472
+.../esbuild@0.27.3/node_modules/esbuild postinstall$ node install.js
+19:55:18.619
+.../esbuild@0.27.3/node_modules/esbuild postinstall: Done
+19:55:18.632
+.../esbuild@0.27.3/node_modules/esbuild postinstall: Done
+19:55:18.929
+dependencies:
+19:55:18.943
++ @types/compression 1.8.1
+19:55:18.943
+dependencies:
+19:55:18.947
++ compression 1.8.1
+19:55:18.947
++ @types/compression 1.8.1
+19:55:18.950
++ connect-timeout 1.9.1
+19:55:18.950
++ compression 1.8.1
+19:55:18.958
++ connect-timeout 1.9.1
+19:55:18.959
+devDependencies:
+19:55:18.963
++ prettier 3.8.1
+19:55:18.963
+devDependencies:
+19:55:18.966
++ typescript 5.9.3
+19:55:18.966
++ prettier 3.8.1
+19:55:18.971
+. preinstall$ sh -c 'rm -f package-lock.json yarn.lock; case "$npm_config_user_agent" in pnpm/*) ;; *) echo "Use pnpm instead" >&2; exit 1 ;; esac'
+19:55:18.971
++ typescript 5.9.3
+19:55:18.983
+. preinstall$ sh -c 'rm -f package-lock.json yarn.lock; case "$npm_config_user_agent" in pnpm/*) ;; *) echo "Use pnpm instead" >&2; exit 1 ;; esac'
+19:55:19.005
+. preinstall: Done
+19:55:19.018
+. preinstall: Done
+19:55:19.223
+Done in 13.6s using pnpm v10.26.1
+19:55:19.226
+Done in 13.6s using pnpm v10.26.1
+19:55:19.404
+[pxxl] Dockerfile RUN
+19:55:19.410
+[pxxl] Dockerfile RUN
+19:55:19.530
+cp: cannot stat '/pxxl-context/tsconfig.base.json*': No such file or directory
+19:55:19.535
+cp: cannot stat '/pxxl-context/tsconfig.base.json*': No such file or directory
+19:55:19.903
+WARN  using --force I sure hope you know what you are doing
+Scope: all 9 workspace projects
+Lockfile is up to date, resolution step is skipped
+Progress: resolved 1, reused 0, downloaded 0, added 0
+Packages: +604
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Progress: resolved 604, reused 0, downloaded 20, added 3
+Progress: resolved 604, reused 0, downloaded 95, added 31
+Progress: resolved 604, reused 0, downloaded 159, added 48
+Progress: resolved 604, reused 0, downloaded 229, added 64
+Progress: resolved 604, reused 0, downloaded 264, added 72
+Progress: resolved 604, reused 0, downloaded 320, added 87
+Progress: resolved 604, reused 0, downloaded 462, added 129
+Progress: resolved 604, reused 0, downloaded 510, added 141
+Progress: resolved 604, reused 0, downloaded 595, added 160
+Progress: resolved 604, reused 0, downloaded 600, added 309
+Progress: resolved 604, reused 0, downloaded 603, added 566
+Progress: resolved 604, reused 0, downloaded 604, added 604, done
+.../esbuild@0.27.3/node_modules/esbuild postinstall$ node install.js
+.../esbuild@0.27.3/node_modules/esbuild postinstall: Done
+dependencies:
++ @types/compression 1.8.1
++ compression 1.8.1
++ connect-timeout 1.9.1
+devDependencies:
++ prettier 3.8.1
++ typescript 5.9.3
+. preinstall$ sh -c 'rm -f package-lock.json yarn.lock; case "$npm_config_user_agent" in pnpm/*) ;; *) echo "Use pnpm instead" >&2; exit 1 ;; esac'
+. preinstall: Done
+Done in 13.6s using pnpm v10.26.1
+[pxxl] Dockerfile RUN
+cp: cannot stat '/pxxl-context/tsconfig.base.json*': No such file or directory
+19:55:19.907
+[failure_class=developer_source owner=developer] Build sandbox failed: exit status 1
+19:55:19.911
+Oh no, your deployment failed. Check the logs above to see what went wrong.
+19:55:19.914
+Oh no, your deployment failed. Check the logs above to see what went wrong.
+19:55:19.916
+failed
+19:55:19.916
+Build worker reported a failed deployment

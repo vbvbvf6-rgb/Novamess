@@ -25,7 +25,7 @@ RUN cd artifacts/pulse \
   && node -e "require.resolve('lightningcss-linux-x64-gnu')" \
   && node -e "require.resolve('lightningcss-linux-x64-musl')"
 
-COPY tsconfig.json tsconfig.base.json* ./
+COPY tsconfig.json tsconfig.base.json ./
 COPY lib/ ./lib/
 COPY artifacts/api-server/ ./artifacts/api-server/
 COPY artifacts/pulse/ ./artifacts/pulse/
