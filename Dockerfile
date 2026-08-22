@@ -29,7 +29,7 @@ COPY tsconfig.json tsconfig.base.json ./
 COPY lib/ ./lib/
 COPY artifacts/api-server/build.mjs ./artifacts/api-server/build.mjs
 COPY artifacts/api-server/package.json ./artifacts/api-server/package.json
-COPY artifacts/api-server/src/ ./artifacts/api-server/src/
+COPY artifacts/api-server/src ./artifacts/api-server/src
 COPY artifacts/pulse/ ./artifacts/pulse/
 
 # Build the API server (esbuild)
