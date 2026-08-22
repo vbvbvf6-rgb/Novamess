@@ -1,0 +1,355 @@
+10:19:55.390
+Build started
+10:19:55.406
+[pxxl] config -> novamess
+| Branch | main |
+| Environment | production |
+| Base directory | / |
+| Install command | corepack enable && corepack prepare pnpm@10.26.1 --activate && pnpm install |
+| | --frozen-lockfile |
+| Build command | PORT=5000 BASE_PATH=/ pnpm --filter @workspace/pulse run build && pnpm |
+| | --filter @workspace/api-server run build |
+| Start command | sh scripts/start-prod.sh |
++----------------------+------------------------------------------------------------------------------+
+Build region: DE
+Build server: self-hosted-build-01 - DE
+Runtime server: staging-runtime-titan-01 - Copenhagen, DK
+10:19:55.406
+Deployment workflow prepared
+10:19:55.406
+Build started
+10:19:55.426
+Deployment workflow prepared
+10:19:55.427
+Build Configuration Completed
+10:19:55.445
+Build Configuration Completed
+10:19:55.462
+Building with build-server (AMD EPYC 9645 96-Core Processor, 12 vCPU, 31 GB, amd64, Debian GNU/Linux 13 (trixie))
+10:19:55.476
+Starting PxxlBuilder
+10:19:55.476
+Building with build-server (AMD EPYC 9645 96-Core Processor, 12 vCPU, 31 GB, amd64, Debian GNU/Linux 13 (trixie))
+10:19:55.485
+Starting PxxlBuilder
+10:19:58.936
+Dockerfile detected; running its stages in the gVisor build sandbox
+10:19:58.951
+Cloning Dockerfile build context
+10:19:58.951
+Dockerfile detected; running its stages in the gVisor build sandbox
+10:19:58.961
+Cloning Dockerfile build context
+10:19:59.476
+[pxxl] source -> cloning repository for Dockerfile build
+10:19:59.484
+Cloning into '/pxxl-context'...
+10:19:59.492
+[pxxl] source -> cloning repository for Dockerfile build
+10:19:59.493
+Cloning into '/pxxl-context'...
+10:20:07.601
+Updating files: 73% (911/1237)Updating files: 74% (916/1237)Updating files: 75% (928/1237)Updating files: 76% (941/1237)Updating files: 77% (953/1237)Updating files: 78% (965/1237)Updating files: 79% (978/1237)Updating files: 80% (990/1237)Updating files: 81% (1002/1237)Updating files: 82% (1015/1237)Updating files: 83% (1027/1237)Updating files: 84% (1040/1237)Updating files: 85% (1052/1237)Updating files: 86% (1064/1237)Updating files: 87% (1077/1237)Updating files: 88% (1089/1237)Updating files: 89% (1101/1237)Updating files: 90% (1114/1237)Updating files: 91% (1126/1237)Updating files: 92% (1139/1237)Updating files: 93% (1151/1237)Updating files: 94% (1163/1237)Updating files: 95% (1176/1237)Updating files: 96% (1188/1237)Updating files: 97% (1200/1237)Updating files: 98% (1213/1237)Updating files: 99% (1225/1237)Updating files: 100% (1237/1237)Updating files: 100% (1237/1237), done.
+10:20:07.618
+Updating files: 73% (911/1237)Updating files: 74% (916/1237)Updating files: 75% (928/1237)Updating files: 76% (941/1237)Updating files: 77% (953/1237)Updating files: 78% (965/1237)Updating files: 79% (978/1237)Updating files: 80% (990/1237)Updating files: 81% (1002/1237)Updating files: 82% (1015/1237)Updating files: 83% (1027/1237)Updating files: 84% (1040/1237)Updating files: 85% (1052/1237)Updating files: 86% (1064/1237)Updating files: 87% (1077/1237)Updating files: 88% (1089/1237)Updating files: 89% (1101/1237)Updating files: 90% (1114/1237)Updating files: 91% (1126/1237)Updating files: 92% (1139/1237)Updating files: 93% (1151/1237)Updating files: 94% (1163/1237)Updating files: 95% (1176/1237)Updating files: 96% (1188/1237)Updating files: 97% (1200/1237)Updating files: 98% (1213/1237)Updating files: 99% (1225/1237)Updating files: 100% (1237/1237)Updating files: 100% (1237/1237), done.
+10:20:08.611
+[pxxl] Dockerfile RUN
+10:20:08.632
+[pxxl] Dockerfile RUN
+10:20:10.816
+added 1 package in 2s
+10:20:10.817
+npm notice
+10:20:10.836
+1 package is looking for funding
+10:20:10.836
+npm notice New major version of npm available! 11.17.0 -> 12.0.2
+10:20:10.836
+added 1 package in 2s
+10:20:10.836
+npm notice
+10:20:10.846
+run `npm fund` for details
+10:20:10.847
+npm notice New major version of npm available! 11.17.0 -> 12.0.2
+10:20:10.846
+1 package is looking for funding
+10:20:10.847
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.0.2
+10:20:10.854
+npm notice To update run: npm install -g npm@12.0.2
+10:20:10.854
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.0.2
+10:20:10.857
+run `npm fund` for details
+10:20:10.871
+npm notice
+10:20:10.871
+npm notice To update run: npm install -g npm@12.0.2
+10:20:10.901
+npm notice
+10:20:10.916
+[pxxl] Dockerfile RUN
+10:20:10.957
+[pxxl] Dockerfile RUN
+10:20:13.051
+WARN  using --force I sure hope you know what you are doing
+10:20:13.077
+Scope: all 9 workspace projects
+10:20:13.077
+WARN  using --force I sure hope you know what you are doing
+10:20:13.095
+Scope: all 9 workspace projects
+10:20:13.113
+Lockfile is up to date, resolution step is skipped
+10:20:13.131
+Lockfile is up to date, resolution step is skipped
+10:20:13.143
+Progress: resolved 1, reused 0, downloaded 0, added 0
+10:20:13.155
+Progress: resolved 1, reused 0, downloaded 0, added 0
+10:20:13.414
+Packages: +604
+10:20:13.429
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+10:20:13.429
+Packages: +604
+10:20:13.445
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+10:20:14.206
+Progress: resolved 604, reused 0, downloaded 4, added 1
+10:20:14.220
+Progress: resolved 604, reused 0, downloaded 4, added 1
+10:20:15.213
+Progress: resolved 604, reused 0, downloaded 78, added 26
+10:20:15.221
+Progress: resolved 604, reused 0, downloaded 78, added 26
+10:20:16.220
+Progress: resolved 604, reused 0, downloaded 207, added 57
+10:20:16.228
+Progress: resolved 604, reused 0, downloaded 207, added 57
+10:20:17.224
+Progress: resolved 604, reused 0, downloaded 302, added 107
+10:20:17.238
+Progress: resolved 604, reused 0, downloaded 302, added 107
+10:20:18.227
+Progress: resolved 604, reused 0, downloaded 383, added 147
+10:20:18.237
+Progress: resolved 604, reused 0, downloaded 383, added 147
+10:20:19.228
+Progress: resolved 604, reused 0, downloaded 417, added 155
+10:20:19.246
+Progress: resolved 604, reused 0, downloaded 417, added 155
+10:20:20.310
+Progress: resolved 604, reused 0, downloaded 480, added 168
+10:20:20.316
+Progress: resolved 604, reused 0, downloaded 480, added 168
+10:20:21.325
+Progress: resolved 604, reused 0, downloaded 509, added 172
+10:20:21.339
+Progress: resolved 604, reused 0, downloaded 509, added 172
+10:20:22.325
+Progress: resolved 604, reused 0, downloaded 554, added 184
+10:20:22.335
+Progress: resolved 604, reused 0, downloaded 554, added 184
+10:20:23.326
+Progress: resolved 604, reused 0, downloaded 601, added 280
+10:20:23.330
+Progress: resolved 604, reused 0, downloaded 601, added 280
+10:20:24.327
+Progress: resolved 604, reused 0, downloaded 601, added 489
+10:20:24.336
+Progress: resolved 604, reused 0, downloaded 601, added 489
+10:20:25.335
+Progress: resolved 604, reused 0, downloaded 601, added 600
+10:20:25.344
+Progress: resolved 604, reused 0, downloaded 601, added 600
+10:20:26.337
+Progress: resolved 604, reused 0, downloaded 604, added 603
+10:20:26.345
+Progress: resolved 604, reused 0, downloaded 604, added 603
+10:20:26.466
+Progress: resolved 604, reused 0, downloaded 604, added 604, done
+10:20:26.482
+Progress: resolved 604, reused 0, downloaded 604, added 604, done
+10:20:26.818
+.../esbuild@0.27.3/node_modules/esbuild postinstall$ node install.js
+10:20:26.842
+.../esbuild@0.27.3/node_modules/esbuild postinstall$ node install.js
+10:20:26.978
+.../esbuild@0.27.3/node_modules/esbuild postinstall: Done
+10:20:26.995
+.../esbuild@0.27.3/node_modules/esbuild postinstall: Done
+10:20:27.274
+dependencies:
+10:20:27.293
++ @types/compression 1.8.1
+10:20:27.293
+dependencies:
+10:20:27.308
++ compression 1.8.1
+10:20:27.308
++ @types/compression 1.8.1
+10:20:27.321
++ compression 1.8.1
+10:20:27.322
++ connect-timeout 1.9.1
+10:20:27.354
++ connect-timeout 1.9.1
+10:20:27.355
+devDependencies:
+10:20:27.368
+devDependencies:
+10:20:27.369
++ prettier 3.8.1
+10:20:27.379
++ typescript 5.9.3
+10:20:27.379
++ prettier 3.8.1
+10:20:27.416
+. preinstall$ sh -c 'rm -f package-lock.json yarn.lock; case "$npm_config_user_agent" in pnpm/*) ;; *) echo "Use pnpm instead" >&2; exit 1 ;; esac'
+10:20:27.416
++ typescript 5.9.3
+10:20:27.450
+. preinstall: Done
+10:20:27.450
+. preinstall$ sh -c 'rm -f package-lock.json yarn.lock; case "$npm_config_user_agent" in pnpm/*) ;; *) echo "Use pnpm instead" >&2; exit 1 ;; esac'
+10:20:27.459
+. preinstall: Done
+10:20:27.565
+Done in 14.9s using pnpm v10.26.1
+10:20:27.575
+Done in 14.9s using pnpm v10.26.1
+10:20:27.760
+[pxxl] Dockerfile RUN
+10:20:27.779
+[pxxl] Dockerfile RUN
+10:20:28.334
+[pxxl] Dockerfile RUN
+10:20:29.158
+> @workspace/api-server@1.0.0 build /workspace/artifacts/api-server
+10:20:29.165
+> node ./build.mjs
+10:20:29.165
+> @workspace/api-server@1.0.0 build /workspace/artifacts/api-server
+10:20:29.169
+> node ./build.mjs
+10:20:29.211
+node:internal/modules/cjs/loader:1520
+10:20:29.228
+throw err;
+10:20:29.228
+node:internal/modules/cjs/loader:1520
+10:20:29.233
+/workspace/artifacts/api-server:
+10:20:29.247
+throw err;
+10:20:29.247
+^
+10:20:29.247
+/workspace/artifacts/api-server:
+10:20:29.247
+ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @workspace/api-server@1.0.0 build: `node ./build.mjs`
+10:20:29.258
+^
+10:20:29.258
+Error: Cannot find module '/workspace/artifacts/api-server/build.mjs'
+10:20:29.259
+ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @workspace/api-server@1.0.0 build: `node ./build.mjs`
+10:20:29.259
+Exit status 1
+10:20:29.263
+Error: Cannot find module '/workspace/artifacts/api-server/build.mjs'
+10:20:29.263
+at Module._resolveFilename (node:internal/modules/cjs/loader:1517:15)
+10:20:29.266
+Exit status 1
+10:20:29.274
+at Module._resolveFilename (node:internal/modules/cjs/loader:1517:15)
+10:20:29.274
+at wrapResolveFilename (node:internal/modules/cjs/loader:1071:27)
+10:20:29.284
+at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1095:10)
+10:20:29.284
+at wrapResolveFilename (node:internal/modules/cjs/loader:1071:27)
+10:20:29.292
+at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1122:12)
+10:20:29.292
+at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1095:10)
+10:20:29.298
+at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1122:12)
+10:20:29.299
+at Module._load (node:internal/modules/cjs/loader:1294:5)
+10:20:29.303
+at Module._load (node:internal/modules/cjs/loader:1294:5)
+10:20:29.304
+at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+10:20:29.308
+at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+10:20:29.308
+at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+10:20:29.313
+at node:internal/main/run_main_module:33:47 {
+10:20:29.313
+at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+10:20:29.328
+code: 'MODULE_NOT_FOUND',
+10:20:29.328
+at node:internal/main/run_main_module:33:47 {
+10:20:29.334
+requireStack: []
+10:20:29.334
+code: 'MODULE_NOT_FOUND',
+10:20:29.340
+}
+10:20:29.340
+requireStack: []
+10:20:29.344
+Node.js v24.19.0
+10:20:29.344
+}
+10:20:29.352
+Node.js v24.19.0
+10:20:29.575
++ @types/compression 1.8.1
++ compression 1.8.1
++ connect-timeout 1.9.1
+devDependencies:
++ prettier 3.8.1
++ typescript 5.9.3
+. preinstall$ sh -c 'rm -f package-lock.json yarn.lock; case "$npm_config_user_agent" in pnpm/*) ;; *) echo "Use pnpm instead" >&2; exit 1 ;; esac'
+. preinstall: Done
+Done in 14.9s using pnpm v10.26.1
+[pxxl] Dockerfile RUN
+[pxxl] Dockerfile RUN
+> @workspace/api-server@1.0.0 build /workspace/artifacts/api-server
+> node ./build.mjs
+node:internal/modules/cjs/loader:1520
+throw err;
+/workspace/artifacts/api-server:
+^
+ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @workspace/api-server@1.0.0 build: `node ./build.mjs`
+Error: Cannot find module '/workspace/artifacts/api-server/build.mjs'
+Exit status 1
+at Module._resolveFilename (node:internal/modules/cjs/loader:1517:15)
+at wrapResolveFilename (node:internal/modules/cjs/loader:1071:27)
+at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1095:10)
+at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1122:12)
+at Module._load (node:internal/modules/cjs/loader:1294:5)
+at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+at node:internal/main/run_main_module:33:47 {
+code: 'MODULE_NOT_FOUND',
+requireStack: []
+}
+Node.js v24.19.0
+10:20:29.586
+[failure_class=developer_source owner=developer] Build sandbox failed: exit status 1
+10:20:29.637
+Oh no, your deployment failed. Check the logs above to see what went wrong.
+10:20:29.641
+Oh no, your deployment failed. Check the logs above to see what went wrong.
+10:20:29.644
+failed
+10:20:29.644
+Build worker reported a failed deployment
