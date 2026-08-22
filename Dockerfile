@@ -27,6 +27,9 @@ RUN cd artifacts/pulse \
 
 COPY tsconfig.json tsconfig.base.json ./
 COPY lib/ ./lib/
+COPY lib/db/src ./lib/db/src
+COPY lib/api-zod/src ./lib/api-zod/src
+COPY lib/api-client-react/src ./lib/api-client-react/src
 COPY artifacts/api-server/build.mjs ./artifacts/api-server/build.mjs
 COPY artifacts/api-server/package.json ./artifacts/api-server/package.json
 COPY artifacts/api-server/src ./artifacts/api-server/src
