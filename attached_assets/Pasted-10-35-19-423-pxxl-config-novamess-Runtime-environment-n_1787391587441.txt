@@ -1,0 +1,172 @@
+10:35:19.423
+[pxxl] config -> novamess
+| Runtime environment | node |
+| Environment | production |
+| Base directory | / |
+| Install command | corepack enable && corepack prepare pnpm@10.26.1 --activate && pnpm install |
+| | --frozen-lockfile |
+| Build command | PORT=5000 BASE_PATH=/ pnpm --filter @workspace/pulse run build && pnpm |
+| | --filter @workspace/api-server run build |
+| Start command | sh scripts/start-prod.sh |
++----------------------+------------------------------------------------------------------------------+
+Build region: DE
+Build server: self-hosted-build-01 - DE
+Runtime server: staging-runtime-titan-01 - Copenhagen, DK
+10:35:19.579
+[pxxl] config -> novamess
+| Branch | main |
+| Environment | production |
+| Base directory | / |
+| Install command | corepack enable && corepack prepare pnpm@10.26.1 --activate && pnpm install |
+| | --frozen-lockfile |
+| Build command | PORT=5000 BASE_PATH=/ pnpm --filter @workspace/pulse run build && pnpm |
+| | --filter @workspace/api-server run build |
+| Start command | sh scripts/start-prod.sh |
++----------------------+------------------------------------------------------------------------------+
+Build region: DE
+Build server: self-hosted-build-01 - DE
+Runtime server: staging-runtime-titan-01 - Copenhagen, DK
+10:35:27.500
+Build started
+10:35:27.505
+Deployment workflow prepared
+10:35:27.511
+Build Configuration Completed
+10:35:27.535
+Building with build-server (AMD EPYC 9645 96-Core Processor, 12 vCPU, 31 GB, amd64, Debian GNU/Linux 13 (trixie))
+10:35:27.544
+Starting PxxlBuilder
+10:35:31.231
+Dockerfile detected; running its stages in the gVisor build sandbox
+10:35:31.246
+Cloning Dockerfile build context
+10:35:31.736
+[pxxl] source -> cloning repository for Dockerfile build
+10:35:31.736
+Cloning into '/pxxl-context'...
+10:35:40.154
+Updating files: 73% (910/1238)Updating files: 74% (917/1238)Updating files: 75% (929/1238)Updating files: 76% (941/1238)Updating files: 77% (954/1238)Updating files: 78% (966/1238)Updating files: 79% (979/1238)Updating files: 80% (991/1238)Updating files: 81% (1003/1238)Updating files: 82% (1016/1238)Updating files: 83% (1028/1238)Updating files: 84% (1040/1238)Updating files: 85% (1053/1238)Updating files: 86% (1065/1238)Updating files: 87% (1078/1238)Updating files: 88% (1090/1238)Updating files: 89% (1102/1238)Updating files: 90% (1115/1238)Updating files: 91% (1127/1238)Updating files: 92% (1139/1238)Updating files: 93% (1152/1238)Updating files: 94% (1164/1238)Updating files: 95% (1177/1238)Updating files: 96% (1189/1238)Updating files: 97% (1201/1238)Updating files: 98% (1214/1238)Updating files: 99% (1226/1238)Updating files: 100% (1238/1238)Updating files: 100% (1238/1238), done.
+10:35:41.217
+[pxxl] Dockerfile RUN
+10:35:43.148
+added 1 package in 2s
+10:35:43.148
+npm notice
+10:35:43.155
+1 package is looking for funding
+10:35:43.157
+npm notice New major version of npm available! 11.17.0 -> 12.0.2
+10:35:43.175
+run `npm fund` for details
+10:35:43.177
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.0.2
+10:35:43.204
+npm notice To update run: npm install -g npm@12.0.2
+10:35:43.225
+npm notice
+10:35:43.250
+[pxxl] Dockerfile RUN
+10:35:45.278
+WARN  using --force I sure hope you know what you are doing
+10:35:45.297
+Scope: all 9 workspace projects
+10:35:45.340
+Lockfile is up to date, resolution step is skipped
+10:35:45.393
+Progress: resolved 1, reused 0, downloaded 0, added 0
+10:35:45.677
+Packages: +604
+10:35:45.692
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+10:35:46.471
+Progress: resolved 604, reused 0, downloaded 25, added 12
+10:35:47.490
+Progress: resolved 604, reused 0, downloaded 118, added 57
+10:35:48.566
+Progress: resolved 604, reused 0, downloaded 186, added 76
+10:35:49.562
+Progress: resolved 604, reused 0, downloaded 230, added 85
+10:35:50.588
+Progress: resolved 604, reused 0, downloaded 272, added 97
+10:35:51.590
+Progress: resolved 604, reused 0, downloaded 354, added 114
+10:35:52.584
+Progress: resolved 604, reused 0, downloaded 450, added 131
+10:35:53.587
+Progress: resolved 604, reused 0, downloaded 505, added 147
+10:35:54.594
+Progress: resolved 604, reused 0, downloaded 573, added 163
+10:35:55.587
+Progress: resolved 604, reused 0, downloaded 599, added 265
+10:35:56.596
+Progress: resolved 604, reused 0, downloaded 601, added 459
+10:35:57.600
+Progress: resolved 604, reused 0, downloaded 604, added 600
+10:35:58.295
+Progress: resolved 604, reused 0, downloaded 604, added 604, done
+10:35:58.495
+.../esbuild@0.27.3/node_modules/esbuild postinstall$ node install.js
+10:35:58.629
+.../esbuild@0.27.3/node_modules/esbuild postinstall: Done
+10:35:58.928
+dependencies:
+10:35:58.959
++ @types/compression 1.8.1
+10:35:58.989
++ compression 1.8.1
+10:35:59.005
++ connect-timeout 1.9.1
+10:35:59.016
+devDependencies:
+10:35:59.030
++ prettier 3.8.1
+10:35:59.044
++ typescript 5.9.3
+10:35:59.052
+. preinstall$ sh -c 'rm -f package-lock.json yarn.lock; case "$npm_config_user_agent" in pnpm/*) ;; *) echo "Use pnpm instead" >&2; exit 1 ;; esac'
+10:35:59.056
+. preinstall: Done
+10:35:59.183
+Done in 14.2s using pnpm v10.26.1
+10:35:59.355
+[pxxl] Dockerfile RUN
+10:35:59.911
+[pxxl] Dockerfile RUN
+10:36:00.862
+> @workspace/api-server@1.0.0 build /workspace/artifacts/api-server
+10:36:00.867
+> node ./build.mjs
+10:36:00.961
+✘ [ERROR] Could not resolve "/workspace/artifacts/api-server/src/index.ts"
+10:36:01.015
+1 error
+10:36:01.026
+Error: Build failed with 1 error:
+10:36:01.037
+error: Could not resolve "/workspace/artifacts/api-server/src/index.ts"
+10:36:01.044
+at failureErrorWithLog (/workspace/node_modules/.pnpm/esbuild@0.27.3/node_modules/esbuild/lib/main.js:1467:15)
+10:36:01.057
+at /workspace/node_modules/.pnpm/esbuild@0.27.3/node_modules/esbuild/lib/main.js:926:25
+10:36:01.093
+at /workspace/node_modules/.pnpm/esbuild@0.27.3/node_modules/esbuild/lib/main.js:1345:9
+10:36:01.105
+/workspace/artifacts/api-server:
+10:36:01.105
+at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+10:36:01.112
+ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @workspace/api-server@1.0.0 build: `node ./build.mjs`
+10:36:01.119
+errors: [Getter/Setter],
+10:36:01.125
+Exit status 1
+10:36:01.127
+warnings: [Getter/Setter]
+10:36:01.140
+}
+10:36:01.454
+[failure_class=developer_source owner=developer] Build sandbox failed: exit status 1
+10:36:01.467
+Oh no, your deployment failed. Check the logs above to see what went wrong.
+10:36:01.473
+failed
