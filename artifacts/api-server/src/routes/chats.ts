@@ -39,7 +39,7 @@ async function buildChat(chatId: number, currentUserId: number) {
     const pinnedRows = await db.execute(sql`
       SELECT pm.id as pin_id, pm.pinned_at, pm.pinned_by,
              m.id, m.chat_id, m.sender_id, m.text, m.type, m.media_url, m.created_at, m.is_deleted,
-             u.display_name, u.avatar_color
+             u.display_name, u.avatar_color, u.nickname_style
       FROM pinned_messages pm
       JOIN messages m ON m.id = pm.message_id
       JOIN users u ON u.id = m.sender_id
@@ -57,7 +57,7 @@ async function buildChat(chatId: number, currentUserId: number) {
       createdAt: row.created_at,
       isDeleted: row.is_deleted,
       pinnedAt: row.pinned_at,
-      sender: { displayName: row.display_name, avatarColor: row.avatar_color },
+      sender: { displayName: row.display_name, avatarColor: row.avatar_color, nicknameStyle: row.nickname_style },
     }));
 
     // Use first pinned message as legacy pinnedMessage if not already set
@@ -178,6 +178,7 @@ async function buildChatsForUser(uid: number) {
         m.id, m.chat_id, m.sender_id, m.text, m.type, m.media_url,
         m.created_at, m.is_deleted, m.reply_to_id,
         u.display_name AS sender_name, u.avatar_color AS sender_color,
+        u.nickname_style AS sender_nickname_style,
         u.username AS sender_username,
         COALESCE((SELECT json_agg(r.*) FROM reactions r WHERE r.message_id = m.id), '[]'::json) AS reactions
       FROM messages m
@@ -200,7 +201,7 @@ async function buildChatsForUser(uid: number) {
     // 5. All members for these chats (to find otherUser in direct chats)
     db.execute(sql`
       SELECT cm.chat_id, cm.user_id, cm.role, cm.last_read_at, cm.last_delivered_at,
-        u.display_name, u.avatar_color, u.avatar_url, u.username,
+        u.display_name, u.avatar_color, u.avatar_url, u.username, u.nickname_style,
         u.status, u.is_verified, u.is_bot, u.is_admin, u.is_developer,
         u.is_youtube_creator, u.is_tiktok_creator,
         u.has_prime, u.prime_tier, u.prime_expires_at
@@ -215,7 +216,7 @@ async function buildChatsForUser(uid: number) {
         pm.chat_id, pm.id AS pin_id, pm.pinned_at, pm.pinned_by,
         m.id AS msg_id, m.sender_id, m.text, m.type, m.media_url,
         m.created_at, m.is_deleted,
-        u.display_name, u.avatar_color
+        u.display_name, u.avatar_color, u.nickname_style
       FROM pinned_messages pm
       JOIN messages m ON m.id = pm.message_id
       JOIN users u ON u.id = m.sender_id
@@ -266,7 +267,7 @@ async function buildChatsForUser(uid: number) {
       senderId: p.sender_id, text: p.text, type: p.type,
       mediaUrl: p.media_url, createdAt: p.created_at,
       isDeleted: p.is_deleted, pinnedAt: p.pinned_at,
-      sender: { displayName: p.display_name, avatarColor: p.avatar_color },
+      sender: { displayName: p.display_name, avatarColor: p.avatar_color, nicknameStyle: p.nickname_style },
     });
   }
 
@@ -294,6 +295,7 @@ async function buildChatsForUser(uid: number) {
         createdAt: lm.created_at, isDeleted: lm.is_deleted,
         sender: lm.sender_id ? {
           displayName: lm.sender_name, avatarColor: lm.sender_color, username: lm.sender_username,
+          nicknameStyle: lm.sender_nickname_style,
         } : null,
         reactions: Array.isArray(lm.reactions) ? lm.reactions : [],
         isRead,
@@ -315,6 +317,7 @@ async function buildChatsForUser(uid: number) {
           avatarColor: other.avatar_color,
           avatarUrl: other.avatar_url,
           username: other.username,
+          nicknameStyle: other.nickname_style,
           status: other.status,
           isVerified: other.is_verified,
           isBot: other.is_bot,

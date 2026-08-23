@@ -399,6 +399,9 @@ export default function Admin() {
   const [maintenance, setMaintenance] = useState<MaintenanceSettings>({ active: false, message: "", fixes: [], endsAt: null });
   const [maintenanceLoading, setMaintenanceLoading] = useState(false);
   const [maintFixInput, setMaintFixInput] = useState("");
+  type FeatureMaintenance = Record<string, { active: boolean; message: string; endsAt: string | null }>;
+  const [featureMaintenance, setFeatureMaintenance] = useState<FeatureMaintenance>({});
+  const [featureMaintenanceLoading, setFeatureMaintenanceLoading] = useState(false);
   const [mailTestResult, setMailTestResult] = useState<any>(null);
 
   // App updates / changelog
@@ -704,6 +707,30 @@ export default function Admin() {
     setMaintenanceLoading(false);
   };
 
+  const featureLabels: Record<string, string> = { wallet: "Кошелёк", messaging: "Чаты и сообщения", bots: "Боты", clans: "Кланы" };
+  const fetchFeatureMaintenance = async () => {
+    try {
+      const res = await fetch("/api/admin/feature-maintenance", { headers: getHeader() });
+      if (res.ok) setFeatureMaintenance(await res.json());
+    } catch {}
+  };
+  const saveFeatureMaintenance = async (data: FeatureMaintenance) => {
+    setFeatureMaintenanceLoading(true);
+    try {
+      const res = await fetch("/api/admin/feature-maintenance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...getHeader() },
+        body: JSON.stringify(data),
+      });
+      const response = await res.json();
+      if (!res.ok) throw new Error(response.error);
+      setFeatureMaintenance(response.data);
+      showToast("Настройки перерывов сохранены", "ok");
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Ошибка сохранения", "err");
+    } finally { setFeatureMaintenanceLoading(false); }
+  };
+
   const addMaintFix = () => {
     const v = maintFixInput.trim();
     if (!v) return;
@@ -1002,7 +1029,7 @@ export default function Admin() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetchData(); fetchMaintenance(); }, [fetchData]);
+  useEffect(() => { fetchData(); fetchMaintenance(); fetchFeatureMaintenance(); }, [fetchData]);
 
   const fetchUserStats = async (uid: number) => {
     setUserStatsLoading(true);
@@ -1829,6 +1856,58 @@ export default function Admin() {
               </div>
             </div>
           )}
+        </div>
+
+        {/* ── Per-feature maintenance ───────────────────────────────────── */}
+        <div className="bg-card border border-border rounded-2xl overflow-hidden">
+          <div className="p-4 border-b border-border/60 flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-amber-500/15 flex items-center justify-center">
+              <Wrench size={18} className="text-amber-400" />
+            </div>
+            <div>
+              <p className="font-semibold text-sm">Перерыв по функциям</p>
+              <p className="text-xs text-muted-foreground">Можно временно отключить только отдельный раздел</p>
+            </div>
+          </div>
+          <div className="p-4 space-y-2">
+            {Object.keys(featureLabels).map(key => {
+              const value = featureMaintenance[key] || { active: false, message: "", endsAt: null };
+              return (
+                <div key={key} className={`p-3 rounded-xl border ${value.active ? "border-amber-500/30 bg-amber-500/5" : "border-border bg-secondary/20"}`}>
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold">{featureLabels[key]}</p>
+                      <p className={`text-xs ${value.active ? "text-amber-400" : "text-muted-foreground"}`}>
+                        {value.active ? "Временно недоступно для пользователей" : "Работает"}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => saveFeatureMaintenance({ ...featureMaintenance, [key]: { ...value, active: !value.active } })}
+                      disabled={featureMaintenanceLoading}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold border ${value.active ? "border-emerald-500/30 text-emerald-400 bg-emerald-500/10" : "border-amber-500/30 text-amber-400 bg-amber-500/10"}`}
+                    >
+                      {value.active ? "Включить" : "Отключить"}
+                    </button>
+                  </div>
+                  {value.active && (
+                    <input
+                      value={value.message}
+                      onChange={e => setFeatureMaintenance(current => ({ ...current, [key]: { ...value, message: e.target.value } }))}
+                      placeholder="Сообщение пользователям (необязательно)"
+                      className="mt-2 w-full bg-background border border-border rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-primary"
+                    />
+                  )}
+                </div>
+              );
+            })}
+            <button
+              onClick={() => saveFeatureMaintenance(featureMaintenance)}
+              disabled={featureMaintenanceLoading}
+              className="w-full py-2.5 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400 font-bold text-sm hover:bg-amber-500/25 disabled:opacity-50"
+            >
+              {featureMaintenanceLoading ? "Сохраняем…" : "Сохранить перерывы"}
+            </button>
+          </div>
         </div>
 
         {/* App Updates / Changelog */}

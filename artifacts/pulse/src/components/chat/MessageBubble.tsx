@@ -1217,11 +1217,11 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
                         backgroundClip: "text",
                       }}
                     >
-                      {message.sender.displayName}
+                      <span className={(message.sender as any).nicknameStyle ? `nickname-style nickname-style-${(message.sender as any).nicknameStyle}` : ""}>{message.sender.displayName}</span>
                     </p>
                   ) : (
                     <p className="text-[12px] font-black leading-none" style={{ color: message.sender.avatarColor }}>
-                      {message.sender.displayName}
+                      <span className={(message.sender as any).nicknameStyle ? `nickname-style nickname-style-${(message.sender as any).nicknameStyle}` : ""}>{message.sender.displayName}</span>
                     </p>
                   )}
                   {/* Prime+ diamond badge */}

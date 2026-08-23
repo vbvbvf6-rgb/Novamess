@@ -436,31 +436,6 @@ export default function Wallet() {
             </motion.a>
           )}
 
-          <motion.section initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="bg-card border border-border rounded-2xl p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Palette size={17} className="text-fuchsia-400" />
-              <div>
-                <h2 className="font-bold text-foreground">Стили никнейма</h2>
-                <p className="text-xs text-muted-foreground">Выданные подарки и награды хранятся здесь</p>
-              </div>
-            </div>
-            {nicknameStyles.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Пока нет выданных стилей</p>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {nicknameStyles.map(style => (
-                  <button key={style.id} onClick={() => equipNicknameStyle(style)} disabled={nicknameLoading || style.equipped} className={`flex items-center gap-3 p-3 rounded-xl border text-left transition-colors ${style.equipped ? "border-primary/50 bg-primary/10" : "border-border hover:border-primary/40"}`}>
-                    <span className={`font-bold text-sm nickname-style nickname-style-${style.slug}`}>Ваш ник</span>
-                    <span className="flex-1 min-w-0">
-                      <span className="block text-xs font-semibold text-foreground truncate">{style.name}</span>
-                      <span className="block text-[10px] text-muted-foreground">{style.equipped ? "Активен" : "Нажмите, чтобы надеть"}</span>
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </motion.section>
-
           <div className="flex bg-muted/50 rounded-xl p-1 border border-border">
             {(["tasks", "history"] as const).map(t => (
               <button key={t} onClick={() => setTab(t)}

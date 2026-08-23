@@ -143352,6 +143352,52 @@ function signToken(userId, sessionId) {
 function signPending2faToken(userId) {
   return import_jsonwebtoken.default.sign({ userId, pending2fa: true }, EFFECTIVE_JWT_SECRET, { expiresIn: PENDING_2FA_TTL });
 }
+var NOVA_SECURITY_ICON = `data:image/svg+xml;utf8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#22d3ee"/><stop offset="1" stop-color="#7c3aed"/></linearGradient></defs><rect width="128" height="128" rx="32" fill="url(#g)"/><path d="M64 22c4 20 12 28 32 32-20 4-28 12-32 32-4-20-12-28-32-32 20-4 28-12 32-32Z" fill="white"/></svg>`)}`;
+async function notifyNovaSecurity(userId, ip, device) {
+  try {
+    let bot = await db.execute(sql`SELECT id FROM users WHERE username = 'nova_security' LIMIT 1`);
+    let botId = Number(bot.rows[0]?.id || 0);
+    if (!botId) {
+      const created = await db.execute(sql`
+        INSERT INTO users (username, display_name, avatar_color, avatar_url, status, is_bot, is_verified, password_hash)
+        VALUES ('nova_security', 'Nova Безопасность', '#7c3aed', ${NOVA_SECURITY_ICON}, 'online', true, true, NULL)
+        RETURNING id
+      `);
+      botId = Number(created.rows[0].id);
+    }
+    const existing = await db.execute(sql`
+      SELECT c.id FROM chats c
+      JOIN chat_members a ON a.chat_id = c.id AND a.user_id = ${userId}
+      JOIN chat_members b ON b.chat_id = c.id AND b.user_id = ${botId}
+      WHERE c.type = 'direct' LIMIT 1
+    `);
+    let chatId = Number(existing.rows[0]?.id || 0);
+    if (!chatId) {
+      const createdChat = await db.execute(sql`INSERT INTO chats (type, created_at, updated_at) VALUES ('direct', NOW(), NOW()) RETURNING id`);
+      chatId = Number(createdChat.rows[0].id);
+      await db.execute(sql`
+        INSERT INTO chat_members (chat_id, user_id, role) VALUES
+        (${chatId}, ${userId}, 'member'), (${chatId}, ${botId}, 'member')
+      `);
+    }
+    const time5 = (/* @__PURE__ */ new Date()).toLocaleString("ru-RU", { timeZone: "Asia/Yekaterinburg" });
+    await db.execute(sql`
+      INSERT INTO messages (chat_id, sender_id, type, text, created_at, updated_at)
+      VALUES (${chatId}, ${botId}, 'text',
+        ${`\u{1F510} \u041D\u043E\u0432\u044B\u0439 \u0432\u0445\u043E\u0434 \u0432 \u0430\u043A\u043A\u0430\u0443\u043D\u0442
+
+\u0412\u0440\u0435\u043C\u044F: ${time5} (\u0415\u043A\u0430\u0442\u0435\u0440\u0438\u043D\u0431\u0443\u0440\u0433)
+IP: ${ip}
+\u0423\u0441\u0442\u0440\u043E\u0439\u0441\u0442\u0432\u043E: ${device.slice(0, 120)}
+
+\u0415\u0441\u043B\u0438 \u044D\u0442\u043E \u0431\u044B\u043B\u0438 \u043D\u0435 \u0432\u044B \u2014 \u0437\u0430\u0432\u0435\u0440\u0448\u0438\u0442\u0435 \u043D\u0435\u0437\u043D\u0430\u043A\u043E\u043C\u044B\u0435 \u0441\u0435\u0441\u0441\u0438\u0438 \u0432 \u041D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0430\u0445.`},
+        NOW(), NOW())
+    `);
+    await db.execute(sql`UPDATE chats SET updated_at = NOW() WHERE id = ${chatId}`);
+  } catch (err2) {
+    console.warn("[security] Could not create Nova Security notification", err2);
+  }
+}
 var sessionTableReady = null;
 async function ensureSessionTable() {
   if (!sessionTableReady) {
@@ -143465,6 +143511,7 @@ router2.post("/auth/login", async (req, res) => {
       req.log.error({ err: err2 }, "Could not create login session");
       return res.status(503).json({ error: "\u0421\u0435\u0440\u0432\u0438\u0441 \u0432\u0445\u043E\u0434\u0430 \u0435\u0449\u0451 \u0437\u0430\u043F\u0443\u0441\u043A\u0430\u0435\u0442\u0441\u044F. \u041F\u043E\u0432\u0442\u043E\u0440\u0438\u0442\u0435 \u0447\u0435\u0440\u0435\u0437 \u043D\u0435\u0441\u043A\u043E\u043B\u044C\u043A\u043E \u0441\u0435\u043A\u0443\u043D\u0434." });
     }
+    await notifyNovaSecurity(user.id, ip, deviceName);
     if (user.totp_enabled) {
       const pendingToken = signPending2faToken(user.id);
       return res.json({
@@ -144973,7 +145020,7 @@ async function buildChat(chatId, currentUserId) {
     const pinnedRows = await db.execute(sql`
       SELECT pm.id as pin_id, pm.pinned_at, pm.pinned_by,
              m.id, m.chat_id, m.sender_id, m.text, m.type, m.media_url, m.created_at, m.is_deleted,
-             u.display_name, u.avatar_color
+             u.display_name, u.avatar_color, u.nickname_style
       FROM pinned_messages pm
       JOIN messages m ON m.id = pm.message_id
       JOIN users u ON u.id = m.sender_id
@@ -144991,7 +145038,7 @@ async function buildChat(chatId, currentUserId) {
       createdAt: row.created_at,
       isDeleted: row.is_deleted,
       pinnedAt: row.pinned_at,
-      sender: { displayName: row.display_name, avatarColor: row.avatar_color }
+      sender: { displayName: row.display_name, avatarColor: row.avatar_color, nicknameStyle: row.nickname_style }
     }));
     if (!pinnedMessage && pinnedMessages.length > 0) {
       pinnedMessage = pinnedMessages[0];
@@ -145076,6 +145123,7 @@ async function buildChatsForUser(uid) {
         m.id, m.chat_id, m.sender_id, m.text, m.type, m.media_url,
         m.created_at, m.is_deleted, m.reply_to_id,
         u.display_name AS sender_name, u.avatar_color AS sender_color,
+        u.nickname_style AS sender_nickname_style,
         u.username AS sender_username,
         COALESCE((SELECT json_agg(r.*) FROM reactions r WHERE r.message_id = m.id), '[]'::json) AS reactions
       FROM messages m
@@ -145096,7 +145144,7 @@ async function buildChatsForUser(uid) {
     // 5. All members for these chats (to find otherUser in direct chats)
     db.execute(sql`
       SELECT cm.chat_id, cm.user_id, cm.role, cm.last_read_at, cm.last_delivered_at,
-        u.display_name, u.avatar_color, u.avatar_url, u.username,
+        u.display_name, u.avatar_color, u.avatar_url, u.username, u.nickname_style,
         u.status, u.is_verified, u.is_bot, u.is_admin, u.is_developer,
         u.is_youtube_creator, u.is_tiktok_creator,
         u.has_prime, u.prime_tier, u.prime_expires_at
@@ -145110,7 +145158,7 @@ async function buildChatsForUser(uid) {
         pm.chat_id, pm.id AS pin_id, pm.pinned_at, pm.pinned_by,
         m.id AS msg_id, m.sender_id, m.text, m.type, m.media_url,
         m.created_at, m.is_deleted,
-        u.display_name, u.avatar_color
+        u.display_name, u.avatar_color, u.nickname_style
       FROM pinned_messages pm
       JOIN messages m ON m.id = pm.message_id
       JOIN users u ON u.id = m.sender_id
@@ -145161,7 +145209,7 @@ async function buildChatsForUser(uid) {
       createdAt: p3.created_at,
       isDeleted: p3.is_deleted,
       pinnedAt: p3.pinned_at,
-      sender: { displayName: p3.display_name, avatarColor: p3.avatar_color }
+      sender: { displayName: p3.display_name, avatarColor: p3.avatar_color, nicknameStyle: p3.nickname_style }
     });
   }
   const result = [];
@@ -145192,7 +145240,8 @@ async function buildChatsForUser(uid) {
         sender: lm.sender_id ? {
           displayName: lm.sender_name,
           avatarColor: lm.sender_color,
-          username: lm.sender_username
+          username: lm.sender_username,
+          nicknameStyle: lm.sender_nickname_style
         } : null,
         reactions: Array.isArray(lm.reactions) ? lm.reactions : [],
         isRead,
@@ -145211,6 +145260,7 @@ async function buildChatsForUser(uid) {
           avatarColor: other.avatar_color,
           avatarUrl: other.avatar_url,
           username: other.username,
+          nicknameStyle: other.nickname_style,
           status: other.status,
           isVerified: other.is_verified,
           isBot: other.is_bot,
@@ -146885,7 +146935,7 @@ router8.post("/messages", async (req, res) => {
           sql`SELECT u.id, u.display_name FROM chat_members cm JOIN users u ON u.id = cm.user_id WHERE cm.chat_id = ${body.chatId} AND cm.user_id != ${uid}`
         );
         const senderRow = await db.execute(
-          sql`SELECT display_name, avatar_url, avatar_color FROM users WHERE id = ${uid} LIMIT 1`
+          sql`SELECT display_name, avatar_url, avatar_color, nickname_style FROM users WHERE id = ${uid} LIMIT 1`
         );
         const senderInfo = senderRow.rows[0];
         const senderName = senderInfo?.display_name || "Aura";
@@ -149772,6 +149822,38 @@ router12.post("/admin/maintenance", requireAdmin, async (req, res) => {
     `);
     broadcastToAll("maintenance", data);
     return res.json({ ok: true, data });
+  } catch (err2) {
+    req.log.error(err2);
+    res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
+  }
+});
+router12.get("/admin/feature-maintenance", requireAdmin, async (_req, res) => {
+  try {
+    const row = await db.execute(sql`SELECT value FROM app_settings WHERE key = 'feature_maintenance' LIMIT 1`);
+    res.json(row.rows[0] ? JSON.parse(row.rows[0].value) : {});
+  } catch {
+    res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
+  }
+});
+router12.post("/admin/feature-maintenance", requireAdmin, async (req, res) => {
+  try {
+    const allowed = ["wallet", "messaging", "bots", "clans"];
+    const input = req.body && typeof req.body === "object" ? req.body : {};
+    const data = {};
+    for (const key of allowed) {
+      const value = input[key] || {};
+      data[key] = {
+        active: Boolean(value.active),
+        message: String(value.message || "").trim().slice(0, 300),
+        endsAt: value.endsAt || null
+      };
+    }
+    const json3 = JSON.stringify(data);
+    await db.execute(sql`
+      INSERT INTO app_settings (key, value, updated_at) VALUES ('feature_maintenance', ${json3}, NOW())
+      ON CONFLICT (key) DO UPDATE SET value = ${json3}, updated_at = NOW()
+    `);
+    res.json({ ok: true, data });
   } catch (err2) {
     req.log.error(err2);
     res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
@@ -152745,17 +152827,24 @@ app.use("/api", async (req, res, next) => {
   try {
     const { db: db2 } = await Promise.resolve().then(() => (init_src(), src_exports));
     const { sql: sql2 } = await Promise.resolve().then(() => (init_drizzle_orm(), drizzle_orm_exports));
-    const row = await db2.execute(sql2`SELECT value FROM app_settings WHERE key = 'maintenance'`);
-    const raw = row.rows[0]?.value;
-    if (!raw) return next();
-    const settings = JSON.parse(raw);
-    if (!settings?.active) return next();
-    if (settings?.endsAt && new Date(settings.endsAt).getTime() <= Date.now()) return next();
+    const [globalRow, featureRow] = await Promise.all([
+      db2.execute(sql2`SELECT value FROM app_settings WHERE key = 'maintenance'`),
+      db2.execute(sql2`SELECT value FROM app_settings WHERE key = 'feature_maintenance'`)
+    ]);
+    const raw = globalRow.rows[0]?.value;
+    const featureRaw = featureRow.rows[0]?.value;
+    const settings = raw ? JSON.parse(raw) : null;
+    const features = featureRaw ? JSON.parse(featureRaw) : {};
+    const featureKey = req.path.startsWith("/wallet") ? "wallet" : req.path.startsWith("/bots") ? "bots" : req.path.startsWith("/chats") || req.path.startsWith("/messages") ? "messaging" : req.path.startsWith("/clans") ? "clans" : null;
+    const active = settings?.active && (!settings.endsAt || new Date(settings.endsAt).getTime() > Date.now());
+    const feature = featureKey ? features[featureKey] : null;
+    const featureActive = feature?.active && (!feature.endsAt || new Date(feature.endsAt).getTime() > Date.now());
+    if (!active && !featureActive) return next();
     if (req.currentUserId) {
       const admin = await db2.execute(sql2`SELECT is_admin FROM users WHERE id = ${req.currentUserId}`);
       if (admin.rows[0]?.is_admin) return next();
     }
-    return res.status(503).json({ error: "\u0422\u0435\u0445\u043D\u0438\u0447\u0435\u0441\u043A\u0438\u0439 \u043F\u0435\u0440\u0435\u0440\u044B\u0432", maintenance: true });
+    return res.status(503).json({ error: featureActive ? "\u0424\u0443\u043D\u043A\u0446\u0438\u044F \u0432\u0440\u0435\u043C\u0435\u043D\u043D\u043E \u043D\u0435\u0434\u043E\u0441\u0442\u0443\u043F\u043D\u0430" : "\u0422\u0435\u0445\u043D\u0438\u0447\u0435\u0441\u043A\u0438\u0439 \u043F\u0435\u0440\u0435\u0440\u044B\u0432", maintenance: true, feature: featureKey });
   } catch {
     return next();
   }

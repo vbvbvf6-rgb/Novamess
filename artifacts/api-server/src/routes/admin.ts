@@ -1542,6 +1542,35 @@ router.post("/admin/maintenance", requireAdmin, async (req, res) => {
   } catch (err) { req.log.error(err); res.status(500).json({ error: "Ошибка сервера" }); }
 });
 
+router.get("/admin/feature-maintenance", requireAdmin, async (_req, res) => {
+  try {
+    const row = await db.execute(sql`SELECT value FROM app_settings WHERE key = 'feature_maintenance' LIMIT 1`);
+    res.json(row.rows[0] ? JSON.parse((row.rows[0] as any).value) : {});
+  } catch { res.status(500).json({ error: "Ошибка сервера" }); }
+});
+
+router.post("/admin/feature-maintenance", requireAdmin, async (req, res) => {
+  try {
+    const allowed = ["wallet", "messaging", "bots", "clans"];
+    const input = req.body && typeof req.body === "object" ? req.body : {};
+    const data: Record<string, any> = {};
+    for (const key of allowed) {
+      const value = input[key] || {};
+      data[key] = {
+        active: Boolean(value.active),
+        message: String(value.message || "").trim().slice(0, 300),
+        endsAt: value.endsAt || null,
+      };
+    }
+    const json = JSON.stringify(data);
+    await db.execute(sql`
+      INSERT INTO app_settings (key, value, updated_at) VALUES ('feature_maintenance', ${json}, NOW())
+      ON CONFLICT (key) DO UPDATE SET value = ${json}, updated_at = NOW()
+    `);
+    res.json({ ok: true, data });
+  } catch (err) { req.log.error(err); res.status(500).json({ error: "Ошибка сервера" }); }
+});
+
 // ── App Updates / Changelog ────────────────────────────────────────────────
 
 router.get("/admin/updates", requireAdmin, async (req, res) => {

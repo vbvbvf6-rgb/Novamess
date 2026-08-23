@@ -419,17 +419,27 @@ app.use("/api", async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { db } = await import("@workspace/db");
     const { sql } = await import("drizzle-orm");
-    const row = await db.execute(sql`SELECT value FROM app_settings WHERE key = 'maintenance'`);
-    const raw = (row.rows[0] as any)?.value;
-    if (!raw) return next();
-    const settings = JSON.parse(raw);
-    if (!settings?.active) return next();
-    if (settings?.endsAt && new Date(settings.endsAt).getTime() <= Date.now()) return next();
+    const [globalRow, featureRow] = await Promise.all([
+      db.execute(sql`SELECT value FROM app_settings WHERE key = 'maintenance'`),
+      db.execute(sql`SELECT value FROM app_settings WHERE key = 'feature_maintenance'`),
+    ]);
+    const raw = (globalRow.rows[0] as any)?.value;
+    const featureRaw = (featureRow.rows[0] as any)?.value;
+    const settings = raw ? JSON.parse(raw) : null;
+    const features = featureRaw ? JSON.parse(featureRaw) : {};
+    const featureKey = req.path.startsWith("/wallet") ? "wallet"
+      : req.path.startsWith("/bots") ? "bots"
+      : req.path.startsWith("/chats") || req.path.startsWith("/messages") ? "messaging"
+      : req.path.startsWith("/clans") ? "clans" : null;
+    const active = settings?.active && (!settings.endsAt || new Date(settings.endsAt).getTime() > Date.now());
+    const feature = featureKey ? features[featureKey] : null;
+    const featureActive = feature?.active && (!feature.endsAt || new Date(feature.endsAt).getTime() > Date.now());
+    if (!active && !featureActive) return next();
     if (req.currentUserId) {
       const admin = await db.execute(sql`SELECT is_admin FROM users WHERE id = ${req.currentUserId}`);
       if ((admin.rows[0] as any)?.is_admin) return next();
     }
-    return res.status(503).json({ error: "Технический перерыв", maintenance: true });
+    return res.status(503).json({ error: featureActive ? "Функция временно недоступна" : "Технический перерыв", maintenance: true, feature: featureKey });
   } catch {
     return next();
   }

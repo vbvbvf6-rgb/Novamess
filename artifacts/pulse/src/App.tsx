@@ -36,6 +36,7 @@ import Settings from "@/pages/Settings";
 import UserProfile from "@/pages/UserProfile";
 import Feed from "@/pages/Feed";
 import Wallet from "@/pages/Wallet";
+import Inventory from "@/pages/Inventory";
 import Admin from "@/pages/Admin";
 import Prime from "@/pages/Prime";
 
@@ -521,6 +522,7 @@ function MainAppInner({ onLogout, onSwitchAccount, onRemoveAccount, onOpenAddAcc
               <Route path="/contacts" component={Contacts} />
               <Route path="/stories" component={Stories} />
               <Route path="/wallet" component={Wallet} />
+              <Route path="/inventory" component={Inventory} />
               <Route path="/admin" component={Admin} />
               <Route path="/prime" component={Prime} />
 

@@ -85,6 +85,52 @@ function signPending2faToken(userId: number): string {
   return jwt.sign({ userId, pending2fa: true }, EFFECTIVE_JWT_SECRET, { expiresIn: PENDING_2FA_TTL });
 }
 
+const NOVA_SECURITY_ICON = `data:image/svg+xml;utf8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#22d3ee"/><stop offset="1" stop-color="#7c3aed"/></linearGradient></defs><rect width="128" height="128" rx="32" fill="url(#g)"/><path d="M64 22c4 20 12 28 32 32-20 4-28 12-32 32-4-20-12-28-32-32 20-4 28-12 32-32Z" fill="white"/></svg>`)}`;
+
+// Every account gets a private system chat with Nova Security. This keeps
+// security alerts inside the messenger instead of sending sensitive details
+// through a third-party service.
+async function notifyNovaSecurity(userId: number, ip: string, device: string): Promise<void> {
+  try {
+    let bot = await db.execute(sql`SELECT id FROM users WHERE username = 'nova_security' LIMIT 1`);
+    let botId = Number((bot.rows[0] as any)?.id || 0);
+    if (!botId) {
+      const created = await db.execute(sql`
+        INSERT INTO users (username, display_name, avatar_color, avatar_url, status, is_bot, is_verified, password_hash)
+        VALUES ('nova_security', 'Nova Безопасность', '#7c3aed', ${NOVA_SECURITY_ICON}, 'online', true, true, NULL)
+        RETURNING id
+      `);
+      botId = Number((created.rows[0] as any).id);
+    }
+    const existing = await db.execute(sql`
+      SELECT c.id FROM chats c
+      JOIN chat_members a ON a.chat_id = c.id AND a.user_id = ${userId}
+      JOIN chat_members b ON b.chat_id = c.id AND b.user_id = ${botId}
+      WHERE c.type = 'direct' LIMIT 1
+    `);
+    let chatId = Number((existing.rows[0] as any)?.id || 0);
+    if (!chatId) {
+      const createdChat = await db.execute(sql`INSERT INTO chats (type, created_at, updated_at) VALUES ('direct', NOW(), NOW()) RETURNING id`);
+      chatId = Number((createdChat.rows[0] as any).id);
+      await db.execute(sql`
+        INSERT INTO chat_members (chat_id, user_id, role) VALUES
+        (${chatId}, ${userId}, 'member'), (${chatId}, ${botId}, 'member')
+      `);
+    }
+    const time = new Date().toLocaleString("ru-RU", { timeZone: "Asia/Yekaterinburg" });
+    await db.execute(sql`
+      INSERT INTO messages (chat_id, sender_id, type, text, created_at, updated_at)
+      VALUES (${chatId}, ${botId}, 'text',
+        ${`🔐 Новый вход в аккаунт\n\nВремя: ${time} (Екатеринбург)\nIP: ${ip}\nУстройство: ${device.slice(0, 120)}\n\nЕсли это были не вы — завершите незнакомые сессии в Настройках.`},
+        NOW(), NOW())
+    `);
+    await db.execute(sql`UPDATE chats SET updated_at = NOW() WHERE id = ${chatId}`);
+  } catch (err) {
+    // A security message must never prevent a successful login.
+    console.warn("[security] Could not create Nova Security notification", err);
+  }
+}
+
 // The sessions table is created during server bootstrap. Login can arrive
 // before that async bootstrap finishes on a fresh/imported database, so make
 // the small prerequisite idempotently here as well instead of issuing a JWT
@@ -217,6 +263,7 @@ router.post("/auth/login", async (req, res) => {
       req.log.error({ err }, "Could not create login session");
       return res.status(503).json({ error: "Сервис входа ещё запускается. Повторите через несколько секунд." });
     }
+    await notifyNovaSecurity(user.id, ip, deviceName);
 
     if (user.totp_enabled) {
       const pendingToken = signPending2faToken(user.id);

@@ -536,7 +536,7 @@ router.post("/messages", async (req, res) => {
           sql`SELECT u.id, u.display_name FROM chat_members cm JOIN users u ON u.id = cm.user_id WHERE cm.chat_id = ${body.chatId} AND cm.user_id != ${uid}`
         );
         const senderRow = await db.execute(
-          sql`SELECT display_name, avatar_url, avatar_color FROM users WHERE id = ${uid} LIMIT 1`
+          sql`SELECT display_name, avatar_url, avatar_color, nickname_style FROM users WHERE id = ${uid} LIMIT 1`
         );
         const senderInfo = senderRow.rows[0] as any;
         const senderName = senderInfo?.display_name || "Aura";

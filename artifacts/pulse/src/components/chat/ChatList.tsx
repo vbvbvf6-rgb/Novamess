@@ -706,7 +706,7 @@ export function ChatList() {
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-baseline mb-1">
                       <div className="flex items-center gap-1.5 min-w-0">
-                        <h3 className="font-bold truncate text-[15px] text-foreground">{displayName}</h3>
+                        <h3 className={cn("font-bold truncate text-[15px]", (chat.otherUser as any)?.nicknameStyle ? `nickname-style nickname-style-${(chat.otherUser as any).nicknameStyle}` : "text-foreground")}>{displayName}</h3>
                         {isVerified && <VerifiedBadge />}
                         {isPrimePlus ? <PrimePlusBadge /> : hasPrime ? <PrimeBadge /> : null}
                         {isAdmin && <AdminBadge />}
@@ -788,7 +788,7 @@ export function ChatList() {
                               {chat.type !== "direct" && lastMessage?.sender ? (
                                 <span>
                                   <span className="text-foreground font-bold">
-                                    {(lastMessage.sender as any)?.displayName?.split(" ")[0]}:
+                                    <span className={(lastMessage.sender as any)?.nicknameStyle ? `nickname-style nickname-style-${(lastMessage.sender as any).nicknameStyle}` : ""}>{(lastMessage.sender as any)?.displayName?.split(" ")[0]}</span>:
                                   </span>{" "}
                                   <span className="opacity-80">{lastMsgText}</span>
                                 </span>
