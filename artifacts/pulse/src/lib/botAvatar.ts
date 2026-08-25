@@ -1,0 +1,1 @@
+export const BOT_AVATAR_URL = "/code-bot-avatar.png";

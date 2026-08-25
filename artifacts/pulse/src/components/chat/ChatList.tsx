@@ -19,6 +19,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { GlobalSearch } from "./GlobalSearch";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
+import { BOT_AVATAR_URL } from "@/lib/botAvatar";
 
 type FolderKey = "all" | "unread" | "groups" | "direct" | `folder:${number}`;
 
@@ -102,6 +103,8 @@ function AdminBadge() {
 
 function ChatAvatar({ chat, displayName }: { chat: Chat; displayName: string }) {
   const { userStatusMap } = useAppContext();
+  const isBot = chat.type === "direct" &&
+    ((chat.otherUser as any)?.isBot || (chat.otherUser as any)?.is_bot);
   const avatarColor =
     chat.type === "direct"
       ? ((chat.otherUser as any)?.avatarColor || chat.avatarColor || "#333")
@@ -109,7 +112,7 @@ function ChatAvatar({ chat, displayName }: { chat: Chat; displayName: string }) 
 
   const avatarUrl =
     chat.type === "direct"
-      ? (chat.otherUser as any)?.avatarUrl
+      ? ((chat.otherUser as any)?.avatarUrl || (isBot ? BOT_AVATAR_URL : undefined))
       : (chat as any).avatarUrl;
 
   const letter = displayName[0]?.toUpperCase() || "?";
@@ -454,8 +457,7 @@ export function ChatList() {
   });
 
   const sorted = filtered
-    ?.filter((chat: Chat) => chat.type !== "direct" || (!(chat.otherUser as any)?.isBot && !(chat.otherUser as any)?.is_bot))
-    .slice().sort((a: Chat, b: Chat) => {
+    ?.slice().sort((a: Chat, b: Chat) => {
       if (a.isPinned && !b.isPinned) return -1;
       if (!a.isPinned && b.isPinned) return 1;
       const aRaw = a.lastMessage?.createdAt || (a as any).createdAt;
@@ -633,7 +635,7 @@ export function ChatList() {
             sorted?.map((chat: Chat) => {
               const isSelected = selectedChatId === chat.id;
               const lastMessage = chat.lastMessage;
-              const isBot = (chat.otherUser as any)?.isBot;
+              const isBot = (chat.otherUser as any)?.isBot || (chat.otherUser as any)?.is_bot;
               const isVerified = chat.type === "direct" && (chat.otherUser as any)?.isVerified;
               const hasPrime = chat.type === "direct" && (chat.otherUser as any)?.hasPrime;
               const isPrimePlus = hasPrime && (chat.otherUser as any)?.primeTier === "prime_plus";

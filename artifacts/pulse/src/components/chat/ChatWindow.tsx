@@ -17,6 +17,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useScreenLock } from "@/hooks/useScreenLock";
 import { authenticateBiometric, isBiometricEnabled } from "@/lib/biometric";
+import { BOT_AVATAR_URL } from "@/lib/botAvatar";
 import { format } from "date-fns";
 import { ru as ruLocale } from "date-fns/locale";
 import {
@@ -1125,8 +1126,17 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
               style={{ backgroundColor: avatarColor }}
             >
               <span className="absolute inset-0 flex items-center justify-center">{(displayName[0] || "?").toUpperCase()}</span>
-              {(chat.type === "direct" ? (chat.otherUser as any)?.avatarUrl : chat.avatarUrl) && (
-                <img src={(chat.type === "direct" ? (chat.otherUser as any)?.avatarUrl : chat.avatarUrl)} alt={displayName} className="absolute inset-0 w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+              {(chat.type === "direct"
+                ? ((chat.otherUser as any)?.avatarUrl || (isBot ? BOT_AVATAR_URL : undefined))
+                : chat.avatarUrl) && (
+                <img
+                  src={chat.type === "direct"
+                    ? ((chat.otherUser as any)?.avatarUrl || (isBot ? BOT_AVATAR_URL : undefined))
+                    : chat.avatarUrl}
+                  alt={displayName}
+                  className="absolute inset-0 w-full h-full object-cover"
+                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                />
               )}
             </button>
             {otherUserHasPrime && (
@@ -1664,7 +1674,14 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
               style={{ backgroundColor: avatarColor }}
             >
               <span className="absolute inset-0 flex items-center justify-center">{(displayName[0] || "?").toUpperCase()}</span>
-              {(chat.otherUser as any)?.avatarUrl && <img src={(chat.otherUser as any).avatarUrl} alt={displayName} className="absolute inset-0 w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />}
+              {((chat.otherUser as any)?.avatarUrl || (isBot ? BOT_AVATAR_URL : undefined)) && (
+                <img
+                  src={(chat.otherUser as any)?.avatarUrl || (isBot ? BOT_AVATAR_URL : undefined)}
+                  alt={displayName}
+                  className="absolute inset-0 w-full h-full object-cover"
+                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                />
+              )}
             </div>
             <div className="space-y-1.5">
               <div className="flex items-center justify-center gap-2">
