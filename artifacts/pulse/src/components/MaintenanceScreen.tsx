@@ -7,6 +7,7 @@ export interface MaintenanceData {
   message?: string;
   fixes?: string[];
   endsAt?: string | null;
+  features?: Record<string, { active: boolean; message?: string; endsAt?: string | null }>;
 }
 
 function formatTime(seconds: number) {

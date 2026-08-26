@@ -8,6 +8,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useGetMe } from "@workspace/api-client-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useQueryClient } from "@tanstack/react-query";
 
 const TASK_CONFIGS: Record<string, { color: string; icon: React.ReactNode }> = {
   daily_login:    { color: "from-yellow-500 to-amber-500",   icon: <Zap size={20} className="text-white" /> },
@@ -88,6 +89,7 @@ export default function Wallet() {
   const en = lang === "en";
   const currency = "Nova ✦";
   const { data: me } = useGetMe();
+  const queryClient = useQueryClient();
   const [balance, setBalance] = useState(0);
   const [walletAddress, setWalletAddress] = useState("");
   const [completedTasks, setCompletedTasks] = useState<string[]>([]);
@@ -171,6 +173,9 @@ export default function Wallet() {
       const res = await fetch(`/api/users/me/nickname-styles/${style.id}/equip`, { method: "POST", headers: getUserIdHeader() });
       if (res.ok) {
         setNicknameStyles(prev => prev.map(item => ({ ...item, equipped: item.id === style.id })));
+        queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/chats"] });
+        window.dispatchEvent(new CustomEvent("pulse:user-updated"));
         toast({ title: `✨ Стиль «${style.name}» активирован` });
       } else {
         const data = await res.json();

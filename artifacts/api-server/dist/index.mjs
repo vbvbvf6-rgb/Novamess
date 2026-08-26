@@ -60186,7 +60186,11 @@ var init_platform_events = __esm({
       eventType: text("event_type").default("event"),
       cost: integer("cost").default(0),
       conditions: text("conditions"),
-      participantCount: integer("participant_count").default(0)
+      participantCount: integer("participant_count").default(0),
+      prizeAmount: integer("prize_amount").default(0),
+      prizeDescription: text("prize_description"),
+      winnerId: integer("winner_id"),
+      prizeAwardedAt: timestamp("prize_awarded_at")
     });
     eventParticipantsTable = pgTable("event_participants", {
       id: serial("id").primaryKey(),
@@ -62145,6 +62149,151 @@ var init_bcryptjs = __esm({
       encodeBase64,
       decodeBase64
     };
+  }
+});
+
+// src/lib/sse.ts
+var sse_exports = {};
+__export(sse_exports, {
+  broadcastToAll: () => broadcastToAll,
+  broadcastToChat: () => broadcastToChat,
+  broadcastToUser: () => broadcastToUser,
+  getUserConnectionCount: () => getUserConnectionCount,
+  setTyping: () => setTyping,
+  stopTyping: () => stopTyping,
+  subscribeToChatEvents: () => subscribeToChatEvents,
+  subscribeToUserEvents: () => subscribeToUserEvents,
+  unsubscribeFromChatEvents: () => unsubscribeFromChatEvents,
+  unsubscribeFromUserEvents: () => unsubscribeFromUserEvents
+});
+function pushToBuffer(userId, event, data) {
+  if (!BUFFERED_EVENTS.has(event)) return;
+  if (!userEventBuffer.has(userId)) userEventBuffer.set(userId, []);
+  const buf = userEventBuffer.get(userId);
+  const now = Date.now();
+  const fresh = buf.filter((e5) => now - e5.ts < BUFFER_TTL_MS);
+  fresh.push({ event, data, ts: now });
+  if (fresh.length > 30) fresh.splice(0, fresh.length - 30);
+  userEventBuffer.set(userId, fresh);
+}
+function flushBuffer(userId, res) {
+  const buf = userEventBuffer.get(userId);
+  if (!buf || buf.length === 0) return;
+  userEventBuffer.delete(userId);
+  const now = Date.now();
+  for (const entry of buf) {
+    if (now - entry.ts < BUFFER_TTL_MS) {
+      try {
+        res.write(`event: ${entry.event}
+data: ${JSON.stringify(entry.data)}
+
+`);
+      } catch {
+      }
+    }
+  }
+}
+function subscribeToChatEvents(chatId, res) {
+  if (!chatSubscribers.has(chatId)) chatSubscribers.set(chatId, /* @__PURE__ */ new Set());
+  chatSubscribers.get(chatId).add(res);
+}
+function unsubscribeFromChatEvents(chatId, res) {
+  chatSubscribers.get(chatId)?.delete(res);
+}
+function broadcastToChat(chatId, event, data) {
+  const subs = chatSubscribers.get(chatId);
+  if (!subs || subs.size === 0) return;
+  const payload = `event: ${event}
+data: ${JSON.stringify(data)}
+
+`;
+  for (const res of subs) {
+    try {
+      res.write(payload);
+    } catch {
+      subs.delete(res);
+    }
+  }
+}
+function subscribeToUserEvents(userId, res) {
+  if (!userSubscribers.has(userId)) userSubscribers.set(userId, /* @__PURE__ */ new Set());
+  userSubscribers.get(userId).add(res);
+  flushBuffer(userId, res);
+}
+function unsubscribeFromUserEvents(userId, res) {
+  userSubscribers.get(userId)?.delete(res);
+}
+function getUserConnectionCount(userId) {
+  return userSubscribers.get(userId)?.size ?? 0;
+}
+function broadcastToAll(event, data) {
+  const payload = `event: ${event}
+data: ${JSON.stringify(data)}
+
+`;
+  for (const [, subs] of userSubscribers) {
+    for (const res of subs) {
+      try {
+        res.write(payload);
+      } catch {
+        subs.delete(res);
+      }
+    }
+  }
+}
+function broadcastToUser(userId, event, data) {
+  const subs = userSubscribers.get(userId);
+  if (!subs || subs.size === 0) {
+    pushToBuffer(userId, event, data);
+    return;
+  }
+  const payload = `event: ${event}
+data: ${JSON.stringify(data)}
+
+`;
+  let delivered = false;
+  for (const res of subs) {
+    try {
+      res.write(payload);
+      delivered = true;
+    } catch {
+      subs.delete(res);
+    }
+  }
+  if (!delivered) {
+    pushToBuffer(userId, event, data);
+  }
+}
+function setTyping(chatId, userId, displayName, typingType = "text") {
+  if (!typingUsers.has(chatId)) typingUsers.set(chatId, /* @__PURE__ */ new Map());
+  const chatTyping = typingUsers.get(chatId);
+  const existing = chatTyping.get(userId);
+  if (existing) clearTimeout(existing);
+  broadcastToChat(chatId, "typing", { userId, displayName, typing: true, typingType });
+  const timeout = setTimeout(() => {
+    chatTyping.delete(userId);
+    broadcastToChat(chatId, "typing", { userId, displayName, typing: false, typingType: "text" });
+  }, 4e3);
+  chatTyping.set(userId, timeout);
+}
+function stopTyping(chatId, userId, displayName) {
+  const chatTyping = typingUsers.get(chatId);
+  if (!chatTyping) return;
+  const existing = chatTyping.get(userId);
+  if (existing) clearTimeout(existing);
+  chatTyping.delete(userId);
+  broadcastToChat(chatId, "typing", { userId, displayName, typing: false, typingType: "text" });
+}
+var chatSubscribers, typingUsers, userSubscribers, userEventBuffer, BUFFER_TTL_MS, BUFFERED_EVENTS;
+var init_sse = __esm({
+  "src/lib/sse.ts"() {
+    "use strict";
+    chatSubscribers = /* @__PURE__ */ new Map();
+    typingUsers = /* @__PURE__ */ new Map();
+    userSubscribers = /* @__PURE__ */ new Map();
+    userEventBuffer = /* @__PURE__ */ new Map();
+    BUFFER_TTL_MS = 6e4;
+    BUFFERED_EVENTS = /* @__PURE__ */ new Set(["incoming-call", "webrtc-signal", "call-accepted", "call-declined", "call-ended", "call-missed"]);
   }
 });
 
@@ -142798,132 +142947,7 @@ init_drizzle_orm();
 init_bcryptjs();
 var import_jsonwebtoken = __toESM(require_jsonwebtoken(), 1);
 import { createHash as createHash2, randomUUID } from "node:crypto";
-
-// src/lib/sse.ts
-var chatSubscribers = /* @__PURE__ */ new Map();
-var typingUsers = /* @__PURE__ */ new Map();
-var userSubscribers = /* @__PURE__ */ new Map();
-var userEventBuffer = /* @__PURE__ */ new Map();
-var BUFFER_TTL_MS = 6e4;
-var BUFFERED_EVENTS = /* @__PURE__ */ new Set(["incoming-call", "webrtc-signal", "call-accepted", "call-declined", "call-ended", "call-missed"]);
-function pushToBuffer(userId, event, data) {
-  if (!BUFFERED_EVENTS.has(event)) return;
-  if (!userEventBuffer.has(userId)) userEventBuffer.set(userId, []);
-  const buf = userEventBuffer.get(userId);
-  const now = Date.now();
-  const fresh = buf.filter((e5) => now - e5.ts < BUFFER_TTL_MS);
-  fresh.push({ event, data, ts: now });
-  if (fresh.length > 30) fresh.splice(0, fresh.length - 30);
-  userEventBuffer.set(userId, fresh);
-}
-function flushBuffer(userId, res) {
-  const buf = userEventBuffer.get(userId);
-  if (!buf || buf.length === 0) return;
-  userEventBuffer.delete(userId);
-  const now = Date.now();
-  for (const entry of buf) {
-    if (now - entry.ts < BUFFER_TTL_MS) {
-      try {
-        res.write(`event: ${entry.event}
-data: ${JSON.stringify(entry.data)}
-
-`);
-      } catch {
-      }
-    }
-  }
-}
-function subscribeToChatEvents(chatId, res) {
-  if (!chatSubscribers.has(chatId)) chatSubscribers.set(chatId, /* @__PURE__ */ new Set());
-  chatSubscribers.get(chatId).add(res);
-}
-function unsubscribeFromChatEvents(chatId, res) {
-  chatSubscribers.get(chatId)?.delete(res);
-}
-function broadcastToChat(chatId, event, data) {
-  const subs = chatSubscribers.get(chatId);
-  if (!subs || subs.size === 0) return;
-  const payload = `event: ${event}
-data: ${JSON.stringify(data)}
-
-`;
-  for (const res of subs) {
-    try {
-      res.write(payload);
-    } catch {
-      subs.delete(res);
-    }
-  }
-}
-function subscribeToUserEvents(userId, res) {
-  if (!userSubscribers.has(userId)) userSubscribers.set(userId, /* @__PURE__ */ new Set());
-  userSubscribers.get(userId).add(res);
-  flushBuffer(userId, res);
-}
-function unsubscribeFromUserEvents(userId, res) {
-  userSubscribers.get(userId)?.delete(res);
-}
-function getUserConnectionCount(userId) {
-  return userSubscribers.get(userId)?.size ?? 0;
-}
-function broadcastToAll(event, data) {
-  const payload = `event: ${event}
-data: ${JSON.stringify(data)}
-
-`;
-  for (const [, subs] of userSubscribers) {
-    for (const res of subs) {
-      try {
-        res.write(payload);
-      } catch {
-        subs.delete(res);
-      }
-    }
-  }
-}
-function broadcastToUser(userId, event, data) {
-  const subs = userSubscribers.get(userId);
-  if (!subs || subs.size === 0) {
-    pushToBuffer(userId, event, data);
-    return;
-  }
-  const payload = `event: ${event}
-data: ${JSON.stringify(data)}
-
-`;
-  let delivered = false;
-  for (const res of subs) {
-    try {
-      res.write(payload);
-      delivered = true;
-    } catch {
-      subs.delete(res);
-    }
-  }
-  if (!delivered) {
-    pushToBuffer(userId, event, data);
-  }
-}
-function setTyping(chatId, userId, displayName, typingType = "text") {
-  if (!typingUsers.has(chatId)) typingUsers.set(chatId, /* @__PURE__ */ new Map());
-  const chatTyping = typingUsers.get(chatId);
-  const existing = chatTyping.get(userId);
-  if (existing) clearTimeout(existing);
-  broadcastToChat(chatId, "typing", { userId, displayName, typing: true, typingType });
-  const timeout = setTimeout(() => {
-    chatTyping.delete(userId);
-    broadcastToChat(chatId, "typing", { userId, displayName, typing: false, typingType: "text" });
-  }, 4e3);
-  chatTyping.set(userId, timeout);
-}
-function stopTyping(chatId, userId, displayName) {
-  const chatTyping = typingUsers.get(chatId);
-  if (!chatTyping) return;
-  const existing = chatTyping.get(userId);
-  if (existing) clearTimeout(existing);
-  chatTyping.delete(userId);
-  broadcastToChat(chatId, "typing", { userId, displayName, typing: false, typingType: "text" });
-}
+init_sse();
 
 // src/lib/totp.ts
 import { createHmac, randomBytes as randomBytes2 } from "node:crypto";
@@ -144989,6 +145013,7 @@ var contacts_default = router5;
 var import_express6 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
+init_sse();
 var router6 = (0, import_express6.Router)();
 async function getUserPrimeInfo2(userId) {
   try {
@@ -145349,6 +145374,11 @@ router6.post("/chats/direct", async (req, res) => {
     const uid = req.currentUserId;
     const userId = Number(req.body.userId);
     if (!userId) return res.status(400).json({ error: "userId required" });
+    const targetRows = await db.execute(sql`SELECT is_bot, username FROM users WHERE id = ${userId} LIMIT 1`);
+    const target = targetRows.rows[0];
+    if (target?.is_bot && String(target.username).toLowerCase() === "nova_ai") {
+      return res.status(403).json({ error: "Nova AI \u043F\u0440\u0438\u043D\u0438\u043C\u0430\u0435\u0442 \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u044F \u0442\u043E\u043B\u044C\u043A\u043E \u0447\u0435\u0440\u0435\u0437 \u0441\u0438\u0441\u0442\u0435\u043C\u043D\u044B\u0435 \u0444\u0443\u043D\u043A\u0446\u0438\u0438" });
+    }
     const myMemberships = await db.select({ chatId: chatMembersTable.chatId }).from(chatMembersTable).where(eq(chatMembersTable.userId, uid));
     const theirMemberships = await db.select({ chatId: chatMembersTable.chatId }).from(chatMembersTable).where(eq(chatMembersTable.userId, userId));
     const myIds = new Set(myMemberships.map((m3) => m3.chatId));
@@ -146228,6 +146258,7 @@ async function moderateContent(text2) {
 }
 
 // src/routes/messages.ts
+init_sse();
 import { spawn } from "node:child_process";
 
 // src/routes/push.ts
@@ -146824,6 +146855,19 @@ router8.post("/messages", async (req, res) => {
       return res.status(403).json({ error: "\u041D\u0435\u0442 \u0434\u043E\u0441\u0442\u0443\u043F\u0430 \u043A \u044D\u0442\u043E\u043C\u0443 \u0447\u0430\u0442\u0443" });
     }
     const chatInfo = await db.query.chatsTable.findFirst({ where: eq(chatsTable.id, body.chatId) });
+    if (chatInfo?.type === "direct") {
+      const botRows = await db.execute(sql`
+        SELECT u.is_bot, u.username
+        FROM chat_members cm
+        JOIN users u ON u.id = cm.user_id
+        WHERE cm.chat_id = ${body.chatId} AND cm.user_id <> ${uid}
+        LIMIT 1
+      `);
+      const otherUser = botRows.rows[0];
+      if (otherUser?.is_bot && String(otherUser.username).toLowerCase() === "nova_ai") {
+        return res.status(403).json({ error: "\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u0438 \u043D\u0435 \u043C\u043E\u0433\u0443\u0442 \u043E\u0442\u043F\u0440\u0430\u0432\u043B\u044F\u0442\u044C \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u044F \u0431\u043E\u0442\u0443 Nova" });
+      }
+    }
     if (chatInfo?.type === "channel" && !body.replyToId) {
       const memberInfo = await db.query.chatMembersTable.findFirst({
         where: and(eq(chatMembersTable.chatId, body.chatId), eq(chatMembersTable.userId, uid))
@@ -147450,6 +147494,7 @@ var messages_default = router8;
 var import_express9 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
+init_sse();
 var router9 = (0, import_express9.Router)();
 var EMBEDDED_METERED_KEY = process.env.METERED_API_KEY ?? "";
 var METERED_APP_URL = process.env.METERED_APP_URL ?? "";
@@ -147917,6 +147962,7 @@ var stories_default = router10;
 var import_express11 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
+init_sse();
 var router11 = (0, import_express11.Router)();
 async function buildPost(postId, currentUserId) {
   const post = await db.query.postsTable.findFirst({ where: eq(postsTable.id, postId) });
@@ -148330,6 +148376,7 @@ var import_express12 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
 init_bcryptjs();
+init_sse();
 var router12 = (0, import_express12.Router)();
 var ADMIN_USER_IDS = [1, 4];
 db.execute(sql`ALTER TABLE bot_tokens ADD COLUMN IF NOT EXISTS code_lang TEXT NOT NULL DEFAULT 'python'`).catch(() => {
@@ -148347,6 +148394,14 @@ db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_youtube_creator BOO
 db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_tiktok_creator BOOLEAN NOT NULL DEFAULT FALSE`).catch(() => {
 });
 db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS nickname_style TEXT`).catch(() => {
+});
+db.execute(sql`ALTER TABLE platform_events ADD COLUMN IF NOT EXISTS prize_amount INTEGER NOT NULL DEFAULT 0`).catch(() => {
+});
+db.execute(sql`ALTER TABLE platform_events ADD COLUMN IF NOT EXISTS prize_description TEXT`).catch(() => {
+});
+db.execute(sql`ALTER TABLE platform_events ADD COLUMN IF NOT EXISTS winner_id INTEGER`).catch(() => {
+});
+db.execute(sql`ALTER TABLE platform_events ADD COLUMN IF NOT EXISTS prize_awarded_at TIMESTAMP WITH TIME ZONE`).catch(() => {
 });
 db.execute(sql`CREATE TABLE IF NOT EXISTS nickname_styles (
   id SERIAL PRIMARY KEY,
@@ -149789,7 +149844,9 @@ router12.get("/maintenance", async (_req, res) => {
       await db.execute(sql`UPDATE app_settings SET value = ${JSON.stringify(data)}, updated_at = NOW() WHERE key = 'maintenance'`).catch(() => {
       });
     }
-    return res.json(data);
+    const featureRows = await db.execute(sql`SELECT value FROM app_settings WHERE key = 'feature_maintenance' LIMIT 1`);
+    const features = featureRows.rows[0] ? JSON.parse(featureRows.rows[0].value) : {};
+    return res.json({ ...data, features });
   } catch {
     return res.json({ active: false });
   }
@@ -150092,6 +150149,7 @@ var admin_default = router12;
 
 // src/routes/events.ts
 var import_express13 = __toESM(require_express2(), 1);
+init_sse();
 init_src();
 init_drizzle_orm();
 var router13 = (0, import_express13.Router)();
@@ -151077,6 +151135,7 @@ var prime_default = router17;
 var import_express18 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
+init_sse();
 var router18 = (0, import_express18.Router)();
 async function isChatMember2(chatId, userId) {
   const rows = await db.execute(sql`SELECT 1 FROM chat_members WHERE chat_id = ${chatId} AND user_id = ${userId} LIMIT 1`);
@@ -151480,6 +151539,82 @@ init_src();
 init_drizzle_orm();
 var router22 = (0, import_express22.Router)();
 var ADMIN_USER_IDS2 = [4];
+async function settleExpiredGiveaways() {
+  const expired = await db.execute(sql`
+    SELECT id, title, prize_amount, prize_description
+    FROM platform_events
+    WHERE event_type = 'giveaway'
+      AND end_at IS NOT NULL AND end_at <= NOW()
+      AND prize_awarded_at IS NULL
+  `);
+  for (const rawEvent of expired.rows) {
+    const eventId = Number(rawEvent.id);
+    try {
+      const settled = await db.transaction(async (tx) => {
+        const eventRows = await tx.execute(sql`
+          SELECT id, title, prize_amount, prize_description
+          FROM platform_events
+          WHERE id = ${eventId} AND event_type = 'giveaway'
+            AND end_at IS NOT NULL AND end_at <= NOW()
+            AND prize_awarded_at IS NULL
+          FOR UPDATE
+        `);
+        const event = eventRows.rows[0];
+        if (!event) return null;
+        const participants = await tx.execute(sql`
+          SELECT ep.user_id, u.username, u.display_name
+          FROM event_participants ep
+          JOIN users u ON u.id = ep.user_id
+          WHERE ep.event_id = ${eventId}
+          ORDER BY RANDOM()
+          LIMIT 1
+        `);
+        const winner = participants.rows[0];
+        await tx.execute(sql`
+          UPDATE platform_events
+          SET winner_id = ${winner ? Number(winner.user_id) : null},
+              prize_awarded_at = NOW(),
+              updated_at = NOW()
+          WHERE id = ${eventId} AND prize_awarded_at IS NULL
+        `);
+        const amount = Math.max(0, Number(event.prize_amount || 0));
+        if (winner && amount > 0) {
+          await tx.execute(sql`
+            UPDATE users SET balance = COALESCE(balance, 0) + ${amount}
+            WHERE id = ${Number(winner.user_id)}
+          `);
+          await tx.execute(sql`
+            INSERT INTO spark_activity (user_id, amount, type, description, created_at)
+            VALUES (${Number(winner.user_id)}, ${amount}, 'event_prize', ${`\u041F\u0440\u0438\u0437 \u0437\u0430 \u0441\u043E\u0431\u044B\u0442\u0438\u0435 \xAB${event.title}\xBB`}, NOW())
+          `).catch(() => {
+          });
+        }
+        return winner ? {
+          eventId,
+          title: event.title,
+          winnerId: Number(winner.user_id),
+          winnerName: winner.display_name || winner.username,
+          amount,
+          description: event.prize_description || null
+        } : { eventId, title: event.title, winnerId: null, winnerName: null, amount, description: event.prize_description || null };
+      });
+      if (settled?.winnerId) {
+        rescheduleWinnerNotification(settled).catch(() => {
+        });
+      }
+    } catch {
+    }
+  }
+}
+async function rescheduleWinnerNotification(settled) {
+  const { broadcastToUser: broadcastToUser2 } = await Promise.resolve().then(() => (init_sse(), sse_exports));
+  broadcastToUser2(settled.winnerId, "event-prize", {
+    eventId: settled.eventId,
+    title: settled.title,
+    amount: settled.amount,
+    description: settled.description
+  });
+}
 async function isAdminUser2(userId) {
   if (ADMIN_USER_IDS2.includes(userId)) return true;
   try {
@@ -151492,6 +151627,7 @@ async function isAdminUser2(userId) {
 }
 router22.get("/platform-events", async (req, res) => {
   try {
+    await settleExpiredGiveaways();
     const now = /* @__PURE__ */ new Date();
     const events = await db.select().from(platformEventsTable).where(
       and(
@@ -151523,6 +151659,10 @@ router22.post("/platform-events/:id/join", async (req, res) => {
     const evtRows = await db.execute(sql`SELECT * FROM platform_events WHERE id = ${eventId} LIMIT 1`);
     const event = evtRows.rows[0];
     if (!event) return res.status(404).json({ error: "\u0421\u043E\u0431\u044B\u0442\u0438\u0435 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u043E" });
+    if (event.end_at && new Date(event.end_at) <= /* @__PURE__ */ new Date()) {
+      await settleExpiredGiveaways();
+      return res.status(410).json({ error: "\u0421\u043E\u0431\u044B\u0442\u0438\u0435 \u0443\u0436\u0435 \u0437\u0430\u0432\u0435\u0440\u0448\u0435\u043D\u043E" });
+    }
     const cost = Number(event.cost || 0);
     if (cost > 0) {
       const deductResult = await db.execute(sql`
@@ -151568,6 +151708,7 @@ router22.post("/platform-events/:id/leave", async (req, res) => {
 router22.get("/admin/platform-events", async (req, res) => {
   try {
     if (!await isAdminUser2(req.currentUserId)) return res.status(403).json({ error: "\u0414\u043E\u0441\u0442\u0443\u043F \u0437\u0430\u043F\u0440\u0435\u0449\u0451\u043D" });
+    await settleExpiredGiveaways();
     const events = await db.select().from(platformEventsTable).orderBy(desc(platformEventsTable.createdAt));
     res.json(events);
   } catch (err2) {
@@ -151578,7 +151719,7 @@ router22.get("/admin/platform-events", async (req, res) => {
 router22.post("/admin/platform-events", async (req, res) => {
   try {
     if (!await isAdminUser2(req.currentUserId)) return res.status(403).json({ error: "\u0414\u043E\u0441\u0442\u0443\u043F \u0437\u0430\u043F\u0440\u0435\u0449\u0451\u043D" });
-    const { title, description, imageUrl, bannerColor, startAt, endAt, isActive, eventType, cost, conditions } = req.body;
+    const { title, description, imageUrl, bannerColor, startAt, endAt, isActive, eventType, cost, conditions, prizeAmount, prizeDescription } = req.body;
     if (!title?.trim()) return res.status(400).json({ error: "\u0417\u0430\u0433\u043E\u043B\u043E\u0432\u043E\u043A \u043E\u0431\u044F\u0437\u0430\u0442\u0435\u043B\u0435\u043D" });
     const [event] = await db.insert(platformEventsTable).values({
       title: title.trim(),
@@ -151591,7 +151732,9 @@ router22.post("/admin/platform-events", async (req, res) => {
       createdBy: req.currentUserId,
       eventType: eventType || "event",
       cost: cost ? Number(cost) : 0,
-      conditions: conditions ? typeof conditions === "string" ? conditions : JSON.stringify(conditions) : null
+      conditions: conditions ? typeof conditions === "string" ? conditions : JSON.stringify(conditions) : null,
+      prizeAmount: eventType === "giveaway" ? Math.max(0, Number(prizeAmount || 0)) : 0,
+      prizeDescription: eventType === "giveaway" ? prizeDescription?.trim() || null : null
     }).returning();
     res.status(201).json(event);
   } catch (err2) {
@@ -151603,7 +151746,7 @@ router22.patch("/admin/platform-events/:id", async (req, res) => {
   try {
     if (!await isAdminUser2(req.currentUserId)) return res.status(403).json({ error: "\u0414\u043E\u0441\u0442\u0443\u043F \u0437\u0430\u043F\u0440\u0435\u0449\u0451\u043D" });
     const id = Number(req.params.id);
-    const { title, description, imageUrl, bannerColor, startAt, endAt, isActive, eventType, cost, conditions } = req.body;
+    const { title, description, imageUrl, bannerColor, startAt, endAt, isActive, eventType, cost, conditions, prizeAmount, prizeDescription } = req.body;
     const updates = { updatedAt: /* @__PURE__ */ new Date() };
     if (title !== void 0) updates.title = title.trim();
     if (description !== void 0) updates.description = description?.trim() || null;
@@ -151615,6 +151758,8 @@ router22.patch("/admin/platform-events/:id", async (req, res) => {
     if (eventType !== void 0) updates.eventType = eventType;
     if (cost !== void 0) updates.cost = Number(cost);
     if (conditions !== void 0) updates.conditions = conditions ? typeof conditions === "string" ? conditions : JSON.stringify(conditions) : null;
+    if (prizeAmount !== void 0) updates.prizeAmount = Math.max(0, Number(prizeAmount || 0));
+    if (prizeDescription !== void 0) updates.prizeDescription = prizeDescription?.trim() || null;
     const [event] = await db.update(platformEventsTable).set(updates).where(eq(platformEventsTable.id, id)).returning();
     if (!event) return res.status(404).json({ error: "Event not found" });
     res.json(event);
@@ -151640,6 +151785,7 @@ var platform_events_default = router22;
 var import_express23 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
+init_sse();
 var router23 = (0, import_express23.Router)();
 router23.get("/contact-requests/incoming", async (req, res) => {
   try {
@@ -152299,6 +152445,7 @@ var routes_default = router25;
 var import_express26 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
+init_sse();
 var botApiRouter = (0, import_express26.Router)();
 async function resolveBot(token) {
   const rows = await db.execute(sql`SELECT bot_user_id FROM bot_tokens WHERE token = ${token}`);
@@ -153166,6 +153313,7 @@ async function migrate(db2, config2) {
 }
 
 // src/index.ts
+init_sse();
 var rawPort = process.env["PORT"];
 if (!rawPort) {
   throw new Error(

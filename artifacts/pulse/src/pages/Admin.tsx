@@ -373,6 +373,8 @@ export default function Admin() {
   interface PlatformEvent {
     id: number; title: string; description: string | null; imageUrl: string | null;
     bannerColor: string; startAt: string | null; endAt: string | null; isActive: boolean; createdAt: string;
+    eventType?: string; cost?: number; conditions?: string | null;
+    prizeAmount?: number; prizeDescription?: string | null; winnerId?: number | null; prizeAwardedAt?: string | null;
   }
   const [platformEvents, setPlatformEvents] = useState<PlatformEvent[]>([]);
   const [eventsLoading, setEventsLoading] = useState(false);
@@ -393,6 +395,8 @@ export default function Admin() {
   const [eventKind, setEventKind] = useState<"event" | "giveaway">("event");
   const [eventCost, setEventCost] = useState(0);
   const [eventConditions, setEventConditions] = useState("");
+  const [eventPrizeAmount, setEventPrizeAmount] = useState(0);
+  const [eventPrizeDescription, setEventPrizeDescription] = useState("");
   // Maintenance mode
   interface MaintenanceSettings { active: boolean; message: string; fixes: string[]; endsAt: string | null; }
   const [showMaintenancePanel, setShowMaintenancePanel] = useState(false);
@@ -519,6 +523,8 @@ export default function Admin() {
       setEventActive(ev.isActive);
       setEventKind((ev as any).eventType === "giveaway" ? "giveaway" : "event");
       setEventCost((ev as any).cost || 0);
+      setEventPrizeAmount(Number((ev as any).prizeAmount || (ev as any).prize_amount || 0));
+      setEventPrizeDescription((ev as any).prizeDescription || (ev as any).prize_description || "");
       const conds = (ev as any).conditions;
       setEventConditions(conds ? (typeof conds === "string" ? conds : JSON.stringify(conds)) : "");
     } else {
@@ -526,6 +532,7 @@ export default function Admin() {
       setEventEmoji("🎉"); setEventTitle(""); setEventDesc(""); setEventImage("");
       setEventColor("#f59e0b"); setEventStartAt(""); setEventEndAt(""); setEventActive(true);
       setEventKind("event"); setEventCost(0); setEventConditions("");
+      setEventPrizeAmount(0); setEventPrizeDescription("");
     }
     setShowEventForm(true);
   };
@@ -545,6 +552,8 @@ export default function Admin() {
         eventType: eventKind,
         cost: eventKind === "giveaway" ? eventCost : 0,
         conditions: condParsed ? JSON.stringify(condParsed) : null,
+        prizeAmount: eventKind === "giveaway" ? Math.max(0, eventPrizeAmount) : 0,
+        prizeDescription: eventKind === "giveaway" ? eventPrizeDescription.trim() || null : null,
       };
       const url = editingEvent ? `/api/admin/platform-events/${editingEvent.id}` : "/api/admin/platform-events";
       const method = editingEvent ? "PATCH" : "POST";
@@ -3126,6 +3135,31 @@ export default function Admin() {
                     rows={2}
                     className="w-full bg-background border border-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-violet-500 transition-colors resize-none"
                   />
+                  {eventKind === "giveaway" && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <label className="text-[10px] text-muted-foreground">
+                        Приз победителю (искры)
+                        <input
+                          type="number"
+                          inputMode="numeric"
+                          min={0}
+                          value={eventPrizeAmount}
+                          onChange={e => setEventPrizeAmount(Math.max(0, Number(e.target.value) || 0))}
+                          placeholder="Например, 100"
+                          className="mt-1 w-full bg-background border border-border rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:border-violet-500 transition-colors"
+                        />
+                      </label>
+                      <label className="text-[10px] text-muted-foreground">
+                        Описание приза
+                        <input
+                          value={eventPrizeDescription}
+                          onChange={e => setEventPrizeDescription(e.target.value)}
+                          placeholder="Например, 100 искр на баланс"
+                          className="mt-1 w-full bg-background border border-border rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:border-violet-500 transition-colors"
+                        />
+                      </label>
+                    </div>
+                  )}
                   <div className="flex items-center gap-3">
                     <div className="flex items-center gap-2">
                       <label className="text-xs text-muted-foreground">Цвет:</label>
@@ -3172,6 +3206,12 @@ export default function Admin() {
                           </span>
                         </div>
                         {ev.description && <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-1">{ev.description}</p>}
+                        {ev.eventType === "giveaway" && (
+                          <p className="text-[10px] text-amber-400 mt-0.5">
+                            🎁 Приз: {ev.prizeDescription || `${ev.prizeAmount || 0} искр`}
+                            {ev.winnerId ? " · победитель выбран" : ""}
+                          </p>
+                        )}
                         {(ev.startAt || ev.endAt) && (
                           <p className="text-[10px] text-muted-foreground mt-0.5">
                             {ev.startAt ? `С ${new Date(ev.startAt).toLocaleDateString("ru-RU")}` : ""}

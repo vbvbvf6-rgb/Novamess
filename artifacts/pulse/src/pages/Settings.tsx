@@ -36,6 +36,7 @@ import {
 import type { Lang } from "@/i18n/translations";
 import { APP_THEMES, applyAppTheme } from "@/lib/appThemes";
 import { disableBiometric, isBiometricSupported, registerBiometric } from "@/lib/biometric";
+import { localStoragePersister } from "@/lib/queryClient";
 
 const AVATAR_COLORS = [
   "#000000","#3B82F6","#EC4899","#10B981","#F59E0B","#8B5CF6",
@@ -1881,12 +1882,29 @@ export default function Settings() {
     setPwLoading(false);
   };
 
-  const handleClearCache = () => {
-    const critical = ["pulse-user-id", "pulse-token", "pulse-theme", "pulse-is-dark"];
+  const handleClearCache = async () => {
+    // Clear persisted query data as well as the older pulse/nova caches, but
+    // keep the active session, saved accounts, and appearance preferences.
+    const preserved = new Map<string, string>();
+    for (const key of ["pulse-user-id", "pulse-token", "pulse-user", "pulse-accounts", "pulse-theme", "pulse-is-dark"]) {
+      const value = sessionStorage.getItem(key) ?? localStorage.getItem(key);
+      if (value !== null) preserved.set(key, value);
+    }
+    queryClient.clear();
+    try { await localStoragePersister?.removeClient?.(); } catch {}
     for (const key of Object.keys(localStorage)) {
-      if (key.startsWith("pulse-") && !critical.includes(key)) {
-        localStorage.removeItem(key);
-      }
+      if (key !== "pulse-accounts" && key !== "pulse-theme" && key !== "pulse-is-dark") localStorage.removeItem(key);
+    }
+    localStorage.removeItem("nova-query-cache");
+    for (const [key, value] of preserved) {
+      if (key === "pulse-accounts" || key === "pulse-theme" || key === "pulse-is-dark") localStorage.setItem(key, value);
+      else sessionStorage.setItem(key, value);
+    }
+    if ("caches" in window) {
+      try {
+        const names = await caches.keys();
+        await Promise.all(names.map(name => caches.delete(name)));
+      } catch {}
     }
     setCacheCleared(c => !c);
     toast({ title: t("settings.cacheCleared"), description: t("settings.cacheClearedDesc") });

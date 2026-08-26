@@ -399,6 +399,19 @@ router.post("/messages", async (req, res) => {
 
     // Channel restriction: only owners/admins can post standalone messages; everyone else can only comment (reply)
     const chatInfo = await db.query.chatsTable.findFirst({ where: eq(chatsTable.id, body.chatId) });
+    if (chatInfo?.type === "direct") {
+      const botRows = await db.execute(sql`
+        SELECT u.is_bot, u.username
+        FROM chat_members cm
+        JOIN users u ON u.id = cm.user_id
+        WHERE cm.chat_id = ${body.chatId} AND cm.user_id <> ${uid}
+        LIMIT 1
+      `);
+      const otherUser = botRows.rows[0] as any;
+      if (otherUser?.is_bot && String(otherUser.username).toLowerCase() === "nova_ai") {
+        return res.status(403).json({ error: "Пользователи не могут отправлять сообщения боту Nova" });
+      }
+    }
     if (chatInfo?.type === "channel" && !body.replyToId) {
       const memberInfo = await db.query.chatMembersTable.findFirst({
         where: and(eq(chatMembersTable.chatId, body.chatId), eq(chatMembersTable.userId, uid)),

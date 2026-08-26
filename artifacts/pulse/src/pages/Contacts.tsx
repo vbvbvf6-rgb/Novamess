@@ -10,7 +10,7 @@ import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 
-type Tab = "contacts" | "groups" | "incoming" | "outgoing";
+type Tab = "contacts" | "incoming" | "outgoing";
 
 interface ContactRequest {
   id: number;
@@ -228,7 +228,6 @@ export default function Contacts() {
       <div className="flex gap-1 px-4 pt-3 pb-0 border-b border-border bg-background/95 backdrop-blur-sm z-10 shrink-0">
         {([
           { key: "contacts", label: "Контакты" },
-          { key: "groups", label: "Каналы / Группы" },
           { key: "incoming", label: "Входящие", badge: incomingPending },
           { key: "outgoing", label: "Исходящие" },
         ] as const).map((t) => (
@@ -247,13 +246,13 @@ export default function Contacts() {
         ))}
       </div>
 
-      {(tab === "contacts" || tab === "groups") && (
+      {tab === "contacts" && (
         <>
           <div className="px-4 py-3 border-b border-border bg-background/95 backdrop-blur-sm z-10 shrink-0">
             <div className="relative max-w-3xl mx-auto w-full">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
-                placeholder={tab === "contacts" ? "Поиск контактов и пользователей..." : "Поиск каналов и групп..."}
+                placeholder="Поиск контактов и пользователей..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 bg-secondary/50 border-transparent focus-visible:ring-primary focus-visible:bg-card h-11 rounded-2xl font-medium"
@@ -274,19 +273,19 @@ export default function Contacts() {
                   </div>
                 ))}
               </div>
-            ) : (tab === "contacts" ? displayUsers : groupUsers)?.length === 0 ? (
+            ) : displayUsers?.length === 0 ? (
               <div className="text-center text-muted-foreground mt-20">
                 <div className="w-20 h-20 bg-secondary rounded-full flex items-center justify-center mx-auto mb-4">
                   <Search size={32} className="text-muted-foreground/50" />
                 </div>
                 <h2 className="text-lg font-semibold text-foreground mb-1">
-                  {searchQuery ? (tab === "contacts" ? "Пользователи не найдены" : "Каналы и группы не найдены") : (tab === "contacts" ? "Контакты отсутствуют" : "Каналы и группы отсутствуют")}
+                  {searchQuery ? "Пользователи не найдены" : "Контакты отсутствуют"}
                 </h2>
-                <p>{searchQuery ? "Попробуйте другой запрос" : tab === "contacts" ? "Введите имя или ник чтобы найти пользователей" : "Введите название канала или группы"}</p>
+                <p>{searchQuery ? "Попробуйте другой запрос" : "Введите имя или ник чтобы найти пользователей"}</p>
               </div>
             ) : (
               <div className="space-y-3">
-                {(tab === "contacts" ? displayUsers : groupUsers)?.map((user: User) => {
+                displayUsers?.map((user: User) => {
                   const isContact = contacts?.some((c: { id: number }) => c.id === user.id) ?? false;
                   return (
                     <div key={user.id} className="flex items-center gap-4 p-4 rounded-2xl border border-border/60 bg-card/40 hover:bg-card hover:border-border hover:shadow-sm transition-all group">

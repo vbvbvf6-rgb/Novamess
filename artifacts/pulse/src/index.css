@@ -246,6 +246,18 @@
   40%            { transform: scale(1); opacity: 1; }
 }
 
+@keyframes messageEmojiPop {
+  0%, 100% { transform: translateY(0) scale(1) rotate(0deg); }
+  35% { transform: translateY(-2px) scale(1.12) rotate(-4deg); }
+  70% { transform: translateY(0) scale(1.04) rotate(3deg); }
+}
+
+.message-emoji {
+  display: inline-block;
+  transform-origin: 50% 75%;
+  animation: messageEmojiPop 1.8s ease-in-out infinite;
+}
+
 /* Reduce motion */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

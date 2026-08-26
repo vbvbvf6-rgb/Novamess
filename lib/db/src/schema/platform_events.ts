@@ -16,6 +16,10 @@ export const platformEventsTable = pgTable("platform_events", {
   cost: integer("cost").default(0),
   conditions: text("conditions"),
   participantCount: integer("participant_count").default(0),
+  prizeAmount: integer("prize_amount").default(0),
+  prizeDescription: text("prize_description"),
+  winnerId: integer("winner_id"),
+  prizeAwardedAt: timestamp("prize_awarded_at"),
 });
 
 export const eventParticipantsTable = pgTable("event_participants", {

@@ -22,6 +22,10 @@ db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_developer BOOLEAN N
 db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_youtube_creator BOOLEAN NOT NULL DEFAULT FALSE`).catch(() => {});
 db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_tiktok_creator BOOLEAN NOT NULL DEFAULT FALSE`).catch(() => {});
 db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS nickname_style TEXT`).catch(() => {});
+db.execute(sql`ALTER TABLE platform_events ADD COLUMN IF NOT EXISTS prize_amount INTEGER NOT NULL DEFAULT 0`).catch(() => {});
+db.execute(sql`ALTER TABLE platform_events ADD COLUMN IF NOT EXISTS prize_description TEXT`).catch(() => {});
+db.execute(sql`ALTER TABLE platform_events ADD COLUMN IF NOT EXISTS winner_id INTEGER`).catch(() => {});
+db.execute(sql`ALTER TABLE platform_events ADD COLUMN IF NOT EXISTS prize_awarded_at TIMESTAMP WITH TIME ZONE`).catch(() => {});
 db.execute(sql`CREATE TABLE IF NOT EXISTS nickname_styles (
   id SERIAL PRIMARY KEY,
   slug TEXT NOT NULL UNIQUE,
@@ -1507,7 +1511,9 @@ router.get("/maintenance", async (_req, res) => {
       data.active = false;
       await db.execute(sql`UPDATE app_settings SET value = ${JSON.stringify(data)}, updated_at = NOW() WHERE key = 'maintenance'`).catch(() => {});
     }
-    return res.json(data);
+    const featureRows = await db.execute(sql`SELECT value FROM app_settings WHERE key = 'feature_maintenance' LIMIT 1`);
+    const features = featureRows.rows[0] ? JSON.parse((featureRows.rows[0] as any).value) : {};
+    return res.json({ ...data, features });
   } catch { return res.json({ active: false }); }
 });
 

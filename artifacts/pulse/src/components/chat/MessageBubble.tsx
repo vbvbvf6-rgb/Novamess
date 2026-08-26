@@ -9,6 +9,7 @@ import { getGetMessagesQueryKey, getGetChatsQueryKey } from "@workspace/api-clie
 import { cn } from "@/lib/utils";
 import { Check, CheckCheck, Clock, X, Info, Play, Pause, Mic, Phone, Reply, Pencil, Trash2, Copy, SmilePlus, Languages, Pin, PinOff, BarChart2, Eye, Crown, Wand2, MessageSquare, Shield, Sparkles, Forward, Search, Download } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { BOT_AVATAR_URL } from "@/lib/botAvatar";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -708,6 +709,14 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
           : rawText;
 
         function renderMarkdown(text: string): React.ReactNode[] {
+          const renderEmojiText = (value: string) => {
+            const parts = value.split(/(\p{Extended_Pictographic}(?:\uFE0F|\uFE0E|\p{Emoji_Modifier}|\u200D\p{Extended_Pictographic})*)/gu);
+            return parts.map((part, index) =>
+              /^\p{Extended_Pictographic}/u.test(part)
+                ? <span key={index} className="message-emoji" role="img">{part}</span>
+                : part
+            );
+          };
           const segments: { text: string; bold?: boolean; italic?: boolean; code?: boolean; strike?: boolean; url?: string }[] = [];
           // NOTE: no lookbehind assertions — iOS Safari < 16.4 throws on (?<!...)
           const combined = /(\*\*[^*]+\*\*|\*(?!\*)[^*]+\*(?!\*)|`[^`]+`|~~[^~]+~~|https?:\/\/[^\s<>"']+)/g;
@@ -749,11 +758,11 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
               }
               return <a key={i} href={seg.url} target="_blank" rel="noopener noreferrer" className={cn("underline underline-offset-2", isMine ? "text-white/90" : "text-primary")} onClick={e => e.stopPropagation()}>{seg.text}</a>;
             }
-            if (seg.bold && seg.italic) return <strong key={i}><em>{seg.text}</em></strong>;
-            if (seg.bold)   return <strong key={i}>{seg.text}</strong>;
-            if (seg.italic) return <em key={i}>{seg.text}</em>;
-            if (seg.strike) return <del key={i} className="opacity-60">{seg.text}</del>;
-            return <React.Fragment key={i}>{seg.text}</React.Fragment>;
+            if (seg.bold && seg.italic) return <strong key={i}><em>{renderEmojiText(seg.text)}</em></strong>;
+            if (seg.bold)   return <strong key={i}>{renderEmojiText(seg.text)}</strong>;
+            if (seg.italic) return <em key={i}>{renderEmojiText(seg.text)}</em>;
+            if (seg.strike) return <del key={i} className="opacity-60">{renderEmojiText(seg.text)}</del>;
+            return <React.Fragment key={i}>{renderEmojiText(seg.text)}</React.Fragment>;
           });
         }
 
@@ -1164,8 +1173,8 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
               style={{ backgroundColor: message.sender?.avatarColor || "#555" }}
             >
               <span className="absolute inset-0 flex items-center justify-center">{(message.sender?.displayName || "U")[0].toUpperCase()}</span>
-              {message.sender?.avatarUrl && (
-                <img src={message.sender.avatarUrl} alt="" className="absolute inset-0 w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+              {(message.sender?.avatarUrl || (message.sender as any)?.isBot || (message.sender as any)?.is_bot) && (
+                <img src={message.sender?.avatarUrl || ((message.sender as any)?.isBot || (message.sender as any)?.is_bot ? BOT_AVATAR_URL : undefined)} alt="" className="absolute inset-0 w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
               )}
             </div>
           )}

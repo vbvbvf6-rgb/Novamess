@@ -402,6 +402,11 @@ router.post("/chats/direct", async (req, res) => {
     const uid = req.currentUserId;
     const userId = Number(req.body.userId);
     if (!userId) return res.status(400).json({ error: "userId required" });
+    const targetRows = await db.execute(sql`SELECT is_bot, username FROM users WHERE id = ${userId} LIMIT 1`);
+    const target = targetRows.rows[0] as any;
+    if (target?.is_bot && String(target.username).toLowerCase() === "nova_ai") {
+      return res.status(403).json({ error: "Nova AI принимает сообщения только через системные функции" });
+    }
 
     const myMemberships = await db
       .select({ chatId: chatMembersTable.chatId })
