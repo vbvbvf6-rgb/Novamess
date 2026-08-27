@@ -1,1 +1,1 @@
-export const BOT_AVATAR_URL = "/code-bot-avatar.png";
+export const BOT_AVATAR_URL = "/nova-bot-avatar.png";

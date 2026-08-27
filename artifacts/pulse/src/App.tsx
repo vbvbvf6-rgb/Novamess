@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Switch, Route, Router as WouterRouter, useLocation, useParams } from "wouter";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
-import { queryClient, localStoragePersister } from "@/lib/queryClient";
+import { queryClient, localStoragePersister, clearPersistedQueryCache } from "@/lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppProvider } from "@/contexts/AppContext";
@@ -825,7 +825,7 @@ function App() {
   const [showLoginSplash, setShowLoginSplash] = useState(false);
 
   const persistAndSwitch = (id: number) => {
-    queryClient.clear();
+    void clearPersistedQueryCache();
     setUserId(id);
   };
 
@@ -877,7 +877,7 @@ function App() {
         sessionStorage.removeItem("pulse-user");
         sessionStorage.removeItem("pulse-token");
         sessionStorage.removeItem("pulse-tab-owned");
-        queryClient.clear();
+        void clearPersistedQueryCache();
         setUserId(null);
       }
     }
@@ -899,7 +899,7 @@ function App() {
     sessionStorage.removeItem("pulse-tab-owned");
     // Remove from localStorage so the user isn't auto-restored on next page load
     if (currentId !== null) removeAccount(currentId);
-    queryClient.clear();
+    void clearPersistedQueryCache();
 
     // If another saved account exists, switch to it instead of going to login
     const remaining = getSavedAccounts().filter(a => a.userId !== currentId);

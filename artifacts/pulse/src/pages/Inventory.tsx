@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Check, Palette, RefreshCw, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface NicknameStyle {
   id: number;
@@ -20,6 +21,7 @@ function authHeaders(): Record<string, string> {
 
 export default function Inventory() {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [items, setItems] = useState<NicknameStyle[]>([]);
   const [loading, setLoading] = useState(true);
   const [equipping, setEquipping] = useState<number | null>(null);
@@ -49,6 +51,10 @@ export default function Inventory() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error);
       setItems(current => current.map(entry => ({ ...entry, equipped: entry.id === item.id })));
+      await queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/chats"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/contacts"] });
+      window.dispatchEvent(new CustomEvent("pulse:nickname-style-changed", { detail: { style: item.slug } }));
       toast({ title: `Стиль «${item.name}» активирован` });
     } catch (error) {
       toast({ title: error instanceof Error ? error.message : "Не удалось активировать стиль", variant: "destructive" });

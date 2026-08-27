@@ -87,6 +87,37 @@ function signPending2faToken(userId: number): string {
 
 const NOVA_SECURITY_ICON = `data:image/svg+xml;utf8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#22d3ee"/><stop offset="1" stop-color="#7c3aed"/></linearGradient></defs><rect width="128" height="128" rx="32" fill="url(#g)"/><path d="M64 22c4 20 12 28 32 32-20 4-28 12-32 32-4-20-12-28-32-32 20-4 28-12 32-32Z" fill="white"/></svg>`)}`;
 
+async function notifyNovaVerification(userId: number, code: string, email: string): Promise<void> {
+  try {
+    const bot = await db.execute(sql`SELECT id FROM users WHERE username = 'nova_ai' AND is_bot = true LIMIT 1`);
+    const botId = Number((bot.rows[0] as any)?.id || 0);
+    if (!botId) return;
+    const existing = await db.execute(sql`
+      SELECT c.id FROM chats c
+      JOIN chat_members a ON a.chat_id = c.id AND a.user_id = ${userId}
+      JOIN chat_members b ON b.chat_id = c.id AND b.user_id = ${botId}
+      WHERE c.type = 'direct' LIMIT 1
+    `);
+    let chatId = Number((existing.rows[0] as any)?.id || 0);
+    if (!chatId) {
+      const createdChat = await db.execute(sql`INSERT INTO chats (type, created_at, updated_at) VALUES ('direct', NOW(), NOW()) RETURNING id`);
+      chatId = Number((createdChat.rows[0] as any).id);
+      await db.execute(sql`
+        INSERT INTO chat_members (chat_id, user_id, role) VALUES
+        (${chatId}, ${userId}, 'member'), (${chatId}, ${botId}, 'member')
+      `);
+    }
+    await db.execute(sql`
+      INSERT INTO messages (chat_id, sender_id, type, text, created_at, updated_at)
+      VALUES (${chatId}, ${botId}, 'text', ${`🔐 Код подтверждения Nova\n\nВаш код: ${code}\nEmail: ${email}\nКод действует 30 минут.`}, NOW(), NOW())
+    `);
+    await db.execute(sql`UPDATE chats SET updated_at = NOW() WHERE id = ${chatId}`);
+    broadcastToUser(userId, "new-message", { chatId, senderId: botId });
+  } catch (err) {
+    console.warn("[auth] Could not deliver verification code to Nova", err);
+  }
+}
+
 // Every account gets a private system chat with Nova Security. This keeps
 // security alerts inside the messenger instead of sending sensitive details
 // through a third-party service.
@@ -526,6 +557,7 @@ router.post("/auth/resend-verification", async (req, res) => {
 
     resendCooldowns.set(uid, Date.now());
     const sent = await sendVerificationEmail(String(user.email), code);
+    await notifyNovaVerification(Number(userId), code, String(user.email));
     if (!sent) {
       return res.status(502).json({ error: "Не удалось отправить письмо. Попробуйте позже." });
     }
@@ -639,6 +671,7 @@ router.post("/auth/register", async (req, res) => {
     if (rawEmail && verificationCode) {
       try {
         emailSent = await sendVerificationEmail(rawEmail, verificationCode);
+        await notifyNovaVerification(newUser.id, verificationCode, rawEmail);
         if (!emailSent) {
           console.error(`[mailer] Email NOT delivered to ${rawEmail} — returned false. Check MAIL_FROM + Elastic Email verified senders.`);
         }

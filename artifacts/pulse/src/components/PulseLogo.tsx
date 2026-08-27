@@ -1,4 +1,17 @@
+import { useEffect, useState } from "react";
+
 export default function PulseLogo({ size = 40 }: { size?: number }) {
+  const [customIcon, setCustomIcon] = useState<string | null>(() => {
+    try { return localStorage.getItem("nova-app-icon"); } catch { return null; }
+  });
+  useEffect(() => {
+    const update = () => setCustomIcon(localStorage.getItem("nova-app-icon"));
+    window.addEventListener("pulse:app-icon", update);
+    return () => window.removeEventListener("pulse:app-icon", update);
+  }, []);
+  if (customIcon) {
+    return <img src={customIcon} alt="Nova" width={size} height={size} className="rounded-[24%] object-cover" onError={() => { localStorage.removeItem("nova-app-icon"); setCustomIcon(null); }} />;
+  }
   const id = `nl_${Math.round(size)}_${Math.random().toString(36).slice(2, 6)}`;
   return (
     <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">

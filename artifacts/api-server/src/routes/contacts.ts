@@ -73,6 +73,7 @@ router.post("/contacts", async (req, res) => {
     } catch {}
     const user = await db.query.usersTable.findFirst({ where: eq(usersTable.id, body.userId) });
     if (!user) return res.status(404).json({ error: "User not found" });
+    if (user.isBot) return res.status(403).json({ error: "Ботов нельзя добавлять в друзья" });
     res.status(201).json(user);
   } catch (err) {
     req.log.error(err);

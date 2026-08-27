@@ -175,7 +175,7 @@ const SYSTEM_USERS: Array<{
   isVerified?: boolean;
   isAdmin?: boolean;
   status: string;
-  passwordHash: string;
+  passwordHash: string | null;
 }> = [
   {
     username: "creater_messenger",
@@ -188,7 +188,16 @@ const SYSTEM_USERS: Array<{
     // bcrypt hash of "pulse2024" — never change this automatically
     passwordHash: "$2b$12$ejJ4JyOdHbph7ETga8QpdeJTzN28FDCNZ3tw.1B1d/936/2ZDZ/fa",
   },
-  // nova_ai bot user intentionally removed — AI feature is disabled
+  {
+    username: "nova_ai",
+    displayName: "Nova",
+    avatarColor: "#7c3aed",
+    avatarUrl: "/nova-bot-avatar.png",
+    isBot: true,
+    isVerified: true,
+    status: "online",
+    passwordHash: null,
+  },
 ];
 
 export async function runSeed() {

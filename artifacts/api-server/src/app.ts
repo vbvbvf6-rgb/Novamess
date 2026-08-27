@@ -9,6 +9,8 @@ import jwt from "jsonwebtoken";
 import router from "./routes";
 import botApiRouter from "./routes/botapi";
 import { logger } from "./lib/logger";
+import { db } from "@workspace/db";
+import { sql } from "drizzle-orm";
 
 declare global {
   namespace Express {
@@ -322,6 +324,26 @@ app.use(async (req: Request, _res: Response, next: NextFunction) => {
   }
 
   req.currentUserId = 0;
+  next();
+});
+
+// IP bans are checked before the authentication/public-route gates, so a
+// banned address cannot bypass the restriction by logging out or using SSE.
+app.use(async (req: Request, res: Response, next: NextFunction) => {
+  const ip = req.ip;
+  if (!ip) return next();
+  try {
+    const rows = await db.execute(sql`
+      SELECT reason, expires_at FROM ip_bans
+      WHERE ip_address = ${ip} AND (expires_at IS NULL OR expires_at > NOW())
+      LIMIT 1
+    `);
+    const ban = rows.rows[0] as any;
+    if (ban) return res.status(403).json({ error: "Ваш IP-адрес заблокирован", reason: ban.reason || null, ipBanned: true });
+  } catch {
+    // The table is created asynchronously during bootstrap; do not lock out
+    // traffic while an imported database is still being initialized.
+  }
   next();
 });
 

@@ -32,3 +32,9 @@ export const QUERY_KEYS = {
   posts:    ["/api/posts"],
   stories:  ["/api/stories"],
 } as const;
+
+export async function clearPersistedQueryCache(): Promise<void> {
+  queryClient.clear();
+  try { await localStoragePersister?.removeClient?.(); } catch {}
+  try { localStorage.removeItem("nova-query-cache"); } catch {}
+}

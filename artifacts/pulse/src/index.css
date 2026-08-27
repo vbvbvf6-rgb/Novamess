@@ -26,6 +26,23 @@
   50% { background-position: 100% 50%; }
 }
 
+@keyframes emojiPop {
+  0% { transform: scale(.65) rotate(-8deg); opacity: .35; }
+  55% { transform: scale(1.18) rotate(4deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+.message-emoji-only {
+  font-size: 3.25rem;
+  line-height: 1.15;
+  letter-spacing: .08em;
+  animation: emojiPop .42s cubic-bezier(.2,.8,.2,1) both;
+  transform-origin: left center;
+}
+.reaction-emoji { display: inline-block; animation: emojiPop .3s ease-out both; }
+@media (prefers-reduced-motion: reduce) {
+  .message-emoji-only, .reaction-emoji { animation: none; }
+}
+
 @theme inline {
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));

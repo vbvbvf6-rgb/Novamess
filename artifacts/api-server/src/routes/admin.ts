@@ -95,6 +95,14 @@ db.execute(sql`CREATE TABLE IF NOT EXISTS app_settings (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 )`).catch(() => {});
 
+db.execute(sql`CREATE TABLE IF NOT EXISTS ip_bans (
+  id SERIAL PRIMARY KEY,
+  ip_address TEXT NOT NULL UNIQUE,
+  reason TEXT,
+  expires_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+)`).catch(() => {});
+
 db.execute(sql`CREATE TABLE IF NOT EXISTS app_updates (
   id SERIAL PRIMARY KEY,
   version TEXT NOT NULL,
@@ -667,6 +675,38 @@ router.post("/admin/users/:userId/ban", requireAdmin, async (req, res) => {
     req.log.error(err);
     res.status(500).json({ error: "Ошибка сервера" });
   }
+});
+
+router.get("/admin/ip-bans", requireAdmin, async (_req, res) => {
+  try {
+    const rows = await db.execute(sql`SELECT id, ip_address, reason, expires_at, created_at FROM ip_bans ORDER BY created_at DESC`);
+    res.json(rows.rows);
+  } catch (err) { res.status(500).json({ error: "Не удалось загрузить IP-баны" }); }
+});
+
+router.post("/admin/ip-bans", requireAdmin, async (req, res) => {
+  try {
+    const ip = String(req.body?.ip || "").trim();
+    const reason = String(req.body?.reason || "").trim().slice(0, 300) || null;
+    const durationHours = req.body?.durationHours ? Number(req.body.durationHours) : null;
+    const net = await import("node:net");
+    if (!net.isIP(ip)) return res.status(400).json({ error: "Укажите корректный IPv4 или IPv6 адрес" });
+    const expiresAt = durationHours && durationHours > 0 ? new Date(Date.now() + durationHours * 3600_000).toISOString() : null;
+    const rows = await db.execute(sql`
+      INSERT INTO ip_bans (ip_address, reason, expires_at)
+      VALUES (${ip}, ${reason}, ${expiresAt})
+      ON CONFLICT (ip_address) DO UPDATE SET reason = EXCLUDED.reason, expires_at = EXCLUDED.expires_at
+      RETURNING id, ip_address, reason, expires_at, created_at
+    `);
+    res.status(201).json(rows.rows[0]);
+  } catch (err) { res.status(500).json({ error: "Не удалось установить IP-бан" }); }
+});
+
+router.delete("/admin/ip-bans/:id", requireAdmin, async (req, res) => {
+  try {
+    await db.execute(sql`DELETE FROM ip_bans WHERE id = ${Number(req.params.id)}`);
+    res.json({ ok: true });
+  } catch { res.status(500).json({ error: "Не удалось снять IP-бан" }); }
 });
 
 // ── Database usage / storage monitoring ────────────────────────────────────

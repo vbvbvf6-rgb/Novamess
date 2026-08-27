@@ -29,6 +29,7 @@ interface AdminUser {
   is_banned: boolean;
   ban_reason: string | null;
   ban_expires_at: string | null;
+  last_ip?: string | null;
 }
 
 interface Stats {
@@ -170,6 +171,11 @@ export default function Admin() {
   const [banConfirm, setBanConfirm] = useState<AdminUser | null>(null);
   const [banReasonInput, setBanReasonInput] = useState("");
   const [banDuration, setBanDuration] = useState<string>("permanent");
+  const [ipBan, setIpBan] = useState<{ ip: string; expiresAt: string | null; reason: string } | null>(null);
+  const [ipBanInput, setIpBanInput] = useState("");
+  const [ipBanReason, setIpBanReason] = useState("");
+  const [ipBanDuration, setIpBanDuration] = useState("permanent");
+  const [ipBanLoading, setIpBanLoading] = useState(false);
 
   // Moderation Appeals
   interface ModerationAppeal {

@@ -78,6 +78,13 @@ async function settleExpiredGiveaways() {
   }
 }
 
+// Settlement must not depend on an admin opening the events page. The lock in
+// the transaction keeps this safe when multiple API workers run this timer.
+const giveawaySettlementTimer = setInterval(() => {
+  settleExpiredGiveaways().catch(() => {});
+}, 30_000);
+giveawaySettlementTimer.unref?.();
+
 async function rescheduleWinnerNotification(settled: { eventId: number; title: string; winnerId: number; winnerName: string; amount: number; description: string | null }) {
   // Keep the award itself transactional; notification delivery is best-effort.
   const { broadcastToUser } = await import("../lib/sse");

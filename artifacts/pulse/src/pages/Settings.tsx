@@ -1403,6 +1403,7 @@ export default function Settings() {
   const [fontSize, setFontSize] = useState(() => ls("pulse-font-size", "medium"));
   const [language, setLanguage] = useState(() => ls("pulse-language", "ru"));
   const [pageZoom, setPageZoom] = useState(() => ls("pulse-page-zoom", "100"));
+  const [appIcon, setAppIcon] = useState(() => localStorage.getItem("nova-app-icon") || "");
 
   // Notifications
   const [notifyMessages, setNotifyMessages] = useState(() => lsb("pulse-notify-messages", true));
@@ -1430,6 +1431,31 @@ export default function Settings() {
       toast({ title: "Не удалось загрузить файл", variant: "destructive" });
     }
     e.target.value = "";
+  };
+
+  const handleAppIconFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !file.type.startsWith("image/")) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const value = String(reader.result || "");
+      if (value.length > 2_000_000) {
+        toast({ title: lang === "ru" ? "Файл слишком большой" : "File is too large", variant: "destructive" });
+        return;
+      }
+      localStorage.setItem("nova-app-icon", value);
+      setAppIcon(value);
+      window.dispatchEvent(new Event("pulse:app-icon"));
+      toast({ title: lang === "ru" ? "Иконка Nova изменена" : "Nova icon changed" });
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
+
+  const resetAppIcon = () => {
+    localStorage.removeItem("nova-app-icon");
+    setAppIcon("");
+    window.dispatchEvent(new Event("pulse:app-icon"));
   };
 
   // Privacy
@@ -1886,14 +1912,14 @@ export default function Settings() {
     // Clear persisted query data as well as the older pulse/nova caches, but
     // keep the active session, saved accounts, and appearance preferences.
     const preserved = new Map<string, string>();
-    for (const key of ["pulse-user-id", "pulse-token", "pulse-user", "pulse-accounts", "pulse-theme", "pulse-is-dark"]) {
+    for (const key of ["pulse-user-id", "pulse-token", "pulse-user", "pulse-accounts", "pulse-theme", "pulse-is-dark", "nova-app-icon"]) {
       const value = sessionStorage.getItem(key) ?? localStorage.getItem(key);
       if (value !== null) preserved.set(key, value);
     }
     queryClient.clear();
     try { await localStoragePersister?.removeClient?.(); } catch {}
     for (const key of Object.keys(localStorage)) {
-      if (key !== "pulse-accounts" && key !== "pulse-theme" && key !== "pulse-is-dark") localStorage.removeItem(key);
+      if (key !== "pulse-accounts" && key !== "pulse-theme" && key !== "pulse-is-dark" && key !== "nova-app-icon") localStorage.removeItem(key);
     }
     localStorage.removeItem("nova-query-cache");
     for (const [key, value] of preserved) {
@@ -2287,6 +2313,25 @@ export default function Settings() {
                         {appTheme === theme.id && <CheckCircle size={12} className="absolute top-1 right-1 text-primary" />}
                       </button>
                     ))}
+                  </div>
+                </div>
+              </Section>
+
+              <Section title={lang === "ru" ? "Иконка Nova" : "Nova icon"} icon={<Smartphone size={13}/>}>
+                <div className="p-4 flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-2xl overflow-hidden bg-secondary border border-border shrink-0">
+                    {appIcon ? <img src={appIcon} alt="Nova" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-2xl">✦</div>}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium">{lang === "ru" ? "Своя иконка на главном экране" : "Custom home-screen icon"}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{lang === "ru" ? "Загрузите PNG или JPG. Иконка сохраняется только на этом устройстве." : "Upload a PNG or JPG. It stays on this device only."}</p>
+                    <div className="flex gap-2 mt-3">
+                      <label className="cursor-pointer px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-bold">
+                        {lang === "ru" ? "Выбрать файл" : "Choose file"}
+                        <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={handleAppIconFile} />
+                      </label>
+                      {appIcon && <button onClick={resetAppIcon} className="px-3 py-1.5 rounded-lg border border-border text-xs text-muted-foreground hover:bg-secondary">{lang === "ru" ? "Сбросить" : "Reset"}</button>}
+                    </div>
                   </div>
                 </div>
               </Section>

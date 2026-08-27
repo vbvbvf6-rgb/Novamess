@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 const QUICK_REACTIONS = ["❤️", "👍", "🔥", "😂", "😮", "😢"];
+const isStandaloneEmoji = (text: string) => /^[\s\p{Extended_Pictographic}\p{Regional_Indicator}\uFE0F\u200D\u20E3]+$/u.test(text) && text.trim().length > 0;
 
 function EffectOverlay({ effect, onDone }: { effect: string; onDone: () => void }) {
   const particles = useMemo(() => {
@@ -702,6 +703,7 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
         const FORWARD_PREFIX = "⤵️ ";
         const isForwardedMsg = (message.text ?? "").startsWith(FORWARD_PREFIX);
         const rawText = isForwardedMsg ? (message.text ?? "").slice(FORWARD_PREFIX.length) : (message.text ?? "");
+        const emojiOnly = !isForwardedMsg && isStandaloneEmoji(rawText);
         const words = rawText.split(" ");
         const isAnimating = typingOut && displayedWords < words.length;
         const visibleText = typingOut && displayedWords !== Infinity
@@ -773,7 +775,7 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
                 Переслано
               </p>
             )}
-            <p className="text-[15px] whitespace-pre-wrap break-words [overflow-wrap:anywhere] leading-snug font-medium">
+            <p className={cn("text-[15px] whitespace-pre-wrap break-words [overflow-wrap:anywhere] leading-snug font-medium", emojiOnly && "message-emoji-only")}>
               {searchHighlight
                 ? <HighlightText text={visibleText} query={searchHighlight} isMine={isMine} />
                 : renderMarkdown(visibleText)}
@@ -1362,7 +1364,7 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
                         : "bg-card border-border text-foreground hover:border-primary/50"
                     )}
                   >
-                    <span>{emoji}</span>
+                    <span className="reaction-emoji">{emoji}</span>
                     <span>{data.count}</span>
                     {data.myCount >= 2 && (
                       <span className="text-[9px] font-black px-1 py-0.5 rounded bg-white/25 leading-none">×2</span>

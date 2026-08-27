@@ -53,8 +53,11 @@ router.post("/contact-requests", async (req, res) => {
     if (!toUserId || toUserId === uid) return res.status(400).json({ error: "Invalid user" });
 
     // Check target exists and get their admin status
-    const target = await db.execute(sql`SELECT id, is_admin FROM users WHERE id = ${toUserId}`);
+    const target = await db.execute(sql`SELECT id, is_admin, is_bot FROM users WHERE id = ${toUserId}`);
     if (!target.rows.length) return res.status(404).json({ error: "User not found" });
+    if ((target.rows[0] as any).is_bot === true || (target.rows[0] as any).is_bot === "t") {
+      return res.status(403).json({ error: "Ботов нельзя добавлять в друзья" });
+    }
 
     // Check not already contacts
     const alreadyContact = await db.execute(sql`
