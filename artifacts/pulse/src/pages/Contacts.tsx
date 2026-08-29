@@ -284,7 +284,7 @@ export default function Contacts() {
               </div>
             ) : (
               <div className="space-y-3">
-                displayUsers?.map((user: User) => {
+                {displayUsers?.map((user: User) => {
                   const isContact = contacts?.some((c: { id: number }) => c.id === user.id) ?? false;
                   return (
                     <div key={user.id} className="flex items-center gap-4 p-4 rounded-2xl border border-border/60 bg-card/40 hover:bg-card hover:border-border hover:shadow-sm transition-all group">

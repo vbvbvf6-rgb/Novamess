@@ -24,6 +24,7 @@ function DocIcon({ mime, name }: { mime: string; name: string }) {
 }
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
+import { encryptForUser } from "@/lib/e2e";
 import { prepareVideoForUpload } from "@/lib/mediaCompression";
 
 // No external object storage is configured — attachments are stored inline
@@ -90,12 +91,13 @@ export interface ChatInputProps {
   onCancelReply?: () => void;
   onCancelEdit?: () => void;
   isBot?: boolean;
+  recipientUserId?: number | null;
   p2p?: P2PChannel;
   isChannel?: boolean;
   isChannelAdmin?: boolean;
 }
 
-export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCancelReply, onCancelEdit, isBot, p2p, isChannel, isChannelAdmin }: ChatInputProps) {
+export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCancelReply, onCancelEdit, isBot, recipientUserId, p2p, isChannel, isChannelAdmin }: ChatInputProps) {
   const { data: me } = useGetMe();
   const { toast } = useToast();
 
@@ -467,6 +469,9 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
       } else {
         const textToSend = text.trim();
         const capturedReplyTo = replyTo;
+        const transportText = recipientUserId && !isBot
+          ? await encryptForUser(textToSend, recipientUserId)
+          : textToSend;
 
         // Clear input immediately for instant feel
         setText("");
@@ -500,7 +505,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
             return old ? [...old, optimistic] : [optimistic];
           });
           try {
-            const sent = await sendMessage.mutateAsync({ data: { chatId, text: textToSend, type: "text", replyToId: capturedReplyTo?.id } });
+            const sent = await sendMessage.mutateAsync({ data: { chatId, text: transportText, type: "text", replyToId: capturedReplyTo?.id } });
             if (sent) {
               // Swap optimistic message with the real one from server
               queryClient.setQueryData(getGetMessagesQueryKey({ chatId }), (old: any) =>

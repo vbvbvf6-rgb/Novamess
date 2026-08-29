@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { Check, CheckCheck, Clock, X, Info, Play, Pause, Mic, Phone, Reply, Pencil, Trash2, Copy, SmilePlus, Languages, Pin, PinOff, BarChart2, Eye, Crown, Wand2, MessageSquare, Shield, Sparkles, Forward, Search, Download } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { BOT_AVATAR_URL } from "@/lib/botAvatar";
+import { decryptMessage, isEncryptedMessage } from "@/lib/e2e";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -428,6 +429,19 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
   const [swipeDx, setSwipeDx] = useState(0);
   const lastTapRef = useRef<number>(0);
   const [heartFlash, setHeartFlash] = useState(false);
+  const [decryptedText, setDecryptedText] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isEncryptedMessage(message.text)) {
+      setDecryptedText(null);
+      return;
+    }
+    let active = true;
+    decryptMessage(message.text!).then((value) => {
+      if (active) setDecryptedText(value);
+    });
+    return () => { active = false; };
+  }, [message.text]);
   const [showForwardModal, setShowForwardModal] = useState(false);
   const [forwardSearch, setForwardSearch] = useState("");
   const [forwarding, setForwarding] = useState(false);
@@ -702,7 +716,8 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
       case "text": {
         const FORWARD_PREFIX = "⤵️ ";
         const isForwardedMsg = (message.text ?? "").startsWith(FORWARD_PREFIX);
-        const rawText = isForwardedMsg ? (message.text ?? "").slice(FORWARD_PREFIX.length) : (message.text ?? "");
+        const messageText = isEncryptedMessage(message.text) ? (decryptedText ?? "🔒 Расшифровываем…") : (message.text ?? "");
+        const rawText = isForwardedMsg ? messageText.slice(FORWARD_PREFIX.length) : messageText;
         const emojiOnly = !isForwardedMsg && isStandaloneEmoji(rawText);
         const words = rawText.split(" ");
         const isAnimating = typingOut && displayedWords < words.length;
@@ -715,7 +730,7 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
             const parts = value.split(/(\p{Extended_Pictographic}(?:\uFE0F|\uFE0E|\p{Emoji_Modifier}|\u200D\p{Extended_Pictographic})*)/gu);
             return parts.map((part, index) =>
               /^\p{Extended_Pictographic}/u.test(part)
-                ? <span key={index} className="message-emoji" role="img">{part}</span>
+                ? <span key={index} className="message-emoji" role="img" aria-label={part}>{part}</span>
                 : part
             );
           };

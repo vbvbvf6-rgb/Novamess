@@ -1862,6 +1862,7 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
         onCancelReply={() => setReplyTo(null)}
         onCancelEdit={() => setEditMessage(null)}
         isBot={!!isBot}
+        recipientUserId={p2pOtherUserId}
         p2p={p2p}
         isChannel={isChannel}
         isChannelAdmin={isChannelAdmin}

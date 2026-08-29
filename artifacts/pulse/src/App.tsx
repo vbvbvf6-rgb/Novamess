@@ -26,6 +26,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { WhatsNewModal } from "@/components/WhatsNewModal";
 import { OnboardingModal } from "@/components/OnboardingModal";
 import { LoginSplash } from "@/components/LoginSplash";
+import { isEncryptedMessage } from "@/lib/e2e";
 
 import Home from "@/pages/Home";
 import Calls from "@/pages/Calls";
@@ -216,7 +217,7 @@ function InAppMessageBanner() {
           id: `${data.chatId}-${data.messageId || Date.now()}`,
           chatId: data.chatId,
           senderName: data.senderName,
-          body: showPreview ? data.body : "Новое сообщение",
+          body: showPreview && !isEncryptedMessage(data.body) ? data.body : "🔒 Зашифрованное сообщение",
           senderAvatar: data.senderAvatar,
           chatType: data.chatType,
           chatName: data.chatName,

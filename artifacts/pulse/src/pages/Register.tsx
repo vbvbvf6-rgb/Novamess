@@ -69,12 +69,45 @@ export default function Register({ onLogin }: RegisterProps) {
   const [verifyLoading, setVerifyLoading] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
   const [resendMessage, setResendMessage] = useState("");
+  const [usernameAvailability, setUsernameAvailability] = useState<"idle" | "checking" | "available" | "taken" | "invalid">("idle");
+  const availabilityRequestRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     if (resendCooldown <= 0) return;
     const t = setTimeout(() => setResendCooldown(c => c - 1), 1000);
     return () => clearTimeout(t);
   }, [resendCooldown]);
+
+  useEffect(() => {
+    const normalized = username.trim().toLowerCase();
+    availabilityRequestRef.current?.abort();
+    if (!normalized) {
+      setUsernameAvailability("idle");
+      return;
+    }
+    if (!/^[a-z0-9_]{3,32}$/.test(normalized)) {
+      setUsernameAvailability("invalid");
+      return;
+    }
+    setUsernameAvailability("checking");
+    const controller = new AbortController();
+    availabilityRequestRef.current = controller;
+    const timer = window.setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/auth/username-availability?username=${encodeURIComponent(normalized)}`, { signal: controller.signal });
+        const data = await res.json();
+        if (!controller.signal.aborted) {
+          setUsernameAvailability(data.valid && data.available ? "available" : "taken");
+        }
+      } catch {
+        if (!controller.signal.aborted) setUsernameAvailability("idle");
+      }
+    }, 350);
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [username]);
 
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
@@ -560,6 +593,18 @@ export default function Register({ onLogin }: RegisterProps) {
                 autoFocus={typeof window !== "undefined" && window.matchMedia("(hover: hover)").matches}
                 className="w-full bg-card/50 border border-border rounded-2xl px-5 py-3 sm:py-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-[15px] font-medium"
               />
+              {usernameAvailability !== "idle" && (
+                <p className={`px-1 text-xs font-semibold ${
+                  usernameAvailability === "available" ? "text-emerald-500" :
+                  usernameAvailability === "taken" ? "text-destructive" :
+                  usernameAvailability === "checking" ? "text-muted-foreground" : "text-amber-500"
+                }`}>
+                  {usernameAvailability === "available" ? "✓ Ник свободен" :
+                   usernameAvailability === "taken" ? "Этот ник уже занят" :
+                   usernameAvailability === "checking" ? "Проверяем доступность…" :
+                   "Используйте 3–32 символа: латиница, цифры и _"}
+                </p>
+              )}
             </div>
               </>
             )}

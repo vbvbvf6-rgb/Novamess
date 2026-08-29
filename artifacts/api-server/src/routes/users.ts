@@ -12,6 +12,7 @@ db.execute(sql`CREATE TABLE IF NOT EXISTS prize_codes (
   prize_description TEXT, max_uses INTEGER NOT NULL DEFAULT 1 CHECK (max_uses > 0), uses INTEGER NOT NULL DEFAULT 0,
   expires_at TIMESTAMP WITH TIME ZONE, created_by INTEGER REFERENCES users(id) ON DELETE SET NULL, created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 )`).catch(() => {});
+db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS encryption_public_key TEXT`).catch(() => {});
 db.execute(sql`CREATE TABLE IF NOT EXISTS prize_code_redemptions (
   id SERIAL PRIMARY KEY, code_id INTEGER NOT NULL REFERENCES prize_codes(id) ON DELETE CASCADE,
   user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE, redeemed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -39,6 +40,24 @@ router.get("/users/me", async (req, res) => {
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.put("/users/me/encryption-key", async (req, res) => {
+  try {
+    const publicKey = req.body?.publicKey;
+    if (!publicKey || typeof publicKey !== "object") {
+      return res.status(400).json({ error: "Некорректный публичный ключ" });
+    }
+    const serialized = JSON.stringify(publicKey);
+    if (serialized.length > 4096 || publicKey.kty !== "EC" || publicKey.crv !== "P-256") {
+      return res.status(400).json({ error: "Поддерживается только ключ ECDH P-256" });
+    }
+    await db.execute(sql`UPDATE users SET encryption_public_key = ${serialized} WHERE id = ${req.currentUserId}`);
+    res.json({ ok: true });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Не удалось сохранить ключ шифрования" });
   }
 });
 
@@ -265,6 +284,20 @@ router.get("/users/search", async (req, res) => {
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.get("/users/:userId/encryption-key", async (req, res) => {
+  try {
+    const userId = Number(req.params.userId);
+    if (!Number.isInteger(userId) || userId <= 0) return res.status(400).json({ error: "Некорректный userId" });
+    const rows = await db.execute(sql`SELECT encryption_public_key FROM users WHERE id = ${userId} LIMIT 1`);
+    if (!rows.rows.length) return res.status(404).json({ error: "Пользователь не найден" });
+    const raw = (rows.rows[0] as any).encryption_public_key;
+    res.json({ publicKey: raw ? JSON.parse(raw) : null });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Не удалось получить ключ шифрования" });
   }
 });
 

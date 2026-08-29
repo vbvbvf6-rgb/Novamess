@@ -35263,7 +35263,7 @@ var require_utils_webcrypto = __commonJS({
     var nodeCrypto2 = __require("crypto");
     module.exports = {
       postgresMd5PasswordHash,
-      randomBytes: randomBytes3,
+      randomBytes: randomBytes4,
       deriveKey,
       sha256: sha2562,
       hashByName,
@@ -35273,7 +35273,7 @@ var require_utils_webcrypto = __commonJS({
     var webCrypto = nodeCrypto2.webcrypto || globalThis.crypto;
     var subtleCrypto = webCrypto.subtle;
     var textEncoder = new TextEncoder();
-    function randomBytes3(length) {
+    function randomBytes4(length) {
       return webCrypto.getRandomValues(Buffer.alloc(length));
     }
     async function md5(string4) {
@@ -127705,7 +127705,7 @@ var require_websocket2 = __commonJS({
     var http2 = __require("http");
     var net = __require("net");
     var tls = __require("tls");
-    var { randomBytes: randomBytes3, createHash: createHash8 } = __require("crypto");
+    var { randomBytes: randomBytes4, createHash: createHash8 } = __require("crypto");
     var { Duplex, Readable: Readable8 } = __require("stream");
     var { URL: URL2 } = __require("url");
     var PerMessageDeflate = require_permessage_deflate();
@@ -128232,7 +128232,7 @@ var require_websocket2 = __commonJS({
         }
       }
       const defaultPort = isSecure ? 443 : 80;
-      const key = randomBytes3(16).toString("base64");
+      const key = randomBytes4(16).toString("base64");
       const request = isSecure ? https.request : http2.request;
       const protocolSet = /* @__PURE__ */ new Set();
       let perMessageDeflate;
@@ -143377,6 +143377,40 @@ function signPending2faToken(userId) {
   return import_jsonwebtoken.default.sign({ userId, pending2fa: true }, EFFECTIVE_JWT_SECRET, { expiresIn: PENDING_2FA_TTL });
 }
 var NOVA_SECURITY_ICON = `data:image/svg+xml;utf8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#22d3ee"/><stop offset="1" stop-color="#7c3aed"/></linearGradient></defs><rect width="128" height="128" rx="32" fill="url(#g)"/><path d="M64 22c4 20 12 28 32 32-20 4-28 12-32 32-4-20-12-28-32-32 20-4 28-12 32-32Z" fill="white"/></svg>`)}`;
+async function notifyNovaVerification(userId, code, email3) {
+  try {
+    const bot = await db.execute(sql`SELECT id FROM users WHERE username = 'nova_ai' AND is_bot = true LIMIT 1`);
+    const botId = Number(bot.rows[0]?.id || 0);
+    if (!botId) return;
+    const existing = await db.execute(sql`
+      SELECT c.id FROM chats c
+      JOIN chat_members a ON a.chat_id = c.id AND a.user_id = ${userId}
+      JOIN chat_members b ON b.chat_id = c.id AND b.user_id = ${botId}
+      WHERE c.type = 'direct' LIMIT 1
+    `);
+    let chatId = Number(existing.rows[0]?.id || 0);
+    if (!chatId) {
+      const createdChat = await db.execute(sql`INSERT INTO chats (type, created_at, updated_at) VALUES ('direct', NOW(), NOW()) RETURNING id`);
+      chatId = Number(createdChat.rows[0].id);
+      await db.execute(sql`
+        INSERT INTO chat_members (chat_id, user_id, role) VALUES
+        (${chatId}, ${userId}, 'member'), (${chatId}, ${botId}, 'member')
+      `);
+    }
+    await db.execute(sql`
+      INSERT INTO messages (chat_id, sender_id, type, text, created_at, updated_at)
+      VALUES (${chatId}, ${botId}, 'text', ${`\u{1F510} \u041A\u043E\u0434 \u043F\u043E\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043D\u0438\u044F Nova
+
+\u0412\u0430\u0448 \u043A\u043E\u0434: ${code}
+Email: ${email3}
+\u041A\u043E\u0434 \u0434\u0435\u0439\u0441\u0442\u0432\u0443\u0435\u0442 30 \u043C\u0438\u043D\u0443\u0442.`}, NOW(), NOW())
+    `);
+    await db.execute(sql`UPDATE chats SET updated_at = NOW() WHERE id = ${chatId}`);
+    broadcastToUser(userId, "new-message", { chatId, senderId: botId });
+  } catch (err2) {
+    console.warn("[auth] Could not deliver verification code to Nova", err2);
+  }
+}
 async function notifyNovaSecurity(userId, ip, device) {
   try {
     let bot = await db.execute(sql`SELECT id FROM users WHERE username = 'nova_security' LIMIT 1`);
@@ -143762,6 +143796,7 @@ router2.post("/auth/resend-verification", async (req, res) => {
     );
     resendCooldowns.set(uid, Date.now());
     const sent = await sendVerificationEmail(String(user.email), code);
+    await notifyNovaVerification(Number(userId), code, String(user.email));
     if (!sent) {
       return res.status(502).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u043E\u0442\u043F\u0440\u0430\u0432\u0438\u0442\u044C \u043F\u0438\u0441\u044C\u043C\u043E. \u041F\u043E\u043F\u0440\u043E\u0431\u0443\u0439\u0442\u0435 \u043F\u043E\u0437\u0436\u0435." });
     }
@@ -143769,6 +143804,18 @@ router2.post("/auth/resend-verification", async (req, res) => {
   } catch (err2) {
     req.log.error(err2);
     res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
+  }
+});
+router2.get("/auth/username-availability", async (req, res) => {
+  try {
+    const username = String(req.query.username || "").trim().toLowerCase();
+    if (!/^[a-z0-9_]{3,32}$/.test(username)) {
+      return res.json({ available: false, valid: false });
+    }
+    const rows = await db.execute(sql`SELECT 1 FROM users WHERE username = ${username} LIMIT 1`);
+    res.json({ available: rows.rows.length === 0, valid: true });
+  } catch {
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u043F\u0440\u043E\u0432\u0435\u0440\u0438\u0442\u044C \u043D\u0438\u043A\u043D\u0435\u0439\u043C" });
   }
 });
 router2.post("/auth/register", async (req, res) => {
@@ -143857,6 +143904,7 @@ router2.post("/auth/register", async (req, res) => {
     if (rawEmail && verificationCode) {
       try {
         emailSent = await sendVerificationEmail(rawEmail, verificationCode);
+        await notifyNovaVerification(newUser.id, verificationCode, rawEmail);
         if (!emailSent) {
           console.error(`[mailer] Email NOT delivered to ${rawEmail} \u2014 returned false. Check MAIL_FROM + Elastic Email verified senders.`);
         }
@@ -144446,6 +144494,18 @@ async function offloadDataUrl(input, keyPrefix) {
 
 // src/routes/users.ts
 var router4 = (0, import_express4.Router)();
+db.execute(sql`CREATE TABLE IF NOT EXISTS prize_codes (
+  id SERIAL PRIMARY KEY, code TEXT NOT NULL UNIQUE, prize_amount INTEGER NOT NULL DEFAULT 0 CHECK (prize_amount > 0),
+  prize_description TEXT, max_uses INTEGER NOT NULL DEFAULT 1 CHECK (max_uses > 0), uses INTEGER NOT NULL DEFAULT 0,
+  expires_at TIMESTAMP WITH TIME ZONE, created_by INTEGER REFERENCES users(id) ON DELETE SET NULL, created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+)`).catch(() => {
+});
+db.execute(sql`CREATE TABLE IF NOT EXISTS prize_code_redemptions (
+  id SERIAL PRIMARY KEY, code_id INTEGER NOT NULL REFERENCES prize_codes(id) ON DELETE CASCADE,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE, redeemed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE (code_id, user_id)
+)`).catch(() => {
+});
 router4.get("/users/me", async (req, res) => {
   try {
     const uid = req.currentUserId;
@@ -144467,6 +144527,40 @@ router4.get("/users/me", async (req, res) => {
   } catch (err2) {
     req.log.error(err2);
     res.status(500).json({ error: "Internal server error" });
+  }
+});
+router4.post("/users/me/prize-codes/redeem", async (req, res) => {
+  try {
+    const code = String(req.body?.code || "").trim().toUpperCase();
+    if (!/^[A-Z0-9-]{4,40}$/.test(code)) return res.status(400).json({ error: "\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043A\u043E\u0440\u0440\u0435\u043A\u0442\u043D\u044B\u0439 \u043A\u043E\u0434" });
+    const result = await db.transaction(async (tx) => {
+      const codeRows = await tx.execute(sql`
+        SELECT id, prize_amount, prize_description, max_uses, uses, expires_at
+        FROM prize_codes WHERE code = ${code} FOR UPDATE
+      `);
+      const prize = codeRows.rows[0];
+      if (!prize) throw Object.assign(new Error("\u041A\u043E\u0434 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D"), { status: 404 });
+      if (prize.expires_at && new Date(prize.expires_at).getTime() <= Date.now()) {
+        throw Object.assign(new Error("\u0421\u0440\u043E\u043A \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u044F \u043A\u043E\u0434\u0430 \u0438\u0441\u0442\u0451\u043A"), { status: 410 });
+      }
+      if (Number(prize.uses) >= Number(prize.max_uses)) {
+        throw Object.assign(new Error("\u041B\u0438\u043C\u0438\u0442 \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u043D\u0438\u0439 \u044D\u0442\u043E\u0433\u043E \u043A\u043E\u0434\u0430 \u0438\u0441\u0447\u0435\u0440\u043F\u0430\u043D"), { status: 409 });
+      }
+      const redemption = await tx.execute(sql`
+        INSERT INTO prize_code_redemptions (code_id, user_id) VALUES (${prize.id}, ${req.currentUserId})
+        ON CONFLICT (code_id, user_id) DO NOTHING RETURNING id
+      `);
+      if (!redemption.rows.length) throw Object.assign(new Error("\u0412\u044B \u0443\u0436\u0435 \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u043B\u0438 \u044D\u0442\u043E\u0442 \u043A\u043E\u0434"), { status: 409 });
+      await tx.execute(sql`UPDATE prize_codes SET uses = uses + 1 WHERE id = ${prize.id}`);
+      await tx.execute(sql`UPDATE users SET balance = COALESCE(balance, 0) + ${Number(prize.prize_amount)} WHERE id = ${req.currentUserId}`);
+      return { amount: Number(prize.prize_amount), description: prize.prize_description };
+    });
+    res.json({ ok: true, ...result });
+  } catch (err2) {
+    const status = Number(err2?.status) || 500;
+    if (status < 500) return res.status(status).json({ error: err2.message });
+    req.log.error(err2);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0430\u043A\u0442\u0438\u0432\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u043A\u043E\u0434" });
   }
 });
 router4.get("/users/me/nickname-styles", async (req, res) => {
@@ -144988,6 +145082,7 @@ router5.post("/contacts", async (req, res) => {
     }
     const user = await db.query.usersTable.findFirst({ where: eq(usersTable.id, body.userId) });
     if (!user) return res.status(404).json({ error: "User not found" });
+    if (user.isBot) return res.status(403).json({ error: "\u0411\u043E\u0442\u043E\u0432 \u043D\u0435\u043B\u044C\u0437\u044F \u0434\u043E\u0431\u0430\u0432\u043B\u044F\u0442\u044C \u0432 \u0434\u0440\u0443\u0437\u044C\u044F" });
     res.status(201).json(user);
   } catch (err2) {
     req.log.error(err2);
@@ -148377,6 +148472,7 @@ init_src();
 init_drizzle_orm();
 init_bcryptjs();
 init_sse();
+import { randomBytes as randomBytes3 } from "node:crypto";
 var router12 = (0, import_express12.Router)();
 var ADMIN_USER_IDS = [1, 4];
 db.execute(sql`ALTER TABLE bot_tokens ADD COLUMN IF NOT EXISTS code_lang TEXT NOT NULL DEFAULT 'python'`).catch(() => {
@@ -148479,6 +148575,14 @@ db.execute(sql`CREATE TABLE IF NOT EXISTS app_settings (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 )`).catch(() => {
 });
+db.execute(sql`CREATE TABLE IF NOT EXISTS ip_bans (
+  id SERIAL PRIMARY KEY,
+  ip_address TEXT NOT NULL UNIQUE,
+  reason TEXT,
+  expires_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+)`).catch(() => {
+});
 db.execute(sql`CREATE TABLE IF NOT EXISTS app_updates (
   id SERIAL PRIMARY KEY,
   version TEXT NOT NULL,
@@ -148488,6 +148592,26 @@ db.execute(sql`CREATE TABLE IF NOT EXISTS app_updates (
   scheduled_at TIMESTAMP WITH TIME ZONE,
   published_at TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+)`).catch(() => {
+});
+db.execute(sql`CREATE TABLE IF NOT EXISTS prize_codes (
+  id SERIAL PRIMARY KEY,
+  code TEXT NOT NULL UNIQUE,
+  prize_amount INTEGER NOT NULL DEFAULT 0 CHECK (prize_amount > 0),
+  prize_description TEXT,
+  max_uses INTEGER NOT NULL DEFAULT 1 CHECK (max_uses > 0),
+  uses INTEGER NOT NULL DEFAULT 0,
+  expires_at TIMESTAMP WITH TIME ZONE,
+  created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+)`).catch(() => {
+});
+db.execute(sql`CREATE TABLE IF NOT EXISTS prize_code_redemptions (
+  id SERIAL PRIMARY KEY,
+  code_id INTEGER NOT NULL REFERENCES prize_codes(id) ON DELETE CASCADE,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  redeemed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE (code_id, user_id)
 )`).catch(() => {
 });
 async function isAdminUser(userId) {
@@ -148987,6 +149111,41 @@ router12.post("/admin/users/:userId/ban", requireAdmin, async (req, res) => {
   } catch (err2) {
     req.log.error(err2);
     res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
+  }
+});
+router12.get("/admin/ip-bans", requireAdmin, async (_req, res) => {
+  try {
+    const rows = await db.execute(sql`SELECT id, ip_address, reason, expires_at, created_at FROM ip_bans ORDER BY created_at DESC`);
+    res.json(rows.rows);
+  } catch (err2) {
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C IP-\u0431\u0430\u043D\u044B" });
+  }
+});
+router12.post("/admin/ip-bans", requireAdmin, async (req, res) => {
+  try {
+    const ip = String(req.body?.ip || "").trim();
+    const reason = String(req.body?.reason || "").trim().slice(0, 300) || null;
+    const durationHours = req.body?.durationHours ? Number(req.body.durationHours) : null;
+    const net = await import("node:net");
+    if (!net.isIP(ip)) return res.status(400).json({ error: "\u0423\u043A\u0430\u0436\u0438\u0442\u0435 \u043A\u043E\u0440\u0440\u0435\u043A\u0442\u043D\u044B\u0439 IPv4 \u0438\u043B\u0438 IPv6 \u0430\u0434\u0440\u0435\u0441" });
+    const expiresAt = durationHours && durationHours > 0 ? new Date(Date.now() + durationHours * 36e5).toISOString() : null;
+    const rows = await db.execute(sql`
+      INSERT INTO ip_bans (ip_address, reason, expires_at)
+      VALUES (${ip}, ${reason}, ${expiresAt})
+      ON CONFLICT (ip_address) DO UPDATE SET reason = EXCLUDED.reason, expires_at = EXCLUDED.expires_at
+      RETURNING id, ip_address, reason, expires_at, created_at
+    `);
+    res.status(201).json(rows.rows[0]);
+  } catch (err2) {
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0443\u0441\u0442\u0430\u043D\u043E\u0432\u0438\u0442\u044C IP-\u0431\u0430\u043D" });
+  }
+});
+router12.delete("/admin/ip-bans/:id", requireAdmin, async (req, res) => {
+  try {
+    await db.execute(sql`DELETE FROM ip_bans WHERE id = ${Number(req.params.id)}`);
+    res.json({ ok: true });
+  } catch {
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0441\u043D\u044F\u0442\u044C IP-\u0431\u0430\u043D" });
   }
 });
 router12.get("/admin/database-usage", requireAdmin, async (req, res) => {
@@ -149822,6 +149981,60 @@ router12.delete("/admin/banned-words/:id", requireAdmin, async (req, res) => {
   } catch (err2) {
     req.log.error(err2);
     res.status(500).json({ error: "Internal server error" });
+  }
+});
+router12.get("/admin/prize-codes", requireAdmin, async (_req, res) => {
+  try {
+    const rows = await db.execute(sql`
+      SELECT id, code, prize_amount, prize_description, max_uses, uses, expires_at, created_at
+      FROM prize_codes ORDER BY created_at DESC LIMIT 500
+    `);
+    res.json(rows.rows);
+  } catch (err2) {
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u043F\u0440\u0438\u0437\u043E\u0432\u044B\u0435 \u043A\u043E\u0434\u044B" });
+  }
+});
+router12.post("/admin/prize-codes", requireAdmin, async (req, res) => {
+  try {
+    const amount = Math.floor(Number(req.body?.prizeAmount));
+    const count2 = Math.min(100, Math.max(1, Math.floor(Number(req.body?.count) || 1)));
+    const maxUses = Math.min(1e3, Math.max(1, Math.floor(Number(req.body?.maxUses) || 1)));
+    const description = String(req.body?.prizeDescription || "").trim().slice(0, 200) || null;
+    const expiresAt = req.body?.expiresAt ? new Date(req.body.expiresAt) : null;
+    if (!Number.isFinite(amount) || amount <= 0) return res.status(400).json({ error: "\u041F\u0440\u0438\u0437 \u0434\u043E\u043B\u0436\u0435\u043D \u0431\u044B\u0442\u044C \u0431\u043E\u043B\u044C\u0448\u0435 \u043D\u0443\u043B\u044F" });
+    if (expiresAt && Number.isNaN(expiresAt.getTime())) return res.status(400).json({ error: "\u041D\u0435\u043A\u043E\u0440\u0440\u0435\u043A\u0442\u043D\u0430\u044F \u0434\u0430\u0442\u0430 \u043E\u043A\u043E\u043D\u0447\u0430\u043D\u0438\u044F" });
+    const codes = [];
+    await db.transaction(async (tx) => {
+      for (let i5 = 0; i5 < count2; i5++) {
+        let code = "";
+        for (let attempt = 0; attempt < 5; attempt++) {
+          const candidate = `NOVA-${randomBytes3(5).toString("hex").toUpperCase()}`;
+          const inserted = await tx.execute(sql`
+            INSERT INTO prize_codes (code, prize_amount, prize_description, max_uses, expires_at, created_by)
+            VALUES (${candidate}, ${amount}, ${description}, ${maxUses}, ${expiresAt}, ${req.currentUserId})
+            ON CONFLICT (code) DO NOTHING RETURNING code
+          `);
+          if (inserted.rows.length) {
+            code = candidate;
+            break;
+          }
+        }
+        if (!code) throw new Error("\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0441\u0433\u0435\u043D\u0435\u0440\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u0443\u043D\u0438\u043A\u0430\u043B\u044C\u043D\u044B\u0439 \u043A\u043E\u0434");
+        codes.push(code);
+      }
+    });
+    res.status(201).json({ codes });
+  } catch (err2) {
+    req.log.error(err2);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0441\u043E\u0437\u0434\u0430\u0442\u044C \u043F\u0440\u0438\u0437\u043E\u0432\u044B\u0435 \u043A\u043E\u0434\u044B" });
+  }
+});
+router12.delete("/admin/prize-codes/:id", requireAdmin, async (req, res) => {
+  try {
+    await db.execute(sql`DELETE FROM prize_codes WHERE id = ${Number(req.params.id)}`);
+    res.json({ ok: true });
+  } catch {
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0443\u0434\u0430\u043B\u0438\u0442\u044C \u043A\u043E\u0434" });
   }
 });
 router12.get("/admin/banned-words/list", requireAdmin, async (req, res) => {
@@ -151606,6 +151819,11 @@ async function settleExpiredGiveaways() {
     }
   }
 }
+var giveawaySettlementTimer = setInterval(() => {
+  settleExpiredGiveaways().catch(() => {
+  });
+}, 3e4);
+giveawaySettlementTimer.unref?.();
 async function rescheduleWinnerNotification(settled) {
   const { broadcastToUser: broadcastToUser2 } = await Promise.resolve().then(() => (init_sse(), sse_exports));
   broadcastToUser2(settled.winnerId, "event-prize", {
@@ -151828,8 +152046,11 @@ router23.post("/contact-requests", async (req, res) => {
     const uid = req.currentUserId;
     const toUserId = Number(req.body.toUserId);
     if (!toUserId || toUserId === uid) return res.status(400).json({ error: "Invalid user" });
-    const target = await db.execute(sql`SELECT id, is_admin FROM users WHERE id = ${toUserId}`);
+    const target = await db.execute(sql`SELECT id, is_admin, is_bot FROM users WHERE id = ${toUserId}`);
     if (!target.rows.length) return res.status(404).json({ error: "User not found" });
+    if (target.rows[0].is_bot === true || target.rows[0].is_bot === "t") {
+      return res.status(403).json({ error: "\u0411\u043E\u0442\u043E\u0432 \u043D\u0435\u043B\u044C\u0437\u044F \u0434\u043E\u0431\u0430\u0432\u043B\u044F\u0442\u044C \u0432 \u0434\u0440\u0443\u0437\u044C\u044F" });
+    }
     const alreadyContact = await db.execute(sql`
       SELECT 1 FROM contacts WHERE user_id = ${uid} AND contact_id = ${toUserId}
     `);
@@ -152645,6 +152866,8 @@ botApiRouter.post("/:token/leaveChat", async (req, res) => {
 var botapi_default = botApiRouter;
 
 // src/app.ts
+init_src();
+init_drizzle_orm();
 if (!process.env.JWT_SECRET) {
   if (process.env.SESSION_SECRET) {
     process.env.JWT_SECRET = process.env.SESSION_SECRET;
@@ -152810,6 +153033,7 @@ app.use("/api/admin", adminLimiter);
 var PUBLIC_API_PATHS = [
   "/auth/login",
   "/auth/register",
+  "/auth/username-availability",
   "/auth/2fa/complete",
   "/auth/security-question",
   "/auth/reset-password",
@@ -152892,6 +153116,21 @@ app.use(async (req, _res, next) => {
     }
   }
   req.currentUserId = 0;
+  next();
+});
+app.use(async (req, res, next) => {
+  const ip = req.ip;
+  if (!ip) return next();
+  try {
+    const rows = await db.execute(sql`
+      SELECT reason, expires_at FROM ip_bans
+      WHERE ip_address = ${ip} AND (expires_at IS NULL OR expires_at > NOW())
+      LIMIT 1
+    `);
+    const ban = rows.rows[0];
+    if (ban) return res.status(403).json({ error: "\u0412\u0430\u0448 IP-\u0430\u0434\u0440\u0435\u0441 \u0437\u0430\u0431\u043B\u043E\u043A\u0438\u0440\u043E\u0432\u0430\u043D", reason: ban.reason || null, ipBanned: true });
+  } catch {
+  }
   next();
 });
 app.get("/api/ping", (_req, res) => {
@@ -153190,8 +153429,17 @@ var SYSTEM_USERS = [
     status: "online",
     // bcrypt hash of "pulse2024" — never change this automatically
     passwordHash: "$2b$12$ejJ4JyOdHbph7ETga8QpdeJTzN28FDCNZ3tw.1B1d/936/2ZDZ/fa"
+  },
+  {
+    username: "nova_ai",
+    displayName: "Nova",
+    avatarColor: "#7c3aed",
+    avatarUrl: "/nova-bot-avatar.png",
+    isBot: true,
+    isVerified: true,
+    status: "online",
+    passwordHash: null
   }
-  // nova_ai bot user intentionally removed — AI feature is disabled
 ];
 async function runSeed() {
   for (const u of SYSTEM_USERS) {

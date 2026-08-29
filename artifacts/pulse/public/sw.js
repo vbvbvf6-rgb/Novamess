@@ -69,6 +69,11 @@ self.addEventListener("message", (e) => {
     return;
   }
 
+  if (e.data?.type === "clear-caches") {
+    e.waitUntil(caches.keys().then((names) => Promise.all(names.map((name) => caches.delete(name)))));
+    return;
+  }
+
   if (e.data?.type === "show-notification") {
     const { title, body, icon, image, url, tag, senderAvatar, senderColor, chatType } = e.data;
 

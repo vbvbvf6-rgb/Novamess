@@ -53,7 +53,7 @@ if ("serviceWorker" in navigator) {
 // On cold server: skeleton shows immediately, data updates as soon as server responds.
 const _pf = (window as any).__prefetch as Record<string, Promise<unknown>> | undefined;
 if (_pf) {
-  const entries: [string[], Promise<unknown>][] = [
+  const entries: [readonly string[], Promise<unknown>][] = [
     [QUERY_KEYS.me,       _pf.me],
     [QUERY_KEYS.chats,    _pf.chats],
     [QUERY_KEYS.contacts, _pf.contacts],

@@ -458,6 +458,35 @@
 .typing-dot:nth-child(2) { animation-delay: 0.2s; }
 .typing-dot:nth-child(3) { animation-delay: 0.4s; }
 
+/* ── Chat emoji motion ──────────────────────────────────────────────────── */
+.message-emoji {
+  display: inline-block;
+  transform-origin: 50% 75%;
+  animation: emojiFloat 2.8s ease-in-out infinite;
+  will-change: transform;
+}
+.message-emoji:nth-child(3n) { animation-delay: -0.9s; }
+.message-emoji:nth-child(3n + 1) { animation-delay: -1.8s; }
+.message-emoji-only .message-emoji {
+  font-size: 2.75rem;
+  line-height: 1.15;
+  animation: emojiPop 2.4s ease-in-out infinite;
+}
+@keyframes emojiFloat {
+  0%, 100% { transform: translateY(0) rotate(-2deg) scale(1); }
+  50% { transform: translateY(-2px) rotate(2deg) scale(1.05); }
+}
+@keyframes emojiPop {
+  0%, 100% { transform: translateY(0) scale(1) rotate(-3deg); }
+  50% { transform: translateY(-5px) scale(1.08) rotate(3deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .message-emoji,
+  .message-emoji-only .message-emoji {
+    animation: none;
+  }
+}
+
 /* ── Cross-browser opacity color fix ─────────────────────────────────────── */
 /* Tailwind v4 uses color-mix(in oklab) for opacity variants — not supported
    in Chrome < 112 (Android WebViews from 2018–2022). Override with hsl(). */

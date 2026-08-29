@@ -1,4 +1,4 @@
-const CACHE_NAME = "nova-mt8wpaak";
+const CACHE_NAME = "nova-mtebpepl";
 const SHELL_URLS = ["/", "/manifest.json", "/favicon.svg", "/icon-192.png", "/icon-512.png"];
 
 self.addEventListener("install", (e) => {
@@ -66,6 +66,11 @@ self.addEventListener("message", (e) => {
   if (e.data?.type === "set-auth") {
     _authToken = e.data.token || null;
     _authUserId = e.data.userId || null;
+    return;
+  }
+
+  if (e.data?.type === "clear-caches") {
+    e.waitUntil(caches.keys().then((names) => Promise.all(names.map((name) => caches.delete(name)))));
     return;
   }
 

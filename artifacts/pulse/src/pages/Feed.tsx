@@ -17,6 +17,30 @@ import { useToast } from "@/hooks/use-toast";
 
 const getCurrentUserId = () => Number(sessionStorage.getItem("pulse-user-id") || "0");
 
+async function compressImage(file: File): Promise<string | null> {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const image = new Image();
+      image.onload = () => {
+        const max = 1280;
+        const scale = Math.min(1, max / Math.max(image.width, image.height));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.max(1, Math.round(image.width * scale));
+        canvas.height = Math.max(1, Math.round(image.height * scale));
+        const context = canvas.getContext("2d");
+        if (!context) return resolve(null);
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL("image/jpeg", 0.82));
+      };
+      image.onerror = () => resolve(null);
+      image.src = String(reader.result);
+    };
+    reader.onerror = () => resolve(null);
+    reader.readAsDataURL(file);
+  });
+}
+
 function VerifiedBadge() {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="shrink-0">

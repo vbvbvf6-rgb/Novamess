@@ -19,6 +19,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { GlobalSearch } from "./GlobalSearch";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
+import { isEncryptedMessage } from "@/lib/e2e";
 import { BOT_AVATAR_URL } from "@/lib/botAvatar";
 
 type FolderKey = "all" | "unread" | "groups" | "direct" | `folder:${number}`;
@@ -654,7 +655,7 @@ export function ChatList() {
                 ? (lastMessage as any).isDeleted
                   ? "🗑 Сообщение удалено"
                   : lastMessage.type === "text"
-                  ? lastMessage.text || ""
+                  ? isEncryptedMessage(lastMessage.text) ? "🔒 Зашифрованное сообщение" : lastMessage.text || ""
                   : lastMessage.type === "image"
                   ? "📷 Фото"
 

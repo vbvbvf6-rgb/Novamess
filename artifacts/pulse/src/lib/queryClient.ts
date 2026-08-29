@@ -37,4 +37,25 @@ export async function clearPersistedQueryCache(): Promise<void> {
   queryClient.clear();
   try { await localStoragePersister?.removeClient?.(); } catch {}
   try { localStorage.removeItem("nova-query-cache"); } catch {}
+  try { localStorage.removeItem("REACT_QUERY_OFFLINE_CACHE"); } catch {}
+  try {
+    Object.keys(localStorage)
+      .filter((key) => /query|tanstack|react-query/i.test(key))
+      .forEach((key) => localStorage.removeItem(key));
+  } catch {}
+  try {
+    Object.keys(sessionStorage)
+      .filter((key) => /query|tanstack|react-query/i.test(key))
+      .forEach((key) => sessionStorage.removeItem(key));
+  } catch {}
+  try {
+    if ("caches" in window) {
+      const cacheNames = await caches.keys();
+      await Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName)));
+    }
+  } catch {}
+  try {
+    const registration = await navigator.serviceWorker?.getRegistration();
+    registration?.active?.postMessage({ type: "clear-caches" });
+  } catch {}
 }

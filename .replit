@@ -90,6 +90,10 @@ GMAIL_USER = "kakafka842@gmail.com"
 GMAIL_APP_PASSWORD = "upefjfrziasysbaz"
 
 [[ports]]
+localPort = 8000
+externalPort = 8000
+
+[[ports]]
 localPort = 8080
 externalPort = 80
 
