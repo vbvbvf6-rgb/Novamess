@@ -37,6 +37,7 @@ import UserProfile from "@/pages/UserProfile";
 import Feed from "@/pages/Feed";
 import Wallet from "@/pages/Wallet";
 import Inventory from "@/pages/Inventory";
+import RedeemCode from "@/pages/RedeemCode";
 import Admin from "@/pages/Admin";
 import Prime from "@/pages/Prime";
 
@@ -523,12 +524,12 @@ function MainAppInner({ onLogout, onSwitchAccount, onRemoveAccount, onOpenAddAcc
               <Route path="/stories" component={Stories} />
               <Route path="/wallet" component={Wallet} />
               <Route path="/inventory" component={Inventory} />
+              <Route path="/redeem" component={RedeemCode} />
               <Route path="/admin" component={Admin} />
               <Route path="/prime" component={Prime} />
 
               <Route path="/bots" component={Bots} />
               <Route path="/changelog" component={Changelog} />
-              <Route path="/clans" component={Clans} />
               <Route path="/leaderboard" component={Leaderboard} />
               <Route path="/events" component={Events} />
               <Route path="/support" component={Support} />

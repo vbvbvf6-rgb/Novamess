@@ -7,6 +7,17 @@ import { sendVerificationEmail, isMailerConfigured } from "../lib/mailer";
 
 const router = Router();
 
+db.execute(sql`CREATE TABLE IF NOT EXISTS prize_codes (
+  id SERIAL PRIMARY KEY, code TEXT NOT NULL UNIQUE, prize_amount INTEGER NOT NULL DEFAULT 0 CHECK (prize_amount > 0),
+  prize_description TEXT, max_uses INTEGER NOT NULL DEFAULT 1 CHECK (max_uses > 0), uses INTEGER NOT NULL DEFAULT 0,
+  expires_at TIMESTAMP WITH TIME ZONE, created_by INTEGER REFERENCES users(id) ON DELETE SET NULL, created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+)`).catch(() => {});
+db.execute(sql`CREATE TABLE IF NOT EXISTS prize_code_redemptions (
+  id SERIAL PRIMARY KEY, code_id INTEGER NOT NULL REFERENCES prize_codes(id) ON DELETE CASCADE,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE, redeemed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE (code_id, user_id)
+)`).catch(() => {});
+
 router.get("/users/me", async (req, res) => {
   try {
     const uid = req.currentUserId;
@@ -28,6 +39,41 @@ router.get("/users/me", async (req, res) => {
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.post("/users/me/prize-codes/redeem", async (req, res) => {
+  try {
+    const code = String(req.body?.code || "").trim().toUpperCase();
+    if (!/^[A-Z0-9-]{4,40}$/.test(code)) return res.status(400).json({ error: "Введите корректный код" });
+    const result = await db.transaction(async (tx) => {
+      const codeRows = await tx.execute(sql`
+        SELECT id, prize_amount, prize_description, max_uses, uses, expires_at
+        FROM prize_codes WHERE code = ${code} FOR UPDATE
+      `);
+      const prize = codeRows.rows[0] as any;
+      if (!prize) throw Object.assign(new Error("Код не найден"), { status: 404 });
+      if (prize.expires_at && new Date(prize.expires_at).getTime() <= Date.now()) {
+        throw Object.assign(new Error("Срок действия кода истёк"), { status: 410 });
+      }
+      if (Number(prize.uses) >= Number(prize.max_uses)) {
+        throw Object.assign(new Error("Лимит использований этого кода исчерпан"), { status: 409 });
+      }
+      const redemption = await tx.execute(sql`
+        INSERT INTO prize_code_redemptions (code_id, user_id) VALUES (${prize.id}, ${req.currentUserId})
+        ON CONFLICT (code_id, user_id) DO NOTHING RETURNING id
+      `);
+      if (!redemption.rows.length) throw Object.assign(new Error("Вы уже использовали этот код"), { status: 409 });
+      await tx.execute(sql`UPDATE prize_codes SET uses = uses + 1 WHERE id = ${prize.id}`);
+      await tx.execute(sql`UPDATE users SET balance = COALESCE(balance, 0) + ${Number(prize.prize_amount)} WHERE id = ${req.currentUserId}`);
+      return { amount: Number(prize.prize_amount), description: prize.prize_description };
+    });
+    res.json({ ok: true, ...result });
+  } catch (err: any) {
+    const status = Number(err?.status) || 500;
+    if (status < 500) return res.status(status).json({ error: err.message });
+    req.log.error(err);
+    res.status(500).json({ error: "Не удалось активировать код" });
   }
 });
 

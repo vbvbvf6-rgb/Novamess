@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import { moderateContent, localModerationCheck } from "../lib/moderation";
 import { invalidateBanwordsCache, getBanwords, findBanword } from "../lib/banwords";
 import { broadcastToAll } from "../lib/sse";
+import { randomBytes } from "node:crypto";
 
 const router = Router();
 
@@ -112,6 +113,24 @@ db.execute(sql`CREATE TABLE IF NOT EXISTS app_updates (
   scheduled_at TIMESTAMP WITH TIME ZONE,
   published_at TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+)`).catch(() => {});
+db.execute(sql`CREATE TABLE IF NOT EXISTS prize_codes (
+  id SERIAL PRIMARY KEY,
+  code TEXT NOT NULL UNIQUE,
+  prize_amount INTEGER NOT NULL DEFAULT 0 CHECK (prize_amount > 0),
+  prize_description TEXT,
+  max_uses INTEGER NOT NULL DEFAULT 1 CHECK (max_uses > 0),
+  uses INTEGER NOT NULL DEFAULT 0,
+  expires_at TIMESTAMP WITH TIME ZONE,
+  created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+)`).catch(() => {});
+db.execute(sql`CREATE TABLE IF NOT EXISTS prize_code_redemptions (
+  id SERIAL PRIMARY KEY,
+  code_id INTEGER NOT NULL REFERENCES prize_codes(id) ON DELETE CASCADE,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  redeemed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE (code_id, user_id)
 )`).catch(() => {});
 
 // No auto-publish: updates are published ONLY when the admin explicitly
@@ -1524,6 +1543,62 @@ router.delete("/admin/banned-words/:id", requireAdmin, async (req, res) => {
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// ── Prize codes ──────────────────────────────────────────────────────────────
+router.get("/admin/prize-codes", requireAdmin, async (_req, res) => {
+  try {
+    const rows = await db.execute(sql`
+      SELECT id, code, prize_amount, prize_description, max_uses, uses, expires_at, created_at
+      FROM prize_codes ORDER BY created_at DESC LIMIT 500
+    `);
+    res.json(rows.rows);
+  } catch (err) {
+    res.status(500).json({ error: "Не удалось загрузить призовые коды" });
+  }
+});
+
+router.post("/admin/prize-codes", requireAdmin, async (req, res) => {
+  try {
+    const amount = Math.floor(Number(req.body?.prizeAmount));
+    const count = Math.min(100, Math.max(1, Math.floor(Number(req.body?.count) || 1)));
+    const maxUses = Math.min(1000, Math.max(1, Math.floor(Number(req.body?.maxUses) || 1)));
+    const description = String(req.body?.prizeDescription || "").trim().slice(0, 200) || null;
+    const expiresAt = req.body?.expiresAt ? new Date(req.body.expiresAt) : null;
+    if (!Number.isFinite(amount) || amount <= 0) return res.status(400).json({ error: "Приз должен быть больше нуля" });
+    if (expiresAt && Number.isNaN(expiresAt.getTime())) return res.status(400).json({ error: "Некорректная дата окончания" });
+
+    const codes: string[] = [];
+    await db.transaction(async (tx) => {
+      for (let i = 0; i < count; i++) {
+        let code = "";
+        for (let attempt = 0; attempt < 5; attempt++) {
+          const candidate = `NOVA-${randomBytes(5).toString("hex").toUpperCase()}`;
+          const inserted = await tx.execute(sql`
+            INSERT INTO prize_codes (code, prize_amount, prize_description, max_uses, expires_at, created_by)
+            VALUES (${candidate}, ${amount}, ${description}, ${maxUses}, ${expiresAt}, ${req.currentUserId})
+            ON CONFLICT (code) DO NOTHING RETURNING code
+          `);
+          if (inserted.rows.length) { code = candidate; break; }
+        }
+        if (!code) throw new Error("Не удалось сгенерировать уникальный код");
+        codes.push(code);
+      }
+    });
+    res.status(201).json({ codes });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Не удалось создать призовые коды" });
+  }
+});
+
+router.delete("/admin/prize-codes/:id", requireAdmin, async (req, res) => {
+  try {
+    await db.execute(sql`DELETE FROM prize_codes WHERE id = ${Number(req.params.id)}`);
+    res.json({ ok: true });
+  } catch {
+    res.status(500).json({ error: "Не удалось удалить код" });
   }
 });
 

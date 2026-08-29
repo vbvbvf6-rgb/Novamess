@@ -403,6 +403,16 @@ export default function Admin() {
   const [eventConditions, setEventConditions] = useState("");
   const [eventPrizeAmount, setEventPrizeAmount] = useState(0);
   const [eventPrizeDescription, setEventPrizeDescription] = useState("");
+  interface PrizeCode { id: number; code: string; prize_amount: number; prize_description: string | null; max_uses: number; uses: number; expires_at: string | null; created_at: string; }
+  const [showPrizeCodes, setShowPrizeCodes] = useState(false);
+  const [prizeCodes, setPrizeCodes] = useState<PrizeCode[]>([]);
+  const [prizeCodesLoading, setPrizeCodesLoading] = useState(false);
+  const [prizeCodeAmount, setPrizeCodeAmount] = useState(100);
+  const [prizeCodeDescription, setPrizeCodeDescription] = useState("");
+  const [prizeCodeCount, setPrizeCodeCount] = useState(1);
+  const [prizeCodeMaxUses, setPrizeCodeMaxUses] = useState(1);
+  const [prizeCodeExpiresAt, setPrizeCodeExpiresAt] = useState("");
+  const [prizeCodesSaving, setPrizeCodesSaving] = useState(false);
   // Maintenance mode
   interface MaintenanceSettings { active: boolean; message: string; fixes: string[]; endsAt: string | null; }
   const [showMaintenancePanel, setShowMaintenancePanel] = useState(false);
@@ -492,6 +502,46 @@ export default function Admin() {
       if (res.ok) setPlatformEvents(await res.json());
     } catch {}
     setEventsLoading(false);
+  };
+
+  const fetchPrizeCodes = async () => {
+    setPrizeCodesLoading(true);
+    try {
+      const res = await fetch("/api/admin/prize-codes", { headers: getHeader() });
+      if (res.ok) setPrizeCodes(await res.json());
+    } catch {}
+    setPrizeCodesLoading(false);
+  };
+
+  const createPrizeCodes = async () => {
+    setPrizeCodesSaving(true);
+    try {
+      const res = await fetch("/api/admin/prize-codes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...getHeader() },
+        body: JSON.stringify({
+          prizeAmount: prizeCodeAmount,
+          prizeDescription: prizeCodeDescription,
+          count: prizeCodeCount,
+          maxUses: prizeCodeMaxUses,
+          expiresAt: prizeCodeExpiresAt || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) { showToast(data.error || "Ошибка создания кодов", "err"); return; }
+      await navigator.clipboard?.writeText(data.codes.join("\n")).catch(() => {});
+      showToast(`✅ Создано кодов: ${data.codes.length}. Коды скопированы`, "ok");
+      fetchPrizeCodes();
+    } catch { showToast("Ошибка соединения", "err"); }
+    finally { setPrizeCodesSaving(false); }
+  };
+
+  const deletePrizeCode = async (id: number) => {
+    if (!confirm("Удалить этот код? Неиспользованные активации будут невозможны.")) return;
+    try {
+      const res = await fetch(`/api/admin/prize-codes/${id}`, { method: "DELETE", headers: getHeader() });
+      if (res.ok) setPrizeCodes(prev => prev.filter(code => code.id !== id));
+    } catch { showToast("Ошибка удаления", "err"); }
   };
 
   const fetchUserReports = async () => {
@@ -3239,6 +3289,62 @@ export default function Admin() {
                           🗑️
                         </button>
                       </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Prize codes */}
+        <div className="bg-card border border-border rounded-2xl overflow-hidden">
+          <button
+            onClick={() => { setShowPrizeCodes(v => !v); if (!showPrizeCodes && prizeCodes.length === 0) fetchPrizeCodes(); }}
+            className="w-full p-4 flex items-center justify-between hover:bg-secondary/50 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-amber-500/10 flex items-center justify-center"><Key size={18} className="text-amber-400" /></div>
+              <div className="text-left">
+                <p className="font-semibold text-sm">Призовые коды</p>
+                <p className="text-xs text-muted-foreground">Создавайте коды на искры для пользователей</p>
+              </div>
+            </div>
+            {showPrizeCodes ? <ChevronDown size={16} className="text-muted-foreground" /> : <ChevronRight size={16} className="text-muted-foreground" />}
+          </button>
+          {showPrizeCodes && (
+            <div className="border-t border-border p-4 space-y-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <label className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Приз (искры)
+                  <input type="number" min={1} value={prizeCodeAmount} onChange={e => setPrizeCodeAmount(Math.max(1, Number(e.target.value) || 1))} className="mt-1 w-full bg-background border border-border rounded-xl px-3 py-2 text-sm" />
+                </label>
+                <label className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Количество
+                  <input type="number" min={1} max={100} value={prizeCodeCount} onChange={e => setPrizeCodeCount(Math.min(100, Math.max(1, Number(e.target.value) || 1)))} className="mt-1 w-full bg-background border border-border rounded-xl px-3 py-2 text-sm" />
+                </label>
+                <label className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Активаций на код
+                  <input type="number" min={1} max={1000} value={prizeCodeMaxUses} onChange={e => setPrizeCodeMaxUses(Math.min(1000, Math.max(1, Number(e.target.value) || 1)))} className="mt-1 w-full bg-background border border-border rounded-xl px-3 py-2 text-sm" />
+                </label>
+                <label className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Действует до
+                  <input type="datetime-local" value={prizeCodeExpiresAt} onChange={e => setPrizeCodeExpiresAt(e.target.value)} className="mt-1 w-full bg-background border border-border rounded-xl px-3 py-2 text-xs" />
+                </label>
+              </div>
+              <div className="flex gap-2">
+                <input value={prizeCodeDescription} onChange={e => setPrizeCodeDescription(e.target.value)} placeholder="Описание приза (необязательно)" className="flex-1 bg-background border border-border rounded-xl px-3 py-2 text-sm" />
+                <button onClick={createPrizeCodes} disabled={prizeCodesSaving} className="px-4 py-2 rounded-xl bg-amber-500 text-white text-sm font-bold disabled:opacity-50">
+                  {prizeCodesSaving ? "Создаём…" : "Создать"}
+                </button>
+              </div>
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold text-muted-foreground">Активные коды ({prizeCodes.length})</p>
+                <button onClick={fetchPrizeCodes} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"><RefreshCw size={11} className={prizeCodesLoading ? "animate-spin" : ""} /> Обновить</button>
+              </div>
+              {prizeCodes.length > 0 && (
+                <div className="max-h-64 overflow-y-auto space-y-2">
+                  {prizeCodes.map(code => (
+                    <div key={code.id} className="flex items-center gap-3 rounded-xl border border-border bg-background p-3">
+                      <code className="font-mono font-bold text-sm text-amber-400">{code.code}</code>
+                      <span className="text-xs text-muted-foreground flex-1">{code.prize_description || `${code.prize_amount} искр`} · {code.uses}/{code.max_uses}</span>
+                      <button onClick={() => deletePrizeCode(code.id)} className="p-1.5 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/10"><Trash2 size={13} /></button>
                     </div>
                   ))}
                 </div>

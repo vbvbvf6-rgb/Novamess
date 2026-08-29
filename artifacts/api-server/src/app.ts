@@ -232,6 +232,7 @@ app.use("/api/admin", adminLimiter);
 const PUBLIC_API_PATHS = [
   "/auth/login",
   "/auth/register",
+  "/auth/username-availability",
   "/auth/2fa/complete",
   "/auth/security-question",
   "/auth/reset-password",

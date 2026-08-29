@@ -1909,19 +1909,20 @@ export default function Settings() {
   };
 
   const handleClearCache = async () => {
-    // Clear persisted query data as well as the older pulse/nova caches, but
-    // keep the active session, saved accounts, and appearance preferences.
+    // Clear persisted query data and every non-session cache. Keep only the
+    // active authentication/session records and the selected appearance.
     const preserved = new Map<string, string>();
-    for (const key of ["pulse-user-id", "pulse-token", "pulse-user", "pulse-accounts", "pulse-theme", "pulse-is-dark", "nova-app-icon"]) {
+    for (const key of ["pulse-user-id", "pulse-token", "pulse-user", "pulse-accounts", "pulse-theme", "pulse-is-dark"]) {
       const value = sessionStorage.getItem(key) ?? localStorage.getItem(key);
       if (value !== null) preserved.set(key, value);
     }
     queryClient.clear();
     try { await localStoragePersister?.removeClient?.(); } catch {}
     for (const key of Object.keys(localStorage)) {
-      if (key !== "pulse-accounts" && key !== "pulse-theme" && key !== "pulse-is-dark" && key !== "nova-app-icon") localStorage.removeItem(key);
+      if (key !== "pulse-accounts" && key !== "pulse-theme" && key !== "pulse-is-dark") localStorage.removeItem(key);
     }
     localStorage.removeItem("nova-query-cache");
+    localStorage.removeItem("nova-app-icon");
     for (const [key, value] of preserved) {
       if (key === "pulse-accounts" || key === "pulse-theme" || key === "pulse-is-dark") localStorage.setItem(key, value);
       else sessionStorage.setItem(key, value);
@@ -1930,6 +1931,12 @@ export default function Settings() {
       try {
         const names = await caches.keys();
         await Promise.all(names.map(name => caches.delete(name)));
+      } catch {}
+    }
+    if (navigator.serviceWorker) {
+      try {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(registrations.map(registration => registration.unregister()));
       } catch {}
     }
     setCacheCleared(c => !c);

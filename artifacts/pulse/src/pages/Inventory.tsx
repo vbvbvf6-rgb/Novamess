@@ -54,6 +54,9 @@ export default function Inventory() {
       await queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
       await queryClient.invalidateQueries({ queryKey: ["/api/chats"] });
       await queryClient.invalidateQueries({ queryKey: ["/api/contacts"] });
+      window.dispatchEvent(new CustomEvent("pulse:user-profile-updated", {
+        detail: { nicknameStyle: data.nicknameStyle ?? item.slug },
+      }));
       window.dispatchEvent(new CustomEvent("pulse:nickname-style-changed", { detail: { style: item.slug } }));
       toast({ title: `Стиль «${item.name}» активирован` });
     } catch (error) {

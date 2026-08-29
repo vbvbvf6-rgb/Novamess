@@ -568,6 +568,19 @@ router.post("/auth/resend-verification", async (req, res) => {
   }
 });
 
+router.get("/auth/username-availability", async (req, res) => {
+  try {
+    const username = String(req.query.username || "").trim().toLowerCase();
+    if (!/^[a-z0-9_]{3,32}$/.test(username)) {
+      return res.json({ available: false, valid: false });
+    }
+    const rows = await db.execute(sql`SELECT 1 FROM users WHERE username = ${username} LIMIT 1`);
+    res.json({ available: rows.rows.length === 0, valid: true });
+  } catch {
+    res.status(500).json({ error: "Не удалось проверить никнейм" });
+  }
+});
+
 router.post("/auth/register", async (req, res) => {
   try {
     const { username, displayName, password, ageGroup, birthDate, email, avatarUrl, referralCode } = req.body;
