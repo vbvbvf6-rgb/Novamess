@@ -275,6 +275,9 @@ export function ChatList() {
   const [creatingFolder, setCreatingFolder] = useState(false);
   const [contextMenuChat, setContextMenuChat] = useState<Chat | null>(null);
   const [showFolderPicker, setShowFolderPicker] = useState(false);
+  const [isSelectingChats, setIsSelectingChats] = useState(false);
+  const [selectedChatIds, setSelectedChatIds] = useState<Set<number>>(new Set());
+  const [bulkDeletingChats, setBulkDeletingChats] = useState(false);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [folderTabLongPress, setFolderTabLongPress] = useState<number | null>(null);
   const folderTabPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -296,6 +299,50 @@ export function ChatList() {
     const token = sessionStorage.getItem("pulse-token");
     return token ? { "Authorization": `Bearer ${token}` } : {};
   }
+
+  const isProtectedChat = (chat: Chat) =>
+    chat.type === "direct" &&
+    String((chat.otherUser as any)?.username || "").toLowerCase() === "nova_security";
+
+  const toggleChatSelection = (chat: Chat) => {
+    if (isProtectedChat(chat)) {
+      toast({ title: "Чат Nova Security нельзя удалить", variant: "destructive" });
+      return;
+    }
+    setSelectedChatIds(prev => {
+      const next = new Set(prev);
+      if (next.has(chat.id)) next.delete(chat.id);
+      else next.add(chat.id);
+      return next;
+    });
+  };
+
+  const cancelChatSelection = () => {
+    setIsSelectingChats(false);
+    setSelectedChatIds(new Set());
+  };
+
+  const deleteSelectedChats = async () => {
+    if (!selectedChatIds.size || bulkDeletingChats) return;
+    setBulkDeletingChats(true);
+    try {
+      const res = await fetch("/api/chats/bulk", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+        body: JSON.stringify({ chatIds: [...selectedChatIds] }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Не удалось удалить чаты");
+      await queryClient.invalidateQueries({ queryKey: getGetChatsQueryKey() });
+      if (selectedChatId && selectedChatIds.has(selectedChatId)) setSelectedChatId(null);
+      toast({ title: `Удалено чатов: ${data.deleted?.length ?? selectedChatIds.size}` });
+      cancelChatSelection();
+    } catch (error: any) {
+      toast({ title: error?.message || "Не удалось удалить выбранные чаты", variant: "destructive" });
+    } finally {
+      setBulkDeletingChats(false);
+    }
+  };
 
   const fetchFolders = useCallback(async () => {
     try {
@@ -504,13 +551,26 @@ export function ChatList() {
             </div>
             <span className="text-[18px] font-black text-foreground tracking-tight">Nova</span>
           </div>
-          <button
-            onClick={openCreate}
-            className="w-10 h-10 rounded-2xl flex items-center justify-center transition-all shrink-0 hover:scale-105 active:scale-95"
-            style={{ background: "linear-gradient(135deg, rgba(59,130,246,0.15), rgba(96,165,250,0.1))", border: "1px solid rgba(59,130,246,0.25)" }}
-          >
-            <SquarePen size={18} className="text-primary" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => isSelectingChats ? cancelChatSelection() : setIsSelectingChats(true)}
+              className={cn(
+                "h-10 rounded-2xl flex items-center justify-center gap-1.5 px-3 transition-all shrink-0 border",
+                isSelectingChats ? "bg-primary text-primary-foreground border-primary" : "text-muted-foreground border-border hover:text-foreground hover:bg-secondary"
+              )}
+              title="Выбрать чаты"
+            >
+              {isSelectingChats ? <X size={17} /> : <Check size={17} />}
+              {isSelectingChats && <span className="text-xs font-bold">{selectedChatIds.size || "Выбор"}</span>}
+            </button>
+            <button
+              onClick={openCreate}
+              className="w-10 h-10 rounded-2xl flex items-center justify-center transition-all shrink-0 hover:scale-105 active:scale-95"
+              style={{ background: "linear-gradient(135deg, rgba(59,130,246,0.15), rgba(96,165,250,0.1))", border: "1px solid rgba(59,130,246,0.25)" }}
+            >
+              <SquarePen size={18} className="text-primary" />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -591,6 +651,21 @@ export function ChatList() {
             <Plus size={15} />
           </button>
         </div>
+          {isSelectingChats && (
+            <div className="mt-3 flex items-center gap-2 rounded-2xl border border-primary/20 bg-primary/5 px-3 py-2.5">
+              <span className="text-xs font-bold text-foreground flex-1">
+                {selectedChatIds.size ? `Выбрано: ${selectedChatIds.size}` : "Нажмите на чаты, чтобы выбрать"}
+              </span>
+              <button
+                onClick={() => void deleteSelectedChats()}
+                disabled={!selectedChatIds.size || bulkDeletingChats}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-destructive px-3 py-2 text-xs font-bold text-destructive-foreground disabled:opacity-40"
+              >
+                <Trash2 size={14} />
+                {bulkDeletingChats ? "Удаляем…" : "Удалить"}
+              </button>
+            </div>
+          )}
       </div>
 
         <div className="px-2">
@@ -655,6 +730,7 @@ export function ChatList() {
           ) : (
             sorted?.map((chat: Chat) => {
               const isSelected = selectedChatId === chat.id;
+              const isBulkSelected = selectedChatIds.has(chat.id);
               const lastMessage = chat.lastMessage;
               const isBot = (chat.otherUser as any)?.isBot || (chat.otherUser as any)?.is_bot;
               const isVerified = chat.type === "direct" && (chat.otherUser as any)?.isVerified;
@@ -703,18 +779,31 @@ export function ChatList() {
               return (
                 <button
                   key={chat.id}
-                  onClick={() => setSelectedChatId(chat.id)}
-                  onContextMenu={e => { e.preventDefault(); setContextMenuChat(chat); }}
-                  onTouchStart={() => { longPressTimer.current = setTimeout(() => setContextMenuChat(chat), 500); }}
+                  onClick={() => isSelectingChats ? toggleChatSelection(chat) : setSelectedChatId(chat.id)}
+                  onContextMenu={e => { e.preventDefault(); isSelectingChats ? toggleChatSelection(chat) : setContextMenuChat(chat); }}
+                  onTouchStart={() => { longPressTimer.current = setTimeout(() => isSelectingChats ? toggleChatSelection(chat) : (setIsSelectingChats(true), toggleChatSelection(chat)), 500); }}
                   onTouchEnd={() => { if (longPressTimer.current) clearTimeout(longPressTimer.current); }}
                   onTouchMove={() => { if (longPressTimer.current) clearTimeout(longPressTimer.current); }}
                   className={cn(
                     "w-full flex items-center gap-4 px-3 py-3 rounded-2xl transition-all text-left group border",
-                    isSelected
+                    isBulkSelected
+                      ? "bg-primary/12 border-primary/40"
+                      : isSelected
                       ? "bg-primary/8 border-primary/20"
                       : "bg-transparent border-transparent hover:bg-secondary/50 hover:border-border/50"
                   )}
                 >
+                  {isSelectingChats && (
+                    <span
+                      className={cn(
+                        "w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors",
+                        isBulkSelected ? "bg-primary border-primary text-primary-foreground" : "border-muted-foreground/40"
+                      )}
+                      aria-hidden="true"
+                    >
+                      {isBulkSelected && <Check size={14} strokeWidth={3} />}
+                    </span>
+                  )}
                   <div className="relative shrink-0">
                     <ChatAvatar chat={chat} displayName={displayName} />
                     {chat.isPinned && (

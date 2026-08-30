@@ -17,6 +17,21 @@ async function getUserPrimeInfo(userId: number): Promise<{ hasPrime: boolean; is
   } catch { return { hasPrime: false, isPrimePlus: false }; }
 }
 
+async function isNovaSecurityChat(chatId: number): Promise<boolean> {
+  const row = await db.execute(sql`
+    SELECT 1
+    FROM chats c
+    JOIN chat_members cm ON cm.chat_id = c.id
+    JOIN users u ON u.id = cm.user_id
+    WHERE c.id = ${chatId}
+      AND c.type = 'direct'
+      AND u.is_bot = true
+      AND u.username = 'nova_security'
+    LIMIT 1
+  `);
+  return row.rows.length > 0;
+}
+
 async function buildChat(chatId: number, currentUserId: number) {
   const chat = await db.query.chatsTable.findFirst({ where: eq(chatsTable.id, chatId) });
   if (!chat) return null;
@@ -582,6 +597,9 @@ router.delete("/chats/:chatId", async (req, res) => {
     });
     if (!membership) return res.status(403).json({ error: "Forbidden" });
     const chatRow = await db.query.chatsTable.findFirst({ where: eq(chatsTable.id, chatId) });
+    if (await isNovaSecurityChat(chatId)) {
+      return res.status(403).json({ error: "Чат Nova Security нельзя удалить" });
+    }
     const isDirect = chatRow?.type === "direct";
     if (!isDirect && membership.role !== "owner" && membership.role !== "admin") return res.status(403).json({ error: "Only chat owners can delete chats" });
     // Clean up pinned messages first
@@ -596,6 +614,56 @@ router.delete("/chats/:chatId", async (req, res) => {
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Delete several conversations in one operation. Direct chats are removed
+// only for the current user, while group/channel deletion follows the same
+// ownership rules as the single-chat endpoint.
+router.delete("/chats/bulk", async (req, res) => {
+  try {
+    const uid = req.currentUserId;
+    const rawIds = Array.isArray(req.body?.chatIds) ? req.body.chatIds : [];
+    const chatIds = [...new Set(rawIds.map(Number).filter((id: number) => Number.isInteger(id) && id > 0))];
+    if (!chatIds.length) return res.status(400).json({ error: "Укажите хотя бы один чат" });
+    if (chatIds.length > 100) return res.status(400).json({ error: "За один раз можно удалить не более 100 чатов" });
+
+    const deleted: number[] = [];
+    const skipped: number[] = [];
+    for (const chatId of chatIds) {
+      const membership = await db.query.chatMembersTable.findFirst({
+        where: and(eq(chatMembersTable.chatId, chatId), eq(chatMembersTable.userId, uid)),
+      });
+      if (!membership || await isNovaSecurityChat(chatId)) {
+        skipped.push(chatId);
+        continue;
+      }
+      const chatRow = await db.query.chatsTable.findFirst({ where: eq(chatsTable.id, chatId) });
+      const isDirect = chatRow?.type === "direct";
+      if (!isDirect && membership.role !== "owner" && membership.role !== "admin") {
+        skipped.push(chatId);
+        continue;
+      }
+
+      if (isDirect) {
+        await db.delete(chatMembersTable).where(
+          and(eq(chatMembersTable.chatId, chatId), eq(chatMembersTable.userId, uid))
+        );
+      } else {
+        await db.execute(sql`DELETE FROM pinned_messages WHERE chat_id = ${chatId}`).catch(() => {});
+        await db.execute(sql`DELETE FROM poll_votes WHERE poll_id IN (SELECT id FROM polls WHERE message_id IN (SELECT id FROM messages WHERE chat_id = ${chatId}))`).catch(() => {});
+        await db.execute(sql`DELETE FROM polls WHERE message_id IN (SELECT id FROM messages WHERE chat_id = ${chatId})`).catch(() => {});
+        await db.execute(sql`DELETE FROM reactions WHERE message_id IN (SELECT id FROM messages WHERE chat_id = ${chatId})`).catch(() => {});
+        await db.delete(messagesTable).where(eq(messagesTable.chatId, chatId));
+        await db.delete(chatMembersTable).where(eq(chatMembersTable.chatId, chatId));
+        await db.delete(chatsTable).where(eq(chatsTable.id, chatId));
+      }
+      deleted.push(chatId);
+    }
+    res.json({ success: true, deleted, skipped });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Не удалось удалить выбранные чаты" });
   }
 });
 

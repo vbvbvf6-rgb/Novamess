@@ -37,6 +37,21 @@ async function isChatMember(chatId: number, userId: number): Promise<boolean> {
   return !!member;
 }
 
+async function isNovaSecurityChat(chatId: number): Promise<boolean> {
+  const row = await db.execute(sql`
+    SELECT 1
+    FROM chats c
+    JOIN chat_members cm ON cm.chat_id = c.id
+    JOIN users u ON u.id = cm.user_id
+    WHERE c.id = ${chatId}
+      AND c.type = 'direct'
+      AND u.is_bot = true
+      AND u.username = 'nova_security'
+    LIMIT 1
+  `);
+  return row.rows.length > 0;
+}
+
 async function deleteExpiredMessages(chatId: number, timerSeconds: number | null | undefined) {
   if (!timerSeconds || !Number.isFinite(Number(timerSeconds)) || Number(timerSeconds) <= 0) return [];
   const cutoff = new Date(Date.now() - Number(timerSeconds) * 1000);
@@ -996,6 +1011,10 @@ router.delete("/messages/:messageId", async (req, res) => {
 
     const existing = await db.query.messagesTable.findFirst({ where: eq(messagesTable.id, messageId) });
     if (!existing) return res.status(404).json({ error: "Сообщение не найдено" });
+    if (!(await isChatMember(existing.chatId, uid))) return res.status(403).json({ error: "Нет доступа к этому чату" });
+    if (await isNovaSecurityChat(existing.chatId)) {
+      return res.status(403).json({ error: "Сообщения Nova Security нельзя удалить" });
+    }
 
     const admin = await isAdmin(uid);
     if (existing.senderId !== uid && !admin) {
@@ -1009,6 +1028,38 @@ router.delete("/messages/:messageId", async (req, res) => {
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.delete("/messages/bulk", async (req, res) => {
+  try {
+    const uid = req.currentUserId;
+    const rawIds = Array.isArray(req.body?.messageIds) ? req.body.messageIds : [];
+    const messageIds = [...new Set(rawIds.map(Number).filter((id: number) => Number.isInteger(id) && id > 0))];
+    if (!messageIds.length) return res.status(400).json({ error: "Укажите хотя бы одно сообщение" });
+    if (messageIds.length > 200) return res.status(400).json({ error: "За один раз можно удалить не более 200 сообщений" });
+
+    const deleted: number[] = [];
+    const skipped: number[] = [];
+    const admin = await isAdmin(uid);
+    for (const messageId of messageIds) {
+      const existing = await db.query.messagesTable.findFirst({ where: eq(messagesTable.id, messageId) });
+      if (!existing || !(await isChatMember(existing.chatId, uid)) || await isNovaSecurityChat(existing.chatId)) {
+        skipped.push(messageId);
+        continue;
+      }
+      if (existing.senderId !== uid && !admin) {
+        skipped.push(messageId);
+        continue;
+      }
+      await db.execute(sql`UPDATE messages SET is_deleted = true, deleted_at = NOW() WHERE id = ${messageId}`);
+      broadcastToChat(existing.chatId, "new-message", { messageId, chatId: existing.chatId });
+      deleted.push(messageId);
+    }
+    res.json({ success: true, deleted, skipped });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Не удалось удалить выбранные сообщения" });
   }
 });
 

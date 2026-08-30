@@ -380,6 +380,9 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
     return localStorage.getItem(`aura-theme-${chatId}`) ?? null;
   });
   const [showGroupCallModal, setShowGroupCallModal] = useState<"audio" | "video" | null>(null);
+  const [messageSelectionMode, setMessageSelectionMode] = useState(false);
+  const [selectedMessageIds, setSelectedMessageIds] = useState<Set<number>>(new Set());
+  const [bulkDeletingMessages, setBulkDeletingMessages] = useState(false);
 
   const hasPrimeUser = !!(me as any)?.hasPrime;
   const isPrimePlusUser = (me as any)?.primeTier === "prime_plus";
@@ -982,6 +985,45 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
     return topLevel;
   }, [messages, _isChannel, adminUserIds]);
 
+  const toggleMessageSelection = (message: Message) => {
+    if ((message as any).isDeleted) return;
+    setMessageSelectionMode(true);
+    setSelectedMessageIds(prev => {
+      const next = new Set(prev);
+      if (next.has(message.id)) next.delete(message.id);
+      else next.add(message.id);
+      return next;
+    });
+  };
+
+  const cancelMessageSelection = () => {
+    setMessageSelectionMode(false);
+    setSelectedMessageIds(new Set());
+  };
+
+  const deleteSelectedMessages = async () => {
+    if (!selectedMessageIds.size || bulkDeletingMessages) return;
+    if (!window.confirm(`Удалить выбранные сообщения (${selectedMessageIds.size})?`)) return;
+    setBulkDeletingMessages(true);
+    try {
+      const res = await fetch("/api/messages/bulk", {
+        method: "DELETE",
+        headers: getCWAuthHeaders(),
+        body: JSON.stringify({ messageIds: [...selectedMessageIds] }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Не удалось удалить сообщения");
+      await queryClient.invalidateQueries({ queryKey: getGetMessagesQueryKey({ chatId }) });
+      queryClient.invalidateQueries({ queryKey: getGetChatsQueryKey() });
+      toast({ title: `Удалено сообщений: ${data.deleted?.length ?? selectedMessageIds.size}` });
+      cancelMessageSelection();
+    } catch (error: any) {
+      toast({ title: error?.message || "Не удалось удалить сообщения", variant: "destructive" });
+    } finally {
+      setBulkDeletingMessages(false);
+    }
+  };
+
   if (isChatLoading || (isChatFetching && !chat)) {
     return (
       <div className="flex-1 h-full flex flex-col items-center justify-center bg-background gap-4">
@@ -1079,6 +1121,8 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
   }
 
   const displayName = chat.type === "direct" ? (chat.otherUser?.displayName || chat.name || "Chat") : (chat.name || "Group");
+  const isNovaSecurity = chat.type === "direct" &&
+    String((chat.otherUser as any)?.username || "").toLowerCase() === "nova_security";
   const avatarColor = chat.type === "direct" ? (chat.otherUser?.avatarColor || chat.avatarColor || "#333") : (chat.avatarColor || "#333");
   const otherUserLastSeen = _otherUserLastSeen;
   const otherUserStatus = _otherUserStatus;
@@ -1319,6 +1363,12 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
                   <Search size={18} className="mr-3 text-muted-foreground" />
                   <span className="font-semibold">{t("chat.searchMessages")}</span>
                 </DropdownMenuItem>
+                {!isNovaSecurity && (
+                  <DropdownMenuItem onClick={() => setMessageSelectionMode(true)} className="rounded-xl cursor-pointer py-2.5">
+                    <Check size={18} className="mr-3 text-primary" />
+                    <span className="font-semibold">Выбрать сообщения</span>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem onClick={() => setShowThemePicker(true)} className="rounded-xl cursor-pointer py-2.5">
                   <Palette size={18} className="mr-3 text-purple-400" />
                   <span className="font-semibold">Фон чата</span>
@@ -1377,18 +1427,23 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
                     </DropdownMenuItem>
                   </>
                 )}
-                <DropdownMenuItem onClick={() => setShowClearDialog(true)} className="rounded-xl cursor-pointer py-2.5">
+                <DropdownMenuItem
+                  onClick={() => isNovaSecurity
+                    ? toast({ title: "Чат Nova Security нельзя изменять", variant: "destructive" })
+                    : setShowClearDialog(true)}
+                  className="rounded-xl cursor-pointer py-2.5"
+                >
                   <MessageSquare size={18} className="mr-3 text-amber-400" />
                   <span className="font-semibold">Очистить чат</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem
+                {!isNovaSecurity && <DropdownMenuItem
                   className="text-destructive focus:text-destructive rounded-xl cursor-pointer py-2.5"
                   onClick={() => setShowDeleteDialog(true)}
                 >
                   <Trash2 size={18} className="mr-3" />
                   <span className="font-semibold">{t("chat.deleteChat")}</span>
-                </DropdownMenuItem>
+                </DropdownMenuItem>}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -1651,6 +1706,25 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
         </button>
       )}
 
+      {messageSelectionMode && (
+        <div className="flex items-center gap-3 px-4 py-2.5 border-b border-primary/20 bg-primary/5 shrink-0">
+          <button onClick={cancelMessageSelection} className="w-8 h-8 rounded-full hover:bg-secondary flex items-center justify-center text-muted-foreground" aria-label="Отменить выбор">
+            <X size={17} />
+          </button>
+          <span className="text-sm font-bold flex-1">
+            {selectedMessageIds.size ? `Выбрано: ${selectedMessageIds.size}` : "Удерживайте сообщение для выбора"}
+          </span>
+          <button
+            onClick={() => void deleteSelectedMessages()}
+            disabled={!selectedMessageIds.size || bulkDeletingMessages}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-destructive px-3 py-2 text-xs font-bold text-destructive-foreground disabled:opacity-40"
+          >
+            <Trash2 size={14} />
+            {bulkDeletingMessages ? "Удаляем…" : "Удалить"}
+          </button>
+        </div>
+      )}
+
       {/* Messages */}
       <div
         ref={scrollRef}
@@ -1776,6 +1850,9 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
                     isChannel={isChannel}
                     onComment={(msg) => setThreadMessage(msg)}
                     isSenderAdmin={adminUserIds.has(message.senderId)}
+                    selectionMode={messageSelectionMode}
+                    isSelected={selectedMessageIds.has(message.id)}
+                    onSelect={isNovaSecurity ? undefined : toggleMessageSelection}
                   />
                 </React.Fragment>
               );

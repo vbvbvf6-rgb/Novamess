@@ -379,6 +379,9 @@ export interface MessageBubbleProps {
   isChannel?: boolean;
   onComment?: (msg: Message) => void;
   isSenderAdmin?: boolean;
+  selectionMode?: boolean;
+  isSelected?: boolean;
+  onSelect?: (msg: Message) => void;
 }
 
 function HighlightText({ text, query, isMine }: { text: string; query: string; isMine: boolean }) {
@@ -405,7 +408,7 @@ function HighlightText({ text, query, isMine }: { text: string; query: string; i
   );
 }
 
-export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin, typingOut, onTypingDone, searchHighlight, isActiveMatch, messageRef, isChannel, onComment, isSenderAdmin }: MessageBubbleProps) {
+export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin, typingOut, onTypingDone, searchHighlight, isActiveMatch, messageRef, isChannel, onComment, isSenderAdmin, selectionMode, isSelected, onSelect }: MessageBubbleProps) {
   const { currentUserId } = useAppContext();
   const { data: me } = useGetMe();
   const { lang } = useLanguage();
@@ -422,6 +425,7 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
   const [translation, setTranslation] = useState<string | null>(null);
   const [showTranslation, setShowTranslation] = useState(false);
   const longPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const didLongPressRef = useRef(false);
   const bubbleRef = useRef<HTMLDivElement>(null);
   const swipeStartX = useRef(0);
   const swipeStartY = useRef(0);
@@ -524,21 +528,33 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
     if (isDeleted) return;
+    if (selectionMode && onSelect) {
+      onSelect(message);
+      return;
+    }
     openMenu(e.clientX, e.clientY);
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
     if (isDeleted) return;
     const touch = e.touches[0];
+    didLongPressRef.current = false;
     longPressRef.current = setTimeout(() => {
       navigator.vibrate?.(12);
-      openMenu(touch.clientX, touch.clientY);
+      didLongPressRef.current = true;
+      if (onSelect) onSelect(message);
+      else openMenu(touch.clientX, touch.clientY);
     }, 500);
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
     if (longPressRef.current) clearTimeout(longPressRef.current);
     if (isDeleted) return;
+    if (selectionMode && onSelect) {
+      if (!didLongPressRef.current && selectionMode) onSelect(message);
+      didLongPressRef.current = false;
+      return;
+    }
     const now = Date.now();
     if (now - lastTapRef.current < 320) {
       lastTapRef.current = 0;
@@ -1205,6 +1221,7 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
               onTouchMove={handleTouchMove}
               className={cn(
                 "relative cursor-pointer transition-transform active:scale-[0.98] max-w-full overflow-hidden",
+                isSelected && "ring-2 ring-primary ring-offset-2 ring-offset-background",
                 message.type === "sticker"
                   ? "px-1 py-1 bg-transparent border-none shadow-none"
                   : cn(
@@ -1218,6 +1235,17 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
               )}
               style={isMine && ownBubbleStyle && message.type !== "sticker" ? ownBubbleStyle : undefined}
             >
+              {selectionMode && (
+                <span
+                  className={cn(
+                    "absolute z-20 -left-2 -top-2 w-6 h-6 rounded-full border-2 flex items-center justify-center text-xs font-black",
+                    isSelected ? "bg-primary border-primary text-primary-foreground" : "bg-card border-border text-transparent"
+                  )}
+                  aria-hidden="true"
+                >
+                  ✓
+                </span>
+              )}
               {/* Double-tap ❤️ flash */}
               {heartFlash && (
                 <motion.span

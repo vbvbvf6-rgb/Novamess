@@ -208,6 +208,32 @@ export async function runSeed() {
       AND username IN ('nova', 'nova_ai', 'deepseek_ai')
       AND NOT EXISTS (SELECT 1 FROM users WHERE username = 'nova_security')
   `).catch(() => {});
+  // If a database already contains the renamed bot plus older duplicates,
+  // remove the duplicate bot accounts and their private system chats. This
+  // keeps exactly one canonical Nova Security identity after upgrades.
+  const duplicateBots = await db.execute(sql`
+    SELECT id FROM users
+    WHERE is_bot = true
+      AND username IN ('nova', 'nova_ai', 'deepseek_ai')
+      AND EXISTS (SELECT 1 FROM users WHERE username = 'nova_security' AND is_bot = true)
+  `).catch(() => ({ rows: [] as any[] }));
+  for (const duplicate of duplicateBots.rows as any[]) {
+    const duplicateId = Number(duplicate.id);
+    const duplicateChats = await db.execute(sql`
+      SELECT DISTINCT c.id
+      FROM chats c
+      JOIN chat_members cm ON cm.chat_id = c.id
+      WHERE c.type = 'direct' AND cm.user_id = ${duplicateId}
+    `).catch(() => ({ rows: [] as any[] }));
+    for (const chat of duplicateChats.rows as any[]) {
+      const chatId = Number(chat.id);
+      await db.execute(sql`DELETE FROM reactions WHERE message_id IN (SELECT id FROM messages WHERE chat_id = ${chatId})`).catch(() => {});
+      await db.execute(sql`DELETE FROM messages WHERE chat_id = ${chatId}`).catch(() => {});
+      await db.execute(sql`DELETE FROM chat_members WHERE chat_id = ${chatId}`).catch(() => {});
+      await db.execute(sql`DELETE FROM chats WHERE id = ${chatId}`).catch(() => {});
+    }
+    await db.execute(sql`DELETE FROM users WHERE id = ${duplicateId}`).catch(() => {});
+  }
   // ── 1. Ensure system users exist ──────────────────────────────────────────
   for (const u of SYSTEM_USERS) {
     const rows = await db.execute(sql`SELECT id FROM users WHERE username = ${u.username} LIMIT 1`);
