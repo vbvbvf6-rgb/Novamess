@@ -143379,7 +143379,7 @@ function signPending2faToken(userId) {
 var NOVA_SECURITY_ICON = `data:image/svg+xml;utf8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#22d3ee"/><stop offset="1" stop-color="#7c3aed"/></linearGradient></defs><rect width="128" height="128" rx="32" fill="url(#g)"/><path d="M64 22c4 20 12 28 32 32-20 4-28 12-32 32-4-20-12-28-32-32 20-4 28-12 32-32Z" fill="white"/></svg>`)}`;
 async function notifyNovaVerification(userId, code, email3) {
   try {
-    const bot = await db.execute(sql`SELECT id FROM users WHERE username IN ('nova', 'nova_ai') AND is_bot = true ORDER BY CASE WHEN username = 'nova' THEN 0 ELSE 1 END LIMIT 1`);
+    const bot = await db.execute(sql`SELECT id FROM users WHERE username IN ('nova_security', 'nova', 'nova_ai') AND is_bot = true ORDER BY CASE WHEN username = 'nova_security' THEN 0 ELSE 1 END LIMIT 1`);
     const botId = Number(bot.rows[0]?.id || 0);
     if (!botId) return;
     const existing = await db.execute(sql`
@@ -145178,6 +145178,20 @@ async function getUserPrimeInfo2(userId) {
     return { hasPrime: false, isPrimePlus: false };
   }
 }
+async function isNovaSecurityChat(chatId) {
+  const row = await db.execute(sql`
+    SELECT 1
+    FROM chats c
+    JOIN chat_members cm ON cm.chat_id = c.id
+    JOIN users u ON u.id = cm.user_id
+    WHERE c.id = ${chatId}
+      AND c.type = 'direct'
+      AND u.is_bot = true
+      AND u.username = 'nova_security'
+    LIMIT 1
+  `);
+  return row.rows.length > 0;
+}
 async function buildChat(chatId, currentUserId) {
   const chat = await db.query.chatsTable.findFirst({ where: eq(chatsTable.id, chatId) });
   if (!chat) return null;
@@ -145491,7 +145505,7 @@ async function buildChatsForUser(uid) {
 router6.get("/chats", async (req, res) => {
   try {
     const uid = req.currentUserId;
-    const botRow = await db.execute(sql`SELECT id FROM users WHERE username IN ('nova', 'nova_ai') AND is_bot = true ORDER BY CASE WHEN username = 'nova' THEN 0 ELSE 1 END LIMIT 1`);
+    const botRow = await db.execute(sql`SELECT id FROM users WHERE username IN ('nova_security', 'nova', 'nova_ai') AND is_bot = true ORDER BY CASE WHEN username = 'nova_security' THEN 0 ELSE 1 END LIMIT 1`);
     const botId = Number(botRow.rows[0]?.id || 0);
     if (botId && uid && uid !== botId) {
       const existing = await db.execute(sql`
@@ -145543,8 +145557,8 @@ router6.post("/chats/direct", async (req, res) => {
     if (!userId) return res.status(400).json({ error: "userId required" });
     const targetRows = await db.execute(sql`SELECT is_bot, username FROM users WHERE id = ${userId} LIMIT 1`);
     const target = targetRows.rows[0];
-    if (target?.is_bot && ["nova", "nova_ai"].includes(String(target.username).toLowerCase())) {
-      return res.status(403).json({ error: "\u0411\u043E\u0442 Nova \u043F\u0440\u0438\u043D\u0438\u043C\u0430\u0435\u0442 \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u044F \u0442\u043E\u043B\u044C\u043A\u043E \u0447\u0435\u0440\u0435\u0437 \u0441\u0438\u0441\u0442\u0435\u043C\u043D\u044B\u0435 \u0444\u0443\u043D\u043A\u0446\u0438\u0438" });
+    if (target?.is_bot && ["nova_security", "nova", "nova_ai"].includes(String(target.username).toLowerCase())) {
+      return res.status(403).json({ error: "\u0411\u043E\u0442 Nova Security \u043F\u0440\u0438\u043D\u0438\u043C\u0430\u0435\u0442 \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u044F \u0442\u043E\u043B\u044C\u043A\u043E \u0447\u0435\u0440\u0435\u0437 \u0441\u0438\u0441\u0442\u0435\u043C\u043D\u044B\u0435 \u0444\u0443\u043D\u043A\u0446\u0438\u0438" });
     }
     const myMemberships = await db.select({ chatId: chatMembersTable.chatId }).from(chatMembersTable).where(eq(chatMembersTable.userId, uid));
     const theirMemberships = await db.select({ chatId: chatMembersTable.chatId }).from(chatMembersTable).where(eq(chatMembersTable.userId, userId));
@@ -145681,6 +145695,9 @@ router6.delete("/chats/:chatId", async (req, res) => {
     });
     if (!membership) return res.status(403).json({ error: "Forbidden" });
     const chatRow = await db.query.chatsTable.findFirst({ where: eq(chatsTable.id, chatId) });
+    if (await isNovaSecurityChat(chatId)) {
+      return res.status(403).json({ error: "\u0427\u0430\u0442 Nova Security \u043D\u0435\u043B\u044C\u0437\u044F \u0443\u0434\u0430\u043B\u0438\u0442\u044C" });
+    }
     const isDirect = chatRow?.type === "direct";
     if (!isDirect && membership.role !== "owner" && membership.role !== "admin") return res.status(403).json({ error: "Only chat owners can delete chats" });
     await db.execute(sql`DELETE FROM pinned_messages WHERE chat_id = ${chatId}`).catch(() => {
@@ -145698,6 +145715,54 @@ router6.delete("/chats/:chatId", async (req, res) => {
   } catch (err2) {
     req.log.error(err2);
     res.status(500).json({ error: "Internal server error" });
+  }
+});
+router6.delete("/chats/bulk", async (req, res) => {
+  try {
+    const uid = req.currentUserId;
+    const rawIds = Array.isArray(req.body?.chatIds) ? req.body.chatIds : [];
+    const chatIds = [...new Set(rawIds.map(Number).filter((id) => Number.isInteger(id) && id > 0))];
+    if (!chatIds.length) return res.status(400).json({ error: "\u0423\u043A\u0430\u0436\u0438\u0442\u0435 \u0445\u043E\u0442\u044F \u0431\u044B \u043E\u0434\u0438\u043D \u0447\u0430\u0442" });
+    if (chatIds.length > 100) return res.status(400).json({ error: "\u0417\u0430 \u043E\u0434\u0438\u043D \u0440\u0430\u0437 \u043C\u043E\u0436\u043D\u043E \u0443\u0434\u0430\u043B\u0438\u0442\u044C \u043D\u0435 \u0431\u043E\u043B\u0435\u0435 100 \u0447\u0430\u0442\u043E\u0432" });
+    const deleted = [];
+    const skipped = [];
+    for (const chatId of chatIds) {
+      const membership = await db.query.chatMembersTable.findFirst({
+        where: and(eq(chatMembersTable.chatId, chatId), eq(chatMembersTable.userId, uid))
+      });
+      if (!membership || await isNovaSecurityChat(chatId)) {
+        skipped.push(chatId);
+        continue;
+      }
+      const chatRow = await db.query.chatsTable.findFirst({ where: eq(chatsTable.id, chatId) });
+      const isDirect = chatRow?.type === "direct";
+      if (!isDirect && membership.role !== "owner" && membership.role !== "admin") {
+        skipped.push(chatId);
+        continue;
+      }
+      if (isDirect) {
+        await db.delete(chatMembersTable).where(
+          and(eq(chatMembersTable.chatId, chatId), eq(chatMembersTable.userId, uid))
+        );
+      } else {
+        await db.execute(sql`DELETE FROM pinned_messages WHERE chat_id = ${chatId}`).catch(() => {
+        });
+        await db.execute(sql`DELETE FROM poll_votes WHERE poll_id IN (SELECT id FROM polls WHERE message_id IN (SELECT id FROM messages WHERE chat_id = ${chatId}))`).catch(() => {
+        });
+        await db.execute(sql`DELETE FROM polls WHERE message_id IN (SELECT id FROM messages WHERE chat_id = ${chatId})`).catch(() => {
+        });
+        await db.execute(sql`DELETE FROM reactions WHERE message_id IN (SELECT id FROM messages WHERE chat_id = ${chatId})`).catch(() => {
+        });
+        await db.delete(messagesTable).where(eq(messagesTable.chatId, chatId));
+        await db.delete(chatMembersTable).where(eq(chatMembersTable.chatId, chatId));
+        await db.delete(chatsTable).where(eq(chatsTable.id, chatId));
+      }
+      deleted.push(chatId);
+    }
+    res.json({ success: true, deleted, skipped });
+  } catch (err2) {
+    req.log.error(err2);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0443\u0434\u0430\u043B\u0438\u0442\u044C \u0432\u044B\u0431\u0440\u0430\u043D\u043D\u044B\u0435 \u0447\u0430\u0442\u044B" });
   }
 });
 router6.delete("/chats/:chatId/messages", async (req, res) => {
@@ -146730,6 +146795,20 @@ async function isChatMember(chatId, userId) {
   });
   return !!member2;
 }
+async function isNovaSecurityChat2(chatId) {
+  const row = await db.execute(sql`
+    SELECT 1
+    FROM chats c
+    JOIN chat_members cm ON cm.chat_id = c.id
+    JOIN users u ON u.id = cm.user_id
+    WHERE c.id = ${chatId}
+      AND c.type = 'direct'
+      AND u.is_bot = true
+      AND u.username = 'nova_security'
+    LIMIT 1
+  `);
+  return row.rows.length > 0;
+}
 async function deleteExpiredMessages(chatId, timerSeconds) {
   if (!timerSeconds || !Number.isFinite(Number(timerSeconds)) || Number(timerSeconds) <= 0) return [];
   const cutoff = new Date(Date.now() - Number(timerSeconds) * 1e3);
@@ -147031,8 +147110,8 @@ router8.post("/messages", async (req, res) => {
         LIMIT 1
       `);
       const otherUser = botRows.rows[0];
-      if (otherUser?.is_bot && ["nova", "nova_ai"].includes(String(otherUser.username).toLowerCase())) {
-        return res.status(403).json({ error: "\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u0438 \u043D\u0435 \u043C\u043E\u0433\u0443\u0442 \u043E\u0442\u043F\u0440\u0430\u0432\u043B\u044F\u0442\u044C \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u044F \u0431\u043E\u0442\u0443 Nova" });
+      if (otherUser?.is_bot && ["nova_security", "nova", "nova_ai"].includes(String(otherUser.username).toLowerCase())) {
+        return res.status(403).json({ error: "\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u0438 \u043D\u0435 \u043C\u043E\u0433\u0443\u0442 \u043E\u0442\u043F\u0440\u0430\u0432\u043B\u044F\u0442\u044C \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u044F \u0431\u043E\u0442\u0443 Nova Security" });
       }
     }
     if (chatInfo?.type === "channel" && !body.replyToId) {
@@ -147562,6 +147641,10 @@ router8.delete("/messages/:messageId", async (req, res) => {
     const uid = req.currentUserId;
     const existing = await db.query.messagesTable.findFirst({ where: eq(messagesTable.id, messageId) });
     if (!existing) return res.status(404).json({ error: "\u0421\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u0435 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u043E" });
+    if (!await isChatMember(existing.chatId, uid)) return res.status(403).json({ error: "\u041D\u0435\u0442 \u0434\u043E\u0441\u0442\u0443\u043F\u0430 \u043A \u044D\u0442\u043E\u043C\u0443 \u0447\u0430\u0442\u0443" });
+    if (await isNovaSecurityChat2(existing.chatId)) {
+      return res.status(403).json({ error: "\u0421\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u044F Nova Security \u043D\u0435\u043B\u044C\u0437\u044F \u0443\u0434\u0430\u043B\u0438\u0442\u044C" });
+    }
     const admin = await isAdmin(uid);
     if (existing.senderId !== uid && !admin) {
       return res.status(403).json({ error: "\u041D\u0435\u043B\u044C\u0437\u044F \u0443\u0434\u0430\u043B\u0438\u0442\u044C \u0447\u0443\u0436\u043E\u0435 \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u0435" });
@@ -147572,6 +147655,36 @@ router8.delete("/messages/:messageId", async (req, res) => {
   } catch (err2) {
     req.log.error(err2);
     res.status(500).json({ error: "Internal server error" });
+  }
+});
+router8.delete("/messages/bulk", async (req, res) => {
+  try {
+    const uid = req.currentUserId;
+    const rawIds = Array.isArray(req.body?.messageIds) ? req.body.messageIds : [];
+    const messageIds = [...new Set(rawIds.map(Number).filter((id) => Number.isInteger(id) && id > 0))];
+    if (!messageIds.length) return res.status(400).json({ error: "\u0423\u043A\u0430\u0436\u0438\u0442\u0435 \u0445\u043E\u0442\u044F \u0431\u044B \u043E\u0434\u043D\u043E \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u0435" });
+    if (messageIds.length > 200) return res.status(400).json({ error: "\u0417\u0430 \u043E\u0434\u0438\u043D \u0440\u0430\u0437 \u043C\u043E\u0436\u043D\u043E \u0443\u0434\u0430\u043B\u0438\u0442\u044C \u043D\u0435 \u0431\u043E\u043B\u0435\u0435 200 \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u0439" });
+    const deleted = [];
+    const skipped = [];
+    const admin = await isAdmin(uid);
+    for (const messageId of messageIds) {
+      const existing = await db.query.messagesTable.findFirst({ where: eq(messagesTable.id, messageId) });
+      if (!existing || !await isChatMember(existing.chatId, uid) || await isNovaSecurityChat2(existing.chatId)) {
+        skipped.push(messageId);
+        continue;
+      }
+      if (existing.senderId !== uid && !admin) {
+        skipped.push(messageId);
+        continue;
+      }
+      await db.execute(sql`UPDATE messages SET is_deleted = true, deleted_at = NOW() WHERE id = ${messageId}`);
+      broadcastToChat(existing.chatId, "new-message", { messageId, chatId: existing.chatId });
+      deleted.push(messageId);
+    }
+    res.json({ success: true, deleted, skipped });
+  } catch (err2) {
+    req.log.error(err2);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0443\u0434\u0430\u043B\u0438\u0442\u044C \u0432\u044B\u0431\u0440\u0430\u043D\u043D\u044B\u0435 \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u044F" });
   }
 });
 router8.post("/messages/:messageId/reactions", async (req, res) => {
@@ -149067,7 +149180,7 @@ router12.post("/admin/broadcast", requireAdmin, async (req, res) => {
   try {
     const { text: text2 } = req.body;
     if (!text2 || !String(text2).trim()) return res.status(400).json({ error: "\u0423\u043A\u0430\u0436\u0438\u0442\u0435 \u0442\u0435\u043A\u0441\u0442 \u043E\u0431\u044A\u044F\u0432\u043B\u0435\u043D\u0438\u044F" });
-    const botRow = await db.execute(sql`SELECT id FROM users WHERE username IN ('nova', 'nova_ai') AND is_bot = true ORDER BY CASE WHEN username = 'nova' THEN 0 ELSE 1 END LIMIT 1`);
+    const botRow = await db.execute(sql`SELECT id FROM users WHERE username IN ('nova_security', 'nova', 'nova_ai') AND is_bot = true ORDER BY CASE WHEN username = 'nova_security' THEN 0 ELSE 1 END LIMIT 1`);
     const botId = botRow.rows[0]?.id;
     if (!botId) return res.status(404).json({ error: "\u0411\u043E\u0442 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D. \u041F\u0435\u0440\u0435\u0437\u0430\u043F\u0443\u0441\u0442\u0438\u0442\u0435 \u0441\u0435\u0440\u0432\u0435\u0440 \u0434\u043B\u044F \u0441\u043E\u0437\u0434\u0430\u043D\u0438\u044F \u0441\u0438\u0441\u0442\u0435\u043C\u043D\u044B\u0445 \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u0435\u0439." });
     const allUsers = await db.execute(sql`SELECT id FROM users WHERE is_bot = false`);
@@ -153525,7 +153638,7 @@ var SYSTEM_USERS = [
     passwordHash: "$2b$12$ejJ4JyOdHbph7ETga8QpdeJTzN28FDCNZ3tw.1B1d/936/2ZDZ/fa"
   },
   {
-    username: "nova",
+    username: "nova_security",
     displayName: "Nova",
     avatarColor: "#7c3aed",
     avatarUrl: "/nova-bot-avatar.png",
@@ -153537,11 +153650,40 @@ var SYSTEM_USERS = [
 ];
 async function runSeed() {
   await db.execute(sql`
-    UPDATE users SET username = 'nova', display_name = 'Nova'
-    WHERE username = 'nova_ai'
-      AND NOT EXISTS (SELECT 1 FROM users WHERE username = 'nova')
+    UPDATE users SET username = 'nova_security', display_name = 'Nova Security'
+    WHERE is_bot = true
+      AND username IN ('nova', 'nova_ai', 'deepseek_ai')
+      AND NOT EXISTS (SELECT 1 FROM users WHERE username = 'nova_security')
   `).catch(() => {
   });
+  const duplicateBots = await db.execute(sql`
+    SELECT id FROM users
+    WHERE is_bot = true
+      AND username IN ('nova', 'nova_ai', 'deepseek_ai')
+      AND EXISTS (SELECT 1 FROM users WHERE username = 'nova_security' AND is_bot = true)
+  `).catch(() => ({ rows: [] }));
+  for (const duplicate of duplicateBots.rows) {
+    const duplicateId = Number(duplicate.id);
+    const duplicateChats = await db.execute(sql`
+      SELECT DISTINCT c.id
+      FROM chats c
+      JOIN chat_members cm ON cm.chat_id = c.id
+      WHERE c.type = 'direct' AND cm.user_id = ${duplicateId}
+    `).catch(() => ({ rows: [] }));
+    for (const chat of duplicateChats.rows) {
+      const chatId = Number(chat.id);
+      await db.execute(sql`DELETE FROM reactions WHERE message_id IN (SELECT id FROM messages WHERE chat_id = ${chatId})`).catch(() => {
+      });
+      await db.execute(sql`DELETE FROM messages WHERE chat_id = ${chatId}`).catch(() => {
+      });
+      await db.execute(sql`DELETE FROM chat_members WHERE chat_id = ${chatId}`).catch(() => {
+      });
+      await db.execute(sql`DELETE FROM chats WHERE id = ${chatId}`).catch(() => {
+      });
+    }
+    await db.execute(sql`DELETE FROM users WHERE id = ${duplicateId}`).catch(() => {
+    });
+  }
   for (const u of SYSTEM_USERS) {
     const rows = await db.execute(sql`SELECT id FROM users WHERE username = ${u.username} LIMIT 1`);
     if (rows.rows.length === 0) {
@@ -153567,7 +153709,7 @@ async function runSeed() {
       `);
     }
   }
-  const botRow = await db.execute(sql`SELECT id FROM users WHERE username = 'nova' AND is_bot = true LIMIT 1`);
+  const botRow = await db.execute(sql`SELECT id FROM users WHERE username = 'nova_security' AND is_bot = true LIMIT 1`);
   const botId = Number(botRow.rows[0]?.id || 0);
   if (botId) {
     const users = await db.execute(sql`SELECT id FROM users WHERE id <> ${botId}`);
