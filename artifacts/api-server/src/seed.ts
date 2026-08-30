@@ -189,7 +189,7 @@ const SYSTEM_USERS: Array<{
     passwordHash: "$2b$12$ejJ4JyOdHbph7ETga8QpdeJTzN28FDCNZ3tw.1B1d/936/2ZDZ/fa",
   },
   {
-    username: "nova",
+    username: "nova_security",
     displayName: "Nova",
     avatarColor: "#7c3aed",
     avatarUrl: "/nova-bot-avatar.png",
@@ -203,9 +203,10 @@ const SYSTEM_USERS: Array<{
 export async function runSeed() {
   // Keep one system bot when upgrading older Nova/Aura databases.
   await db.execute(sql`
-    UPDATE users SET username = 'nova', display_name = 'Nova'
-    WHERE username = 'nova_ai'
-      AND NOT EXISTS (SELECT 1 FROM users WHERE username = 'nova')
+    UPDATE users SET username = 'nova_security', display_name = 'Nova Security'
+    WHERE is_bot = true
+      AND username IN ('nova', 'nova_ai', 'deepseek_ai')
+      AND NOT EXISTS (SELECT 1 FROM users WHERE username = 'nova_security')
   `).catch(() => {});
   // ── 1. Ensure system users exist ──────────────────────────────────────────
   for (const u of SYSTEM_USERS) {
@@ -239,7 +240,7 @@ export async function runSeed() {
 
   // Every account gets a direct system chat. New accounts are also covered by
   // the same helper in the chat list route.
-  const botRow = await db.execute(sql`SELECT id FROM users WHERE username = 'nova' AND is_bot = true LIMIT 1`);
+  const botRow = await db.execute(sql`SELECT id FROM users WHERE username = 'nova_security' AND is_bot = true LIMIT 1`);
   const botId = Number((botRow.rows as any[])[0]?.id || 0);
   if (botId) {
     const users = await db.execute(sql`SELECT id FROM users WHERE id <> ${botId}`);

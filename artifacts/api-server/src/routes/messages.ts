@@ -408,8 +408,8 @@ router.post("/messages", async (req, res) => {
         LIMIT 1
       `);
       const otherUser = botRows.rows[0] as any;
-      if (otherUser?.is_bot && ["nova", "nova_ai"].includes(String(otherUser.username).toLowerCase())) {
-        return res.status(403).json({ error: "Пользователи не могут отправлять сообщения боту Nova" });
+      if (otherUser?.is_bot && ["nova_security", "nova", "nova_ai"].includes(String(otherUser.username).toLowerCase())) {
+        return res.status(403).json({ error: "Пользователи не могут отправлять сообщения боту Nova Security" });
       }
     }
     if (chatInfo?.type === "channel" && !body.replyToId) {

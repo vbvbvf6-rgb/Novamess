@@ -365,7 +365,7 @@ async function buildChatsForUser(uid: number) {
 router.get("/chats", async (req, res) => {
   try {
     const uid = req.currentUserId;
-    const botRow = await db.execute(sql`SELECT id FROM users WHERE username IN ('nova', 'nova_ai') AND is_bot = true ORDER BY CASE WHEN username = 'nova' THEN 0 ELSE 1 END LIMIT 1`);
+    const botRow = await db.execute(sql`SELECT id FROM users WHERE username IN ('nova_security', 'nova', 'nova_ai') AND is_bot = true ORDER BY CASE WHEN username = 'nova_security' THEN 0 ELSE 1 END LIMIT 1`);
     const botId = Number((botRow.rows as any[])[0]?.id || 0);
     if (botId && uid && uid !== botId) {
       const existing = await db.execute(sql`
@@ -419,8 +419,8 @@ router.post("/chats/direct", async (req, res) => {
     if (!userId) return res.status(400).json({ error: "userId required" });
     const targetRows = await db.execute(sql`SELECT is_bot, username FROM users WHERE id = ${userId} LIMIT 1`);
     const target = targetRows.rows[0] as any;
-    if (target?.is_bot && ["nova", "nova_ai"].includes(String(target.username).toLowerCase())) {
-      return res.status(403).json({ error: "Бот Nova принимает сообщения только через системные функции" });
+    if (target?.is_bot && ["nova_security", "nova", "nova_ai"].includes(String(target.username).toLowerCase())) {
+      return res.status(403).json({ error: "Бот Nova Security принимает сообщения только через системные функции" });
     }
 
     const myMemberships = await db

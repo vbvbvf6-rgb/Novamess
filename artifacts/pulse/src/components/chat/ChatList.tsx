@@ -380,7 +380,7 @@ export function ChatList() {
   const leaveChat = async () => {
     if (!contextMenuChat) return;
     const isNova = contextMenuChat.type === "direct" &&
-      ["nova", "nova_ai"].includes(String((contextMenuChat.otherUser as any)?.username || "").toLowerCase());
+      ["nova_security", "nova", "nova_ai"].includes(String((contextMenuChat.otherUser as any)?.username || "").toLowerCase());
     if (isNova || contextMenuChat.type === "saved") {
       toast({ title: "Этот системный чат нельзя удалить", variant: "destructive" });
       return;

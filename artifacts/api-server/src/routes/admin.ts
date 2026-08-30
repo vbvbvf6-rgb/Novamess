@@ -552,7 +552,7 @@ router.post("/admin/broadcast", requireAdmin, async (req, res) => {
     if (!text || !String(text).trim()) return res.status(400).json({ error: "Укажите текст объявления" });
 
     // Find the bot by username (not hardcoded ID)
-    const botRow = await db.execute(sql`SELECT id FROM users WHERE username IN ('nova', 'nova_ai') AND is_bot = true ORDER BY CASE WHEN username = 'nova' THEN 0 ELSE 1 END LIMIT 1`);
+    const botRow = await db.execute(sql`SELECT id FROM users WHERE username IN ('nova_security', 'nova', 'nova_ai') AND is_bot = true ORDER BY CASE WHEN username = 'nova_security' THEN 0 ELSE 1 END LIMIT 1`);
     const botId = (botRow.rows[0] as any)?.id;
     if (!botId) return res.status(404).json({ error: "Бот не найден. Перезапустите сервер для создания системных пользователей." });
 
