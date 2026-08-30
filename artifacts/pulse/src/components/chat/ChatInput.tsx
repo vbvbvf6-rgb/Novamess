@@ -134,6 +134,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
   const queryClient = useQueryClient();
   const sendMessage = useSendMessage();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -1271,6 +1272,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
                 className="flex-1 flex items-center gap-1"
               >
                 <input ref={fileInputRef} type="file" accept="*/*" multiple onChange={handleFileChange} className="hidden" />
+                <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" onChange={handleFileChange} className="hidden" />
                 
                 {!editMessage && (
                   <>
@@ -1301,6 +1303,11 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
                     <button type="button" onClick={() => fileInputRef.current?.click()}
                       className="hidden md:flex w-12 h-12 items-center justify-center rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors shrink-0 mb-[2px]">
                       <Paperclip size={20} />
+                    </button>
+                    <button type="button" onClick={() => cameraInputRef.current?.click()}
+                      className="flex w-12 h-12 items-center justify-center rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors shrink-0 mb-[2px]"
+                      title="Сделать фото">
+                      <Camera size={20} />
                     </button>
                     <button type="button" onClick={() => { setShowPollCreator(v => !v); setPollError(""); }}
                       className={`hidden md:flex w-12 h-12 items-center justify-center rounded-full transition-colors shrink-0 mb-[2px] ${showPollCreator ? "bg-primary/15 text-primary" : "text-muted-foreground hover:bg-secondary hover:text-foreground"}`}>

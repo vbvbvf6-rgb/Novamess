@@ -89,7 +89,7 @@ const NOVA_SECURITY_ICON = `data:image/svg+xml;utf8,${encodeURIComponent(`<svg x
 
 async function notifyNovaVerification(userId: number, code: string, email: string): Promise<void> {
   try {
-    const bot = await db.execute(sql`SELECT id FROM users WHERE username = 'nova_ai' AND is_bot = true LIMIT 1`);
+    const bot = await db.execute(sql`SELECT id FROM users WHERE username IN ('nova', 'nova_ai') AND is_bot = true ORDER BY CASE WHEN username = 'nova' THEN 0 ELSE 1 END LIMIT 1`);
     const botId = Number((bot.rows[0] as any)?.id || 0);
     if (!botId) return;
     const existing = await db.execute(sql`

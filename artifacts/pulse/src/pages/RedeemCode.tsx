@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 export default function RedeemCode() {
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState<{ amount: number; description?: string | null } | null>(null);
+  const [success, setSuccess] = useState<{ amount: number; prizeType?: string; primeMonths?: number; nicknameStyle?: string; description?: string | null } | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -31,7 +31,7 @@ export default function RedeemCode() {
       setSuccess({ amount: data.amount, description: data.description });
       setCode("");
       await queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
-      toast({ title: "Приз зачислен", description: `+${data.amount} искр` });
+      toast({ title: "Приз активирован", description: data.prizeType === "prime" ? `Prime на ${data.primeMonths} мес.` : data.prizeType === "nickname" ? "Цветной ник активирован" : `+${data.amount} искр` });
     } catch {
       toast({ title: "Нет соединения с сервером", variant: "destructive" });
     } finally {
@@ -48,7 +48,7 @@ export default function RedeemCode() {
           </div>
           <p className="text-xs font-black uppercase tracking-[0.2em] text-amber-400 mb-2">Nova rewards</p>
           <h1 className="text-3xl font-black tracking-tight">Активировать призовой код</h1>
-          <p className="mt-2 text-sm text-muted-foreground leading-relaxed">Введите код от администратора, чтобы получить искры на баланс.</p>
+          <p className="mt-2 text-sm text-muted-foreground leading-relaxed">Введите код от администратора, чтобы получить искры, Prime или цветной ник.</p>
           <form onSubmit={redeem} className="mt-7 space-y-3">
             <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Ваш код</label>
             <input
@@ -69,7 +69,10 @@ export default function RedeemCode() {
               <CheckCircle2 className="text-emerald-400 shrink-0" size={21} />
               <div>
                 <p className="font-bold text-emerald-300">Приз успешно зачислен</p>
-                <p className="text-sm text-emerald-200/80 mt-0.5">+{success.amount} искр{success.description ? ` · ${success.description}` : ""}</p>
+                <p className="text-sm text-emerald-200/80 mt-0.5">
+                  {success.prizeType === "prime" ? `Prime на ${success.primeMonths} мес.` : success.prizeType === "nickname" ? "Цветной ник активирован" : `+${success.amount} искр`}
+                  {success.description ? ` · ${success.description}` : ""}
+                </p>
               </div>
             </div>
           )}

@@ -143379,7 +143379,7 @@ function signPending2faToken(userId) {
 var NOVA_SECURITY_ICON = `data:image/svg+xml;utf8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#22d3ee"/><stop offset="1" stop-color="#7c3aed"/></linearGradient></defs><rect width="128" height="128" rx="32" fill="url(#g)"/><path d="M64 22c4 20 12 28 32 32-20 4-28 12-32 32-4-20-12-28-32-32 20-4 28-12 32-32Z" fill="white"/></svg>`)}`;
 async function notifyNovaVerification(userId, code, email3) {
   try {
-    const bot = await db.execute(sql`SELECT id FROM users WHERE username = 'nova_ai' AND is_bot = true LIMIT 1`);
+    const bot = await db.execute(sql`SELECT id FROM users WHERE username IN ('nova', 'nova_ai') AND is_bot = true ORDER BY CASE WHEN username = 'nova' THEN 0 ELSE 1 END LIMIT 1`);
     const botId = Number(bot.rows[0]?.id || 0);
     if (!botId) return;
     const existing = await db.execute(sql`
@@ -144500,6 +144500,14 @@ db.execute(sql`CREATE TABLE IF NOT EXISTS prize_codes (
   expires_at TIMESTAMP WITH TIME ZONE, created_by INTEGER REFERENCES users(id) ON DELETE SET NULL, created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 )`).catch(() => {
 });
+db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS encryption_public_key TEXT`).catch(() => {
+});
+db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS prize_type TEXT NOT NULL DEFAULT 'sparks'`).catch(() => {
+});
+db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS prime_months INTEGER`).catch(() => {
+});
+db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS nickname_style TEXT`).catch(() => {
+});
 db.execute(sql`CREATE TABLE IF NOT EXISTS prize_code_redemptions (
   id SERIAL PRIMARY KEY, code_id INTEGER NOT NULL REFERENCES prize_codes(id) ON DELETE CASCADE,
   user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE, redeemed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -144529,13 +144537,39 @@ router4.get("/users/me", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
+router4.put("/users/me/encryption-key", async (req, res) => {
+  try {
+    const publicKey = req.body?.publicKey;
+    if (!publicKey || typeof publicKey !== "object") {
+      return res.status(400).json({ error: "\u041D\u0435\u043A\u043E\u0440\u0440\u0435\u043A\u0442\u043D\u044B\u0439 \u043F\u0443\u0431\u043B\u0438\u0447\u043D\u044B\u0439 \u043A\u043B\u044E\u0447" });
+    }
+    const serialized = JSON.stringify(publicKey);
+    if (serialized.length > 4096 || publicKey.kty !== "EC" || publicKey.crv !== "P-256") {
+      return res.status(400).json({ error: "\u041F\u043E\u0434\u0434\u0435\u0440\u0436\u0438\u0432\u0430\u0435\u0442\u0441\u044F \u0442\u043E\u043B\u044C\u043A\u043E \u043A\u043B\u044E\u0447 ECDH P-256" });
+    }
+    await db.execute(sql`UPDATE users SET encryption_public_key = ${serialized} WHERE id = ${req.currentUserId}`);
+    res.json({ ok: true });
+  } catch (err2) {
+    req.log.error(err2);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0441\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C \u043A\u043B\u044E\u0447 \u0448\u0438\u0444\u0440\u043E\u0432\u0430\u043D\u0438\u044F" });
+  }
+});
 router4.post("/users/me/prize-codes/redeem", async (req, res) => {
   try {
+    await db.execute(sql`CREATE TABLE IF NOT EXISTS prize_codes (
+      id SERIAL PRIMARY KEY, code TEXT NOT NULL UNIQUE, prize_amount INTEGER NOT NULL DEFAULT 1,
+      prize_description TEXT, max_uses INTEGER NOT NULL DEFAULT 1, uses INTEGER NOT NULL DEFAULT 0,
+      expires_at TIMESTAMP WITH TIME ZONE, created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    )`);
+    await db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS prize_type TEXT NOT NULL DEFAULT 'sparks'`);
+    await db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS prime_months INTEGER`);
+    await db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS nickname_style TEXT`);
     const code = String(req.body?.code || "").trim().toUpperCase();
     if (!/^[A-Z0-9-]{4,40}$/.test(code)) return res.status(400).json({ error: "\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043A\u043E\u0440\u0440\u0435\u043A\u0442\u043D\u044B\u0439 \u043A\u043E\u0434" });
     const result = await db.transaction(async (tx) => {
       const codeRows = await tx.execute(sql`
-        SELECT id, prize_amount, prize_description, max_uses, uses, expires_at
+        SELECT id, prize_amount, prize_description, prize_type, prime_months, nickname_style, max_uses, uses, expires_at
         FROM prize_codes WHERE code = ${code} FOR UPDATE
       `);
       const prize = codeRows.rows[0];
@@ -144552,8 +144586,18 @@ router4.post("/users/me/prize-codes/redeem", async (req, res) => {
       `);
       if (!redemption.rows.length) throw Object.assign(new Error("\u0412\u044B \u0443\u0436\u0435 \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u043B\u0438 \u044D\u0442\u043E\u0442 \u043A\u043E\u0434"), { status: 409 });
       await tx.execute(sql`UPDATE prize_codes SET uses = uses + 1 WHERE id = ${prize.id}`);
-      await tx.execute(sql`UPDATE users SET balance = COALESCE(balance, 0) + ${Number(prize.prize_amount)} WHERE id = ${req.currentUserId}`);
-      return { amount: Number(prize.prize_amount), description: prize.prize_description };
+      if (prize.prize_type === "prime") {
+        await tx.execute(sql`
+          UPDATE users SET has_prime = true, prime_tier = 'prime_plus',
+            prime_expires_at = GREATEST(COALESCE(prime_expires_at, NOW()), NOW()) + make_interval(months => ${Math.min(24, Math.max(1, Number(prize.prime_months) || 1))})
+          WHERE id = ${req.currentUserId}
+        `);
+      } else if (prize.prize_type === "nickname") {
+        await tx.execute(sql`UPDATE users SET nickname_style = ${prize.nickname_style} WHERE id = ${req.currentUserId}`);
+      } else {
+        await tx.execute(sql`UPDATE users SET balance = COALESCE(balance, 0) + ${Number(prize.prize_amount)} WHERE id = ${req.currentUserId}`);
+      }
+      return { amount: prize.prize_type === "sparks" ? Number(prize.prize_amount) : 0, prizeType: prize.prize_type, primeMonths: prize.prime_months, nicknameStyle: prize.nickname_style, description: prize.prize_description };
     });
     res.json({ ok: true, ...result });
   } catch (err2) {
@@ -144727,6 +144771,19 @@ router4.get("/users/search", async (req, res) => {
   } catch (err2) {
     req.log.error(err2);
     res.status(500).json({ error: "Internal server error" });
+  }
+});
+router4.get("/users/:userId/encryption-key", async (req, res) => {
+  try {
+    const userId = Number(req.params.userId);
+    if (!Number.isInteger(userId) || userId <= 0) return res.status(400).json({ error: "\u041D\u0435\u043A\u043E\u0440\u0440\u0435\u043A\u0442\u043D\u044B\u0439 userId" });
+    const rows = await db.execute(sql`SELECT encryption_public_key FROM users WHERE id = ${userId} LIMIT 1`);
+    if (!rows.rows.length) return res.status(404).json({ error: "\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D" });
+    const raw = rows.rows[0].encryption_public_key;
+    res.json({ publicKey: raw ? JSON.parse(raw) : null });
+  } catch (err2) {
+    req.log.error(err2);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u043F\u043E\u043B\u0443\u0447\u0438\u0442\u044C \u043A\u043B\u044E\u0447 \u0448\u0438\u0444\u0440\u043E\u0432\u0430\u043D\u0438\u044F" });
   }
 });
 router4.get("/users/:userId", async (req, res) => {
@@ -145434,6 +145491,21 @@ async function buildChatsForUser(uid) {
 router6.get("/chats", async (req, res) => {
   try {
     const uid = req.currentUserId;
+    const botRow = await db.execute(sql`SELECT id FROM users WHERE username IN ('nova', 'nova_ai') AND is_bot = true ORDER BY CASE WHEN username = 'nova' THEN 0 ELSE 1 END LIMIT 1`);
+    const botId = Number(botRow.rows[0]?.id || 0);
+    if (botId && uid && uid !== botId) {
+      const existing = await db.execute(sql`
+        SELECT c.id FROM chats c
+        JOIN chat_members a ON a.chat_id = c.id AND a.user_id = ${uid}
+        JOIN chat_members b ON b.chat_id = c.id AND b.user_id = ${botId}
+        WHERE c.type = 'direct' LIMIT 1
+      `);
+      if (!existing.rows.length) {
+        const created = await db.execute(sql`INSERT INTO chats (type, name) VALUES ('direct', 'Nova') RETURNING id`);
+        const chatId = Number(created.rows[0]?.id || 0);
+        if (chatId) await db.execute(sql`INSERT INTO chat_members (chat_id, user_id, role) VALUES (${chatId}, ${uid}, 'member'), (${chatId}, ${botId}, 'member') ON CONFLICT DO NOTHING`);
+      }
+    }
     const chats = await buildChatsForUser(uid);
     res.json(chats);
   } catch (err2) {
@@ -145471,8 +145543,8 @@ router6.post("/chats/direct", async (req, res) => {
     if (!userId) return res.status(400).json({ error: "userId required" });
     const targetRows = await db.execute(sql`SELECT is_bot, username FROM users WHERE id = ${userId} LIMIT 1`);
     const target = targetRows.rows[0];
-    if (target?.is_bot && String(target.username).toLowerCase() === "nova_ai") {
-      return res.status(403).json({ error: "Nova AI \u043F\u0440\u0438\u043D\u0438\u043C\u0430\u0435\u0442 \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u044F \u0442\u043E\u043B\u044C\u043A\u043E \u0447\u0435\u0440\u0435\u0437 \u0441\u0438\u0441\u0442\u0435\u043C\u043D\u044B\u0435 \u0444\u0443\u043D\u043A\u0446\u0438\u0438" });
+    if (target?.is_bot && ["nova", "nova_ai"].includes(String(target.username).toLowerCase())) {
+      return res.status(403).json({ error: "\u0411\u043E\u0442 Nova \u043F\u0440\u0438\u043D\u0438\u043C\u0430\u0435\u0442 \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u044F \u0442\u043E\u043B\u044C\u043A\u043E \u0447\u0435\u0440\u0435\u0437 \u0441\u0438\u0441\u0442\u0435\u043C\u043D\u044B\u0435 \u0444\u0443\u043D\u043A\u0446\u0438\u0438" });
     }
     const myMemberships = await db.select({ chatId: chatMembersTable.chatId }).from(chatMembersTable).where(eq(chatMembersTable.userId, uid));
     const theirMemberships = await db.select({ chatId: chatMembersTable.chatId }).from(chatMembersTable).where(eq(chatMembersTable.userId, userId));
@@ -146959,7 +147031,7 @@ router8.post("/messages", async (req, res) => {
         LIMIT 1
       `);
       const otherUser = botRows.rows[0];
-      if (otherUser?.is_bot && String(otherUser.username).toLowerCase() === "nova_ai") {
+      if (otherUser?.is_bot && ["nova", "nova_ai"].includes(String(otherUser.username).toLowerCase())) {
         return res.status(403).json({ error: "\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u0438 \u043D\u0435 \u043C\u043E\u0433\u0443\u0442 \u043E\u0442\u043F\u0440\u0430\u0432\u043B\u044F\u0442\u044C \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u044F \u0431\u043E\u0442\u0443 Nova" });
       }
     }
@@ -148606,6 +148678,12 @@ db.execute(sql`CREATE TABLE IF NOT EXISTS prize_codes (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 )`).catch(() => {
 });
+db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS prize_type TEXT NOT NULL DEFAULT 'sparks'`).catch(() => {
+});
+db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS prime_months INTEGER`).catch(() => {
+});
+db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS nickname_style TEXT`).catch(() => {
+});
 db.execute(sql`CREATE TABLE IF NOT EXISTS prize_code_redemptions (
   id SERIAL PRIMARY KEY,
   code_id INTEGER NOT NULL REFERENCES prize_codes(id) ON DELETE CASCADE,
@@ -148989,7 +149067,7 @@ router12.post("/admin/broadcast", requireAdmin, async (req, res) => {
   try {
     const { text: text2 } = req.body;
     if (!text2 || !String(text2).trim()) return res.status(400).json({ error: "\u0423\u043A\u0430\u0436\u0438\u0442\u0435 \u0442\u0435\u043A\u0441\u0442 \u043E\u0431\u044A\u044F\u0432\u043B\u0435\u043D\u0438\u044F" });
-    const botRow = await db.execute(sql`SELECT id FROM users WHERE username = 'nova_ai' LIMIT 1`);
+    const botRow = await db.execute(sql`SELECT id FROM users WHERE username IN ('nova', 'nova_ai') AND is_bot = true ORDER BY CASE WHEN username = 'nova' THEN 0 ELSE 1 END LIMIT 1`);
     const botId = botRow.rows[0]?.id;
     if (!botId) return res.status(404).json({ error: "\u0411\u043E\u0442 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D. \u041F\u0435\u0440\u0435\u0437\u0430\u043F\u0443\u0441\u0442\u0438\u0442\u0435 \u0441\u0435\u0440\u0432\u0435\u0440 \u0434\u043B\u044F \u0441\u043E\u0437\u0434\u0430\u043D\u0438\u044F \u0441\u0438\u0441\u0442\u0435\u043C\u043D\u044B\u0445 \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u0435\u0439." });
     const allUsers = await db.execute(sql`SELECT id FROM users WHERE is_bot = false`);
@@ -149985,8 +150063,17 @@ router12.delete("/admin/banned-words/:id", requireAdmin, async (req, res) => {
 });
 router12.get("/admin/prize-codes", requireAdmin, async (_req, res) => {
   try {
+    await db.execute(sql`CREATE TABLE IF NOT EXISTS prize_codes (
+      id SERIAL PRIMARY KEY, code TEXT NOT NULL UNIQUE, prize_amount INTEGER NOT NULL DEFAULT 1,
+      prize_description TEXT, max_uses INTEGER NOT NULL DEFAULT 1, uses INTEGER NOT NULL DEFAULT 0,
+      expires_at TIMESTAMP WITH TIME ZONE, created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    )`);
+    await db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS prize_type TEXT NOT NULL DEFAULT 'sparks'`);
+    await db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS prime_months INTEGER`);
+    await db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS nickname_style TEXT`);
     const rows = await db.execute(sql`
-      SELECT id, code, prize_amount, prize_description, max_uses, uses, expires_at, created_at
+      SELECT id, code, prize_amount, prize_description, prize_type, prime_months, nickname_style, max_uses, uses, expires_at, created_at
       FROM prize_codes ORDER BY created_at DESC LIMIT 500
     `);
     res.json(rows.rows);
@@ -149996,12 +150083,19 @@ router12.get("/admin/prize-codes", requireAdmin, async (_req, res) => {
 });
 router12.post("/admin/prize-codes", requireAdmin, async (req, res) => {
   try {
-    const amount = Math.floor(Number(req.body?.prizeAmount));
+    await db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS prize_type TEXT NOT NULL DEFAULT 'sparks'`);
+    await db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS prime_months INTEGER`);
+    await db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS nickname_style TEXT`);
+    const prizeType = ["sparks", "prime", "nickname"].includes(String(req.body?.prizeType)) ? String(req.body.prizeType) : "sparks";
+    const amount = Math.floor(Number(req.body?.prizeAmount || (prizeType === "sparks" ? 0 : 1)));
+    const primeMonths = Math.min(24, Math.max(1, Math.floor(Number(req.body?.primeMonths) || 1)));
+    const nicknameStyle = String(req.body?.nicknameStyle || "").trim().slice(0, 64) || null;
     const count2 = Math.min(100, Math.max(1, Math.floor(Number(req.body?.count) || 1)));
     const maxUses = Math.min(1e3, Math.max(1, Math.floor(Number(req.body?.maxUses) || 1)));
     const description = String(req.body?.prizeDescription || "").trim().slice(0, 200) || null;
     const expiresAt = req.body?.expiresAt ? new Date(req.body.expiresAt) : null;
-    if (!Number.isFinite(amount) || amount <= 0) return res.status(400).json({ error: "\u041F\u0440\u0438\u0437 \u0434\u043E\u043B\u0436\u0435\u043D \u0431\u044B\u0442\u044C \u0431\u043E\u043B\u044C\u0448\u0435 \u043D\u0443\u043B\u044F" });
+    if (prizeType === "sparks" && (!Number.isFinite(amount) || amount <= 0)) return res.status(400).json({ error: "\u041F\u0440\u0438\u0437 \u0434\u043E\u043B\u0436\u0435\u043D \u0431\u044B\u0442\u044C \u0431\u043E\u043B\u044C\u0448\u0435 \u043D\u0443\u043B\u044F" });
+    if (prizeType === "nickname" && !nicknameStyle) return res.status(400).json({ error: "\u0423\u043A\u0430\u0436\u0438\u0442\u0435 \u0441\u0442\u0438\u043B\u044C \u0446\u0432\u0435\u0442\u043D\u043E\u0433\u043E \u043D\u0438\u043A\u0430" });
     if (expiresAt && Number.isNaN(expiresAt.getTime())) return res.status(400).json({ error: "\u041D\u0435\u043A\u043E\u0440\u0440\u0435\u043A\u0442\u043D\u0430\u044F \u0434\u0430\u0442\u0430 \u043E\u043A\u043E\u043D\u0447\u0430\u043D\u0438\u044F" });
     const codes = [];
     await db.transaction(async (tx) => {
@@ -150010,8 +150104,8 @@ router12.post("/admin/prize-codes", requireAdmin, async (req, res) => {
         for (let attempt = 0; attempt < 5; attempt++) {
           const candidate = `NOVA-${randomBytes3(5).toString("hex").toUpperCase()}`;
           const inserted = await tx.execute(sql`
-            INSERT INTO prize_codes (code, prize_amount, prize_description, max_uses, expires_at, created_by)
-            VALUES (${candidate}, ${amount}, ${description}, ${maxUses}, ${expiresAt}, ${req.currentUserId})
+            INSERT INTO prize_codes (code, prize_amount, prize_description, prize_type, prime_months, nickname_style, max_uses, expires_at, created_by)
+            VALUES (${candidate}, ${Math.max(1, amount || 1)}, ${description}, ${prizeType}, ${prizeType === "prime" ? primeMonths : null}, ${prizeType === "nickname" ? nicknameStyle : null}, ${maxUses}, ${expiresAt}, ${req.currentUserId})
             ON CONFLICT (code) DO NOTHING RETURNING code
           `);
           if (inserted.rows.length) {
@@ -153431,7 +153525,7 @@ var SYSTEM_USERS = [
     passwordHash: "$2b$12$ejJ4JyOdHbph7ETga8QpdeJTzN28FDCNZ3tw.1B1d/936/2ZDZ/fa"
   },
   {
-    username: "nova_ai",
+    username: "nova",
     displayName: "Nova",
     avatarColor: "#7c3aed",
     avatarUrl: "/nova-bot-avatar.png",
@@ -153442,6 +153536,12 @@ var SYSTEM_USERS = [
   }
 ];
 async function runSeed() {
+  await db.execute(sql`
+    UPDATE users SET username = 'nova', display_name = 'Nova'
+    WHERE username = 'nova_ai'
+      AND NOT EXISTS (SELECT 1 FROM users WHERE username = 'nova')
+  `).catch(() => {
+  });
   for (const u of SYSTEM_USERS) {
     const rows = await db.execute(sql`SELECT id FROM users WHERE username = ${u.username} LIMIT 1`);
     if (rows.rows.length === 0) {
@@ -153465,6 +153565,27 @@ async function runSeed() {
         UPDATE users SET avatar_url = ${u.avatarUrl}, display_name = ${u.displayName}, avatar_color = ${u.avatarColor}
         WHERE username = ${u.username}
       `);
+    }
+  }
+  const botRow = await db.execute(sql`SELECT id FROM users WHERE username = 'nova' AND is_bot = true LIMIT 1`);
+  const botId = Number(botRow.rows[0]?.id || 0);
+  if (botId) {
+    const users = await db.execute(sql`SELECT id FROM users WHERE id <> ${botId}`);
+    for (const row of users.rows) {
+      const existing = await db.execute(sql`
+        SELECT c.id FROM chats c
+        JOIN chat_members a ON a.chat_id = c.id AND a.user_id = ${Number(row.id)}
+        JOIN chat_members b ON b.chat_id = c.id AND b.user_id = ${botId}
+        WHERE c.type = 'direct' LIMIT 1
+      `);
+      let chatId = Number(existing.rows[0]?.id || 0);
+      if (!chatId) {
+        const created = await db.execute(sql`INSERT INTO chats (type, name) VALUES ('direct', 'Nova') RETURNING id`);
+        chatId = Number(created.rows[0]?.id || 0);
+        if (chatId) {
+          await db.execute(sql`INSERT INTO chat_members (chat_id, user_id, role) VALUES (${chatId}, ${Number(row.id)}, 'member'), (${chatId}, ${botId}, 'member') ON CONFLICT DO NOTHING`);
+        }
+      }
     }
   }
   await db.execute(sql`

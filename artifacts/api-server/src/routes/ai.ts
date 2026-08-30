@@ -4,7 +4,7 @@ import { sql } from "drizzle-orm";
 
 const router = Router();
 
-const BOT_USERNAME = "nova_ai";
+const BOT_USERNAME = "nova";
 const TIMEOUT_MS = 7000;
 const MAX_TOKENS = 500;
 

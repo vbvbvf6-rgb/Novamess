@@ -13,6 +13,9 @@ db.execute(sql`CREATE TABLE IF NOT EXISTS prize_codes (
   expires_at TIMESTAMP WITH TIME ZONE, created_by INTEGER REFERENCES users(id) ON DELETE SET NULL, created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 )`).catch(() => {});
 db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS encryption_public_key TEXT`).catch(() => {});
+db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS prize_type TEXT NOT NULL DEFAULT 'sparks'`).catch(() => {});
+db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS prime_months INTEGER`).catch(() => {});
+db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS nickname_style TEXT`).catch(() => {});
 db.execute(sql`CREATE TABLE IF NOT EXISTS prize_code_redemptions (
   id SERIAL PRIMARY KEY, code_id INTEGER NOT NULL REFERENCES prize_codes(id) ON DELETE CASCADE,
   user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE, redeemed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -63,11 +66,20 @@ router.put("/users/me/encryption-key", async (req, res) => {
 
 router.post("/users/me/prize-codes/redeem", async (req, res) => {
   try {
+    await db.execute(sql`CREATE TABLE IF NOT EXISTS prize_codes (
+      id SERIAL PRIMARY KEY, code TEXT NOT NULL UNIQUE, prize_amount INTEGER NOT NULL DEFAULT 1,
+      prize_description TEXT, max_uses INTEGER NOT NULL DEFAULT 1, uses INTEGER NOT NULL DEFAULT 0,
+      expires_at TIMESTAMP WITH TIME ZONE, created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    )`);
+    await db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS prize_type TEXT NOT NULL DEFAULT 'sparks'`);
+    await db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS prime_months INTEGER`);
+    await db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS nickname_style TEXT`);
     const code = String(req.body?.code || "").trim().toUpperCase();
     if (!/^[A-Z0-9-]{4,40}$/.test(code)) return res.status(400).json({ error: "Введите корректный код" });
     const result = await db.transaction(async (tx) => {
       const codeRows = await tx.execute(sql`
-        SELECT id, prize_amount, prize_description, max_uses, uses, expires_at
+        SELECT id, prize_amount, prize_description, prize_type, prime_months, nickname_style, max_uses, uses, expires_at
         FROM prize_codes WHERE code = ${code} FOR UPDATE
       `);
       const prize = codeRows.rows[0] as any;
@@ -84,8 +96,18 @@ router.post("/users/me/prize-codes/redeem", async (req, res) => {
       `);
       if (!redemption.rows.length) throw Object.assign(new Error("Вы уже использовали этот код"), { status: 409 });
       await tx.execute(sql`UPDATE prize_codes SET uses = uses + 1 WHERE id = ${prize.id}`);
-      await tx.execute(sql`UPDATE users SET balance = COALESCE(balance, 0) + ${Number(prize.prize_amount)} WHERE id = ${req.currentUserId}`);
-      return { amount: Number(prize.prize_amount), description: prize.prize_description };
+      if (prize.prize_type === "prime") {
+        await tx.execute(sql`
+          UPDATE users SET has_prime = true, prime_tier = 'prime_plus',
+            prime_expires_at = GREATEST(COALESCE(prime_expires_at, NOW()), NOW()) + make_interval(months => ${Math.min(24, Math.max(1, Number(prize.prime_months) || 1))})
+          WHERE id = ${req.currentUserId}
+        `);
+      } else if (prize.prize_type === "nickname") {
+        await tx.execute(sql`UPDATE users SET nickname_style = ${prize.nickname_style} WHERE id = ${req.currentUserId}`);
+      } else {
+        await tx.execute(sql`UPDATE users SET balance = COALESCE(balance, 0) + ${Number(prize.prize_amount)} WHERE id = ${req.currentUserId}`);
+      }
+      return { amount: prize.prize_type === "sparks" ? Number(prize.prize_amount) : 0, prizeType: prize.prize_type, primeMonths: prize.prime_months, nicknameStyle: prize.nickname_style, description: prize.prize_description };
     });
     res.json({ ok: true, ...result });
   } catch (err: any) {

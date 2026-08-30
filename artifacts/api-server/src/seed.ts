@@ -189,7 +189,7 @@ const SYSTEM_USERS: Array<{
     passwordHash: "$2b$12$ejJ4JyOdHbph7ETga8QpdeJTzN28FDCNZ3tw.1B1d/936/2ZDZ/fa",
   },
   {
-    username: "nova_ai",
+    username: "nova",
     displayName: "Nova",
     avatarColor: "#7c3aed",
     avatarUrl: "/nova-bot-avatar.png",
@@ -201,6 +201,12 @@ const SYSTEM_USERS: Array<{
 ];
 
 export async function runSeed() {
+  // Keep one system bot when upgrading older Nova/Aura databases.
+  await db.execute(sql`
+    UPDATE users SET username = 'nova', display_name = 'Nova'
+    WHERE username = 'nova_ai'
+      AND NOT EXISTS (SELECT 1 FROM users WHERE username = 'nova')
+  `).catch(() => {});
   // ── 1. Ensure system users exist ──────────────────────────────────────────
   for (const u of SYSTEM_USERS) {
     const rows = await db.execute(sql`SELECT id FROM users WHERE username = ${u.username} LIMIT 1`);
@@ -228,6 +234,30 @@ export async function runSeed() {
         UPDATE users SET avatar_url = ${u.avatarUrl}, display_name = ${u.displayName}, avatar_color = ${u.avatarColor}
         WHERE username = ${u.username}
       `);
+    }
+  }
+
+  // Every account gets a direct system chat. New accounts are also covered by
+  // the same helper in the chat list route.
+  const botRow = await db.execute(sql`SELECT id FROM users WHERE username = 'nova' AND is_bot = true LIMIT 1`);
+  const botId = Number((botRow.rows as any[])[0]?.id || 0);
+  if (botId) {
+    const users = await db.execute(sql`SELECT id FROM users WHERE id <> ${botId}`);
+    for (const row of users.rows as any[]) {
+      const existing = await db.execute(sql`
+        SELECT c.id FROM chats c
+        JOIN chat_members a ON a.chat_id = c.id AND a.user_id = ${Number(row.id)}
+        JOIN chat_members b ON b.chat_id = c.id AND b.user_id = ${botId}
+        WHERE c.type = 'direct' LIMIT 1
+      `);
+      let chatId = Number((existing.rows as any[])[0]?.id || 0);
+      if (!chatId) {
+        const created = await db.execute(sql`INSERT INTO chats (type, name) VALUES ('direct', 'Nova') RETURNING id`);
+        chatId = Number((created.rows as any[])[0]?.id || 0);
+        if (chatId) {
+          await db.execute(sql`INSERT INTO chat_members (chat_id, user_id, role) VALUES (${chatId}, ${Number(row.id)}, 'member'), (${chatId}, ${botId}, 'member') ON CONFLICT DO NOTHING`);
+        }
+      }
     }
   }
 

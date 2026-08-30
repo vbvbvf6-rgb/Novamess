@@ -446,6 +446,7 @@ export default function UserProfile() {
 
   const isContact = contacts?.some((c: { id: number }) => c.id === userId) ?? false;
   const isMe = userId === 1;
+  const isBot = Boolean((user as any)?.isBot ?? (user as any)?.is_bot);
 
   const commonChats = chats?.filter((chat: { type: string; otherUser?: { id: number } | null; members?: { userId: number }[] }) => {
     if (chat.type === "direct") return chat.otherUser?.id === userId;
@@ -561,15 +562,15 @@ export default function UserProfile() {
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-52">
-                {isContact ? (
+                {!isBot && isContact ? (
                   <DropdownMenuItem onClick={handleRemoveContact} className="text-destructive focus:text-destructive">
                     <UserMinus size={15} className="mr-2" /> Удалить из контактов
                   </DropdownMenuItem>
-                ) : (
+                ) : !isBot ? (
                   <DropdownMenuItem onClick={handleAddContact}>
                     <UserPlus size={15} className="mr-2" /> Добавить в контакты
                   </DropdownMenuItem>
-                )}
+                ) : null}
                 <DropdownMenuItem
                   onClick={handleBlock}
                   disabled={blockLoading}
@@ -671,7 +672,7 @@ export default function UserProfile() {
                     >
                       <MessageSquare size={18} />
                     </motion.button>
-                    {isContact ? (
+                    {!isBot && isContact ? (
                       <motion.button
                         whileHover={{ scale: 1.08 }}
                         whileTap={{ scale: 0.95 }}
@@ -680,7 +681,7 @@ export default function UserProfile() {
                       >
                         <UserMinus size={18} />
                       </motion.button>
-                    ) : (
+                    ) : !isBot ? (
                       <motion.button
                         whileHover={{ scale: 1.08 }}
                         whileTap={{ scale: 0.95 }}
@@ -690,7 +691,7 @@ export default function UserProfile() {
                       >
                         <UserPlus size={18} />
                       </motion.button>
-                    )}
+                    ) : null}
                   </div>
                 )}
               </div>

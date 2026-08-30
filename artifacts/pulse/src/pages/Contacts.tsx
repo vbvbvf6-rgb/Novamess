@@ -205,7 +205,7 @@ export default function Contacts() {
     setEditingNicknameId(null);
   };
 
-  const isBotUser = (u: any) => Boolean(u?.is_bot || u?.isBot || ["nova_ai", "deepseek_ai"].includes((u?.username || "").toLowerCase()));
+  const isBotUser = (u: any) => Boolean(u?.is_bot || u?.isBot || ["nova", "nova_ai", "deepseek_ai"].includes((u?.username || "").toLowerCase()));
   const rawUsers = searchQuery.length > 0 ? searchResults : contacts;
   const displayUsers = (rawUsers as any[])?.filter((u: any) => !isBotUser(u) && !u?.isGroup && !u?.isChannel && u?.type !== "group" && u?.type !== "channel");
   const isLoading = searchQuery.length > 0 ? searchLoading : contactsLoading;

@@ -1,11 +1,25 @@
 import { useEffect, useState } from "react";
 
+export const NOVA_ICON_PRESETS = [
+  { id: "orange", label: "Оранжевый", colors: ["#ffd166", "#ff5c1a", "#d63600"] },
+  { id: "violet", label: "Фиолетовый", colors: ["#c084fc", "#7c3aed", "#4c1d95"] },
+  { id: "blue", label: "Синий", colors: ["#67e8f9", "#2563eb", "#172554"] },
+  { id: "green", label: "Зелёный", colors: ["#bef264", "#16a34a", "#14532d"] },
+  { id: "pink", label: "Розовый", colors: ["#fda4af", "#e11d48", "#831843"] },
+] as const;
+
 export default function PulseLogo({ size = 40 }: { size?: number }) {
   const [customIcon, setCustomIcon] = useState<string | null>(() => {
     try { return localStorage.getItem("nova-app-icon"); } catch { return null; }
   });
+  const [preset, setPreset] = useState(() => {
+    try { return localStorage.getItem("nova-app-icon-preset") || "orange"; } catch { return "orange"; }
+  });
   useEffect(() => {
-    const update = () => setCustomIcon(localStorage.getItem("nova-app-icon"));
+    const update = () => {
+      setCustomIcon(localStorage.getItem("nova-app-icon"));
+      setPreset(localStorage.getItem("nova-app-icon-preset") || "orange");
+    };
     window.addEventListener("pulse:app-icon", update);
     return () => window.removeEventListener("pulse:app-icon", update);
   }, []);
@@ -13,14 +27,14 @@ export default function PulseLogo({ size = 40 }: { size?: number }) {
     return <img src={customIcon} alt="Nova" width={size} height={size} className="rounded-[24%] object-cover" onError={() => { localStorage.removeItem("nova-app-icon"); setCustomIcon(null); }} />;
   }
   const id = `nl_${Math.round(size)}_${Math.random().toString(36).slice(2, 6)}`;
+  const presetColors = NOVA_ICON_PRESETS.find(item => item.id === preset)?.colors || NOVA_ICON_PRESETS[0].colors;
   return (
     <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <linearGradient id={`${id}_bg`} x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#ffd166"/>
-          <stop offset="35%" stopColor="#ff9433"/>
-          <stop offset="70%" stopColor="#ff5c1a"/>
-          <stop offset="100%" stopColor="#d63600"/>
+          <stop offset="0%" stopColor={presetColors[0]}/>
+          <stop offset="50%" stopColor={presetColors[1]}/>
+          <stop offset="100%" stopColor={presetColors[2]}/>
         </linearGradient>
         <linearGradient id={`${id}_shine`} x1="10" y1="10" x2="60" y2="60" gradientUnits="userSpaceOnUse">
           <stop offset="0%" stopColor="#ffffff" stopOpacity="0.65"/>
@@ -39,7 +53,7 @@ export default function PulseLogo({ size = 40 }: { size?: number }) {
           </feMerge>
         </filter>
         <filter id={`${id}_shadow`} x="-25%" y="-25%" width="150%" height="150%">
-          <feDropShadow dx="0" dy="3" stdDeviation="5" floodColor="#c83000" floodOpacity="0.5"/>
+          <feDropShadow dx="0" dy="3" stdDeviation="5" floodColor={presetColors[2]} floodOpacity="0.5"/>
         </filter>
         <filter id={`${id}_inner`} x="-20%" y="-20%" width="140%" height="140%">
           <feGaussianBlur in="SourceAlpha" stdDeviation="2" result="blur"/>

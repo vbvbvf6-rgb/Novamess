@@ -31,6 +31,14 @@
   55% { transform: scale(1.18) rotate(4deg); opacity: 1; }
   100% { transform: scale(1) rotate(0); opacity: 1; }
 }
+@keyframes storyProgress {
+  from { width: 0%; }
+  to { width: 100%; }
+}
+.story-progress-fill {
+  width: 0%;
+  animation: storyProgress linear forwards;
+}
 .message-emoji-only {
   font-size: 3.25rem;
   line-height: 1.15;

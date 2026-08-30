@@ -365,6 +365,21 @@ async function buildChatsForUser(uid: number) {
 router.get("/chats", async (req, res) => {
   try {
     const uid = req.currentUserId;
+    const botRow = await db.execute(sql`SELECT id FROM users WHERE username IN ('nova', 'nova_ai') AND is_bot = true ORDER BY CASE WHEN username = 'nova' THEN 0 ELSE 1 END LIMIT 1`);
+    const botId = Number((botRow.rows as any[])[0]?.id || 0);
+    if (botId && uid && uid !== botId) {
+      const existing = await db.execute(sql`
+        SELECT c.id FROM chats c
+        JOIN chat_members a ON a.chat_id = c.id AND a.user_id = ${uid}
+        JOIN chat_members b ON b.chat_id = c.id AND b.user_id = ${botId}
+        WHERE c.type = 'direct' LIMIT 1
+      `);
+      if (!(existing.rows as any[]).length) {
+        const created = await db.execute(sql`INSERT INTO chats (type, name) VALUES ('direct', 'Nova') RETURNING id`);
+        const chatId = Number((created.rows as any[])[0]?.id || 0);
+        if (chatId) await db.execute(sql`INSERT INTO chat_members (chat_id, user_id, role) VALUES (${chatId}, ${uid}, 'member'), (${chatId}, ${botId}, 'member') ON CONFLICT DO NOTHING`);
+      }
+    }
     const chats = await buildChatsForUser(uid);
     res.json(chats);
   } catch (err) {
@@ -404,8 +419,8 @@ router.post("/chats/direct", async (req, res) => {
     if (!userId) return res.status(400).json({ error: "userId required" });
     const targetRows = await db.execute(sql`SELECT is_bot, username FROM users WHERE id = ${userId} LIMIT 1`);
     const target = targetRows.rows[0] as any;
-    if (target?.is_bot && String(target.username).toLowerCase() === "nova_ai") {
-      return res.status(403).json({ error: "Nova AI принимает сообщения только через системные функции" });
+    if (target?.is_bot && ["nova", "nova_ai"].includes(String(target.username).toLowerCase())) {
+      return res.status(403).json({ error: "Бот Nova принимает сообщения только через системные функции" });
     }
 
     const myMemberships = await db

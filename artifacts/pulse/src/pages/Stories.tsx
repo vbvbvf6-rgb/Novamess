@@ -85,6 +85,7 @@ export default function Stories() {
   const [createError, setCreateError] = useState("");
   const [viewingGroup, setViewingGroup] = useState<any>(null);
   const [viewingIndex, setViewingIndex] = useState(0);
+  const [storyPaused, setStoryPaused] = useState(false);
   const [viewCount, setViewCount] = useState<number | null>(null);
   const { currentUserId } = useAppContext();
   const { toast } = useToast();
@@ -199,6 +200,9 @@ export default function Stories() {
       setViewingGroup(null);
     }
   };
+
+  const pauseStory = () => setStoryPaused(true);
+  const resumeStory = () => setStoryPaused(false);
 
   const goPrev = () => {
     if (viewingIndex > 0) {
@@ -470,6 +474,10 @@ export default function Stories() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="fixed inset-0 z-50 bg-neutral-900"
+              onPointerDown={pauseStory}
+              onPointerUp={resumeStory}
+              onPointerCancel={resumeStory}
+              onPointerLeave={resumeStory}
             >
               <div className="relative w-full h-full flex items-stretch justify-center">
                 <div
@@ -517,13 +525,11 @@ export default function Stories() {
                           <div className="h-full bg-white w-full" />
                         )}
                         {i === viewingIndex && (
-                          <motion.div
+                          <div
                             key={`prog-${viewingGroup.user?.id}-${viewingIndex}`}
-                            className="h-full bg-white rounded-full"
-                            initial={{ width: "0%" }}
-                            animate={{ width: "100%" }}
-                            transition={{ duration: STORY_DURATION / 1000, ease: "linear" }}
-                            onAnimationComplete={goNext}
+                            className="story-progress-fill h-full bg-white rounded-full"
+                            style={{ animationPlayState: storyPaused ? "paused" : "running", animationDuration: `${STORY_DURATION}ms` }}
+                            onAnimationEnd={() => { if (!storyPaused) goNext(); }}
                           />
                         )}
                       </div>

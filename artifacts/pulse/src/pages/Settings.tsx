@@ -23,6 +23,7 @@ import { RINGTONES, previewRingtone, storeCustomRingtone } from "@/lib/ringtones
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { NOVA_ICON_PRESETS } from "@/components/PulseLogo";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -1404,6 +1405,16 @@ export default function Settings() {
   const [language, setLanguage] = useState(() => ls("pulse-language", "ru"));
   const [pageZoom, setPageZoom] = useState(() => ls("pulse-page-zoom", "100"));
   const [appIcon, setAppIcon] = useState(() => localStorage.getItem("nova-app-icon") || "");
+  const [appIconPreset, setAppIconPreset] = useState(() => localStorage.getItem("nova-app-icon-preset") || "orange");
+
+  const selectAppIconPreset = (preset: string) => {
+    localStorage.removeItem("nova-app-icon");
+    localStorage.setItem("nova-app-icon-preset", preset);
+    setAppIcon("");
+    setAppIconPreset(preset);
+    window.dispatchEvent(new Event("pulse:app-icon"));
+    toast({ title: lang === "ru" ? "Иконка Nova изменена" : "Nova icon changed" });
+  };
 
   // Notifications
   const [notifyMessages, setNotifyMessages] = useState(() => lsb("pulse-notify-messages", true));
@@ -2325,21 +2336,19 @@ export default function Settings() {
               </Section>
 
               <Section title={lang === "ru" ? "Иконка Nova" : "Nova icon"} icon={<Smartphone size={13}/>}>
-                <div className="p-4 flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-2xl overflow-hidden bg-secondary border border-border shrink-0">
-                    {appIcon ? <img src={appIcon} alt="Nova" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-2xl">✦</div>}
+                <div className="p-4">
+                  <p className="text-sm font-medium">{lang === "ru" ? "Выберите один из пяти цветов" : "Choose one of five colors"}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{lang === "ru" ? "Иконка сохраняется на этом устройстве. Загрузка своих файлов отключена." : "The icon is saved on this device. Custom uploads are disabled."}</p>
+                  <div className="grid grid-cols-5 gap-2 mt-4">
+                    {NOVA_ICON_PRESETS.map(preset => (
+                      <button key={preset.id} onClick={() => selectAppIconPreset(preset.id)} title={preset.label}
+                        className={`h-12 rounded-2xl border-2 transition-all ${appIconPreset === preset.id && !appIcon ? "border-foreground scale-105 shadow-lg" : "border-transparent hover:border-border"}`}
+                        style={{ background: `linear-gradient(135deg, ${preset.colors[0]}, ${preset.colors[1]} 55%, ${preset.colors[2]})` }}>
+                        <span className="text-white text-xl font-black">✦</span>
+                      </button>
+                    ))}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium">{lang === "ru" ? "Своя иконка на главном экране" : "Custom home-screen icon"}</p>
-                    <p className="text-xs text-muted-foreground mt-1">{lang === "ru" ? "Загрузите PNG или JPG. Иконка сохраняется только на этом устройстве." : "Upload a PNG or JPG. It stays on this device only."}</p>
-                    <div className="flex gap-2 mt-3">
-                      <label className="cursor-pointer px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-bold">
-                        {lang === "ru" ? "Выбрать файл" : "Choose file"}
-                        <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={handleAppIconFile} />
-                      </label>
-                      {appIcon && <button onClick={resetAppIcon} className="px-3 py-1.5 rounded-lg border border-border text-xs text-muted-foreground hover:bg-secondary">{lang === "ru" ? "Сбросить" : "Reset"}</button>}
-                    </div>
-                  </div>
+                  {appIcon && <button onClick={() => { resetAppIcon(); selectAppIconPreset("orange"); }} className="mt-3 px-3 py-1.5 rounded-lg border border-border text-xs text-muted-foreground hover:bg-secondary">{lang === "ru" ? "Сбросить свою иконку" : "Reset custom icon"}</button>}
                 </div>
               </Section>
 

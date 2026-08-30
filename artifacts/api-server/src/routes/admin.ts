@@ -125,6 +125,9 @@ db.execute(sql`CREATE TABLE IF NOT EXISTS prize_codes (
   created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 )`).catch(() => {});
+db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS prize_type TEXT NOT NULL DEFAULT 'sparks'`).catch(() => {});
+db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS prime_months INTEGER`).catch(() => {});
+db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS nickname_style TEXT`).catch(() => {});
 db.execute(sql`CREATE TABLE IF NOT EXISTS prize_code_redemptions (
   id SERIAL PRIMARY KEY,
   code_id INTEGER NOT NULL REFERENCES prize_codes(id) ON DELETE CASCADE,
@@ -549,7 +552,7 @@ router.post("/admin/broadcast", requireAdmin, async (req, res) => {
     if (!text || !String(text).trim()) return res.status(400).json({ error: "Укажите текст объявления" });
 
     // Find the bot by username (not hardcoded ID)
-    const botRow = await db.execute(sql`SELECT id FROM users WHERE username = 'nova_ai' LIMIT 1`);
+    const botRow = await db.execute(sql`SELECT id FROM users WHERE username IN ('nova', 'nova_ai') AND is_bot = true ORDER BY CASE WHEN username = 'nova' THEN 0 ELSE 1 END LIMIT 1`);
     const botId = (botRow.rows[0] as any)?.id;
     if (!botId) return res.status(404).json({ error: "Бот не найден. Перезапустите сервер для создания системных пользователей." });
 
@@ -1549,8 +1552,17 @@ router.delete("/admin/banned-words/:id", requireAdmin, async (req, res) => {
 // ── Prize codes ──────────────────────────────────────────────────────────────
 router.get("/admin/prize-codes", requireAdmin, async (_req, res) => {
   try {
+    await db.execute(sql`CREATE TABLE IF NOT EXISTS prize_codes (
+      id SERIAL PRIMARY KEY, code TEXT NOT NULL UNIQUE, prize_amount INTEGER NOT NULL DEFAULT 1,
+      prize_description TEXT, max_uses INTEGER NOT NULL DEFAULT 1, uses INTEGER NOT NULL DEFAULT 0,
+      expires_at TIMESTAMP WITH TIME ZONE, created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    )`);
+    await db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS prize_type TEXT NOT NULL DEFAULT 'sparks'`);
+    await db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS prime_months INTEGER`);
+    await db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS nickname_style TEXT`);
     const rows = await db.execute(sql`
-      SELECT id, code, prize_amount, prize_description, max_uses, uses, expires_at, created_at
+      SELECT id, code, prize_amount, prize_description, prize_type, prime_months, nickname_style, max_uses, uses, expires_at, created_at
       FROM prize_codes ORDER BY created_at DESC LIMIT 500
     `);
     res.json(rows.rows);
@@ -1561,12 +1573,19 @@ router.get("/admin/prize-codes", requireAdmin, async (_req, res) => {
 
 router.post("/admin/prize-codes", requireAdmin, async (req, res) => {
   try {
-    const amount = Math.floor(Number(req.body?.prizeAmount));
+    await db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS prize_type TEXT NOT NULL DEFAULT 'sparks'`);
+    await db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS prime_months INTEGER`);
+    await db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS nickname_style TEXT`);
+    const prizeType = ["sparks", "prime", "nickname"].includes(String(req.body?.prizeType)) ? String(req.body.prizeType) : "sparks";
+    const amount = Math.floor(Number(req.body?.prizeAmount || (prizeType === "sparks" ? 0 : 1)));
+    const primeMonths = Math.min(24, Math.max(1, Math.floor(Number(req.body?.primeMonths) || 1)));
+    const nicknameStyle = String(req.body?.nicknameStyle || "").trim().slice(0, 64) || null;
     const count = Math.min(100, Math.max(1, Math.floor(Number(req.body?.count) || 1)));
     const maxUses = Math.min(1000, Math.max(1, Math.floor(Number(req.body?.maxUses) || 1)));
     const description = String(req.body?.prizeDescription || "").trim().slice(0, 200) || null;
     const expiresAt = req.body?.expiresAt ? new Date(req.body.expiresAt) : null;
-    if (!Number.isFinite(amount) || amount <= 0) return res.status(400).json({ error: "Приз должен быть больше нуля" });
+    if (prizeType === "sparks" && (!Number.isFinite(amount) || amount <= 0)) return res.status(400).json({ error: "Приз должен быть больше нуля" });
+    if (prizeType === "nickname" && !nicknameStyle) return res.status(400).json({ error: "Укажите стиль цветного ника" });
     if (expiresAt && Number.isNaN(expiresAt.getTime())) return res.status(400).json({ error: "Некорректная дата окончания" });
 
     const codes: string[] = [];
@@ -1576,8 +1595,8 @@ router.post("/admin/prize-codes", requireAdmin, async (req, res) => {
         for (let attempt = 0; attempt < 5; attempt++) {
           const candidate = `NOVA-${randomBytes(5).toString("hex").toUpperCase()}`;
           const inserted = await tx.execute(sql`
-            INSERT INTO prize_codes (code, prize_amount, prize_description, max_uses, expires_at, created_by)
-            VALUES (${candidate}, ${amount}, ${description}, ${maxUses}, ${expiresAt}, ${req.currentUserId})
+            INSERT INTO prize_codes (code, prize_amount, prize_description, prize_type, prime_months, nickname_style, max_uses, expires_at, created_by)
+            VALUES (${candidate}, ${Math.max(1, amount || 1)}, ${description}, ${prizeType}, ${prizeType === "prime" ? primeMonths : null}, ${prizeType === "nickname" ? nicknameStyle : null}, ${maxUses}, ${expiresAt}, ${req.currentUserId})
             ON CONFLICT (code) DO NOTHING RETURNING code
           `);
           if (inserted.rows.length) { code = candidate; break; }

@@ -377,6 +377,26 @@ export function ChatList() {
     setContextMenuChat(null);
   };
 
+  const leaveChat = async () => {
+    if (!contextMenuChat) return;
+    const isNova = contextMenuChat.type === "direct" &&
+      ["nova", "nova_ai"].includes(String((contextMenuChat.otherUser as any)?.username || "").toLowerCase());
+    if (isNova || contextMenuChat.type === "saved") {
+      toast({ title: "Этот системный чат нельзя удалить", variant: "destructive" });
+      return;
+    }
+    if (!window.confirm("Удалить этот чат из списка?")) return;
+    try {
+      const res = await fetch(`/api/chats/${contextMenuChat.id}/leave`, { method: "POST", headers: getAuthHeaders() });
+      if (!res.ok) throw new Error();
+      queryClient.invalidateQueries({ queryKey: getGetChatsQueryKey() });
+      setContextMenuChat(null);
+      toast({ title: "Чат удалён" });
+    } catch {
+      toast({ title: "Не удалось удалить чат", variant: "destructive" });
+    }
+  };
+
   const openCreate = () => {
     setCreateStep("choose");
     setCreateName("");
@@ -1093,6 +1113,17 @@ export function ChatList() {
                         <Trash2 size={18} className="text-red-500" />
                       </div>
                       <span className="font-bold text-[15px] text-foreground">Убрать из папки</span>
+                    </button>
+                  )}
+                  {contextMenuChat.type !== "channel" && (
+                    <button
+                      onClick={leaveChat}
+                      className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-red-500/10 transition-colors text-left"
+                    >
+                      <div className="w-9 h-9 rounded-xl bg-red-500/10 flex items-center justify-center shrink-0">
+                        <Trash2 size={18} className="text-red-500" />
+                      </div>
+                      <span className="font-bold text-[15px] text-red-500">Удалить чат</span>
                     </button>
                   )}
                   <button

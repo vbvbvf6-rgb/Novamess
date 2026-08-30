@@ -403,11 +403,14 @@ export default function Admin() {
   const [eventConditions, setEventConditions] = useState("");
   const [eventPrizeAmount, setEventPrizeAmount] = useState(0);
   const [eventPrizeDescription, setEventPrizeDescription] = useState("");
-  interface PrizeCode { id: number; code: string; prize_amount: number; prize_description: string | null; max_uses: number; uses: number; expires_at: string | null; created_at: string; }
+  interface PrizeCode { id: number; code: string; prize_amount: number; prize_description: string | null; prize_type?: string; prime_months?: number | null; nickname_style?: string | null; max_uses: number; uses: number; expires_at: string | null; created_at: string; }
   const [showPrizeCodes, setShowPrizeCodes] = useState(false);
   const [prizeCodes, setPrizeCodes] = useState<PrizeCode[]>([]);
   const [prizeCodesLoading, setPrizeCodesLoading] = useState(false);
   const [prizeCodeAmount, setPrizeCodeAmount] = useState(100);
+  const [prizeCodeType, setPrizeCodeType] = useState<"sparks" | "prime" | "nickname">("sparks");
+  const [prizeCodePrimeMonths, setPrizeCodePrimeMonths] = useState(1);
+  const [prizeCodeNicknameStyle, setPrizeCodeNicknameStyle] = useState("rainbow");
   const [prizeCodeDescription, setPrizeCodeDescription] = useState("");
   const [prizeCodeCount, setPrizeCodeCount] = useState(1);
   const [prizeCodeMaxUses, setPrizeCodeMaxUses] = useState(1);
@@ -521,6 +524,9 @@ export default function Admin() {
         headers: { "Content-Type": "application/json", ...getHeader() },
         body: JSON.stringify({
           prizeAmount: prizeCodeAmount,
+          prizeType: prizeCodeType,
+          primeMonths: prizeCodePrimeMonths,
+          nicknameStyle: prizeCodeNicknameStyle,
           prizeDescription: prizeCodeDescription,
           count: prizeCodeCount,
           maxUses: prizeCodeMaxUses,
@@ -3307,17 +3313,32 @@ export default function Admin() {
               <div className="w-9 h-9 rounded-xl bg-amber-500/10 flex items-center justify-center"><Key size={18} className="text-amber-400" /></div>
               <div className="text-left">
                 <p className="font-semibold text-sm">Призовые коды</p>
-                <p className="text-xs text-muted-foreground">Создавайте коды на искры для пользователей</p>
+                <p className="text-xs text-muted-foreground">Искры, Prime и цветные ники</p>
               </div>
             </div>
             {showPrizeCodes ? <ChevronDown size={16} className="text-muted-foreground" /> : <ChevronRight size={16} className="text-muted-foreground" />}
           </button>
           {showPrizeCodes && (
             <div className="border-t border-border p-4 space-y-4">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <label className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Приз (искры)
-                  <input type="number" min={1} value={prizeCodeAmount} onChange={e => setPrizeCodeAmount(Math.max(1, Number(e.target.value) || 1))} className="mt-1 w-full bg-background border border-border rounded-xl px-3 py-2 text-sm" />
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                <label className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Тип приза
+                  <select value={prizeCodeType} onChange={e => setPrizeCodeType(e.target.value as "sparks" | "prime" | "nickname")} className="mt-1 w-full bg-background border border-border rounded-xl px-3 py-2 text-sm">
+                    <option value="sparks">Искры</option>
+                    <option value="prime">Prime</option>
+                    <option value="nickname">Цветной ник</option>
+                  </select>
                 </label>
+                {prizeCodeType === "sparks" && <label className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Приз (искры)
+                  <input type="number" min={1} value={prizeCodeAmount} onChange={e => setPrizeCodeAmount(Math.max(1, Number(e.target.value) || 1))} className="mt-1 w-full bg-background border border-border rounded-xl px-3 py-2 text-sm" />
+                </label>}
+                {prizeCodeType === "prime" && <label className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Prime (месяцев)
+                  <input type="number" min={1} max={24} value={prizeCodePrimeMonths} onChange={e => setPrizeCodePrimeMonths(Math.min(24, Math.max(1, Number(e.target.value) || 1)))} className="mt-1 w-full bg-background border border-border rounded-xl px-3 py-2 text-sm" />
+                </label>}
+                {prizeCodeType === "nickname" && <label className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Стиль ника
+                  <select value={prizeCodeNicknameStyle} onChange={e => setPrizeCodeNicknameStyle(e.target.value)} className="mt-1 w-full bg-background border border-border rounded-xl px-3 py-2 text-sm">
+                    <option value="rainbow">Радуга</option><option value="fire">Огонь</option><option value="ocean">Океан</option><option value="violet">Фиолетовый</option>
+                  </select>
+                </label>}
                 <label className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Количество
                   <input type="number" min={1} max={100} value={prizeCodeCount} onChange={e => setPrizeCodeCount(Math.min(100, Math.max(1, Number(e.target.value) || 1)))} className="mt-1 w-full bg-background border border-border rounded-xl px-3 py-2 text-sm" />
                 </label>
@@ -3343,7 +3364,7 @@ export default function Admin() {
                   {prizeCodes.map(code => (
                     <div key={code.id} className="flex items-center gap-3 rounded-xl border border-border bg-background p-3">
                       <code className="font-mono font-bold text-sm text-amber-400">{code.code}</code>
-                      <span className="text-xs text-muted-foreground flex-1">{code.prize_description || `${code.prize_amount} искр`} · {code.uses}/{code.max_uses}</span>
+                      <span className="text-xs text-muted-foreground flex-1">{code.prize_description || (code.prize_type === "prime" ? `Prime · ${code.prime_months || 1} мес.` : code.prize_type === "nickname" ? `Цветной ник · ${code.nickname_style || ""}` : `${code.prize_amount} искр`)} · {code.uses}/{code.max_uses}</span>
                       <button onClick={() => deletePrizeCode(code.id)} className="p-1.5 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/10"><Trash2 size={13} /></button>
                     </div>
                   ))}
