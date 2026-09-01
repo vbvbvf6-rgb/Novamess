@@ -641,6 +641,13 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
   };
 
   const isDeleted = !!(message as any).isDeleted;
+  const isVideoNoteMessage = message.type === "video" && (() => {
+    try {
+      return JSON.parse(message.text || "{}").videoNote === true;
+    } catch {
+      return false;
+    }
+  })();
 
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -1080,13 +1087,11 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
       }
       case "video": {
         let videoName = "Видео";
-        let isVideoNote = false;
         try {
           const p = JSON.parse(message.text || "{}");
           videoName = p.name || "Видео";
-          isVideoNote = p.videoNote === true;
         } catch {}
-        if (isVideoNote) {
+        if (isVideoNoteMessage) {
           return <VideoNotePlayer src={message.mediaUrl || ""} isMine={isMine} />;
         }
         return (
@@ -1345,10 +1350,15 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
               onTouchEnd={handleTouchEnd}
               onTouchMove={handleTouchMove}
               className={cn(
-                "relative cursor-pointer transition-transform active:scale-[0.98] max-w-full overflow-hidden",
+                "relative cursor-pointer transition-transform active:scale-[0.98] max-w-full",
+                isVideoNoteMessage
+                  ? "overflow-visible p-0 bg-transparent border-none shadow-none rounded-none"
+                  : "overflow-hidden",
                 isSelected && "ring-2 ring-primary ring-offset-2 ring-offset-background",
                 message.type === "sticker"
                   ? "px-1 py-1 bg-transparent border-none shadow-none"
+                  : isVideoNoteMessage
+                    ? ""
                   : cn(
                     message.type === "audio" ? "px-3 py-2.5 md:px-5 md:py-3.5 rounded-[20px] md:rounded-[24px]" : "px-3.5 py-2.5 sm:px-5 sm:py-3.5 rounded-[20px] sm:rounded-[24px]",
                     isDeleted
@@ -1358,7 +1368,7 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
                         : "bg-secondary text-foreground rounded-bl-sm border border-border shadow-[0_2px_10px_rgba(0,0,0,0.18)]"
                   )
               )}
-              style={isMine && ownBubbleStyle && message.type !== "sticker" ? ownBubbleStyle : undefined}
+              style={isMine && ownBubbleStyle && message.type !== "sticker" && !isVideoNoteMessage ? ownBubbleStyle : undefined}
             >
               {selectionMode && (
                 <span
@@ -1481,7 +1491,8 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
               ) : renderContent()}
 
               <div className={cn(
-                "flex items-center justify-end gap-1.5 mt-2.5 text-[11px] font-bold",
+                "flex items-center justify-end gap-1.5 text-[11px] font-bold",
+                isVideoNoteMessage ? "mt-1 pr-1" : "mt-2.5",
                 isMine ? "text-primary-foreground/70" : "text-muted-foreground/70"
               )}>
                 {!(message as any).isDeleted && (message as any).isEdited && (

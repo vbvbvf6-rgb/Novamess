@@ -715,17 +715,32 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
 
   const switchCamera = async () => {
     const nextFacingMode = cameraFacingMode === "user" ? "environment" : "user";
-    setCameraFacingMode(nextFacingMode);
     if (!isRecording || recordingKind !== "video") return;
 
     const currentStream = recordingStreamRef.current;
-    if (!currentStream) return;
+    const currentTrack = currentStream?.getVideoTracks()[0];
+    if (!currentStream || !currentTrack) return;
+
+    try {
+      // Keep the same track in the MediaRecorder whenever possible. Stopping
+      // the original track during a live recording can make mobile browsers
+      // finish the whole recording and hide the recording controls.
+      await currentTrack.applyConstraints({ facingMode: { exact: nextFacingMode } });
+      setCameraFacingMode(nextFacingMode);
+      if (videoPreviewRef.current) {
+        await videoPreviewRef.current.play().catch(() => {});
+      }
+      return;
+    } catch {
+      // Some browsers do not support switching cameras via constraints.
+      // Fall back to replacing the track for those devices.
+    }
+
     try {
       const replacement = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: nextFacingMode, width: { ideal: 720 }, height: { ideal: 720 } },
       });
       const nextTrack = replacement.getVideoTracks()[0];
-      const currentTrack = currentStream.getVideoTracks()[0];
       if (!nextTrack) return;
       if (currentTrack) {
         currentStream.removeTrack(currentTrack);
@@ -736,6 +751,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
         videoPreviewRef.current.srcObject = currentStream;
         await videoPreviewRef.current.play().catch(() => {});
       }
+      setCameraFacingMode(nextFacingMode);
     } catch {
       toast({ title: "Не удалось сменить камеру", description: "Проверьте доступ к камере в браузере", variant: "destructive" });
     }
