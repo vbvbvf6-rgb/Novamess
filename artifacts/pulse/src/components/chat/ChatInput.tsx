@@ -32,6 +32,15 @@ import { prepareVideoForUpload } from "@/lib/mediaCompression";
 // rather than let them bloat storage (compression handles the normal case).
 const MAX_RAW_FILE_BYTES = 200 * 1024 * 1024; // 200MB
 
+// Prefer MP4 for iOS/Safari, then use WebM variants for Chromium/Firefox.
+const VIDEO_RECORDING_MIME_TYPES = [
+  "video/mp4;codecs=avc1.42E01E,mp4a.40.2",
+  "video/mp4",
+  "video/webm;codecs=vp8,opus",
+  "video/webm;codecs=vp9,opus",
+  "video/webm",
+];
+
 function EmojiGlyph({
   emoji,
   alt = emoji,
@@ -96,7 +105,7 @@ function formatDuration(seconds: number) {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-function readFileAsDataUrl(file: File): Promise<string> {
+function readFileAsDataUrl(file: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => resolve(e.target?.result as string);
@@ -449,7 +458,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
     setIsSending(true);
     try {
       if (videoBlob) {
-        const base64 = await readFileAsDataUrl(new File([videoBlob], "video-note.webm", { type: videoBlob.type }));
+        const base64 = await readFileAsDataUrl(videoBlob);
         const sent = await sendMessage.mutateAsync({
           data: {
             chatId,
@@ -629,9 +638,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
           : { audio: true },
       );
       const mimeType = kind === "video"
-        ? (MediaRecorder.isTypeSupported("video/webm;codecs=vp9,opus")
-          ? "video/webm;codecs=vp9,opus"
-          : MediaRecorder.isTypeSupported("video/webm") ? "video/webm" : "")
+        ? VIDEO_RECORDING_MIME_TYPES.find(type => MediaRecorder.isTypeSupported(type)) || ""
         : (MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
           ? "audio/webm;codecs=opus"
           : MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "audio/ogg");

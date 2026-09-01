@@ -279,6 +279,93 @@ function VoicePlayer({ src, durationSec, isMine, messageId, viewerIsPrimePlus }:
   );
 }
 
+function VideoNotePlayer({ src, isMine }: { src: string; isMine: boolean }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [playing, setPlaying] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    const onPlay = () => setPlaying(true);
+    const onPause = () => setPlaying(false);
+    const onEnded = () => setPlaying(false);
+    video.addEventListener("play", onPlay);
+    video.addEventListener("pause", onPause);
+    video.addEventListener("ended", onEnded);
+    return () => {
+      video.removeEventListener("play", onPlay);
+      video.removeEventListener("pause", onPause);
+      video.removeEventListener("ended", onEnded);
+    };
+  }, []);
+
+  const togglePlayback = async (event: React.MouseEvent | React.TouchEvent) => {
+    event.stopPropagation();
+    const video = videoRef.current;
+    if (!video || failed) return;
+    try {
+      if (video.paused || video.ended) {
+        if (video.ended) video.currentTime = 0;
+        await video.play();
+      } else {
+        video.pause();
+      }
+    } catch {
+      setFailed(true);
+    }
+  };
+
+  return (
+    <div className={cn(
+      "video-note-player relative w-[min(280px,68vw)] aspect-square rounded-full overflow-hidden bg-black shadow-xl ring-1 group",
+      isMine ? "ring-white/20" : "ring-black/10"
+    )}>
+      <video
+        ref={videoRef}
+        src={src}
+        playsInline
+        preload="metadata"
+        className="absolute inset-0 h-full w-full object-cover"
+        onClick={togglePlayback}
+        onError={() => setFailed(true)}
+        onLoadedData={() => setFailed(false)}
+      />
+      <div className="absolute inset-0 rounded-full pointer-events-none bg-gradient-to-b from-black/10 via-transparent to-black/30" />
+      <button
+        type="button"
+        onClick={togglePlayback}
+        disabled={failed}
+        aria-label={failed ? "Видео недоступно" : playing ? "Поставить на паузу" : "Воспроизвести видеокружок"}
+        className={cn(
+          "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 rounded-full flex items-center justify-center text-white backdrop-blur-md transition-all active:scale-90",
+          failed
+            ? "bg-red-500/70 cursor-not-allowed"
+            : "bg-black/35 hover:bg-black/55 shadow-lg"
+        )}
+      >
+        {failed ? (
+          <span className="text-[11px] font-black">!</span>
+        ) : playing ? (
+          <Pause size={22} fill="currentColor" />
+        ) : (
+          <Play size={22} fill="currentColor" className="ml-0.5" />
+        )}
+      </button>
+      {failed && (
+        <span className="absolute left-1/2 bottom-8 -translate-x-1/2 text-[10px] font-bold text-white/90 whitespace-nowrap">
+          Формат не поддерживается
+        </span>
+      )}
+      {!failed && !playing && (
+        <span className="absolute left-1/2 bottom-5 -translate-x-1/2 px-2.5 py-1 rounded-full bg-black/35 text-[10px] font-bold text-white/85 pointer-events-none">
+          Нажмите для просмотра
+        </span>
+      )}
+    </div>
+  );
+}
+
 function PollDisplay({ pollData, messageId, chatId, currentUserId, isMine }: {
   pollData: any;
   messageId: number;
@@ -992,16 +1079,19 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
           videoName = p.name || "Видео";
           isVideoNote = p.videoNote === true;
         } catch {}
+        if (isVideoNote) {
+          return <VideoNotePlayer src={message.mediaUrl || ""} isMine={isMine} />;
+        }
         return (
-          <div className={cn("overflow-hidden -mx-1 -mt-1 mb-1 relative group", isVideoNote ? "rounded-full aspect-square max-w-[280px] bg-black" : "rounded-xl")}>
+          <div className="overflow-hidden -mx-1 -mt-1 mb-1 relative group rounded-xl">
             <video
               src={message.mediaUrl || ""}
               controls
               playsInline
-              className={cn("max-w-[280px] w-full block object-cover", isVideoNote ? "h-full aspect-square rounded-full" : "max-h-[320px] rounded-xl")}
+              className="max-w-[280px] w-full block object-cover max-h-[320px] rounded-xl"
               preload="metadata"
             />
-            {!isVideoNote && <div className="flex items-center gap-1 px-2 pb-1 pt-1">
+            <div className="flex items-center gap-1 px-2 pb-1 pt-1">
               <p className="text-[11px] text-muted-foreground truncate flex-1">{videoName}</p>
               {message.mediaUrl && (
                 <a
@@ -1014,7 +1104,7 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
                   <Download size={13} />
                 </a>
               )}
-            </div>}
+            </div>
           </div>
         );
       }
