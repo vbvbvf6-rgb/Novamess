@@ -1004,33 +1004,6 @@ router.put("/messages/:messageId", async (req, res) => {
   }
 });
 
-router.delete("/messages/:messageId", async (req, res) => {
-  try {
-    const messageId = Number(req.params.messageId);
-    const uid = req.currentUserId;
-
-    const existing = await db.query.messagesTable.findFirst({ where: eq(messagesTable.id, messageId) });
-    if (!existing) return res.status(404).json({ error: "Сообщение не найдено" });
-    if (!(await isChatMember(existing.chatId, uid))) return res.status(403).json({ error: "Нет доступа к этому чату" });
-    if (await isNovaSecurityChat(existing.chatId)) {
-      return res.status(403).json({ error: "Сообщения Nova Security нельзя удалить" });
-    }
-
-    const admin = await isAdmin(uid);
-    if (existing.senderId !== uid && !admin) {
-      return res.status(403).json({ error: "Нельзя удалить чужое сообщение" });
-    }
-
-    // Store deletedAt timestamp but KEEP content so Prime+ users can view it for 48h
-    await db.execute(sql`UPDATE messages SET is_deleted = true, deleted_at = NOW() WHERE id = ${messageId}`);
-    broadcastToChat(existing.chatId, "new-message", { messageId, chatId: existing.chatId });
-    res.status(204).send();
-  } catch (err) {
-    req.log.error(err);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
 router.delete("/messages/bulk", async (req, res) => {
   try {
     const uid = req.currentUserId;
@@ -1064,6 +1037,33 @@ router.delete("/messages/bulk", async (req, res) => {
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Не удалось удалить выбранные сообщения" });
+  }
+});
+
+router.delete("/messages/:messageId", async (req, res) => {
+  try {
+    const messageId = Number(req.params.messageId);
+    const uid = req.currentUserId;
+
+    const existing = await db.query.messagesTable.findFirst({ where: eq(messagesTable.id, messageId) });
+    if (!existing) return res.status(404).json({ error: "Сообщение не найдено" });
+    if (!(await isChatMember(existing.chatId, uid))) return res.status(403).json({ error: "Нет доступа к этому чату" });
+    if (await isNovaSecurityChat(existing.chatId)) {
+      return res.status(403).json({ error: "Сообщения Nova Security нельзя удалить" });
+    }
+
+    const admin = await isAdmin(uid);
+    if (existing.senderId !== uid && !admin) {
+      return res.status(403).json({ error: "Нельзя удалить чужое сообщение" });
+    }
+
+    // Store deletedAt timestamp but KEEP content so Prime+ users can view it for 48h
+    await db.execute(sql`UPDATE messages SET is_deleted = true, deleted_at = NOW() WHERE id = ${messageId}`);
+    broadcastToChat(existing.chatId, "new-message", { messageId, chatId: existing.chatId });
+    res.status(204).send();
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
