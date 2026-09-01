@@ -283,6 +283,13 @@ function VideoNotePlayer({ src, isMine }: { src: string; isMine: boolean }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
   const [failed, setFailed] = useState(false);
+  const normalizedSrc = useMemo(() => {
+    if (!src.startsWith("data:video/")) return src;
+    const base64Marker = src.indexOf(";base64,");
+    if (base64Marker < 0) return src;
+    const mime = src.slice(5, base64Marker).split(/[;,]/)[0];
+    return `${src.slice(0, 5)}${mime};base64,${src.slice(base64Marker + ";base64,".length)}`;
+  }, [src]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -323,7 +330,7 @@ function VideoNotePlayer({ src, isMine }: { src: string; isMine: boolean }) {
     )}>
       <video
         ref={videoRef}
-        src={src}
+        src={normalizedSrc}
         playsInline
         preload="metadata"
         className="absolute inset-0 h-full w-full object-cover"

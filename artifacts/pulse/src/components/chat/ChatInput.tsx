@@ -3,7 +3,8 @@ import { emojiToTwemojiUrl } from "@/lib/twemoji";
 import { useSendMessage, useGetMe, getGetMessagesQueryKey, getGetChatsQueryKey, Message } from "@workspace/api-client-react";
 import type { P2PChannel } from "@/hooks/useP2PChannel";
 import { useQueryClient } from "@tanstack/react-query";
-import { Paperclip, Mic, SendHorizontal, X, Square, Trash2, Images, Reply, Pencil, Clock, BarChart2, Plus, Minus, CalendarClock, Hourglass, Smile, Package, FileText, FileCode, FileArchive, File as FileIcon, Video, Camera, RefreshCw, Zap } from "lucide-react";
+import { Paperclip, Mic, SendHorizontal, X, Square, Trash2, Images, Reply, Pencil, Clock, BarChart2, Plus, Minus, CalendarClock, Hourglass, Smile, Package, FileText, FileCode, FileArchive, File as FileIcon, Video, Camera, RefreshCw, Zap, Play, Pause } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface DocPreview { name: string; size: number; mime: string; data: string; }
 
@@ -199,6 +200,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
   const pendingVideoSendRef = useRef(false);
   const [cameraFacingMode, setCameraFacingMode] = useState<"user" | "environment">("user");
   const [flashEnabled, setFlashEnabled] = useState(false);
+  const [isRecordingPaused, setIsRecordingPaused] = useState(false);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -659,10 +661,15 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
       chunksRef.current = [];
       recorder.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
       recorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: mimeType });
+        // Keep codec parameters for MediaRecorder, but strip them from the
+        // data URL MIME header. Commas in `codecs=vp8,opus` can make a data
+        // URL look truncated to mobile video decoders.
+        const outputMimeType = (recorder.mimeType || mimeType).split(";")[0];
+        const blob = new Blob(chunksRef.current, { type: outputMimeType });
         if (kind === "video") setVideoBlob(blob);
         else setAudioBlob(blob);
         setRecordingKind(null);
+        setIsRecordingPaused(false);
         recordingStreamRef.current = null;
         if (videoPreviewRef.current) videoPreviewRef.current.srcObject = null;
         stream.getTracks().forEach(t => t.stop());
@@ -674,6 +681,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
       setRecordingKind(kind);
       if (kind === "video") {
         setFlashEnabled(false);
+        setIsRecordingPaused(false);
         pendingVideoSendRef.current = false;
       }
       if (kind === "video" && videoPreviewRef.current) {
@@ -684,6 +692,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
       setRecordSeconds(0);
       timerRef.current = setInterval(() => {
         setRecordSeconds(s => {
+          if (mediaRecorderRef.current?.state === "paused") return s;
           const next = s + 1;
           if (next >= MAX_VOICE_SECONDS) {
             if (mediaRecorderRef.current?.state !== "inactive") mediaRecorderRef.current?.stop();
@@ -754,11 +763,26 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
     stopRecording();
   };
 
+  const toggleRecordingPause = () => {
+    const recorder = mediaRecorderRef.current;
+    if (!recorder || recordingKind !== "video") return;
+    if (recorder.state === "recording") {
+      recorder.pause();
+      recordingStreamRef.current?.getVideoTracks().forEach(track => { track.enabled = false; });
+      setIsRecordingPaused(true);
+    } else if (recorder.state === "paused") {
+      recorder.resume();
+      recordingStreamRef.current?.getVideoTracks().forEach(track => { track.enabled = true; });
+      setIsRecordingPaused(false);
+    }
+  };
+
   const stopRecording = () => {
     if (mediaRecorderRef.current?.state !== "inactive") mediaRecorderRef.current?.stop();
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
     setIsRecording(false);
     setRecordingKind(null);
+    setIsRecordingPaused(false);
     recordingStreamRef.current = null;
   };
 
@@ -771,6 +795,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
     setAudioBlob(null);
     setVideoBlob(null);
     setRecordingKind(null);
+    setIsRecordingPaused(false);
     setRecordSeconds(0);
     chunksRef.current = [];
     recordingStreamRef.current = null;
@@ -1408,6 +1433,83 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
           )}
         </AnimatePresence>
 
+        {isRecording && recordingKind === "video" ? (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="relative mx-auto w-full max-w-[430px] min-h-[520px] max-h-[calc(100dvh-5rem)] overflow-hidden rounded-[30px] bg-black shadow-2xl"
+          >
+            <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/60 pointer-events-none" />
+            <video
+              ref={videoPreviewRef}
+              autoPlay
+              muted
+              playsInline
+              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(92vw,430px)] aspect-square rounded-full object-cover ring-2 ring-white/80 shadow-[0_0_0_10px_rgba(255,255,255,0.06)]"
+            />
+
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/35 backdrop-blur-md text-white">
+              <motion.span
+                animate={{ opacity: isRecordingPaused ? 0.35 : [0.45, 1, 0.45] }}
+                transition={{ duration: 1.2, repeat: Infinity }}
+                className="w-2.5 h-2.5 rounded-full bg-red-500"
+              />
+              <span className="text-[15px] font-black font-mono tabular-nums">{formatDuration(recordSeconds)}</span>
+            </div>
+
+            <button
+              type="button"
+              onClick={toggleRecordingPause}
+              className="absolute top-4 right-4 w-12 h-12 rounded-full flex items-center justify-center bg-white/90 text-slate-900 shadow-lg active:scale-90 transition-transform"
+              aria-label={isRecordingPaused ? "Продолжить запись" : "Поставить запись на паузу"}
+            >
+              {isRecordingPaused ? <Play size={19} fill="currentColor" /> : <Pause size={19} />}
+            </button>
+
+            <div className="absolute left-5 bottom-[82px] flex items-center gap-2">
+              <button
+                type="button"
+                onClick={switchCamera}
+                className="w-12 h-12 rounded-full flex items-center justify-center bg-white/90 text-slate-900 shadow-lg active:scale-90 transition-transform"
+                aria-label="Сменить камеру"
+              >
+                <RefreshCw size={21} />
+              </button>
+              <button
+                type="button"
+                onClick={toggleFlash}
+                className={cn(
+                  "w-12 h-12 rounded-full flex items-center justify-center shadow-lg active:scale-90 transition-all",
+                  flashEnabled ? "bg-amber-400 text-amber-950" : "bg-white/90 text-slate-900"
+                )}
+                aria-label="Включить вспышку"
+              >
+                <Zap size={21} fill={flashEnabled ? "currentColor" : "none"} />
+              </button>
+            </div>
+
+            <div className="absolute left-4 right-4 bottom-4 flex items-center gap-3">
+              <div className="min-w-[84px] px-3 py-2.5 rounded-full bg-white/90 text-slate-700 text-center text-[14px] font-bold font-mono tabular-nums">
+                {formatDuration(recordSeconds)}
+              </div>
+              <button
+                type="button"
+                onClick={cancelRecording}
+                className="flex-1 h-12 rounded-full bg-white/90 text-primary text-[14px] font-black tracking-wide active:scale-95 transition-transform"
+              >
+                ОТМЕНА
+              </button>
+              <button
+                type="button"
+                onClick={sendVideoNoteNow}
+                className="w-16 h-16 -mr-1 rounded-full flex items-center justify-center bg-sky-500 text-white shadow-[0_5px_22px_rgba(14,165,233,0.5)] active:scale-90 transition-transform ring-4 ring-sky-400/30"
+                aria-label="Отправить видеокружок"
+              >
+                <SendHorizontal size={25} className="translate-x-[-1px]" />
+              </button>
+            </div>
+          </motion.div>
+        ) : (
         <div className={`p-1.5 bg-card border rounded-[28px] transition-all flex items-center gap-1.5 shadow-sm focus-within:shadow-md focus-within:border-primary/50 ${editMessage ? "border-primary/50 bg-primary/5" : "border-border"}`}>
           
           <AnimatePresence mode="wait">
@@ -1564,6 +1666,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
             </div>
           )}
         </div>
+        )}
       </div>
     </div>
   );
