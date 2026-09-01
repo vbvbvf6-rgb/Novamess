@@ -3,7 +3,7 @@ import { emojiToTwemojiUrl } from "@/lib/twemoji";
 import { useSendMessage, useGetMe, getGetMessagesQueryKey, getGetChatsQueryKey, Message } from "@workspace/api-client-react";
 import type { P2PChannel } from "@/hooks/useP2PChannel";
 import { useQueryClient } from "@tanstack/react-query";
-import { Paperclip, Mic, SendHorizontal, X, Square, Trash2, Images, Reply, Pencil, Clock, BarChart2, Plus, Minus, CalendarClock, Hourglass, Smile, Package, FileText, FileCode, FileArchive, File as FileIcon, Video, Camera } from "lucide-react";
+import { Paperclip, Mic, SendHorizontal, X, Square, Trash2, Images, Reply, Pencil, Clock, BarChart2, Plus, Minus, CalendarClock, Hourglass, Smile, Package, FileText, FileCode, FileArchive, File as FileIcon, Video, Camera, RefreshCw, Zap } from "lucide-react";
 
 interface DocPreview { name: string; size: number; mime: string; data: string; }
 
@@ -196,6 +196,9 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordingStreamRef = useRef<MediaStream | null>(null);
   const videoPreviewRef = useRef<HTMLVideoElement>(null);
+  const pendingVideoSendRef = useRef(false);
+  const [cameraFacingMode, setCameraFacingMode] = useState<"user" | "environment">("user");
+  const [flashEnabled, setFlashEnabled] = useState(false);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -628,13 +631,19 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
     }
   };
 
+  useEffect(() => {
+    if (!videoBlob || !pendingVideoSendRef.current) return;
+    pendingVideoSendRef.current = false;
+    void handleSend();
+  }, [videoBlob]);
+
   const MAX_VOICE_SECONDS = 120; // 2 minutes max recording
 
   const startRecording = async (kind: "audio" | "video" = "audio") => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia(
         kind === "video"
-          ? { video: { facingMode: "user", width: { ideal: 720 }, height: { ideal: 720 } }, audio: true }
+          ? { video: { facingMode: cameraFacingMode, width: { ideal: 720 }, height: { ideal: 720 } }, audio: true }
           : { audio: true },
       );
       const mimeType = kind === "video"
@@ -663,6 +672,10 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
       recordingStreamRef.current = stream;
       setIsRecording(true);
       setRecordingKind(kind);
+      if (kind === "video") {
+        setFlashEnabled(false);
+        pendingVideoSendRef.current = false;
+      }
       if (kind === "video" && videoPreviewRef.current) {
         videoPreviewRef.current.srcObject = stream;
         videoPreviewRef.current.play().catch(() => {});
@@ -691,6 +704,56 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
     }
   };
 
+  const switchCamera = async () => {
+    const nextFacingMode = cameraFacingMode === "user" ? "environment" : "user";
+    setCameraFacingMode(nextFacingMode);
+    if (!isRecording || recordingKind !== "video") return;
+
+    const currentStream = recordingStreamRef.current;
+    if (!currentStream) return;
+    try {
+      const replacement = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: nextFacingMode, width: { ideal: 720 }, height: { ideal: 720 } },
+      });
+      const nextTrack = replacement.getVideoTracks()[0];
+      const currentTrack = currentStream.getVideoTracks()[0];
+      if (!nextTrack) return;
+      if (currentTrack) {
+        currentStream.removeTrack(currentTrack);
+        currentTrack.stop();
+      }
+      currentStream.addTrack(nextTrack);
+      if (videoPreviewRef.current) {
+        videoPreviewRef.current.srcObject = currentStream;
+        await videoPreviewRef.current.play().catch(() => {});
+      }
+    } catch {
+      toast({ title: "Не удалось сменить камеру", description: "Проверьте доступ к камере в браузере", variant: "destructive" });
+    }
+  };
+
+  const toggleFlash = async () => {
+    const track = recordingStreamRef.current?.getVideoTracks()[0];
+    const nextFlashState = !flashEnabled;
+    if (!track) return;
+    try {
+      const capabilities = track.getCapabilities() as MediaTrackCapabilities & { torch?: boolean };
+      if (!capabilities.torch) {
+        toast({ title: "Вспышка недоступна", description: "Эта камера не поддерживает управление вспышкой", variant: "destructive" });
+        return;
+      }
+      await track.applyConstraints({ advanced: [{ torch: nextFlashState } as MediaTrackConstraintSet] });
+      setFlashEnabled(nextFlashState);
+    } catch {
+      toast({ title: "Вспышка недоступна", description: "Не удалось включить вспышку камеры", variant: "destructive" });
+    }
+  };
+
+  const sendVideoNoteNow = () => {
+    pendingVideoSendRef.current = true;
+    stopRecording();
+  };
+
   const stopRecording = () => {
     if (mediaRecorderRef.current?.state !== "inactive") mediaRecorderRef.current?.stop();
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
@@ -700,6 +763,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
   };
 
   const cancelRecording = () => {
+    pendingVideoSendRef.current = false;
     mediaRecorderRef.current?.stream?.getTracks().forEach(t => t.stop());
     if (mediaRecorderRef.current?.state !== "inactive") mediaRecorderRef.current?.stop();
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
