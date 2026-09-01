@@ -661,6 +661,12 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
       chunksRef.current = [];
       recorder.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
       recorder.onstop = () => {
+        // A mobile browser can stop MediaRecorder when a camera track ends
+        // during a camera switch. Always leave the recording state here too,
+        // otherwise the compact audio-style controls remain stuck on screen
+        // with recordingKind already cleared.
+        if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+        setIsRecording(false);
         // Keep codec parameters for MediaRecorder, but strip them from the
         // data URL MIME header. Commas in `codecs=vp8,opus` can make a data
         // URL look truncated to mobile video decoders.
