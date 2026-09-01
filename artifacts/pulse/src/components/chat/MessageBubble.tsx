@@ -11,6 +11,7 @@ import { Check, CheckCheck, Clock, X, Info, Play, Pause, Mic, Phone, Reply, Penc
 import { motion, AnimatePresence } from "framer-motion";
 import { BOT_AVATAR_URL } from "@/lib/botAvatar";
 import { decryptMessage, isEncryptedMessage } from "@/lib/e2e";
+import { emojiToTwemojiUrl } from "@/lib/twemoji";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,6 +25,28 @@ import {
 
 const QUICK_REACTIONS = ["❤️", "👍", "🔥", "😂", "😮", "😢"];
 const isStandaloneEmoji = (text: string) => /^[\s\p{Extended_Pictographic}\p{Regional_Indicator}\uFE0F\u200D\u20E3]+$/u.test(text) && text.trim().length > 0;
+
+function TwemojiInlineGlyph({ emoji, className = "" }: { emoji: string; className?: string }) {
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    setFailed(false);
+  }, [emoji]);
+
+  if (failed) {
+    return <span className={cn("message-emoji message-emoji-fallback", className)} role="img" aria-label={emoji}>{emoji}</span>;
+  }
+
+  return (
+    <img
+      src={emojiToTwemojiUrl(emoji)}
+      alt={emoji}
+      draggable={false}
+      className={cn("message-emoji", className)}
+      onError={() => setFailed(true)}
+    />
+  );
+}
 
 function EffectOverlay({ effect, onDone }: { effect: string; onDone: () => void }) {
   const particles = useMemo(() => {
@@ -746,7 +769,7 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
             const parts = value.split(/(\p{Extended_Pictographic}(?:\uFE0F|\uFE0E|\p{Emoji_Modifier}|\u200D\p{Extended_Pictographic})*)/gu);
             return parts.map((part, index) =>
               /^\p{Extended_Pictographic}/u.test(part)
-                ? <span key={index} className="message-emoji" role="img" aria-label={part}>{part}</span>
+                ? <TwemojiInlineGlyph key={`${part}-${index}`} emoji={part} />
                 : part
             );
           };
@@ -1412,7 +1435,7 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
                         : "bg-card border-border text-foreground hover:border-primary/50"
                     )}
                   >
-                    <span className="reaction-emoji">{emoji}</span>
+                    <TwemojiInlineGlyph emoji={emoji} className="reaction-emoji" />
                     <span>{data.count}</span>
                     {data.myCount >= 2 && (
                       <span className="text-[9px] font-black px-1 py-0.5 rounded bg-white/25 leading-none">×2</span>
@@ -1456,7 +1479,7 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
                                 reacted ? "bg-primary/20" : "hover:bg-secondary"
                               )}
                             >
-                              {emoji}
+                              <TwemojiInlineGlyph emoji={emoji} className="reaction-picker-emoji" />
                             </button>
                           );
                         })}
@@ -1523,7 +1546,7 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
                       (groupedReactions[emoji]?.mine) && "bg-primary/20 text-primary"
                     )}
                   >
-                    {emoji}
+                    <TwemojiInlineGlyph emoji={emoji} className="reaction-picker-emoji" />
                   </button>
                 ))}
                 <button

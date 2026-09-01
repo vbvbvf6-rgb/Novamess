@@ -32,8 +32,54 @@ import { prepareVideoForUpload } from "@/lib/mediaCompression";
 // rather than let them bloat storage (compression handles the normal case).
 const MAX_RAW_FILE_BYTES = 200 * 1024 * 1024; // 200MB
 
+function EmojiGlyph({
+  emoji,
+  alt = emoji,
+  size = 24,
+  className = "",
+}: {
+  emoji: string;
+  alt?: string;
+  size?: number;
+  className?: string;
+}) {
+  const [failed, setFailed] = useState(false);
 
+  useEffect(() => {
+    setFailed(false);
+  }, [emoji]);
+
+  if (failed) {
+    return (
+      <span
+        className={`emoji-picker-glyph emoji-picker-glyph-fallback ${className}`}
+        role="img"
+        aria-label={alt}
+        style={{ fontSize: size }}
+      >
+        {emoji}
+      </span>
+    );
+  }
+
+  return (
+    <img
+      src={emojiToTwemojiUrl(emoji)}
+      alt={alt}
+      width={size}
+      height={size}
+      draggable={false}
+      className={`emoji-picker-glyph ${className}`}
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
+const RECENT_EMOJIS = ["😀", "😂", "🤣", "😍", "🥰", "😘", "😊", "😎", "😭", "😡", "👍", "👎", "❤️", "🔥", "✨", "🎉", "🚀", "💯", "💔", "🙏", "🤔", "😴", "🥳", "🤩", "🤗", "👏", "🙌", "💪", "👋", "💋", "🐶", "🐱"];
+const FREQUENT_EMOJIS = ["😀", "😃", "😄", "😁", "😂", "🤣", "😊", "😇", "🙂", "🙃", "😉", "😌", "😍", "🥰", "😘", "😗", "😙", "😚", "😋", "😛", "😝", "😜", "🤪", "🤨", "🧐", "🤓", "😎", "🤩", "🥳", "😏", "😒", "🙄", "😬", "🤭", "🤫", "🤔", "🤐", "🤗", "🤥", "😶", "😐", "😑", "😔", "😪", "🤤", "😴", "🥺", "😢", "😭", "😤", "😠", "😡", "🤬", "🤯", "😳", "🥵", "🥶", "😱", "😨", "😰", "😥", "😓", "😩", "😫", "🥱", "😈", "👿", "💀", "☠️", "💩", "🤡", "👻", "👽", "🤖", "💖", "💗", "💓", "💞", "💕", "💌", "💘", "💝", "💟", "💯", "💢", "💥", "💫", "✨", "⭐", "🌟", "🔥", "⚡", "🎉", "🎊", "🎁", "🎈", "🚀", "👍", "👎", "👌", "👏", "🙏", "💪", "🤝", "🫶", "👋", "🤞", "✌️", "🤟", "🤘", "💅", "💋", "❤️", "🧡", "💛", "💚", "💙", "💜", "🖤", "🤍", "🤎"];
 const EMOJI_CATEGORIES: { label: string; icon: string; emojis: string[] }[] = [
+  { label: "Недавние", icon: "🕘", emojis: RECENT_EMOJIS },
+  { label: "Частые", icon: "⭐", emojis: FREQUENT_EMOJIS },
   { label: "Смайлы", icon: "😀", emojis: ["😀","😁","😂","🤣","😃","😄","😅","😆","😉","😊","😋","😎","😍","🥰","😘","🥲","😗","😙","🥺","😚","🙂","🤗","🤭","🤫","🤔","🤐","😐","😑","😶","😏","😒","🙄","😬","🤥","😌","😔","😪","🤤","😴","😷","🤒","🤕","🤢","🤮","🥵","🥶","🥴","😵","🤯","🤠","🥳","😕","☹️","😟","😧","😮","😲","😳","🥸","😢","😭","😤","😠","😡","🤬","💀","👻","👽","🤖","💩","😈","👹","👺","🤡","💫","💥","❗","❓","‼️"] },
   { label: "Жесты", icon: "👋", emojis: ["👋","🤚","🖐","✋","🖖","👌","🤌","🤏","✌","🤞","🤟","🤘","🤙","👈","👉","👆","🖕","👇","☝","👍","👎","✊","👊","🤛","🤜","👏","🙌","🫶","👐","🤲","🤝","🙏","💪","🦾","🦿","🦵","🦶","👂","🦻","👃","🫀","🫁","🧠","🦷","🦴","👀","👁","👅","👄","💋","🧑","👶","🧒","👦","👧","🧑","👱","🧔","👩","👴","👵","🧓","👮","💂","🕵","👷","🫅","👸","🤴","🧙","🧝","🧛","🧟","🧞","🧜","🧚","🤶","🎅","🧑‍⚕️","🧑‍🏫","🧑‍🍳","🧑‍🔧","🧑‍🎤","🧑‍💻","🧑‍🚀"] },
   { label: "Сердца", icon: "❤️", emojis: ["❤️","🧡","💛","💚","💙","💜","🖤","🤍","🤎","❤️‍🔥","💔","❣️","💕","💞","💓","💗","💖","💘","💝","💟","☮️","✝️","☪️","✡️","🕉","☯️","🆗","🆙","🆒","🆕","🆓","🉐","🉑","💯","🔝","🔛","🔜","🔚","⭕","🚫","💢","♨️","🚷","📵","🔞","❌","⭕","🛑","⛔","📛","🔴","🟠","🟡","🟢","🔵","🟣","⚫","⚪","🟤","💫","⭐","🌟","✨","🌠","🔥","💥","☀️","🌤","⛅","☁️","❄️","⛄","🌊","💧","🌀"] },
@@ -102,10 +148,10 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
   const { toast } = useToast();
 
   const [text, setText] = useState("");
-  const FLAGS_CATEGORY = 7;
   const STICKERS_TAB = EMOJI_CATEGORIES.length;
   const [showEmoji, setShowEmoji] = useState(false);
   const [emojiCategory, setEmojiCategory] = useState(0);
+  const [recentEmojis, setRecentEmojis] = useState(RECENT_EMOJIS);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [docPreviews, setDocPreviews] = useState<DocPreview[]>([]);
   const [isSending, setIsSending] = useState(false);
@@ -679,6 +725,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
 
   const insertEmoji = (emoji: string) => {
     setText(prev => prev + emoji);
+    setRecentEmojis(prev => [emoji, ...prev.filter(item => item !== emoji)].slice(0, 48));
     if (window.matchMedia("(hover: hover)").matches) {
       textareaRef.current?.focus();
     }
@@ -957,14 +1004,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
                     title={cat.label}
                     className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-all ${emojiCategory === i ? "bg-background shadow-sm border border-border scale-110" : "hover:bg-background/50"}`}
                   >
-                    <img
-                      src={emojiToTwemojiUrl(cat.icon)}
-                      alt={cat.label}
-                      width={20}
-                      height={20}
-                      draggable={false}
-                      onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; e.currentTarget.insertAdjacentText("afterend", cat.icon); }}
-                    />
+                    <EmojiGlyph emoji={cat.icon} alt={cat.label} size={21} />
                   </button>
                 ))}
                 {/* Sticker tab — coming soon */}
@@ -1006,22 +1046,16 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
                 </div>
               ) : (
                 /* Emoji grid */
-                <div className="p-3 grid grid-cols-8 gap-0.5 max-h-[240px] overflow-y-auto scrollbar-none">
-                  {EMOJI_CATEGORIES[emojiCategory].emojis.map((emoji, i) => (
-                    <button key={i} onClick={() => insertEmoji(emoji)}
-                      className="hover:bg-secondary rounded-xl p-1.5 transition-colors flex items-center justify-center hover:scale-110 active:scale-95">
-                      <img
-                        src={emojiToTwemojiUrl(emoji)}
-                        alt={emoji}
-                        width={22}
-                        height={22}
-                        draggable={false}
-                        onError={e => {
-                          const el = e.currentTarget as HTMLImageElement;
-                          el.style.display = "none";
-                          el.insertAdjacentHTML("afterend", `<span style="font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif;font-size:20px;line-height:1">${emoji}</span>`);
-                        }}
-                      />
+                <div className="emoji-picker-grid p-3 grid grid-cols-8 gap-0.5 max-h-[240px] overflow-y-auto scrollbar-none">
+                  {(emojiCategory === 0 ? recentEmojis : EMOJI_CATEGORIES[emojiCategory].emojis).map((emoji, i) => (
+                    <button
+                      key={`${emoji}-${i}`}
+                      onClick={() => insertEmoji(emoji)}
+                      aria-label={`Добавить ${emoji}`}
+                      className="emoji-picker-cell hover:bg-secondary rounded-xl p-1.5 transition-colors flex items-center justify-center hover:scale-110 active:scale-95"
+                      style={{ animationDelay: `${Math.min(i, 32) * 12}ms` }}
+                    >
+                      <EmojiGlyph emoji={emoji} size={24} className="emoji-picker-glyph-animated" />
                     </button>
                   ))}
                 </div>
