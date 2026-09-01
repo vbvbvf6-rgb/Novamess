@@ -50,8 +50,8 @@ const STEPS: Step[] = [
     icon: <Zap size={32} />,
     color: "text-yellow-400",
     gradient: "from-yellow-500/20 to-yellow-600/5",
-    title: "Gem 💎 и Кошелёк",
-    description: "Gem — внутренняя валюта Nova. Получай ежедневный бонус 💎, выполняй задания в разделе «События».",
+    title: "Nova ✦ и Кошелёк",
+    description: "Nova — внутренняя валюта мессенджера. Получай ежедневный бонус ✦ и выполняй задания в разделе «События».",
     tip: "💡 Заходи ежедневно чтобы не потерять стрик!",
   },
   {
@@ -67,7 +67,7 @@ const STEPS: Step[] = [
     color: "text-amber-400",
     gradient: "from-amber-500/20 to-amber-600/5",
     title: "Nova Prime",
-    description: "Подпишись на Prime чтобы получить золотое кольцо, эксклюзивные темы оформления и множитель Gem × 2 💎.",
+    description: "Подпишись на Prime чтобы получить золотое кольцо, эксклюзивные темы оформления и множитель Nova × 2 ✦.",
     tip: "💡 Раздел «Nova Prime» в левом меню",
   },
 ];

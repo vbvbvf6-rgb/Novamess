@@ -147661,7 +147661,9 @@ router8.delete("/messages/bulk", async (req, res) => {
   try {
     const uid = req.currentUserId;
     const rawIds = Array.isArray(req.body?.messageIds) ? req.body.messageIds : [];
-    const messageIds = [...new Set(rawIds.map(Number).filter((id) => Number.isInteger(id) && id > 0))];
+    const messageIds = Array.from(new Set(
+      rawIds.map((id) => Number(id)).filter((id) => Number.isInteger(id) && id > 0)
+    ));
     if (!messageIds.length) return res.status(400).json({ error: "\u0423\u043A\u0430\u0436\u0438\u0442\u0435 \u0445\u043E\u0442\u044F \u0431\u044B \u043E\u0434\u043D\u043E \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u0435" });
     if (messageIds.length > 200) return res.status(400).json({ error: "\u0417\u0430 \u043E\u0434\u0438\u043D \u0440\u0430\u0437 \u043C\u043E\u0436\u043D\u043E \u0443\u0434\u0430\u043B\u0438\u0442\u044C \u043D\u0435 \u0431\u043E\u043B\u0435\u0435 200 \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u0439" });
     const deleted = [];
@@ -148712,7 +148714,13 @@ db.execute(sql`
   ('red-black', 'Красно-чёрный', 'Красный и чёрный перелив для администраторов', 'admin', 'linear-gradient(90deg,#ef4444,#111827,#dc2626,#030712)', 3),
   ('black-white', 'Чёрно-белый', 'Контрастный чёрно-белый перелив для администраторов', 'admin', 'linear-gradient(90deg,#050505,#f8fafc,#737373,#fff)', 4),
   ('ocean', 'Океан', 'Спокойный сине-бирюзовый градиент', 'common', 'linear-gradient(90deg,#2563eb,#06b6d4,#22d3ee)', 5),
-  ('violet', 'Фиолетовый', 'Мягкий фиолетовый градиент', 'common', 'linear-gradient(90deg,#7c3aed,#c026d3,#ec4899)', 6)
+  ('violet', 'Фиолетовый', 'Мягкий фиолетовый градиент', 'common', 'linear-gradient(90deg,#7c3aed,#c026d3,#ec4899)', 6),
+  ('sunset', 'Закат', 'Тёплый перелив от янтарного к розовому', 'common', 'linear-gradient(90deg,#f97316,#ef4444,#ec4899,#f59e0b)', 7),
+  ('aurora', 'Северное сияние', 'Свежий зелёно-бирюзовый перелив', 'common', 'linear-gradient(90deg,#14b8a6,#22c55e,#84cc16,#06b6d4)', 8),
+  ('ruby', 'Рубин', 'Глубокий алый градиент', 'premium', 'linear-gradient(90deg,#be123c,#f43f5e,#fb7185,#881337)', 9),
+  ('mint', 'Мятный', 'Мягкий мятный неон', 'common', 'linear-gradient(90deg,#0f766e,#2dd4bf,#a7f3d0,#0d9488)', 10),
+  ('starlight', 'Звёздный свет', 'Светящийся небесный градиент', 'premium', 'linear-gradient(90deg,#f8fafc,#93c5fd,#c4b5fd,#fef08a)', 11),
+  ('cyber', 'Кибер', 'Яркий неоновый перелив', 'premium', 'linear-gradient(90deg,#22d3ee,#a3e635,#f0abfc,#38bdf8)', 12)
   ON CONFLICT (slug) DO NOTHING
 `).catch(() => {
 });
@@ -150734,7 +150742,7 @@ router14.post("/wallet/spend", async (req, res) => {
     if (result.rows.length === 0) {
       const balanceRows = await db.execute(sql`SELECT balance FROM users WHERE id = ${uid}`);
       const balance = Number(balanceRows.rows[0]?.balance ?? 0);
-      return res.status(400).json({ error: `\u041D\u0435\u0434\u043E\u0441\u0442\u0430\u0442\u043E\u0447\u043D\u043E \u041A\u0440\u0438\u0441\u0442\u0430\u043B\u043B\u043E\u0432. \u0412\u0430\u0448 \u0431\u0430\u043B\u0430\u043D\u0441: ${balance} \u{1F48E}`, balance });
+      return res.status(400).json({ error: `\u041D\u0435\u0434\u043E\u0441\u0442\u0430\u0442\u043E\u0447\u043D\u043E Nova. \u0412\u0430\u0448 \u0431\u0430\u043B\u0430\u043D\u0441: ${balance} \u2726`, balance });
     }
     const newBalance = Number(result.rows[0]?.balance ?? 0);
     db.execute(sql`INSERT INTO spark_activity (user_id, type, amount, description) VALUES (${uid}, 'spent', ${-amount}, 'Покупка') ON CONFLICT DO NOTHING`).catch(() => {
@@ -150784,7 +150792,7 @@ router14.post("/wallet/send", async (req, res) => {
     if (!row || Number(row.deduct_count) === 0) {
       const senderRows = await db.execute(sql`SELECT balance FROM users WHERE id = ${uid}`);
       const senderBalance = Number(senderRows.rows[0]?.balance ?? 0);
-      return res.status(400).json({ error: `\u041D\u0435\u0434\u043E\u0441\u0442\u0430\u0442\u043E\u0447\u043D\u043E \u041A\u0440\u0438\u0441\u0442\u0430\u043B\u043B\u043E\u0432. \u0412\u0430\u0448 \u0431\u0430\u043B\u0430\u043D\u0441: ${senderBalance} \u{1F48E}` });
+      return res.status(400).json({ error: `\u041D\u0435\u0434\u043E\u0441\u0442\u0430\u0442\u043E\u0447\u043D\u043E Nova. \u0412\u0430\u0448 \u0431\u0430\u043B\u0430\u043D\u0441: ${senderBalance} \u2726` });
     }
     const newBalance = Number(row.new_sender_balance ?? 0);
     db.execute(sql`INSERT INTO spark_activity (user_id, type, amount, description) VALUES (${uid}, 'sent', ${-amount}, ${"\u041E\u0442\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u043E: " + target.displayName})`).catch(() => {
@@ -150871,142 +150879,6 @@ router14.get("/wallet/activity", async (req, res) => {
       activities: rows.rows,
       summary: summary.rows[0] ?? { total_earned: 0, total_spent: 0, total_transactions: 0 }
     });
-  } catch (err2) {
-    req.log.error(err2);
-    res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
-  }
-});
-router14.post("/wallet/beg", async (req, res) => {
-  try {
-    const uid = req.currentUserId;
-    const { toUserId, amount, message } = req.body;
-    if (!toUserId || typeof toUserId !== "number") {
-      return res.status(400).json({ error: "\u0423\u043A\u0430\u0436\u0438\u0442\u0435 \u043F\u043E\u043B\u0443\u0447\u0430\u0442\u0435\u043B\u044F" });
-    }
-    if (toUserId === uid) {
-      return res.status(400).json({ error: "\u041D\u0435\u043B\u044C\u0437\u044F \u043F\u043E\u043F\u0440\u043E\u0441\u0438\u0442\u044C \u041A\u0440\u0438\u0441\u0442\u0430\u043B\u043B\u044B \u0443 \u0441\u0430\u043C\u043E\u0433\u043E \u0441\u0435\u0431\u044F" });
-    }
-    const amt = typeof amount === "number" && amount > 0 ? Math.floor(amount) : 0;
-    const msg = typeof message === "string" ? message.trim().slice(0, 200) : "";
-    const target = await db.execute(sql`SELECT id, display_name FROM users WHERE id = ${toUserId}`);
-    if (!target.rows.length) {
-      return res.status(404).json({ error: "\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D" });
-    }
-    const existing = await db.execute(sql`
-      SELECT id FROM spark_beg_requests
-      WHERE from_user_id = ${uid} AND to_user_id = ${toUserId} AND status = 'pending'
-      LIMIT 1
-    `);
-    if (existing.rows.length) {
-      return res.status(409).json({ error: "\u0423 \u0432\u0430\u0441 \u0443\u0436\u0435 \u0435\u0441\u0442\u044C \u0430\u043A\u0442\u0438\u0432\u043D\u044B\u0439 \u0437\u0430\u043F\u0440\u043E\u0441 \u043A \u044D\u0442\u043E\u043C\u0443 \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044E" });
-    }
-    const inserted = await db.execute(sql`
-      INSERT INTO spark_beg_requests (from_user_id, to_user_id, amount, message, status)
-      VALUES (${uid}, ${toUserId}, ${amt}, ${msg}, 'pending')
-      RETURNING id
-    `);
-    res.json({ success: true, id: inserted.rows[0].id });
-  } catch (err2) {
-    req.log.error(err2);
-    res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
-  }
-});
-router14.get("/wallet/beg/incoming", async (req, res) => {
-  try {
-    const uid = req.currentUserId;
-    const rows = await db.execute(sql`
-      SELECT b.id, b.from_user_id, b.amount, b.message, b.status, b.created_at,
-             u.display_name, u.username, u.avatar_color, u.avatar_url
-      FROM spark_beg_requests b
-      JOIN users u ON u.id = b.from_user_id
-      WHERE b.to_user_id = ${uid} AND b.status = 'pending'
-      ORDER BY b.created_at DESC
-      LIMIT 50
-    `);
-    res.json(rows.rows);
-  } catch (err2) {
-    req.log.error(err2);
-    res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
-  }
-});
-router14.get("/wallet/beg/outgoing", async (req, res) => {
-  try {
-    const uid = req.currentUserId;
-    const rows = await db.execute(sql`
-      SELECT b.id, b.to_user_id, b.amount, b.message, b.status, b.created_at,
-             u.display_name, u.username, u.avatar_color, u.avatar_url
-      FROM spark_beg_requests b
-      JOIN users u ON u.id = b.to_user_id
-      WHERE b.from_user_id = ${uid}
-      ORDER BY b.created_at DESC
-      LIMIT 50
-    `);
-    res.json(rows.rows);
-  } catch (err2) {
-    req.log.error(err2);
-    res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
-  }
-});
-router14.post("/wallet/beg/:id/fulfill", async (req, res) => {
-  try {
-    const uid = req.currentUserId;
-    const begId = parseInt(req.params.id, 10);
-    const { amount } = req.body;
-    if (typeof amount !== "number" || amount <= 0) {
-      return res.status(400).json({ error: "\u0423\u043A\u0430\u0436\u0438\u0442\u0435 \u0441\u0443\u043C\u043C\u0443" });
-    }
-    const begRows = await db.execute(sql`
-      SELECT * FROM spark_beg_requests WHERE id = ${begId} AND to_user_id = ${uid} AND status = 'pending' LIMIT 1
-    `);
-    if (!begRows.rows.length) {
-      return res.status(404).json({ error: "\u0417\u0430\u043F\u0440\u043E\u0441 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D" });
-    }
-    const beg = begRows.rows[0];
-    await db.execute(sql`BEGIN`);
-    try {
-      const deductResult = await db.execute(sql`
-        UPDATE users SET balance = balance - ${amount}
-        WHERE id = ${uid} AND balance >= ${amount}
-        RETURNING balance
-      `);
-      if (deductResult.rows.length === 0) {
-        await db.execute(sql`ROLLBACK`);
-        const senderRows = await db.execute(sql`SELECT balance FROM users WHERE id = ${uid}`);
-        const senderBalance = Number(senderRows.rows[0]?.balance ?? 0);
-        return res.status(400).json({ error: `\u041D\u0435\u0434\u043E\u0441\u0442\u0430\u0442\u043E\u0447\u043D\u043E \u041A\u0440\u0438\u0441\u0442\u0430\u043B\u043B\u043E\u0432. \u0412\u0430\u0448 \u0431\u0430\u043B\u0430\u043D\u0441: ${senderBalance} \u{1F48E}` });
-      }
-      const newBalance = Number(deductResult.rows[0]?.balance ?? 0);
-      await db.execute(sql`UPDATE users SET balance = balance + ${amount} WHERE id = ${beg.from_user_id}`);
-      await db.execute(sql`UPDATE spark_beg_requests SET status = 'fulfilled' WHERE id = ${begId}`);
-      await db.execute(sql`COMMIT`);
-      const fromUser = await db.execute(sql`SELECT display_name FROM users WHERE id = ${beg.from_user_id}`);
-      const fromName = fromUser.rows[0]?.display_name ?? "\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C";
-      db.execute(sql`INSERT INTO spark_activity (user_id, type, amount, description) VALUES (${uid}, 'sent', ${-amount}, ${"\u041E\u0442\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u043E \u043F\u043E \u0437\u0430\u043F\u0440\u043E\u0441\u0443: " + fromName})`).catch(() => {
-      });
-      db.execute(sql`INSERT INTO spark_activity (user_id, type, amount, description) VALUES (${beg.from_user_id}, 'received', ${amount}, ${"\u041F\u043E\u043B\u0443\u0447\u0435\u043D\u043E \u043F\u043E \u0437\u0430\u043F\u0440\u043E\u0441\u0443 \u{1F48E}"})`).catch(() => {
-      });
-      res.json({ success: true, balance: newBalance });
-    } catch (txErr) {
-      await db.execute(sql`ROLLBACK`);
-      throw txErr;
-    }
-  } catch (err2) {
-    req.log.error(err2);
-    res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
-  }
-});
-router14.post("/wallet/beg/:id/decline", async (req, res) => {
-  try {
-    const uid = req.currentUserId;
-    const begId = parseInt(req.params.id, 10);
-    const result = await db.execute(sql`
-      UPDATE spark_beg_requests SET status = 'declined'
-      WHERE id = ${begId} AND to_user_id = ${uid} AND status = 'pending'
-    `);
-    if ((result.rowCount ?? 0) === 0) {
-      return res.status(404).json({ error: "\u0417\u0430\u043F\u0440\u043E\u0441 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D" });
-    }
-    res.json({ success: true });
   } catch (err2) {
     req.log.error(err2);
     res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
@@ -151422,7 +151294,7 @@ router17.post("/prime/subscribe", async (req, res) => {
     );
     if (deductResult.rows.length === 0) {
       return res.status(400).json({
-        error: `\u041D\u0435\u0434\u043E\u0441\u0442\u0430\u0442\u043E\u0447\u043D\u043E \u041A\u0440\u0438\u0441\u0442\u0430\u043B\u043B\u043E\u0432. \u041D\u0443\u0436\u043D\u043E ${plan.spark} \u{1F48E}, \u0443 \u0432\u0430\u0441 ${balance} \u{1F48E}`,
+        error: `\u041D\u0435\u0434\u043E\u0441\u0442\u0430\u0442\u043E\u0447\u043D\u043E Nova. \u041D\u0443\u0436\u043D\u043E ${plan.spark} \u2726, \u0443 \u0432\u0430\u0441 ${balance} \u2726`,
         required: plan.spark,
         balance
       });

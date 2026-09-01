@@ -963,17 +963,22 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
       }
       case "video": {
         let videoName = "Видео";
-        try { const p = JSON.parse(message.text || "{}"); videoName = p.name || "Видео"; } catch {}
+        let isVideoNote = false;
+        try {
+          const p = JSON.parse(message.text || "{}");
+          videoName = p.name || "Видео";
+          isVideoNote = p.videoNote === true;
+        } catch {}
         return (
-          <div className="rounded-xl overflow-hidden -mx-1 -mt-1 mb-1 relative group">
+          <div className={cn("overflow-hidden -mx-1 -mt-1 mb-1 relative group", isVideoNote ? "rounded-full aspect-square max-w-[280px] bg-black" : "rounded-xl")}>
             <video
               src={message.mediaUrl || ""}
               controls
               playsInline
-              className="max-w-[280px] max-h-[320px] w-full block rounded-xl"
+              className={cn("max-w-[280px] w-full block object-cover", isVideoNote ? "h-full aspect-square rounded-full" : "max-h-[320px] rounded-xl")}
               preload="metadata"
             />
-            <div className="flex items-center gap-1 px-2 pb-1 pt-1">
+            {!isVideoNote && <div className="flex items-center gap-1 px-2 pb-1 pt-1">
               <p className="text-[11px] text-muted-foreground truncate flex-1">{videoName}</p>
               {message.mediaUrl && (
                 <a
@@ -986,7 +991,7 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
                   <Download size={13} />
                 </a>
               )}
-            </div>
+            </div>}
           </div>
         );
       }

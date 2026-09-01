@@ -53,7 +53,13 @@ db.execute(sql`
   ('red-black', 'Красно-чёрный', 'Красный и чёрный перелив для администраторов', 'admin', 'linear-gradient(90deg,#ef4444,#111827,#dc2626,#030712)', 3),
   ('black-white', 'Чёрно-белый', 'Контрастный чёрно-белый перелив для администраторов', 'admin', 'linear-gradient(90deg,#050505,#f8fafc,#737373,#fff)', 4),
   ('ocean', 'Океан', 'Спокойный сине-бирюзовый градиент', 'common', 'linear-gradient(90deg,#2563eb,#06b6d4,#22d3ee)', 5),
-  ('violet', 'Фиолетовый', 'Мягкий фиолетовый градиент', 'common', 'linear-gradient(90deg,#7c3aed,#c026d3,#ec4899)', 6)
+  ('violet', 'Фиолетовый', 'Мягкий фиолетовый градиент', 'common', 'linear-gradient(90deg,#7c3aed,#c026d3,#ec4899)', 6),
+  ('sunset', 'Закат', 'Тёплый перелив от янтарного к розовому', 'common', 'linear-gradient(90deg,#f97316,#ef4444,#ec4899,#f59e0b)', 7),
+  ('aurora', 'Северное сияние', 'Свежий зелёно-бирюзовый перелив', 'common', 'linear-gradient(90deg,#14b8a6,#22c55e,#84cc16,#06b6d4)', 8),
+  ('ruby', 'Рубин', 'Глубокий алый градиент', 'premium', 'linear-gradient(90deg,#be123c,#f43f5e,#fb7185,#881337)', 9),
+  ('mint', 'Мятный', 'Мягкий мятный неон', 'common', 'linear-gradient(90deg,#0f766e,#2dd4bf,#a7f3d0,#0d9488)', 10),
+  ('starlight', 'Звёздный свет', 'Светящийся небесный градиент', 'premium', 'linear-gradient(90deg,#f8fafc,#93c5fd,#c4b5fd,#fef08a)', 11),
+  ('cyber', 'Кибер', 'Яркий неоновый перелив', 'premium', 'linear-gradient(90deg,#22d3ee,#a3e635,#f0abfc,#38bdf8)', 12)
   ON CONFLICT (slug) DO NOTHING
 `).catch(() => {});
 db.execute(sql`CREATE TABLE IF NOT EXISTS creator_verifications (

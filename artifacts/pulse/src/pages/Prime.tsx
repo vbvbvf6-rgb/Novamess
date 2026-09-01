@@ -33,7 +33,7 @@ const PRIME_FEATURES = [
   { icon: Crown,        text: "Золотое кольцо вокруг аватара в чатах и профиле",  color: "text-yellow-400", bg: "bg-yellow-500/10" },
   { icon: Star,         text: "Значок Prime ⭐ у вашего имени везде",              color: "text-yellow-400", bg: "bg-yellow-500/10" },
   { icon: Palette,      text: "Эксклюзивные темы: Obsidian, Midnight, Forest",    color: "text-yellow-400", bg: "bg-yellow-500/10" },
-  { icon: TrendingUp,   text: "2× Gem 💎 за выполнение ежедневных заданий",       color: "text-green-400",  bg: "bg-green-500/10"  },
+  { icon: TrendingUp,   text: "2× Nova ✦ за выполнение ежедневных заданий",       color: "text-green-400",  bg: "bg-green-500/10"  },
   { icon: Zap,          text: "Ежедневный бонус 25 💎 вместо 10 💎",              color: "text-green-400",  bg: "bg-green-500/10"  },
   { icon: RefreshCw,    text: "Смена никнейма каждые 24ч вместо 7 дней",          color: "text-green-400",  bg: "bg-green-500/10"  },
   { icon: Image,        text: "Загрузка медиа без ограничений размера",            color: "text-green-400",  bg: "bg-green-500/10"  },
@@ -42,26 +42,26 @@ const PRIME_FEATURES = [
   { icon: Clock,        text: "Отложенная отправка сообщений по расписанию",      color: "text-green-400",  bg: "bg-green-500/10"  },
   { icon: Bell,         text: "Приоритетные уведомления",        color: "text-green-400",  bg: "bg-green-500/10"  },
   { icon: Shield,       text: "VIP-метка в группах и каналах",                   color: "text-yellow-400", bg: "bg-yellow-500/10" },
-  { icon: Zap,          text: "50 💎 Gem бонус при оформлении",                   color: "text-green-400",  bg: "bg-green-500/10"  },
+  { icon: Zap,          text: "50 Nova ✦ бонус при оформлении",                   color: "text-green-400",  bg: "bg-green-500/10"  },
 ];
 
 const PLUS_EXCLUSIVE = [
   { icon: Sparkles,     text: "Алмазное анимированное кольцо вместо золотого",        color: "text-purple-400", bg: "bg-purple-500/10" },
   { icon: Star,         text: "Значок PRIME+ 💎 с градиентом у имени",                color: "text-purple-400", bg: "bg-purple-500/10" },
-  { icon: TrendingUp,   text: "3× Gem 💎 вместо 2× за ежедневные задания",            color: "text-fuchsia-400",bg: "bg-fuchsia-500/10"},
+  { icon: TrendingUp,   text: "3× Nova ✦ вместо 2× за ежедневные задания",            color: "text-fuchsia-400",bg: "bg-fuchsia-500/10"},
   { icon: Zap,          text: "Ежедневный бонус 50 💎 вместо 25 💎",                  color: "text-fuchsia-400",bg: "bg-fuchsia-500/10"},
   { icon: Brush,        text: "Кастомный цвет имени: градиентный текст",              color: "text-purple-400", bg: "bg-purple-500/10" },
   { icon: Palette,      text: "Полная палитра тем + анимированный фон профиля",       color: "text-purple-400", bg: "bg-purple-500/10" },
   { icon: Layers,       text: "Эксклюзивный пак стикеров Prime+",                    color: "text-purple-400", bg: "bg-purple-500/10" },
   { icon: Shield,       text: "VIP+ метка в группах и каналах",                      color: "text-purple-400", bg: "bg-purple-500/10" },
-  { icon: Zap,          text: "100 💎 Gem бонус при оформлении",                      color: "text-fuchsia-400",bg: "bg-fuchsia-500/10"},
+  { icon: Zap,          text: "100 Nova ✦ бонус при оформлении",                      color: "text-fuchsia-400",bg: "bg-fuchsia-500/10"},
   { icon: Trash2,       text: "Просмотр удалённых сообщений — 48 часов",             color: "text-violet-400", bg: "bg-violet-500/10" },
   { icon: Globe,        text: "Кастомный анимированный статус профиля",               color: "text-violet-400", bg: "bg-violet-500/10" },
   { icon: Smile,        text: "Двойные реакции: отправляй ×2 реакции на сообщение",  color: "text-fuchsia-400",bg: "bg-fuchsia-500/10"},
   { icon: Music,        text: "Кастомные звуки и рингтоны уведомлений",               color: "text-purple-400", bg: "bg-purple-500/10" },
   { icon: Wand2,        text: "Эффекты отправки: конфетти, снег, огонь в чате",       color: "text-purple-400", bg: "bg-purple-500/10" },
   { icon: QrCode,       text: "QR-код профиля с кастомным дизайном Prime+",           color: "text-violet-400", bg: "bg-violet-500/10" },
-  { icon: BarChart3,    text: "Детальная статистика трат Кристаллов и активности",          color: "text-violet-400", bg: "bg-violet-500/10" },
+  { icon: BarChart3,    text: "Детальная статистика трат Nova и активности",          color: "text-violet-400", bg: "bg-violet-500/10" },
   { icon: Headphones,   text: "Эксклюзивный доступ к Prime+ Lounge — закрытому чату", color: "text-fuchsia-400",bg: "bg-fuchsia-500/10"},
 ];
 
@@ -70,7 +70,7 @@ const PLUS_EXCLUSIVE = [
 const COMPARISON_ROWS = [
   { label: "Значок у имени",           prime: "⭐ Prime",       plus: "💎 Prime+ градиент" },
   { label: "Кольцо аватара",           prime: "Золотое",         plus: "Алмазное анимированное" },
-  { label: "Ежедневный Кристалл бонус",   prime: "25 💎",           plus: "50 💎" },
+  { label: "Ежедневный Nova бонус",   prime: "25 ✦",           plus: "50 ✦" },
   { label: "Множитель заданий",        prime: "2×",              plus: "3×" },
   { label: "Бонус при старте",         prime: "50 💎",           plus: "100 💎" },
   { label: "Темы оформления",          prime: "3 темы",          plus: "Все темы + анимация" },
@@ -381,7 +381,7 @@ export default function Prime() {
       setShowModal(false);
       toast({
         title: pendingTier === "prime_plus" ? "Nova Prime+ активирован! 💎" : "Nova Prime активирован! ⭐",
-        description: `Остаток: ${data.balance} 💎 Кристаллы`,
+        description: `Остаток: ${data.balance} Nova ✦`,
       });
     } catch {
       toast({ variant: "destructive", title: "Ошибка соединения" });
@@ -805,7 +805,7 @@ export default function Prime() {
                     <div>
                       <h3 className="font-black text-base">{pendingTier === "prime_plus" ? "Nova Prime+" : "Nova Prime"}</h3>
                       <p className={`text-xs font-semibold ${pendingTier === "prime_plus" ? "text-purple-400" : "text-yellow-400"}`}>
-                        {selectedPlan.name} — {selectedPlan.spark} 💎 Кристаллы
+                        {selectedPlan.name} — {selectedPlan.spark} Nova ✦
                       </p>
                     </div>
                   </div>
@@ -827,7 +827,7 @@ export default function Prime() {
                     <span className="font-bold">{selectedPlan.spark} ✨</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Бонус Кристалл</span>
+                    <span className="text-muted-foreground">Бонус Nova</span>
                     <span className="font-bold text-green-400">+{pendingTier === "prime_plus" ? 100 : 50} ✨</span>
                   </div>
                   <div className="flex justify-between">
@@ -852,14 +852,14 @@ export default function Prime() {
                   {(pendingTier === "prime_plus" ? [
                     "Значок PRIME+ 💎 у вашего имени",
                     "Алмазное анимированное кольцо",
-                    "3× Кристаллы за ежедневные задания",
-                    "Бонус 100 💎 Кристаллов к балансу",
+                    "3× Nova за ежедневные задания",
+                    "Бонус 100 Nova к балансу",
                     "Все функции Prime включены",
                   ] : [
                     "Значок Prime ⭐ у вашего имени",
                     "Золотое кольцо вокруг аватара",
-                    "2× Кристаллы за ежедневные задания",
-                    "Бонус 50 💎 Кристаллов к балансу",
+                    "2× Nova за ежедневные задания",
+                    "Бонус 50 Nova к балансу",
                     "Смена ника каждые 24ч",
                   ]).map((item, i) => (
                     <div key={i} className="flex items-center gap-2 text-xs text-foreground">
@@ -874,7 +874,7 @@ export default function Prime() {
                   <div className="bg-destructive/10 border border-destructive/20 rounded-2xl p-3.5 flex items-start gap-3">
                     <AlertTriangle size={16} className="text-destructive shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-xs font-bold text-destructive">Недостаточно Кристаллов</p>
+                      <p className="text-xs font-bold text-destructive">Недостаточно Nova</p>
                       <p className="text-xs text-muted-foreground mt-0.5">Нужно ещё {selectedPlan.spark - wallet} ✨. Пополните баланс в Кошельке.</p>
                     </div>
                   </div>
@@ -902,7 +902,7 @@ export default function Prime() {
                   <button onClick={() => { setShowModal(false); navigate("/wallet"); }}
                     className="w-full py-3.5 bg-primary rounded-2xl text-white font-bold text-sm flex items-center justify-center gap-2"
                   >
-                    <ShoppingCart size={16} /> Купить Кристаллы в Кошельке
+                    <ShoppingCart size={16} /> Купить Nova в Кошельке
                   </button>
                 )}
 

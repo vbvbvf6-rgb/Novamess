@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { createPortal } from "react-dom";
 import { useParams, useLocation } from "wouter";
 import {
   useGetUserById,
@@ -23,7 +22,6 @@ import {
   Crown,
   Zap,
   X,
-  HandCoins,
   Flag,
   AlertTriangle,
   ShieldBan,
@@ -222,163 +220,6 @@ function ReportUserDialog({ userId, displayName }: { userId: number; displayName
   );
 }
 
-const BEG_PRESETS = [10, 25, 50, 100, 250];
-
-function BegModal({
-  user,
-  onClose,
-}: {
-  user: { id: number; displayName: string; avatarColor?: string | null; avatarUrl?: string | null };
-  onClose: () => void;
-}) {
-  const { toast } = useToast();
-  const [amount, setAmount] = useState(25);
-  const [customAmount, setCustomAmount] = useState("");
-  const [useCustom, setUseCustom] = useState(false);
-  const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  const finalAmount = useCustom ? (parseInt(customAmount) || 0) : amount;
-
-  const handleSubmit = async () => {
-    if (finalAmount <= 0) {
-      toast({ title: "Укажи сумму", variant: "destructive" });
-      return;
-    }
-    setLoading(true);
-    try {
-      const res = await fetch("/api/wallet/beg", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` },
-        body: JSON.stringify({ toUserId: user.id, amount: finalAmount, message }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        toast({ title: data.error || "Ошибка", variant: "destructive" });
-      } else {
-        toast({ title: `Запрос отправлен ${user.displayName}!`, description: `Ты попросил ${finalAmount} 💎 Кристаллов` });
-        onClose();
-      }
-    } catch {
-      toast({ title: "Ошибка сети", variant: "destructive" });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return createPortal(
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[9999] bg-black/40 backdrop-blur-md flex items-end sm:items-center justify-center p-4"
-        onClick={e => { if (e.target === e.currentTarget) onClose(); }}
-      >
-        <motion.div
-          initial={{ y: "100%", opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: "100%", opacity: 0 }}
-          transition={{ type: "spring", damping: 25, stiffness: 200 }}
-          className="bg-card rounded-[32px] border border-border w-full max-w-sm overflow-hidden shadow-2xl"
-        >
-          <div className="flex items-center gap-3 px-6 py-5 border-b border-border">
-            <div className="flex-1">
-              <h2 className="font-black text-lg">Попросить Кристаллы 💎</h2>
-              <p className="text-xs text-muted-foreground">у {user.displayName}</p>
-            </div>
-            <button onClick={onClose} className="p-2 -mr-2 rounded-xl hover:bg-secondary transition-colors text-muted-foreground">
-              <X size={18} />
-            </button>
-          </div>
-
-          <div className="p-6 space-y-5">
-            {/* Animated begging emoji */}
-            <div className="flex flex-col items-center gap-2">
-              <motion.div
-                animate={{ rotate: [0, -10, 10, -10, 10, 0], y: [0, -4, 0] }}
-                transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 1 }}
-                className="text-5xl select-none"
-              >
-                🙏
-              </motion.div>
-              <p className="text-sm text-muted-foreground text-center">Укажи сколько Кристаллов хочешь попросить</p>
-            </div>
-
-            {/* Preset amounts */}
-            <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">Сумма</p>
-              <div className="flex flex-wrap gap-2">
-                {BEG_PRESETS.map(p => (
-                  <button
-                    key={p}
-                    onClick={() => { setAmount(p); setUseCustom(false); }}
-                    className={`px-3 py-1.5 rounded-xl text-sm font-bold border transition-all ${
-                      !useCustom && amount === p
-                        ? "bg-yellow-500/20 border-yellow-500/50 text-yellow-300"
-                        : "bg-secondary border-border text-muted-foreground hover:bg-secondary/80"
-                    }`}
-                  >
-                    {p} 💎
-                  </button>
-                ))}
-                <button
-                  onClick={() => setUseCustom(true)}
-                  className={`px-3 py-1.5 rounded-xl text-sm font-bold border transition-all ${
-                    useCustom
-                      ? "bg-yellow-500/20 border-yellow-500/50 text-yellow-300"
-                      : "bg-secondary border-border text-muted-foreground hover:bg-secondary/80"
-                  }`}
-                >
-                  Своя
-                </button>
-              </div>
-              {useCustom && (
-                <motion.input
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  type="number"
-                  inputMode="numeric"
-                  min={1}
-                  value={customAmount}
-                  onChange={e => setCustomAmount(e.target.value)}
-                  placeholder="Сумма ✨"
-                  className="mt-2 w-full rounded-xl bg-secondary border border-border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500/40"
-                />
-              )}
-            </div>
-
-            {/* Message */}
-            <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">Сообщение (необязательно)</p>
-              <textarea
-                value={message}
-                onChange={e => setMessage(e.target.value)}
-                placeholder="Объясни зачем тебе Кристаллы… 😅"
-                maxLength={200}
-                rows={2}
-                className="w-full rounded-xl bg-secondary border border-border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500/40 resize-none"
-              />
-              <p className="text-right text-[10px] text-muted-foreground mt-1">{message.length}/200</p>
-            </div>
-
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={handleSubmit}
-              disabled={loading || finalAmount <= 0}
-              className="w-full py-3.5 rounded-2xl font-black text-sm bg-gradient-to-r from-yellow-500 to-orange-500 text-black disabled:opacity-50 transition-all shadow-[0_0_20px_rgba(234,179,8,0.3)]"
-            >
-              {loading ? "Отправка…" : `Попросить ${finalAmount > 0 ? finalAmount + " 💎" : "Spark"}`}
-            </motion.button>
-          </div>
-        </motion.div>
-      </motion.div>
-    </AnimatePresence>,
-    document.body
-  );
-}
-
 const STATUS_CONFIG: Record<string, { color: string; label: string; icon: React.ReactNode }> = {
   online: { color: "bg-green-500", label: "online", icon: <CheckCircle2 size={12} className="text-green-400" /> },
   away: { color: "bg-yellow-500", label: "away", icon: <Clock size={12} className="text-yellow-400" /> },
@@ -411,7 +252,6 @@ export default function UserProfile() {
   const { setSelectedChatId } = useAppContext();
   const queryClient = useQueryClient();
   const [isStartingChat, setIsStartingChat] = useState(false);
-  const [showBeg, setShowBeg] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
   const [blockLoading, setBlockLoading] = useState(false);
 
@@ -829,12 +669,6 @@ export default function UserProfile() {
         </div>
       </div>
 
-      {showBeg && user && (
-        <BegModal
-          user={{ id: user.id, displayName: user.displayName, avatarColor: user.avatarColor, avatarUrl: (user as any).avatarUrl }}
-          onClose={() => setShowBeg(false)}
-        />
-      )}
     </div>
   );
 }

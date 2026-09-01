@@ -118,6 +118,8 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
   const [isRecording, setIsRecording] = useState(false);
   const [recordSeconds, setRecordSeconds] = useState(0);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [videoBlob, setVideoBlob] = useState<Blob | null>(null);
+  const [recordingKind, setRecordingKind] = useState<"audio" | "video" | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
 
   const [showPollCreator, setShowPollCreator] = useState(false);
@@ -137,6 +139,8 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const recordingStreamRef = useRef<MediaStream | null>(null);
+  const videoPreviewRef = useRef<HTMLVideoElement>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -192,11 +196,23 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
   }, [replyTo]);
 
   useEffect(() => {
+    const preview = videoPreviewRef.current;
+    if (isRecording && recordingKind === "video" && preview && recordingStreamRef.current) {
+      preview.srcObject = recordingStreamRef.current;
+      preview.play().catch(() => {});
+    } else if (preview && !isRecording) {
+      preview.srcObject = null;
+    }
+  }, [isRecording, recordingKind]);
+
+  useEffect(() => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
       if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
       if (stopTypingTimeoutRef.current) clearTimeout(stopTypingTimeoutRef.current);
       mediaRecorderRef.current?.stream?.getTracks().forEach(t => t.stop());
+      recordingStreamRef.current = null;
+      if (videoPreviewRef.current) videoPreviewRef.current.srcObject = null;
     };
   }, []);
 
@@ -383,10 +399,24 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
       return;
     }
 
-    if (!text.trim() && imagePreviews.length === 0 && !audioBlob && docPreviews.length === 0) return;
+    if (!text.trim() && imagePreviews.length === 0 && !audioBlob && !videoBlob && docPreviews.length === 0) return;
     setIsSending(true);
     try {
-      if (audioBlob) {
+      if (videoBlob) {
+        const base64 = await readFileAsDataUrl(new File([videoBlob], "video-note.webm", { type: videoBlob.type }));
+        const sent = await sendMessage.mutateAsync({
+          data: {
+            chatId,
+            type: "video",
+            mediaUrl: base64,
+            text: JSON.stringify({ name: "Видеокружок", size: videoBlob.size, mime: videoBlob.type, duration: recordSeconds, videoNote: true }),
+            replyToId: replyTo?.id,
+          }
+        });
+        if (sent) p2p?.send(sent as Message);
+        setVideoBlob(null);
+        setRecordSeconds(0);
+      } else if (audioBlob) {
         const base64 = await readFileAsDataUrl(new File([audioBlob], "voice.webm", { type: audioBlob.type }));
         const sent = await sendMessage.mutateAsync({
           data: { chatId, type: "audio", mediaUrl: base64, text: `voice:${recordSeconds}`, replyToId: replyTo?.id }
@@ -545,24 +575,46 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
 
   const MAX_VOICE_SECONDS = 120; // 2 minutes max recording
 
-  const startRecording = async () => {
+  const startRecording = async (kind: "audio" | "video" = "audio") => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
-        ? "audio/webm;codecs=opus"
-        : MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "audio/ogg";
-      const recorder = new MediaRecorder(stream, { mimeType, audioBitsPerSecond: 32000 });
+      const stream = await navigator.mediaDevices.getUserMedia(
+        kind === "video"
+          ? { video: { facingMode: "user", width: { ideal: 720 }, height: { ideal: 720 } }, audio: true }
+          : { audio: true },
+      );
+      const mimeType = kind === "video"
+        ? (MediaRecorder.isTypeSupported("video/webm;codecs=vp9,opus")
+          ? "video/webm;codecs=vp9,opus"
+          : MediaRecorder.isTypeSupported("video/webm") ? "video/webm" : "")
+        : (MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+          ? "audio/webm;codecs=opus"
+          : MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "audio/ogg");
+      if (!mimeType || !MediaRecorder.isTypeSupported(mimeType)) {
+        stream.getTracks().forEach(t => t.stop());
+        throw new Error("Формат записи не поддерживается");
+      }
+      const recorder = new MediaRecorder(stream, { mimeType, ...(kind === "audio" ? { audioBitsPerSecond: 32000 } : {}) });
       chunksRef.current = [];
       recorder.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
       recorder.onstop = () => {
         const blob = new Blob(chunksRef.current, { type: mimeType });
-        setAudioBlob(blob);
+        if (kind === "video") setVideoBlob(blob);
+        else setAudioBlob(blob);
+        setRecordingKind(null);
+        recordingStreamRef.current = null;
+        if (videoPreviewRef.current) videoPreviewRef.current.srcObject = null;
         stream.getTracks().forEach(t => t.stop());
       };
       recorder.start(100);
       mediaRecorderRef.current = recorder;
+      recordingStreamRef.current = stream;
       setIsRecording(true);
-      sendTypingEvent("audio");
+      setRecordingKind(kind);
+      if (kind === "video" && videoPreviewRef.current) {
+        videoPreviewRef.current.srcObject = stream;
+        videoPreviewRef.current.play().catch(() => {});
+      }
+      sendTypingEvent(kind);
       setRecordSeconds(0);
       timerRef.current = setInterval(() => {
         setRecordSeconds(s => {
@@ -576,7 +628,13 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
         });
       }, 1000);
     } catch {
-      toast({ title: "Нет доступа к микрофону", description: "Разрешите доступ к микрофону в настройках браузера", variant: "destructive" });
+      toast({
+        title: kind === "video" ? "Не удалось включить камеру" : "Нет доступа к микрофону",
+        description: kind === "video"
+          ? "Разрешите доступ к камере и микрофону в настройках браузера"
+          : "Разрешите доступ к микрофону в настройках браузера",
+        variant: "destructive",
+      });
     }
   };
 
@@ -584,6 +642,8 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
     if (mediaRecorderRef.current?.state !== "inactive") mediaRecorderRef.current?.stop();
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
     setIsRecording(false);
+    setRecordingKind(null);
+    recordingStreamRef.current = null;
   };
 
   const cancelRecording = () => {
@@ -592,8 +652,12 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
     setIsRecording(false);
     setAudioBlob(null);
+    setVideoBlob(null);
+    setRecordingKind(null);
     setRecordSeconds(0);
     chunksRef.current = [];
+    recordingStreamRef.current = null;
+    if (videoPreviewRef.current) videoPreviewRef.current.srcObject = null;
   };
 
   const sendGif = async (gifUrl: string) => {
@@ -660,7 +724,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
   const _pad = (n: number) => n.toString().padStart(2, "0");
   const minDatetime = `${_minDate.getFullYear()}-${_pad(_minDate.getMonth()+1)}-${_pad(_minDate.getDate())}T${_pad(_minDate.getHours())}:${_pad(_minDate.getMinutes())}`;
 
-  const hasContent = text.trim().length > 0 || imagePreviews.length > 0 || docPreviews.length > 0 || !!audioBlob;
+  const hasContent = text.trim().length > 0 || imagePreviews.length > 0 || docPreviews.length > 0 || !!audioBlob || !!videoBlob;
 
   if (isChannel && !isChannelAdmin) {
     if (!replyTo) {
@@ -1224,6 +1288,16 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
                     <span className="text-[10px] font-bold leading-none">Голос</span>
                   </button>
                 )}
+                <button
+                  type="button"
+                  onClick={() => { startRecording("video"); setShowMobileActions(false); }}
+                  className="flex flex-col items-center gap-1.5 py-4 px-2 hover:bg-secondary/60 transition-colors text-muted-foreground hover:text-foreground active:bg-secondary"
+                >
+                  <div className="w-10 h-10 rounded-2xl bg-purple-500/15 flex items-center justify-center">
+                    <Video size={19} className="text-purple-400" />
+                  </div>
+                  <span className="text-[10px] font-bold leading-none">Кружок</span>
+                </button>
               </div>
             </motion.div>
           )}
@@ -1238,8 +1312,17 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
                 initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
                 className="flex-1 flex items-center gap-3 px-4 h-12"
               >
+                {recordingKind === "video" && (
+                  <video
+                    ref={videoPreviewRef}
+                    autoPlay
+                    muted
+                    playsInline
+                    className="w-10 h-10 rounded-full object-cover border-2 border-red-400/60 shrink-0"
+                  />
+                )}
                 <motion.div animate={{ scale: [1, 1.4, 1], opacity: [0.5, 1, 0.5] }} transition={{ duration: 1.2, repeat: Infinity }} className="w-3 h-3 rounded-full bg-red-500 shrink-0" />
-                <span className="text-[15px] font-bold text-red-500">Запись...</span>
+                <span className="text-[15px] font-bold text-red-500">{recordingKind === "video" ? "Кружок..." : "Запись..."}</span>
                 <div className="flex flex-col items-end ml-auto gap-0.5">
                   <span className="text-[15px] font-black font-mono text-red-400 tracking-wider">{formatDuration(recordSeconds)}</span>
                   {!isPrimePlus && MAX_VOICE_SECONDS < Infinity && (
@@ -1251,15 +1334,17 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
                 <button onClick={cancelRecording} className="w-10 h-10 flex items-center justify-center rounded-full text-muted-foreground hover:bg-red-500/10 hover:text-red-500 transition-colors shrink-0 ml-2"><Trash2 size={18} /></button>
                 <button onClick={stopRecording} className="w-10 h-10 flex items-center justify-center bg-red-500 text-white rounded-full hover:bg-red-600 transition-all shadow-[0_4px_14px_rgba(239,68,68,0.4)] shrink-0"><Square size={16} fill="white" /></button>
               </motion.div>
-            ) : audioBlob ? (
+            ) : audioBlob || videoBlob ? (
               <motion.div
                 key="audio-preview"
                 initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
                 className="flex-1 flex items-center gap-3 px-2 h-12"
               >
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0"><Mic size={18} className="text-primary" /></div>
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  {videoBlob ? <Video size={18} className="text-primary" /> : <Mic size={18} className="text-primary" />}
+                </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-bold text-foreground">Голосовое</p>
+                  <p className="text-[13px] font-bold text-foreground">{videoBlob ? "Видеокружок" : "Голосовое"}</p>
                   <p className="text-[11px] font-black text-primary/70">{formatDuration(recordSeconds)}</p>
                 </div>
                 <button onClick={cancelRecording} className="w-10 h-10 flex items-center justify-center rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors shrink-0"><Trash2 size={18} /></button>
@@ -1308,6 +1393,11 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
                       className="flex w-12 h-12 items-center justify-center rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors shrink-0 mb-[2px]"
                       title="Сделать фото">
                       <Camera size={20} />
+                    </button>
+                    <button type="button" onClick={() => startRecording("video")}
+                      className="hidden md:flex w-12 h-12 items-center justify-center rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors shrink-0 mb-[2px]"
+                      title="Записать видеокружок">
+                      <Video size={20} />
                     </button>
                     <button type="button" onClick={() => { setShowPollCreator(v => !v); setPollError(""); }}
                       className={`hidden md:flex w-12 h-12 items-center justify-center rounded-full transition-colors shrink-0 mb-[2px] ${showPollCreator ? "bg-primary/15 text-primary" : "text-muted-foreground hover:bg-secondary hover:text-foreground"}`}>
@@ -1358,9 +1448,9 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
                 >
                   <SendHorizontal size={20} className={isSending ? "animate-pulse" : "translate-x-[-1px]"} />
                 </button>
-              ) : !editMessage && !audioBlob ? (
+              ) : !editMessage && !audioBlob && !videoBlob ? (
                 <button
-                  onClick={startRecording}
+                  onClick={() => startRecording()}
                   className="w-12 h-12 flex items-center justify-center bg-secondary text-foreground rounded-[20px] hover:bg-secondary/80 transition-all hover:scale-105 active:scale-95"
                 >
                   <Mic size={20} />

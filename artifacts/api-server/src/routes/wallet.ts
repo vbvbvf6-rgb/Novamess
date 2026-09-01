@@ -51,7 +51,7 @@ router.post("/wallet/spend", async (req, res) => {
     if ((result.rows as any[]).length === 0) {
       const balanceRows = await db.execute(sql`SELECT balance FROM users WHERE id = ${uid}`);
       const balance = Number((balanceRows.rows[0] as any)?.balance ?? 0);
-      return res.status(400).json({ error: `Недостаточно Кристаллов. Ваш баланс: ${balance} 💎`, balance });
+      return res.status(400).json({ error: `Недостаточно Nova. Ваш баланс: ${balance} ✦`, balance });
     }
     const newBalance = Number((result.rows[0] as any)?.balance ?? 0);
     db.execute(sql`INSERT INTO spark_activity (user_id, type, amount, description) VALUES (${uid}, 'spent', ${-amount}, 'Покупка') ON CONFLICT DO NOTHING`).catch(() => {});
@@ -107,7 +107,7 @@ router.post("/wallet/send", async (req, res) => {
       // Re-fetch actual balance for accurate error message
       const senderRows = await db.execute(sql`SELECT balance FROM users WHERE id = ${uid}`);
       const senderBalance = Number((senderRows.rows[0] as any)?.balance ?? 0);
-      return res.status(400).json({ error: `Недостаточно Кристаллов. Ваш баланс: ${senderBalance} 💎` });
+      return res.status(400).json({ error: `Недостаточно Nova. Ваш баланс: ${senderBalance} ✦` });
     }
 
     const newBalance = Number(row.new_sender_balance ?? 0);
@@ -203,157 +203,6 @@ router.get("/wallet/activity", async (req, res) => {
       activities: rows.rows,
       summary: summary.rows[0] ?? { total_earned: 0, total_spent: 0, total_transactions: 0 },
     });
-  } catch (err) {
-    req.log.error(err);
-    res.status(500).json({ error: "Ошибка сервера" });
-  }
-});
-
-// ─── Spark Beg Requests ───────────────────────────────────────────────────────
-
-router.post("/wallet/beg", async (req, res) => {
-  try {
-    const uid = req.currentUserId;
-    const { toUserId, amount, message } = req.body;
-    if (!toUserId || typeof toUserId !== "number") {
-      return res.status(400).json({ error: "Укажите получателя" });
-    }
-    if (toUserId === uid) {
-      return res.status(400).json({ error: "Нельзя попросить Кристаллы у самого себя" });
-    }
-    const amt = typeof amount === "number" && amount > 0 ? Math.floor(amount) : 0;
-    const msg = typeof message === "string" ? message.trim().slice(0, 200) : "";
-
-    const target = await db.execute(sql`SELECT id, display_name FROM users WHERE id = ${toUserId}`);
-    if (!(target.rows as any[]).length) {
-      return res.status(404).json({ error: "Пользователь не найден" });
-    }
-
-    // Check for existing pending request between same pair
-    const existing = await db.execute(sql`
-      SELECT id FROM spark_beg_requests
-      WHERE from_user_id = ${uid} AND to_user_id = ${toUserId} AND status = 'pending'
-      LIMIT 1
-    `);
-    if ((existing.rows as any[]).length) {
-      return res.status(409).json({ error: "У вас уже есть активный запрос к этому пользователю" });
-    }
-
-    const inserted = await db.execute(sql`
-      INSERT INTO spark_beg_requests (from_user_id, to_user_id, amount, message, status)
-      VALUES (${uid}, ${toUserId}, ${amt}, ${msg}, 'pending')
-      RETURNING id
-    `);
-
-    res.json({ success: true, id: (inserted.rows[0] as any).id });
-  } catch (err) {
-    req.log.error(err);
-    res.status(500).json({ error: "Ошибка сервера" });
-  }
-});
-
-router.get("/wallet/beg/incoming", async (req, res) => {
-  try {
-    const uid = req.currentUserId;
-    const rows = await db.execute(sql`
-      SELECT b.id, b.from_user_id, b.amount, b.message, b.status, b.created_at,
-             u.display_name, u.username, u.avatar_color, u.avatar_url
-      FROM spark_beg_requests b
-      JOIN users u ON u.id = b.from_user_id
-      WHERE b.to_user_id = ${uid} AND b.status = 'pending'
-      ORDER BY b.created_at DESC
-      LIMIT 50
-    `);
-    res.json(rows.rows);
-  } catch (err) {
-    req.log.error(err);
-    res.status(500).json({ error: "Ошибка сервера" });
-  }
-});
-
-router.get("/wallet/beg/outgoing", async (req, res) => {
-  try {
-    const uid = req.currentUserId;
-    const rows = await db.execute(sql`
-      SELECT b.id, b.to_user_id, b.amount, b.message, b.status, b.created_at,
-             u.display_name, u.username, u.avatar_color, u.avatar_url
-      FROM spark_beg_requests b
-      JOIN users u ON u.id = b.to_user_id
-      WHERE b.from_user_id = ${uid}
-      ORDER BY b.created_at DESC
-      LIMIT 50
-    `);
-    res.json(rows.rows);
-  } catch (err) {
-    req.log.error(err);
-    res.status(500).json({ error: "Ошибка сервера" });
-  }
-});
-
-router.post("/wallet/beg/:id/fulfill", async (req, res) => {
-  try {
-    const uid = req.currentUserId;
-    const begId = parseInt(req.params.id, 10);
-    const { amount } = req.body;
-    if (typeof amount !== "number" || amount <= 0) {
-      return res.status(400).json({ error: "Укажите сумму" });
-    }
-
-    const begRows = await db.execute(sql`
-      SELECT * FROM spark_beg_requests WHERE id = ${begId} AND to_user_id = ${uid} AND status = 'pending' LIMIT 1
-    `);
-    if (!(begRows.rows as any[]).length) {
-      return res.status(404).json({ error: "Запрос не найден" });
-    }
-    const beg = begRows.rows[0] as any;
-
-    // Atomically deduct, credit and mark fulfilled in one transaction block
-    await db.execute(sql`BEGIN`);
-    try {
-      const deductResult = await db.execute(sql`
-        UPDATE users SET balance = balance - ${amount}
-        WHERE id = ${uid} AND balance >= ${amount}
-        RETURNING balance
-      `);
-      if ((deductResult.rows as any[]).length === 0) {
-        await db.execute(sql`ROLLBACK`);
-        const senderRows = await db.execute(sql`SELECT balance FROM users WHERE id = ${uid}`);
-        const senderBalance = Number((senderRows.rows[0] as any)?.balance ?? 0);
-        return res.status(400).json({ error: `Недостаточно Кристаллов. Ваш баланс: ${senderBalance} 💎` });
-      }
-      const newBalance = Number((deductResult.rows[0] as any)?.balance ?? 0);
-      await db.execute(sql`UPDATE users SET balance = balance + ${amount} WHERE id = ${beg.from_user_id}`);
-      await db.execute(sql`UPDATE spark_beg_requests SET status = 'fulfilled' WHERE id = ${begId}`);
-      await db.execute(sql`COMMIT`);
-
-      const fromUser = await db.execute(sql`SELECT display_name FROM users WHERE id = ${beg.from_user_id}`);
-      const fromName = (fromUser.rows[0] as any)?.display_name ?? "пользователь";
-      db.execute(sql`INSERT INTO spark_activity (user_id, type, amount, description) VALUES (${uid}, 'sent', ${-amount}, ${"Отправлено по запросу: " + fromName})`).catch(() => {});
-      db.execute(sql`INSERT INTO spark_activity (user_id, type, amount, description) VALUES (${beg.from_user_id}, 'received', ${amount}, ${"Получено по запросу 💎"})`).catch(() => {});
-
-      res.json({ success: true, balance: newBalance });
-    } catch (txErr) {
-      await db.execute(sql`ROLLBACK`);
-      throw txErr;
-    }
-  } catch (err) {
-    req.log.error(err);
-    res.status(500).json({ error: "Ошибка сервера" });
-  }
-});
-
-router.post("/wallet/beg/:id/decline", async (req, res) => {
-  try {
-    const uid = req.currentUserId;
-    const begId = parseInt(req.params.id, 10);
-    const result = await db.execute(sql`
-      UPDATE spark_beg_requests SET status = 'declined'
-      WHERE id = ${begId} AND to_user_id = ${uid} AND status = 'pending'
-    `);
-    if ((result.rowCount ?? 0) === 0) {
-      return res.status(404).json({ error: "Запрос не найден" });
-    }
-    res.json({ success: true });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Ошибка сервера" });

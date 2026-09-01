@@ -1035,7 +1035,11 @@ router.delete("/messages/bulk", async (req, res) => {
   try {
     const uid = req.currentUserId;
     const rawIds = Array.isArray(req.body?.messageIds) ? req.body.messageIds : [];
-    const messageIds = [...new Set(rawIds.map(Number).filter((id: number) => Number.isInteger(id) && id > 0))];
+    const messageIds: number[] = Array.from(new Set(
+      (rawIds as unknown[])
+        .map((id) => Number(id))
+        .filter((id): id is number => Number.isInteger(id) && id > 0),
+    ));
     if (!messageIds.length) return res.status(400).json({ error: "Укажите хотя бы одно сообщение" });
     if (messageIds.length > 200) return res.status(400).json({ error: "За один раз можно удалить не более 200 сообщений" });
 

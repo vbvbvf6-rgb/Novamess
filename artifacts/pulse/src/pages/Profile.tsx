@@ -110,7 +110,7 @@ function ReferralSection() {
 
             {myCode.invited === 0 && (
               <p className="text-[11px] text-muted-foreground/70 text-center mt-3">
-                За каждого приглашённого друга вы получаете +50 💎 Кристаллов
+                За каждого приглашённого друга вы получаете +50 Nova ✦
               </p>
             )}
           </>
@@ -296,118 +296,6 @@ function AnimatedStatusPicker({ user }: { user: any }) {
   );
 }
 
-function IncomingBegRequests() {
-  const [requests, setRequests] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [fulfillAmounts, setFulfillAmounts] = useState<Record<number, string>>({});
-  const [actionLoading, setActionLoading] = useState<Record<number, boolean>>({});
-
-  const getToken = () => sessionStorage.getItem("pulse-token");
-
-  const load = async () => {
-    try {
-      const res = await fetch("/api/wallet/beg/incoming", {
-        headers: { Authorization: `Bearer ${getToken()}` },
-      });
-      if (res.ok) setRequests(await res.json());
-    } catch {}
-    setLoading(false);
-  };
-
-  React.useEffect(() => { load(); }, []);
-
-  const handleFulfill = async (id: number) => {
-    const amt = parseInt(fulfillAmounts[id] || "0");
-    if (!amt || amt <= 0) return;
-    setActionLoading(prev => ({ ...prev, [id]: true }));
-    try {
-      const res = await fetch(`/api/wallet/beg/${id}/fulfill`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` },
-        body: JSON.stringify({ amount: amt }),
-      });
-      if (res.ok) {
-        setRequests(prev => prev.filter(r => r.id !== id));
-      }
-    } catch {}
-    setActionLoading(prev => ({ ...prev, [id]: false }));
-  };
-
-  const handleDecline = async (id: number) => {
-    setActionLoading(prev => ({ ...prev, [id]: true }));
-    try {
-      const res = await fetch(`/api/wallet/beg/${id}/decline`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${getToken()}` },
-      });
-      if (res.ok) setRequests(prev => prev.filter(r => r.id !== id));
-    } catch {}
-    setActionLoading(prev => ({ ...prev, [id]: false }));
-  };
-
-  if (loading) return <div className="text-xs text-muted-foreground py-2">Загрузка…</div>;
-  if (!requests.length) return (
-    <div className="text-sm text-muted-foreground text-center py-4">Входящих запросов нет</div>
-  );
-
-  return (
-    <div className="space-y-3">
-      {requests.map(req => (
-        <motion.div
-          key={req.id}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95 }}
-          className="rounded-2xl bg-yellow-500/5 border border-yellow-500/20 p-4 space-y-3"
-        >
-          <div className="flex items-center gap-3">
-            <div
-              className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0 relative overflow-hidden"
-              style={{ backgroundColor: req.avatar_color || "#3B82F6" }}
-            >
-              <span className="absolute inset-0 flex items-center justify-center">{(req.display_name?.[0] || "?").toUpperCase()}</span>
-              {req.avatar_url && <img src={req.avatar_url} alt="" className="absolute inset-0 w-full h-full object-cover rounded-full" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-bold text-sm truncate">{req.display_name}</p>
-              <p className="text-xs text-yellow-400">просит {req.amount > 0 ? `${req.amount} 💎` : "Кристаллы 💎"}</p>
-            </div>
-            <span className="text-2xl">🙏</span>
-          </div>
-          {req.message && (
-            <p className="text-sm text-muted-foreground italic bg-black/20 rounded-xl px-3 py-2">"{req.message}"</p>
-          )}
-          <div className="flex gap-2 items-center">
-            <input
-              type="number"
-              inputMode="numeric"
-              min={1}
-              value={fulfillAmounts[req.id] ?? (req.amount > 0 ? String(req.amount) : "")}
-              onChange={e => setFulfillAmounts(prev => ({ ...prev, [req.id]: e.target.value }))}
-              placeholder="Сумма ✨"
-              className="w-28 rounded-xl bg-secondary border border-border px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500/40"
-            />
-            <button
-              onClick={() => handleFulfill(req.id)}
-              disabled={actionLoading[req.id]}
-              className="flex-1 py-1.5 rounded-xl text-sm font-bold bg-yellow-500/20 text-yellow-300 hover:bg-yellow-500/30 transition-colors border border-yellow-500/30 disabled:opacity-50"
-            >
-              {actionLoading[req.id] ? "…" : "Отправить ✨"}
-            </button>
-            <button
-              onClick={() => handleDecline(req.id)}
-              disabled={actionLoading[req.id]}
-              className="py-1.5 px-3 rounded-xl text-sm font-bold bg-secondary text-muted-foreground hover:bg-secondary/80 transition-colors disabled:opacity-50"
-            >
-              Нет
-            </button>
-          </div>
-        </motion.div>
-      ))}
-    </div>
-  );
-}
-
 function SparkActivityLog() {
   const [activities, setActivities] = useState<any[]>([]);
   const [summary, setSummary] = useState<any>(null);
@@ -503,7 +391,6 @@ export default function Profile() {
   const isPrimePlus = (user as any)?.hasPrime && (user as any)?.primeTier === "prime_plus";
   const hasPrime = (user as any)?.hasPrime;
   const [showSparkLog, setShowSparkLog] = useState(false);
-  const [showBegRequests, setShowBegRequests] = useState(false);
 
   return (
     <div className="flex-1 flex flex-col h-full bg-background overflow-hidden relative">
@@ -695,7 +582,7 @@ export default function Profile() {
                   />
                   <StatCard
                     icon={<Zap className="text-yellow-400" />}
-                    label="Кристаллы"
+                    label="Nova"
                     value={(user as any)?.balance ? `${Number((user as any).balance).toLocaleString()} ✨` : "0 ✨"}
                     color="bg-yellow-500/10 border-yellow-500/20"
                   />
@@ -703,31 +590,7 @@ export default function Profile() {
               )}
             </div>
 
-            {/* Incoming Crystal Beg Requests */}
-            <div>
-              <button
-                onClick={() => setShowBegRequests(v => !v)}
-                className="flex items-center gap-2 text-sm font-bold text-foreground mb-3 hover:text-primary transition-colors w-full"
-              >
-                <span className="text-lg leading-none">🙏</span>
-                Запросы Кристаллов
-                <span className="ml-auto text-xs text-muted-foreground">{showBegRequests ? "Скрыть" : "Показать"}</span>
-              </button>
-              <AnimatePresence>
-                {showBegRequests && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="overflow-hidden"
-                  >
-                    <IncomingBegRequests />
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
-            {/* Detailed Crystal Activity Log (Prime+) */}
+            {/* Detailed Nova activity log (Prime+) */}
             {hasPrime && (
               <div>
                 <button
@@ -735,7 +598,7 @@ export default function Profile() {
                   className="flex items-center gap-2 text-sm font-bold text-foreground mb-3 hover:text-primary transition-colors"
                 >
                   <Activity size={16} className="text-primary" />
-                  {isPrimePlus ? "Подробный журнал Кристаллов" : "Журнал Кристаллов"}
+                  {isPrimePlus ? "Подробный журнал Nova" : "Журнал Nova"}
                   <span className="ml-auto text-xs text-muted-foreground">{showSparkLog ? "Скрыть" : "Показать"}</span>
                 </button>
                 <AnimatePresence>

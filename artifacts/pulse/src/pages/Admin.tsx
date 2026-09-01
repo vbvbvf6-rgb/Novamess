@@ -1313,7 +1313,7 @@ export default function Admin() {
       });
       const data = await res.json();
       if (!res.ok) { showToast(data.error || "Ошибка", "err"); return; }
-      showToast(`${n > 0 ? "+" : ""}${n} 💎 Кристаллы → ${data.usersAffected} пользователей`, "ok");
+      showToast(`${n > 0 ? "+" : ""}${n} Nova ✦ → ${data.usersAffected} пользователей`, "ok");
       setMassAmount("");
       setShowMassConfirm(false);
       fetchData();
@@ -1697,7 +1697,7 @@ export default function Admin() {
               </div>
             </div>
             <p className="text-sm mb-5">
-              Выдать <span className="font-bold text-primary">{Number(massAmount) > 0 ? "+" : ""}{massAmount} 💎 Кристаллы</span> каждому из <span className="font-bold">{users.length}</span> пользователей?
+              Выдать <span className="font-bold text-primary">{Number(massAmount) > 0 ? "+" : ""}{massAmount} Nova ✦</span> каждому из <span className="font-bold">{users.length}</span> пользователей?
             </p>
             <div className="flex gap-3">
               <button onClick={() => setShowMassConfirm(false)} className="flex-1 py-2.5 rounded-xl border border-border text-sm font-medium text-muted-foreground hover:bg-secondary transition-colors">Отмена</button>
@@ -1728,7 +1728,7 @@ export default function Admin() {
         {stats && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <StatCard icon={<Users size={20} className="text-primary" />} label="Пользователей" value={stats.totalUsers} color="bg-primary/10" />
-            <StatCard icon={<Diamond size={20} className="text-cyan-400" />} label="Кристаллы в обороте" value={stats.totalSpark} color="bg-cyan-500/10" />
+            <StatCard icon={<Diamond size={20} className="text-cyan-400" />} label="Nova в обороте" value={stats.totalSpark} color="bg-cyan-500/10" />
             <StatCard icon={<Crown size={20} className="text-amber-400" />} label="Prime подписок" value={stats.primeUsers} color="bg-amber-500/10" />
             <StatCard icon={<MessageSquare size={20} className="text-blue-400" />} label="Сообщений" value={stats.totalMessages} color="bg-blue-500/10" />
             <StatCard icon={<Activity size={20} className="text-green-400" />} label="Чатов" value={stats.totalChats} color="bg-green-500/10" />
@@ -3528,7 +3528,7 @@ export default function Admin() {
             {showLeaderboard && (
               <div className="border-t border-border p-4">
                 <div className="flex gap-1 mb-3 bg-secondary/50 rounded-xl p-1">
-                  {([["byBalance", "💎 Кристаллы"], ["byMessages", "💬 Сообщ."]] as const).map(([key, label]) => (
+                  {([["byBalance", "Nova ✦"], ["byMessages", "💬 Сообщ."]] as const).map(([key, label]) => (
                     <button
                       key={key}
                       onClick={() => setLeaderTab(key)}
@@ -4174,7 +4174,7 @@ export default function Admin() {
                   {/* Balance tab */}
                   {activeTab === "balance" && (
                     <>
-                      <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">Быстрая выдача 💎 Кристаллы</p>
+                      <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">Быстрая выдача Nova ✦</p>
                       <div className="grid grid-cols-3 gap-2 mb-4">
                         {[50, 100, 500, 1000, 5000, 10000].map(amt => (
                           <motion.button

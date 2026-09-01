@@ -1008,7 +1008,7 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
     try {
       const res = await fetch("/api/messages/bulk", {
         method: "DELETE",
-        headers: getCWAuthHeaders(),
+        headers: getCWAuthHeaders(true),
         body: JSON.stringify({ messageIds: [...selectedMessageIds] }),
       });
       const data = await res.json().catch(() => ({}));

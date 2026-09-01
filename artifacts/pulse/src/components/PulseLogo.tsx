@@ -8,6 +8,21 @@ export const NOVA_ICON_PRESETS = [
   { id: "pink", label: "Розовый", colors: ["#fda4af", "#e11d48", "#831843"] },
 ] as const;
 
+function iconDataUrl(presetId: string): string {
+  const preset = NOVA_ICON_PRESETS.find(item => item.id === presetId) || NOVA_ICON_PRESETS[0];
+  const [start, middle, end] = preset.colors;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="${start}"/><stop offset=".5" stop-color="${middle}"/><stop offset="1" stop-color="${end}"/></linearGradient></defs><rect x="3" y="3" width="94" height="94" rx="24" fill="url(#g)"/><path d="M50 13c0 0 4.5 28 37 37-32.5 9-37 37-37 37 0 0-4.5-28-37-37 32.5-9 37-37 37-37Z" fill="white"/><circle cx="50" cy="50" r="5.5" fill="white"/></svg>`;
+  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+}
+
+function syncBrowserIcon(customIcon: string | null, presetId: string) {
+  if (typeof document === "undefined") return;
+  const href = customIcon || iconDataUrl(presetId);
+  document.querySelectorAll<HTMLLinkElement>('link[rel~="icon"], link[rel="apple-touch-icon"]').forEach(link => {
+    link.href = href;
+  });
+}
+
 export default function PulseLogo({ size = 40 }: { size?: number }) {
   const [customIcon, setCustomIcon] = useState<string | null>(() => {
     try { return localStorage.getItem("nova-app-icon"); } catch { return null; }
@@ -17,11 +32,19 @@ export default function PulseLogo({ size = 40 }: { size?: number }) {
   });
   useEffect(() => {
     const update = () => {
-      setCustomIcon(localStorage.getItem("nova-app-icon"));
-      setPreset(localStorage.getItem("nova-app-icon-preset") || "orange");
+      const nextCustomIcon = localStorage.getItem("nova-app-icon");
+      const nextPreset = localStorage.getItem("nova-app-icon-preset") || "orange";
+      setCustomIcon(nextCustomIcon);
+      setPreset(nextPreset);
+      syncBrowserIcon(nextCustomIcon, nextPreset);
     };
     window.addEventListener("pulse:app-icon", update);
-    return () => window.removeEventListener("pulse:app-icon", update);
+    window.addEventListener("storage", update);
+    update();
+    return () => {
+      window.removeEventListener("pulse:app-icon", update);
+      window.removeEventListener("storage", update);
+    };
   }, []);
   if (customIcon) {
     return <img src={customIcon} alt="Nova" width={size} height={size} className="rounded-[24%] object-cover" onError={() => { localStorage.removeItem("nova-app-icon"); setCustomIcon(null); }} />;
