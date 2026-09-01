@@ -708,10 +708,17 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
           recordingCanvasRef.current = canvas;
         }
       }
-      const activeRecorder = new MediaRecorder(recorderStream, {
-        mimeType,
-        ...(kind === "audio" ? { audioBitsPerSecond: 32000 } : {}),
-      });
+      let activeRecorder: MediaRecorder;
+      try {
+        activeRecorder = new MediaRecorder(recorderStream, {
+          mimeType,
+          ...(kind === "audio" ? { audioBitsPerSecond: 32000 } : {}),
+        });
+      } catch (error) {
+        recorderStream.getTracks().forEach(track => track.stop());
+        if (recorderStream !== stream) stream.getTracks().forEach(track => track.stop());
+        throw error;
+      }
       activeRecorder.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
       activeRecorder.onstop = () => {
         // A mobile browser can stop MediaRecorder when a camera track ends
@@ -823,7 +830,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
   };
 
   const toggleFlash = async () => {
-    const track = recordingStreamRef.current?.getVideoTracks()[0];
+    const track = cameraStreamRef.current?.getVideoTracks()[0];
     const nextFlashState = !flashEnabled;
     if (!track) return;
     try {
@@ -869,7 +876,9 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
 
   const cancelRecording = () => {
     pendingVideoSendRef.current = false;
+    cancelRecordingRef.current = true;
     mediaRecorderRef.current?.stream?.getTracks().forEach(t => t.stop());
+    cameraStreamRef.current?.getTracks().forEach(t => t.stop());
     if (mediaRecorderRef.current?.state !== "inactive") mediaRecorderRef.current?.stop();
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
     setIsRecording(false);
@@ -880,6 +889,8 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
     setRecordSeconds(0);
     chunksRef.current = [];
     recordingStreamRef.current = null;
+    cameraStreamRef.current = null;
+    recordingCanvasRef.current = null;
     if (videoPreviewRef.current) videoPreviewRef.current.srcObject = null;
   };
 

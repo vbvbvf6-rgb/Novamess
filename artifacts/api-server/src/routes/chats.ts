@@ -588,35 +588,6 @@ router.put("/chats/:chatId", async (req, res) => {
   }
 });
 
-router.delete("/chats/:chatId", async (req, res) => {
-  try {
-    const chatId = Number(req.params.chatId);
-    const uid = req.currentUserId;
-    const membership = await db.query.chatMembersTable.findFirst({
-      where: and(eq(chatMembersTable.chatId, chatId), eq(chatMembersTable.userId, uid)),
-    });
-    if (!membership) return res.status(403).json({ error: "Forbidden" });
-    const chatRow = await db.query.chatsTable.findFirst({ where: eq(chatsTable.id, chatId) });
-    if (await isNovaSecurityChat(chatId)) {
-      return res.status(403).json({ error: "Чат Nova Security нельзя удалить" });
-    }
-    const isDirect = chatRow?.type === "direct";
-    if (!isDirect && membership.role !== "owner" && membership.role !== "admin") return res.status(403).json({ error: "Only chat owners can delete chats" });
-    // Clean up pinned messages first
-    await db.execute(sql`DELETE FROM pinned_messages WHERE chat_id = ${chatId}`).catch(() => {});
-    await db.execute(sql`DELETE FROM poll_votes WHERE poll_id IN (SELECT id FROM polls WHERE message_id IN (SELECT id FROM messages WHERE chat_id = ${chatId}))`).catch(() => {});
-    await db.execute(sql`DELETE FROM polls WHERE message_id IN (SELECT id FROM messages WHERE chat_id = ${chatId})`).catch(() => {});
-    await db.execute(sql`DELETE FROM reactions WHERE message_id IN (SELECT id FROM messages WHERE chat_id = ${chatId})`).catch(() => {});
-    await db.delete(messagesTable).where(eq(messagesTable.chatId, chatId));
-    await db.delete(chatMembersTable).where(eq(chatMembersTable.chatId, chatId));
-    await db.delete(chatsTable).where(eq(chatsTable.id, chatId));
-    res.status(204).send();
-  } catch (err) {
-    req.log.error(err);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
 // Delete several conversations in one operation. Direct chats are removed
 // only for the current user, while group/channel deletion follows the same
 // ownership rules as the single-chat endpoint.
@@ -664,6 +635,35 @@ router.delete("/chats/bulk", async (req, res) => {
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Не удалось удалить выбранные чаты" });
+  }
+});
+
+router.delete("/chats/:chatId", async (req, res) => {
+  try {
+    const chatId = Number(req.params.chatId);
+    const uid = req.currentUserId;
+    const membership = await db.query.chatMembersTable.findFirst({
+      where: and(eq(chatMembersTable.chatId, chatId), eq(chatMembersTable.userId, uid)),
+    });
+    if (!membership) return res.status(403).json({ error: "Forbidden" });
+    const chatRow = await db.query.chatsTable.findFirst({ where: eq(chatsTable.id, chatId) });
+    if (await isNovaSecurityChat(chatId)) {
+      return res.status(403).json({ error: "Чат Nova Security нельзя удалить" });
+    }
+    const isDirect = chatRow?.type === "direct";
+    if (!isDirect && membership.role !== "owner" && membership.role !== "admin") return res.status(403).json({ error: "Only chat owners can delete chats" });
+    // Clean up pinned messages first
+    await db.execute(sql`DELETE FROM pinned_messages WHERE chat_id = ${chatId}`).catch(() => {});
+    await db.execute(sql`DELETE FROM poll_votes WHERE poll_id IN (SELECT id FROM polls WHERE message_id IN (SELECT id FROM messages WHERE chat_id = ${chatId}))`).catch(() => {});
+    await db.execute(sql`DELETE FROM polls WHERE message_id IN (SELECT id FROM messages WHERE chat_id = ${chatId})`).catch(() => {});
+    await db.execute(sql`DELETE FROM reactions WHERE message_id IN (SELECT id FROM messages WHERE chat_id = ${chatId})`).catch(() => {});
+    await db.delete(messagesTable).where(eq(messagesTable.chatId, chatId));
+    await db.delete(chatMembersTable).where(eq(chatMembersTable.chatId, chatId));
+    await db.delete(chatsTable).where(eq(chatsTable.id, chatId));
+    res.status(204).send();
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
