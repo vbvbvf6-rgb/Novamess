@@ -1267,12 +1267,14 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
   };
 
   const handleSwipeStart = (e: React.TouchEvent) => {
+    e.stopPropagation();
     swipeStartX.current = e.touches[0].clientX;
     swipeStartY.current = e.touches[0].clientY;
     swipeAxis.current = null;
   };
 
   const handleSwipeMove = (e: React.TouchEvent) => {
+    e.stopPropagation();
     const dx = e.touches[0].clientX - swipeStartX.current;
     const dy = e.touches[0].clientY - swipeStartY.current;
     if (!swipeAxis.current) {
@@ -1284,7 +1286,8 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
     setSwipeDx(clamped);
   };
 
-  const handleSwipeEnd = () => {
+  const handleSwipeEnd = (e: React.TouchEvent) => {
+    e.stopPropagation();
     if (swipeDx >= 48 && onReply) onReply(message);
     setSwipeDx(0);
     swipeAxis.current = null;
@@ -1293,6 +1296,7 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
   return (
     <div
       className="relative"
+      data-message-swipe="true"
       onTouchStart={handleSwipeStart}
       onTouchMove={handleSwipeMove}
       onTouchEnd={handleSwipeEnd}

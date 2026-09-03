@@ -685,7 +685,7 @@ router.post("/admin/users/:userId/ban", requireAdmin, async (req, res) => {
 
     const { ban, action, reason, durationHours } = req.body || {};
     const requestedAction = action || (ban ? "ban" : "none");
-    const validActions = ["none", "ban", "shadow_ban", "spam_ban"];
+    const validActions = ["none", "ban", "shadow_ban", "spam_ban", "no_first_message"];
     if (!validActions.includes(requestedAction)) return res.status(400).json({ error: "Неизвестный тип модерации" });
     const cleanReason = typeof reason === "string" ? reason.trim().slice(0, 500) : "";
     if (requestedAction !== "none" && !cleanReason) {
@@ -734,6 +734,8 @@ router.post("/admin/users/:userId/ban", requireAdmin, async (req, res) => {
           ? `@${row?.username} получил теневой бан${parsedDuration ? ` на ${parsedDuration} ч.` : " навсегда"}`
           : requestedAction === "spam_ban"
             ? `@${row?.username} получил спам-бан${parsedDuration ? ` на ${parsedDuration} ч.` : " навсегда"}`
+            : requestedAction === "no_first_message"
+              ? `@${row?.username} запрещено начинать новые диалоги${parsedDuration ? ` на ${parsedDuration} ч.` : " навсегда"}`
             : `@${row?.username} заблокирован${parsedDuration ? ` на ${parsedDuration} ч.` : " навсегда"}`,
     });
   } catch (err) {

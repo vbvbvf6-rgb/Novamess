@@ -59716,6 +59716,7 @@ var init_users = __esm({
       isBot: boolean("is_bot").notNull().default(false),
       isVerified: boolean("is_verified").notNull().default(false),
       isAdmin: boolean("is_admin").notNull().default(false),
+      moderationType: text("moderation_type").notNull().default("none"),
       isDeveloper: boolean("is_developer").notNull().default(false),
       isYoutubeCreator: boolean("is_youtube_creator").notNull().default(false),
       isTiktokCreator: boolean("is_tiktok_creator").notNull().default(false),
@@ -143525,7 +143526,7 @@ router2.post("/auth/login", async (req, res) => {
     if (user.is_banned === true || user.is_banned === "t" || user.is_banned === 1) {
       const expiresAt = user.ban_expires_at ? new Date(user.ban_expires_at) : null;
       if (expiresAt && expiresAt.getTime() <= Date.now()) {
-        await db.execute(sql`UPDATE users SET is_banned = false, ban_reason = NULL, ban_expires_at = NULL WHERE id = ${user.id}`);
+        await db.execute(sql`UPDATE users SET is_banned = false, moderation_type = 'none', ban_reason = NULL, ban_expires_at = NULL WHERE id = ${user.id}`);
       } else {
         return res.status(403).json({
           error: "\u0412\u0430\u0448 \u0430\u043A\u043A\u0430\u0443\u043D\u0442 \u0437\u0430\u0431\u043B\u043E\u043A\u0438\u0440\u043E\u0432\u0430\u043D. \u041E\u0431\u0440\u0430\u0442\u0438\u0442\u0435\u0441\u044C \u0432 \u043F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0443.",
@@ -144492,6 +144493,45 @@ async function offloadDataUrl(input, keyPrefix) {
   }
 }
 
+// src/lib/userModeration.ts
+init_src();
+init_drizzle_orm();
+async function getActiveUserModeration(userId) {
+  const rows = await db.execute(sql`
+    SELECT is_banned, moderation_type, ban_reason, ban_expires_at
+    FROM users
+    WHERE id = ${userId}
+    LIMIT 1
+  `);
+  const row = rows.rows[0];
+  if (!row) return { type: "none", reason: null, expiresAt: null };
+  let type = String(row.moderation_type || "").toLowerCase();
+  if (!["none", "ban", "shadow_ban", "spam_ban", "no_first_message"].includes(type)) type = "none";
+  if (type === "none" && (row.is_banned === true || row.is_banned === "t" || row.is_banned === 1)) {
+    type = "ban";
+  }
+  const expiresAt = row.ban_expires_at ? new Date(row.ban_expires_at) : null;
+  if (type !== "none" && expiresAt && expiresAt.getTime() <= Date.now()) {
+    await db.execute(sql`
+      UPDATE users
+      SET is_banned = false, moderation_type = 'none', ban_reason = NULL, ban_expires_at = NULL
+      WHERE id = ${userId}
+    `);
+    return { type: "none", reason: null, expiresAt: null };
+  }
+  return {
+    type,
+    reason: row.ban_reason || null,
+    expiresAt
+  };
+}
+function moderationBlocksWriting(type) {
+  return type === "ban" || type === "spam_ban";
+}
+function moderationBlocksStartingDirectChat(type) {
+  return type === "no_first_message";
+}
+
 // src/routes/users.ts
 var router4 = (0, import_express4.Router)();
 db.execute(sql`CREATE TABLE IF NOT EXISTS prize_codes (
@@ -144519,6 +144559,7 @@ router4.get("/users/me", async (req, res) => {
     const uid = req.currentUserId;
     const user = await db.query.usersTable.findFirst({ where: eq(usersTable.id, uid) });
     if (!user) return res.status(404).json({ error: "User not found" });
+    const moderation = await getActiveUserModeration(uid);
     const rows = await db.execute(sql`SELECT balance, username_changed_at, has_prime, prime_tier, prime_expires_at, age_verified, is_admin, is_developer, is_youtube_creator, is_tiktok_creator, is_bot, nickname_style FROM users WHERE id = ${uid}`);
     const row = rows.rows[0];
     const balance = row ? Number(row.balance) : 0;
@@ -144531,7 +144572,24 @@ router4.get("/users/me", async (req, res) => {
     const isTiktokCreator = row?.is_tiktok_creator === true || row?.is_tiktok_creator === "t" || row?.is_tiktok_creator === 1;
     const isBot = row?.is_bot === true || row?.is_bot === "t" || row?.is_bot === 1;
     const popularity = 0;
-    res.json({ ...user, nicknameStyle: row?.nickname_style ?? null, balance, hasPrime, primeTier, primeExpiresAt: row?.prime_expires_at ?? null, usernameChangedAt: row?.username_changed_at ?? null, ageVerified, isAdmin: isAdmin3, isDeveloper, isYoutubeCreator, isTiktokCreator, popularity });
+    res.json({
+      ...user,
+      nicknameStyle: row?.nickname_style ?? null,
+      balance,
+      hasPrime,
+      primeTier,
+      primeExpiresAt: row?.prime_expires_at ?? null,
+      usernameChangedAt: row?.username_changed_at ?? null,
+      ageVerified,
+      isAdmin: isAdmin3,
+      isDeveloper,
+      isYoutubeCreator,
+      isTiktokCreator,
+      popularity,
+      moderationType: moderation.type,
+      moderationReason: moderation.reason,
+      moderationExpiresAt: moderation.expiresAt?.toISOString() ?? null
+    });
   } catch (err2) {
     req.log.error(err2);
     res.status(500).json({ error: "Internal server error" });
@@ -145573,6 +145631,15 @@ router6.post("/chats/direct", async (req, res) => {
         return res.json(result2);
       }
     }
+    const moderation = await getActiveUserModeration(uid);
+    if (moderationBlocksStartingDirectChat(moderation.type)) {
+      return res.status(403).json({
+        error: "\u0412\u0430\u043C \u0437\u0430\u043F\u0440\u0435\u0449\u0435\u043D\u043E \u043D\u0430\u0447\u0438\u043D\u0430\u0442\u044C \u043D\u043E\u0432\u044B\u0435 \u0434\u0438\u0430\u043B\u043E\u0433\u0438.",
+        code: "FIRST_MESSAGE_BLOCKED",
+        banReason: moderation.reason,
+        banExpiresAt: moderation.expiresAt?.toISOString() || null
+      });
+    }
     const [chat] = await db.insert(chatsTable).values({ type: "direct" }).returning();
     await db.insert(chatMembersTable).values([
       { chatId: chat.id, userId: uid, role: "member" },
@@ -145686,37 +145753,6 @@ router6.put("/chats/:chatId", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-router6.delete("/chats/:chatId", async (req, res) => {
-  try {
-    const chatId = Number(req.params.chatId);
-    const uid = req.currentUserId;
-    const membership = await db.query.chatMembersTable.findFirst({
-      where: and(eq(chatMembersTable.chatId, chatId), eq(chatMembersTable.userId, uid))
-    });
-    if (!membership) return res.status(403).json({ error: "Forbidden" });
-    const chatRow = await db.query.chatsTable.findFirst({ where: eq(chatsTable.id, chatId) });
-    if (await isNovaSecurityChat(chatId)) {
-      return res.status(403).json({ error: "\u0427\u0430\u0442 Nova Security \u043D\u0435\u043B\u044C\u0437\u044F \u0443\u0434\u0430\u043B\u0438\u0442\u044C" });
-    }
-    const isDirect = chatRow?.type === "direct";
-    if (!isDirect && membership.role !== "owner" && membership.role !== "admin") return res.status(403).json({ error: "Only chat owners can delete chats" });
-    await db.execute(sql`DELETE FROM pinned_messages WHERE chat_id = ${chatId}`).catch(() => {
-    });
-    await db.execute(sql`DELETE FROM poll_votes WHERE poll_id IN (SELECT id FROM polls WHERE message_id IN (SELECT id FROM messages WHERE chat_id = ${chatId}))`).catch(() => {
-    });
-    await db.execute(sql`DELETE FROM polls WHERE message_id IN (SELECT id FROM messages WHERE chat_id = ${chatId})`).catch(() => {
-    });
-    await db.execute(sql`DELETE FROM reactions WHERE message_id IN (SELECT id FROM messages WHERE chat_id = ${chatId})`).catch(() => {
-    });
-    await db.delete(messagesTable).where(eq(messagesTable.chatId, chatId));
-    await db.delete(chatMembersTable).where(eq(chatMembersTable.chatId, chatId));
-    await db.delete(chatsTable).where(eq(chatsTable.id, chatId));
-    res.status(204).send();
-  } catch (err2) {
-    req.log.error(err2);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
 router6.delete("/chats/bulk", async (req, res) => {
   try {
     const uid = req.currentUserId;
@@ -145763,6 +145799,37 @@ router6.delete("/chats/bulk", async (req, res) => {
   } catch (err2) {
     req.log.error(err2);
     res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0443\u0434\u0430\u043B\u0438\u0442\u044C \u0432\u044B\u0431\u0440\u0430\u043D\u043D\u044B\u0435 \u0447\u0430\u0442\u044B" });
+  }
+});
+router6.delete("/chats/:chatId", async (req, res) => {
+  try {
+    const chatId = Number(req.params.chatId);
+    const uid = req.currentUserId;
+    const membership = await db.query.chatMembersTable.findFirst({
+      where: and(eq(chatMembersTable.chatId, chatId), eq(chatMembersTable.userId, uid))
+    });
+    if (!membership) return res.status(403).json({ error: "Forbidden" });
+    const chatRow = await db.query.chatsTable.findFirst({ where: eq(chatsTable.id, chatId) });
+    if (await isNovaSecurityChat(chatId)) {
+      return res.status(403).json({ error: "\u0427\u0430\u0442 Nova Security \u043D\u0435\u043B\u044C\u0437\u044F \u0443\u0434\u0430\u043B\u0438\u0442\u044C" });
+    }
+    const isDirect = chatRow?.type === "direct";
+    if (!isDirect && membership.role !== "owner" && membership.role !== "admin") return res.status(403).json({ error: "Only chat owners can delete chats" });
+    await db.execute(sql`DELETE FROM pinned_messages WHERE chat_id = ${chatId}`).catch(() => {
+    });
+    await db.execute(sql`DELETE FROM poll_votes WHERE poll_id IN (SELECT id FROM polls WHERE message_id IN (SELECT id FROM messages WHERE chat_id = ${chatId}))`).catch(() => {
+    });
+    await db.execute(sql`DELETE FROM polls WHERE message_id IN (SELECT id FROM messages WHERE chat_id = ${chatId})`).catch(() => {
+    });
+    await db.execute(sql`DELETE FROM reactions WHERE message_id IN (SELECT id FROM messages WHERE chat_id = ${chatId})`).catch(() => {
+    });
+    await db.delete(messagesTable).where(eq(messagesTable.chatId, chatId));
+    await db.delete(chatMembersTable).where(eq(chatMembersTable.chatId, chatId));
+    await db.delete(chatsTable).where(eq(chatsTable.id, chatId));
+    res.status(204).send();
+  } catch (err2) {
+    req.log.error(err2);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 router6.delete("/chats/:chatId/messages", async (req, res) => {
@@ -146989,6 +147056,15 @@ async function buildMessagesBatch(msgs, viewerIsPrimePlus = false) {
 router8.get("/messages/search", async (req, res) => {
   try {
     const uid = req.currentUserId;
+    const viewerIsAdmin = await isAdmin(uid);
+    const shadowVisibility = viewerIsAdmin ? sql`` : sql`
+      AND (m.sender_id = ${uid} OR NOT EXISTS (
+        SELECT 1 FROM users shadow_user
+        WHERE shadow_user.id = m.sender_id
+          AND shadow_user.moderation_type = 'shadow_ban'
+          AND (shadow_user.ban_expires_at IS NULL OR shadow_user.ban_expires_at > NOW())
+      ))
+    `;
     const q2 = String(req.query.q ?? "").trim();
     const chatId = req.query.chatId ? Number(req.query.chatId) : void 0;
     const limit = Math.min(Number(req.query.limit ?? 30), 100);
@@ -147008,6 +147084,7 @@ router8.get("/messages/search", async (req, res) => {
             WHERE m.chat_id = ${chatId}
               AND m.is_deleted = false
               AND m.text ILIKE ${"%" + q2 + "%"}
+             ${shadowVisibility}
             ORDER BY m.created_at DESC
             LIMIT ${limit}`
       );
@@ -147025,6 +147102,7 @@ router8.get("/messages/search", async (req, res) => {
           LEFT JOIN users cu ON cu.id = cm2.user_id
           WHERE m.is_deleted = false
             AND m.text ILIKE ${"%" + q2 + "%"}
+            ${shadowVisibility}
           ORDER BY m.created_at DESC
           LIMIT ${limit}`
     );
@@ -147055,10 +147133,17 @@ router8.get("/messages", async (req, res) => {
         broadcastToChat(chatId, "message-deleted", { messageId: id, chatId });
       }
     }
-    let query = db.select().from(messagesTable).where(eq(messagesTable.chatId, chatId));
+    const viewerIsAdmin = await isAdmin(uid);
+    const visibility = viewerIsAdmin ? void 0 : sql`(messages.sender_id = ${uid} OR NOT EXISTS (
+          SELECT 1 FROM users shadow_user
+          WHERE shadow_user.id = messages.sender_id
+            AND shadow_user.moderation_type = 'shadow_ban'
+            AND (shadow_user.ban_expires_at IS NULL OR shadow_user.ban_expires_at > NOW())
+        ))`;
+    let query = db.select().from(messagesTable).where(visibility ? and(eq(messagesTable.chatId, chatId), visibility) : eq(messagesTable.chatId, chatId));
     if (before) {
       query = db.select().from(messagesTable).where(
-        and(eq(messagesTable.chatId, chatId), lt(messagesTable.id, before))
+        visibility ? and(eq(messagesTable.chatId, chatId), lt(messagesTable.id, before), visibility) : and(eq(messagesTable.chatId, chatId), lt(messagesTable.id, before))
       );
     }
     const msgs = await query.orderBy(desc(messagesTable.createdAt)).limit(limit);
@@ -147097,10 +147182,34 @@ router8.post("/messages", async (req, res) => {
     const uid = req.currentUserId;
     const body = SendMessageBody.parse(req.body);
     const effect = typeof req.body.effect === "string" ? req.body.effect : null;
+    const moderation = await getActiveUserModeration(uid);
+    if (moderationBlocksWriting(moderation.type)) {
+      return res.status(403).json({
+        error: moderation.type === "spam_ban" ? "\u0412\u0430\u043C \u0437\u0430\u043F\u0440\u0435\u0449\u0435\u043D\u043E \u043E\u0442\u043F\u0440\u0430\u0432\u043B\u044F\u0442\u044C \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u044F \u0437\u0430 \u0441\u043F\u0430\u043C." : "\u0412\u0430\u0448 \u0430\u043A\u043A\u0430\u0443\u043D\u0442 \u0437\u0430\u0431\u043B\u043E\u043A\u0438\u0440\u043E\u0432\u0430\u043D.",
+        code: moderation.type === "spam_ban" ? "SPAM_BANNED" : "ACCOUNT_BANNED",
+        banReason: moderation.reason,
+        banExpiresAt: moderation.expiresAt?.toISOString() || null
+      });
+    }
     if (!await isChatMember(body.chatId, uid)) {
       return res.status(403).json({ error: "\u041D\u0435\u0442 \u0434\u043E\u0441\u0442\u0443\u043F\u0430 \u043A \u044D\u0442\u043E\u043C\u0443 \u0447\u0430\u0442\u0443" });
     }
     const chatInfo = await db.query.chatsTable.findFirst({ where: eq(chatsTable.id, body.chatId) });
+    if (chatInfo?.type === "direct" && moderation.type === "no_first_message") {
+      const existingMessages = await db.execute(sql`
+        SELECT 1 FROM messages
+        WHERE chat_id = ${body.chatId}
+        LIMIT 1
+      `);
+      if (existingMessages.rows.length === 0) {
+        return res.status(403).json({
+          error: "\u0412\u0430\u043C \u0437\u0430\u043F\u0440\u0435\u0449\u0435\u043D\u043E \u043D\u0430\u0447\u0438\u043D\u0430\u0442\u044C \u043D\u043E\u0432\u044B\u0435 \u0434\u0438\u0430\u043B\u043E\u0433\u0438.",
+          code: "FIRST_MESSAGE_BLOCKED",
+          banReason: moderation.reason,
+          banExpiresAt: moderation.expiresAt?.toISOString() || null
+        });
+      }
+    }
     if (chatInfo?.type === "direct") {
       const botRows = await db.execute(sql`
         SELECT u.is_bot, u.username
@@ -147552,6 +147661,13 @@ Assistant:` : body.text;
 router8.post("/messages/schedule", async (req, res) => {
   try {
     const uid = req.currentUserId;
+    const moderation = await getActiveUserModeration(uid);
+    if (moderationBlocksWriting(moderation.type)) {
+      return res.status(403).json({
+        error: moderation.type === "spam_ban" ? "\u0412\u0430\u043C \u0437\u0430\u043F\u0440\u0435\u0449\u0435\u043D\u043E \u043F\u043B\u0430\u043D\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u044F \u0438\u0437-\u0437\u0430 \u0441\u043F\u0430\u043C\u0430." : "\u0412\u0430\u0448 \u0430\u043A\u043A\u0430\u0443\u043D\u0442 \u0437\u0430\u0431\u043B\u043E\u043A\u0438\u0440\u043E\u0432\u0430\u043D.",
+        code: moderation.type === "spam_ban" ? "SPAM_BANNED" : "ACCOUNT_BANNED"
+      });
+    }
     const primeRow = await db.execute(sql`SELECT has_prime, prime_expires_at FROM users WHERE id = ${uid}`);
     const pu = primeRow.rows[0];
     const hasPrime = (pu?.has_prime === true || pu?.has_prime === "t") && pu?.prime_expires_at && new Date(pu.prime_expires_at) > /* @__PURE__ */ new Date();
@@ -147635,28 +147751,6 @@ router8.put("/messages/:messageId", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-router8.delete("/messages/:messageId", async (req, res) => {
-  try {
-    const messageId = Number(req.params.messageId);
-    const uid = req.currentUserId;
-    const existing = await db.query.messagesTable.findFirst({ where: eq(messagesTable.id, messageId) });
-    if (!existing) return res.status(404).json({ error: "\u0421\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u0435 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u043E" });
-    if (!await isChatMember(existing.chatId, uid)) return res.status(403).json({ error: "\u041D\u0435\u0442 \u0434\u043E\u0441\u0442\u0443\u043F\u0430 \u043A \u044D\u0442\u043E\u043C\u0443 \u0447\u0430\u0442\u0443" });
-    if (await isNovaSecurityChat2(existing.chatId)) {
-      return res.status(403).json({ error: "\u0421\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u044F Nova Security \u043D\u0435\u043B\u044C\u0437\u044F \u0443\u0434\u0430\u043B\u0438\u0442\u044C" });
-    }
-    const admin = await isAdmin(uid);
-    if (existing.senderId !== uid && !admin) {
-      return res.status(403).json({ error: "\u041D\u0435\u043B\u044C\u0437\u044F \u0443\u0434\u0430\u043B\u0438\u0442\u044C \u0447\u0443\u0436\u043E\u0435 \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u0435" });
-    }
-    await db.execute(sql`UPDATE messages SET is_deleted = true, deleted_at = NOW() WHERE id = ${messageId}`);
-    broadcastToChat(existing.chatId, "new-message", { messageId, chatId: existing.chatId });
-    res.status(204).send();
-  } catch (err2) {
-    req.log.error(err2);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
 router8.delete("/messages/bulk", async (req, res) => {
   try {
     const uid = req.currentUserId;
@@ -147687,6 +147781,28 @@ router8.delete("/messages/bulk", async (req, res) => {
   } catch (err2) {
     req.log.error(err2);
     res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0443\u0434\u0430\u043B\u0438\u0442\u044C \u0432\u044B\u0431\u0440\u0430\u043D\u043D\u044B\u0435 \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u044F" });
+  }
+});
+router8.delete("/messages/:messageId", async (req, res) => {
+  try {
+    const messageId = Number(req.params.messageId);
+    const uid = req.currentUserId;
+    const existing = await db.query.messagesTable.findFirst({ where: eq(messagesTable.id, messageId) });
+    if (!existing) return res.status(404).json({ error: "\u0421\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u0435 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u043E" });
+    if (!await isChatMember(existing.chatId, uid)) return res.status(403).json({ error: "\u041D\u0435\u0442 \u0434\u043E\u0441\u0442\u0443\u043F\u0430 \u043A \u044D\u0442\u043E\u043C\u0443 \u0447\u0430\u0442\u0443" });
+    if (await isNovaSecurityChat2(existing.chatId)) {
+      return res.status(403).json({ error: "\u0421\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u044F Nova Security \u043D\u0435\u043B\u044C\u0437\u044F \u0443\u0434\u0430\u043B\u0438\u0442\u044C" });
+    }
+    const admin = await isAdmin(uid);
+    if (existing.senderId !== uid && !admin) {
+      return res.status(403).json({ error: "\u041D\u0435\u043B\u044C\u0437\u044F \u0443\u0434\u0430\u043B\u0438\u0442\u044C \u0447\u0443\u0436\u043E\u0435 \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u0435" });
+    }
+    await db.execute(sql`UPDATE messages SET is_deleted = true, deleted_at = NOW() WHERE id = ${messageId}`);
+    broadcastToChat(existing.chatId, "new-message", { messageId, chatId: existing.chatId });
+    res.status(204).send();
+  } catch (err2) {
+    req.log.error(err2);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 router8.post("/messages/:messageId/reactions", async (req, res) => {
@@ -148152,6 +148268,15 @@ router10.get("/stories", async (req, res) => {
 router10.post("/stories", async (req, res) => {
   try {
     const uid = req.currentUserId;
+    const moderation = await getActiveUserModeration(uid);
+    if (moderationBlocksWriting(moderation.type)) {
+      return res.status(403).json({
+        error: moderation.type === "spam_ban" ? "\u0412\u0430\u043C \u0437\u0430\u043F\u0440\u0435\u0449\u0435\u043D\u043E \u043F\u0443\u0431\u043B\u0438\u043A\u043E\u0432\u0430\u0442\u044C \u0438\u0441\u0442\u043E\u0440\u0438\u0438 \u0438\u0437-\u0437\u0430 \u0441\u043F\u0430\u043C\u0430." : "\u0412\u0430\u0448 \u0430\u043A\u043A\u0430\u0443\u043D\u0442 \u0437\u0430\u0431\u043B\u043E\u043A\u0438\u0440\u043E\u0432\u0430\u043D.",
+        code: moderation.type === "spam_ban" ? "SPAM_BANNED" : "ACCOUNT_BANNED",
+        banReason: moderation.reason,
+        banExpiresAt: moderation.expiresAt?.toISOString() || null
+      });
+    }
     const body = CreateStoryBody.parse(req.body);
     if (body.type !== "text" && body.type !== "image") {
       return res.status(400).json({ error: "\u0412 \u0441\u0442\u0430\u0442\u0443\u0441\u0435 \u043C\u043E\u0436\u043D\u043E \u043F\u0443\u0431\u043B\u0438\u043A\u043E\u0432\u0430\u0442\u044C \u0442\u043E\u043B\u044C\u043A\u043E \u0442\u0435\u043A\u0441\u0442 \u0438 \u0444\u043E\u0442\u043E\u0433\u0440\u0430\u0444\u0438\u0438." });
@@ -148292,7 +148417,12 @@ async function isUserFeedMuted(userId) {
 router11.get("/posts", async (req, res) => {
   try {
     const uid = req.currentUserId;
-    const posts = await db.select().from(postsTable).orderBy(desc(postsTable.createdAt)).limit(100);
+    const posts = await db.select().from(postsTable).where(sql`(posts.user_id = ${uid} OR NOT EXISTS (
+        SELECT 1 FROM users shadow_user
+        WHERE shadow_user.id = posts.user_id
+          AND shadow_user.moderation_type = 'shadow_ban'
+          AND (shadow_user.ban_expires_at IS NULL OR shadow_user.ban_expires_at > NOW())
+      ))`).orderBy(desc(postsTable.createdAt)).limit(100);
     const visible = posts.filter((p3) => p3.moderationStatus !== "rejected");
     const built = await Promise.all(visible.map((p3) => buildPost(p3.id, uid)));
     res.json(built.filter(Boolean));
@@ -148304,6 +148434,15 @@ router11.get("/posts", async (req, res) => {
 router11.post("/posts", async (req, res) => {
   try {
     const uid = req.currentUserId;
+    const moderation = await getActiveUserModeration(uid);
+    if (moderationBlocksWriting(moderation.type)) {
+      return res.status(403).json({
+        error: moderation.type === "spam_ban" ? "\u0412\u0430\u043C \u0437\u0430\u043F\u0440\u0435\u0449\u0435\u043D\u043E \u043F\u0443\u0431\u043B\u0438\u043A\u043E\u0432\u0430\u0442\u044C \u0438\u0437-\u0437\u0430 \u0441\u043F\u0430\u043C\u0430." : "\u0412\u0430\u0448 \u0430\u043A\u043A\u0430\u0443\u043D\u0442 \u0437\u0430\u0431\u043B\u043E\u043A\u0438\u0440\u043E\u0432\u0430\u043D.",
+        code: moderation.type === "spam_ban" ? "SPAM_BANNED" : "ACCOUNT_BANNED",
+        banReason: moderation.reason,
+        banExpiresAt: moderation.expiresAt?.toISOString() || null
+      });
+    }
     const { text: text2, imageUrl, topic } = req.body;
     if (!text2 && !imageUrl) return res.status(400).json({ error: "text or image required" });
     const isAdminRow = await db.execute(sql`SELECT is_admin FROM users WHERE id = ${uid}`);
@@ -148492,7 +148631,13 @@ router11.get("/posts/:postId/comments", async (req, res) => {
   try {
     const postId = Number(req.params.postId);
     const comments = await db.select().from(postCommentsTable).where(eq(postCommentsTable.postId, postId)).orderBy(postCommentsTable.createdAt);
-    const built = await Promise.all(comments.map(async (c5) => {
+    const viewerRows = await db.execute(sql`SELECT is_admin FROM users WHERE id = ${req.currentUserId} LIMIT 1`);
+    const viewerIsAdmin = !!viewerRows.rows[0]?.is_admin;
+    const visibleComments = viewerIsAdmin ? comments : (await Promise.all(comments.map(async (comment) => {
+      const moderation = await getActiveUserModeration(comment.userId);
+      return comment.userId === req.currentUserId || moderation.type !== "shadow_ban" ? comment : null;
+    }))).filter(Boolean);
+    const built = await Promise.all(visibleComments.map(async (c5) => {
       const author = await db.query.usersTable.findFirst({ where: eq(usersTable.id, c5.userId) });
       return { ...c5, author: author ?? null };
     }));
@@ -148505,6 +148650,15 @@ router11.get("/posts/:postId/comments", async (req, res) => {
 router11.post("/posts/:postId/comments", async (req, res) => {
   try {
     const uid = req.currentUserId;
+    const moderation = await getActiveUserModeration(uid);
+    if (moderationBlocksWriting(moderation.type)) {
+      return res.status(403).json({
+        error: moderation.type === "spam_ban" ? "\u0412\u0430\u043C \u0437\u0430\u043F\u0440\u0435\u0449\u0435\u043D\u043E \u043A\u043E\u043C\u043C\u0435\u043D\u0442\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u0438\u0437-\u0437\u0430 \u0441\u043F\u0430\u043C\u0430." : "\u0412\u0430\u0448 \u0430\u043A\u043A\u0430\u0443\u043D\u0442 \u0437\u0430\u0431\u043B\u043E\u043A\u0438\u0440\u043E\u0432\u0430\u043D.",
+        code: moderation.type === "spam_ban" ? "SPAM_BANNED" : "ACCOUNT_BANNED",
+        banReason: moderation.reason,
+        banExpiresAt: moderation.expiresAt?.toISOString() || null
+      });
+    }
     const postId = Number(req.params.postId);
     const { text: text2 } = req.body;
     if (!text2 || !String(text2).trim()) return res.status(400).json({ error: "text required" });
@@ -148665,6 +148819,8 @@ var ADMIN_USER_IDS = [1, 4];
 db.execute(sql`ALTER TABLE bot_tokens ADD COLUMN IF NOT EXISTS code_lang TEXT NOT NULL DEFAULT 'python'`).catch(() => {
 });
 db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_banned BOOLEAN NOT NULL DEFAULT FALSE`).catch(() => {
+});
+db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS moderation_type TEXT NOT NULL DEFAULT 'none'`).catch(() => {
 });
 db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS ban_reason TEXT`).catch(() => {
 });
@@ -148839,7 +148995,7 @@ router12.get("/admin/check", async (req, res) => {
 router12.get("/admin/users", requireAdmin, async (req, res) => {
   try {
     const rows = await db.execute(
-      sql`SELECT id, username, display_name, avatar_color, avatar_url, nickname_style, status, balance, created_at, is_verified, is_developer, is_admin, is_bot, has_prime, is_banned, ban_reason, ban_expires_at FROM users ORDER BY id`
+      sql`SELECT id, username, display_name, avatar_color, avatar_url, nickname_style, status, balance, created_at, is_verified, is_developer, is_admin, is_bot, has_prime, is_banned, moderation_type, ban_reason, ban_expires_at FROM users ORDER BY id`
     );
     res.json(rows.rows);
   } catch (err2) {
@@ -149283,29 +149439,58 @@ router12.get("/admin/leaderboard", requireAdmin, async (req, res) => {
 router12.post("/admin/users/:userId/ban", requireAdmin, async (req, res) => {
   try {
     const targetId = Number(req.params.userId);
-    if (targetId === req.currentUserId) return res.status(400).json({ error: "\u041D\u0435\u043B\u044C\u0437\u044F \u0437\u0430\u0431\u0430\u043D\u0438\u0442\u044C \u0441\u0435\u0431\u044F" });
-    const { ban, reason, durationHours } = req.body;
-    if (ban) {
-      const expiresAt = durationHours ? new Date(Date.now() + Number(durationHours) * 36e5).toISOString() : null;
-      await db.execute(sql`UPDATE users SET is_banned = true, ban_reason = ${reason?.trim() || null}, ban_expires_at = ${expiresAt} WHERE id = ${targetId}`);
-    } else {
-      await db.execute(sql`UPDATE users SET is_banned = false, ban_reason = NULL, ban_expires_at = NULL WHERE id = ${targetId}`);
+    if (!Number.isInteger(targetId) || targetId <= 0 || targetId === req.currentUserId) return res.status(400).json({ error: "\u041D\u0435\u043B\u044C\u0437\u044F \u043F\u0440\u0438\u043C\u0435\u043D\u0438\u0442\u044C \u044D\u0442\u043E \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u0435 \u043A \u0441\u0435\u0431\u0435" });
+    const targetCheck = await db.execute(sql`SELECT id, username, is_admin FROM users WHERE id = ${targetId} LIMIT 1`);
+    const targetRow = targetCheck.rows[0];
+    if (!targetRow) return res.status(404).json({ error: "\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D" });
+    if (targetRow.is_admin === true || targetRow.is_admin === "t" || targetRow.is_admin === 1) {
+      return res.status(400).json({ error: "\u041D\u0435\u043B\u044C\u0437\u044F \u043F\u0440\u0438\u043C\u0435\u043D\u0438\u0442\u044C \u043C\u043E\u0434\u0435\u0440\u0430\u0446\u0438\u044E \u043A \u0430\u0434\u043C\u0438\u043D\u0438\u0441\u0442\u0440\u0430\u0442\u043E\u0440\u0443" });
     }
-    const target = await db.execute(sql`SELECT username, is_banned, ban_reason, ban_expires_at FROM users WHERE id = ${targetId}`);
+    const { ban, action, reason, durationHours } = req.body || {};
+    const requestedAction = action || (ban ? "ban" : "none");
+    const validActions = ["none", "ban", "shadow_ban", "spam_ban", "no_first_message"];
+    if (!validActions.includes(requestedAction)) return res.status(400).json({ error: "\u041D\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043D\u044B\u0439 \u0442\u0438\u043F \u043C\u043E\u0434\u0435\u0440\u0430\u0446\u0438\u0438" });
+    const cleanReason = typeof reason === "string" ? reason.trim().slice(0, 500) : "";
+    if (requestedAction !== "none" && !cleanReason) {
+      return res.status(400).json({ error: "\u0423\u043A\u0430\u0436\u0438\u0442\u0435 \u043F\u0440\u0438\u0447\u0438\u043D\u0443 \u043E\u0433\u0440\u0430\u043D\u0438\u0447\u0435\u043D\u0438\u044F" });
+    }
+    const parsedDuration = durationHours === null || durationHours === void 0 || durationHours === "" ? null : Number(durationHours);
+    if (parsedDuration !== null && (!Number.isFinite(parsedDuration) || parsedDuration <= 0 || parsedDuration > 8760)) {
+      return res.status(400).json({ error: "\u0421\u0440\u043E\u043A \u0434\u043E\u043B\u0436\u0435\u043D \u0431\u044B\u0442\u044C \u043E\u0442 1 \u0447\u0430\u0441\u0430 \u0434\u043E 1 \u0433\u043E\u0434\u0430" });
+    }
+    if (requestedAction !== "none") {
+      const expiresAt = parsedDuration ? new Date(Date.now() + parsedDuration * 36e5).toISOString() : null;
+      await db.execute(sql`
+        UPDATE users
+        SET is_banned = ${requestedAction === "ban"},
+            moderation_type = ${requestedAction},
+            ban_reason = ${cleanReason || null},
+            ban_expires_at = ${expiresAt}
+        WHERE id = ${targetId}
+      `);
+    } else {
+      await db.execute(sql`
+        UPDATE users
+        SET is_banned = false, moderation_type = 'none', ban_reason = NULL, ban_expires_at = NULL
+        WHERE id = ${targetId}
+      `);
+    }
+    const target = await db.execute(sql`SELECT username, is_banned, moderation_type, ban_reason, ban_expires_at FROM users WHERE id = ${targetId}`);
     const row = target.rows[0];
-    if (ban) {
+    if (requestedAction === "ban") {
       broadcastToAll("banned", {
         userId: targetId,
-        banReason: reason?.trim() || null,
-        banExpiresAt: durationHours ? new Date(Date.now() + Number(durationHours) * 36e5).toISOString() : null
+        banReason: cleanReason || null,
+        banExpiresAt: row?.ban_expires_at || null
       });
     }
     res.json({
       success: true,
-      isBanned: row?.is_banned ?? !!ban,
+      isBanned: row?.is_banned ?? false,
+      moderationType: row?.moderation_type || "none",
       banReason: row?.ban_reason ?? null,
       banExpiresAt: row?.ban_expires_at ?? null,
-      message: ban ? `@${row?.username} \u0437\u0430\u0431\u043B\u043E\u043A\u0438\u0440\u043E\u0432\u0430\u043D${durationHours ? ` \u043D\u0430 ${durationHours} \u0447.` : " \u043D\u0430\u0432\u0441\u0435\u0433\u0434\u0430"}` : `@${row?.username} \u0440\u0430\u0437\u0431\u043B\u043E\u043A\u0438\u0440\u043E\u0432\u0430\u043D`
+      message: requestedAction === "none" ? `@${row?.username} \u043E\u0433\u0440\u0430\u043D\u0438\u0447\u0435\u043D\u0438\u044F \u0441\u043D\u044F\u0442\u044B` : requestedAction === "shadow_ban" ? `@${row?.username} \u043F\u043E\u043B\u0443\u0447\u0438\u043B \u0442\u0435\u043D\u0435\u0432\u043E\u0439 \u0431\u0430\u043D${parsedDuration ? ` \u043D\u0430 ${parsedDuration} \u0447.` : " \u043D\u0430\u0432\u0441\u0435\u0433\u0434\u0430"}` : requestedAction === "spam_ban" ? `@${row?.username} \u043F\u043E\u043B\u0443\u0447\u0438\u043B \u0441\u043F\u0430\u043C-\u0431\u0430\u043D${parsedDuration ? ` \u043D\u0430 ${parsedDuration} \u0447.` : " \u043D\u0430\u0432\u0441\u0435\u0433\u0434\u0430"}` : requestedAction === "no_first_message" ? `@${row?.username} \u0437\u0430\u043F\u0440\u0435\u0449\u0435\u043D\u043E \u043D\u0430\u0447\u0438\u043D\u0430\u0442\u044C \u043D\u043E\u0432\u044B\u0435 \u0434\u0438\u0430\u043B\u043E\u0433\u0438${parsedDuration ? ` \u043D\u0430 ${parsedDuration} \u0447.` : " \u043D\u0430\u0432\u0441\u0435\u0433\u0434\u0430"}` : `@${row?.username} \u0437\u0430\u0431\u043B\u043E\u043A\u0438\u0440\u043E\u0432\u0430\u043D${parsedDuration ? ` \u043D\u0430 ${parsedDuration} \u0447.` : " \u043D\u0430\u0432\u0441\u0435\u0433\u0434\u0430"}`
     });
   } catch (err2) {
     req.log.error(err2);
@@ -152123,6 +152308,15 @@ router23.get("/contact-requests/outgoing", async (req, res) => {
 router23.post("/contact-requests", async (req, res) => {
   try {
     const uid = req.currentUserId;
+    const moderation = await getActiveUserModeration(uid);
+    if (moderationBlocksStartingDirectChat(moderation.type)) {
+      return res.status(403).json({
+        error: "\u0412\u0430\u043C \u0437\u0430\u043F\u0440\u0435\u0449\u0435\u043D\u043E \u043E\u0442\u043F\u0440\u0430\u0432\u043B\u044F\u0442\u044C \u043D\u043E\u0432\u044B\u0435 \u0437\u0430\u044F\u0432\u043A\u0438 \u0432 \u043A\u043E\u043D\u0442\u0430\u043A\u0442\u044B.",
+        code: "FIRST_MESSAGE_BLOCKED",
+        banReason: moderation.reason,
+        banExpiresAt: moderation.expiresAt?.toISOString() || null
+      });
+    }
     const toUserId = Number(req.body.toUserId);
     if (!toUserId || toUserId === uid) return res.status(400).json({ error: "Invalid user" });
     const target = await db.execute(sql`SELECT id, is_admin, is_bot FROM users WHERE id = ${toUserId}`);
@@ -153730,6 +153924,10 @@ if (Number.isNaN(port) || port <= 0) {
       await migrate(db, { migrationsFolder });
       logger.info("DB migrations complete \u2713");
     }
+    await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_banned BOOLEAN NOT NULL DEFAULT FALSE`);
+    await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS moderation_type TEXT NOT NULL DEFAULT 'none'`);
+    await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS ban_reason TEXT`);
+    await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS ban_expires_at TIMESTAMP WITH TIME ZONE`);
   } catch (migErr) {
     logger.warn({ err: migErr }, "DB migration check warning (non-fatal) \u2014 server will continue");
   }
@@ -153825,8 +154023,18 @@ httpServer.listen(port, () => {
 });
 setInterval(async () => {
   try {
-    const rows = await db.execute(sql`SELECT * FROM scheduled_messages WHERE scheduled_at <= NOW()`);
+    const rows = await db.execute(sql`
+      SELECT sm.*, u.moderation_type, u.is_banned
+      FROM scheduled_messages sm
+      JOIN users u ON u.id = sm.sender_id
+      WHERE sm.scheduled_at <= NOW()
+    `);
     for (const msg of rows.rows) {
+      const moderation = await getActiveUserModeration(Number(msg.sender_id));
+      if (moderationBlocksWriting(moderation.type)) {
+        await db.execute(sql`DELETE FROM scheduled_messages WHERE id = ${msg.id}`);
+        continue;
+      }
       const [inserted] = await db.insert(messagesTable).values({
         chatId: msg.chat_id,
         senderId: msg.sender_id,

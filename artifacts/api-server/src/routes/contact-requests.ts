@@ -2,6 +2,7 @@ import { Router } from "express";
 import { db } from "@workspace/db";
 import { sql } from "drizzle-orm";
 import { broadcastToUser } from "../lib/sse";
+import { getActiveUserModeration, moderationBlocksStartingDirectChat } from "../lib/userModeration";
 
 const router = Router();
 
@@ -49,6 +50,15 @@ router.get("/contact-requests/outgoing", async (req, res) => {
 router.post("/contact-requests", async (req, res) => {
   try {
     const uid = req.currentUserId;
+    const moderation = await getActiveUserModeration(uid);
+    if (moderationBlocksStartingDirectChat(moderation.type)) {
+      return res.status(403).json({
+        error: "Вам запрещено отправлять новые заявки в контакты.",
+        code: "FIRST_MESSAGE_BLOCKED",
+        banReason: moderation.reason,
+        banExpiresAt: moderation.expiresAt?.toISOString() || null,
+      });
+    }
     const toUserId = Number(req.body.toUserId);
     if (!toUserId || toUserId === uid) return res.status(400).json({ error: "Invalid user" });
 

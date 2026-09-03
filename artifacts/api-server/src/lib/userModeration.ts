@@ -1,7 +1,7 @@
 import { db } from "@workspace/db";
 import { sql } from "drizzle-orm";
 
-export type ModerationType = "none" | "ban" | "shadow_ban" | "spam_ban";
+export type ModerationType = "none" | "ban" | "shadow_ban" | "spam_ban" | "no_first_message";
 
 export interface UserModeration {
   type: ModerationType;
@@ -24,7 +24,7 @@ export async function getActiveUserModeration(userId: number): Promise<UserModer
   if (!row) return { type: "none", reason: null, expiresAt: null };
 
   let type = String(row.moderation_type || "").toLowerCase() as ModerationType;
-  if (!["none", "ban", "shadow_ban", "spam_ban"].includes(type)) type = "none";
+  if (!["none", "ban", "shadow_ban", "spam_ban", "no_first_message"].includes(type)) type = "none";
   if (type === "none" && (row.is_banned === true || row.is_banned === "t" || row.is_banned === 1)) {
     type = "ban";
   }
@@ -48,4 +48,8 @@ export async function getActiveUserModeration(userId: number): Promise<UserModer
 
 export function moderationBlocksWriting(type: ModerationType): boolean {
   return type === "ban" || type === "spam_ban";
+}
+
+export function moderationBlocksStartingDirectChat(type: ModerationType): boolean {
+  return type === "no_first_message";
 }

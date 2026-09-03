@@ -19,6 +19,7 @@ export default function Home() {
   const [closing, setClosing] = useState(false); // animate-out in progress
   const dragging = useRef(false);
   const swipeDecided = useRef(false); // whether we've decided h vs v
+  const messageGesture = useRef(false);
 
   const closeChat = useCallback(() => {
     setClosing(true);
@@ -30,6 +31,8 @@ export default function Home() {
   }, [setSelectedChatId]);
 
   const handleTouchStart = (e: React.TouchEvent) => {
+    messageGesture.current = Boolean((e.target as HTMLElement).closest?.("[data-message-swipe='true']"));
+    if (messageGesture.current) return;
     touchStartX.current = e.touches[0].clientX;
     touchStartY.current = e.touches[0].clientY;
     touchStartTime.current = Date.now();
@@ -38,6 +41,7 @@ export default function Home() {
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
+    if (messageGesture.current) return;
     const dx = e.touches[0].clientX - touchStartX.current;
     const dy = e.touches[0].clientY - touchStartY.current;
 
@@ -58,6 +62,10 @@ export default function Home() {
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
+    if (messageGesture.current) {
+      messageGesture.current = false;
+      return;
+    }
     if (!dragging.current) {
       swipeDecided.current = false;
       return;

@@ -29,7 +29,7 @@ interface AdminUser {
   is_banned: boolean;
   ban_reason: string | null;
   ban_expires_at: string | null;
-  moderation_type?: "none" | "ban" | "shadow_ban" | "spam_ban";
+  moderation_type?: "none" | "ban" | "shadow_ban" | "spam_ban" | "no_first_message";
   last_ip?: string | null;
 }
 
@@ -172,7 +172,7 @@ export default function Admin() {
   const [banConfirm, setBanConfirm] = useState<AdminUser | null>(null);
   const [banReasonInput, setBanReasonInput] = useState("");
   const [banDuration, setBanDuration] = useState<string>("permanent");
-  const [moderationTypeInput, setModerationTypeInput] = useState<"ban" | "shadow_ban" | "spam_ban">("ban");
+  const [moderationTypeInput, setModerationTypeInput] = useState<"ban" | "shadow_ban" | "spam_ban" | "no_first_message">("ban");
   const [ipBan, setIpBan] = useState<{ ip: string; expiresAt: string | null; reason: string } | null>(null);
   const [ipBanInput, setIpBanInput] = useState("");
   const [ipBanReason, setIpBanReason] = useState("");
@@ -1048,7 +1048,7 @@ export default function Admin() {
     return target.is_banned ? "ban" : "none";
   };
 
-  const handleBanToggle = async (target: AdminUser, opts?: { reason?: string; durationHours?: number | null; type?: "ban" | "shadow_ban" | "spam_ban" }) => {
+  const handleBanToggle = async (target: AdminUser, opts?: { reason?: string; durationHours?: number | null; type?: "ban" | "shadow_ban" | "spam_ban" | "no_first_message" }) => {
     const currentType = getModerationType(target);
     const isModerated = currentType !== "none";
     setBanLoading(true);
@@ -1662,6 +1662,7 @@ export default function Admin() {
                 { value: "ban" as const, label: "Обычный бан", description: "Нельзя войти в аккаунт", activeClass: "border-orange-500 bg-orange-500/10" },
                 { value: "shadow_ban" as const, label: "Теневой бан", description: "Сообщения видит только автор и админы", activeClass: "border-purple-500 bg-purple-500/10" },
                 { value: "spam_ban" as const, label: "Спам-бан", description: "Нельзя писать, публиковать и комментировать", activeClass: "border-red-500 bg-red-500/10" },
+                { value: "no_first_message" as const, label: "Запрет первого сообщения", description: "Нельзя начинать новые личные диалоги и отправлять заявки", activeClass: "border-blue-500 bg-blue-500/10" },
               ].map(option => (
                 <button
                   key={option.value}
@@ -4114,6 +4115,7 @@ export default function Admin() {
                       {user.is_bot && <span className="text-[8px] font-black uppercase px-1 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">BOT</span>}
                       {getModerationType(user) === "shadow_ban" && <span className="text-[8px] font-black uppercase px-1 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30">ТЕНЬ</span>}
                       {getModerationType(user) === "spam_ban" && <span className="text-[8px] font-black uppercase px-1 py-0.5 rounded bg-red-500/20 text-red-300 border border-red-500/30">СПАМ</span>}
+                      {getModerationType(user) === "no_first_message" && <span className="text-[8px] font-black uppercase px-1 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30">ПЕРВЫЙ</span>}
                     </div>
                     <p className="text-xs text-muted-foreground">@{user.username}</p>
                   </div>
@@ -4388,7 +4390,7 @@ export default function Admin() {
                           {getModerationType(selectedUser) !== "none" && (
                             <div className="bg-orange-500/8 border border-orange-500/25 rounded-xl px-3 py-2.5 space-y-1.5">
                               <p className="text-[11px] font-bold uppercase tracking-widest text-orange-400">
-                                {getModerationType(selectedUser) === "shadow_ban" ? "Теневой бан" : getModerationType(selectedUser) === "spam_ban" ? "Спам-бан" : "Активная блокировка"}
+                                {getModerationType(selectedUser) === "shadow_ban" ? "Теневой бан" : getModerationType(selectedUser) === "spam_ban" ? "Спам-бан" : getModerationType(selectedUser) === "no_first_message" ? "Запрет первого сообщения" : "Активная блокировка"}
                               </p>
                               {selectedUser.ban_reason && (
                                 <p className="text-xs text-foreground font-medium">Причина: {selectedUser.ban_reason}</p>

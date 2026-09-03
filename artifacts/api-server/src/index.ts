@@ -63,9 +63,13 @@ if (Number.isNaN(port) || port <= 0) {
       logger.info("DB migrations complete ✓");
     }
     // Some legacy schema fixes run when route modules are imported, which is
-    // before a fresh database has its tables. Ensure moderation is present
-    // after migrations so the moderation helpers are safe from first boot.
+    // before a fresh database has its tables. Ensure every moderation column
+    // is present after migrations so helpers and background jobs are safe from
+    // first boot.
+    await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_banned BOOLEAN NOT NULL DEFAULT FALSE`);
     await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS moderation_type TEXT NOT NULL DEFAULT 'none'`);
+    await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS ban_reason TEXT`);
+    await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS ban_expires_at TIMESTAMP WITH TIME ZONE`);
   } catch (migErr) {
     logger.warn({ err: migErr }, "DB migration check warning (non-fatal) — server will continue");
   }

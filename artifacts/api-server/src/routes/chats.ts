@@ -4,6 +4,7 @@ import { eq, and, desc, inArray, count, gt, ne, lte, sql } from "drizzle-orm";
 import { CreateChatBody, UpdateChatBody, AddChatMemberBody } from "@workspace/api-zod";
 import { broadcastToChat, setTyping, stopTyping } from "../lib/sse";
 import { offloadDataUrl } from "../lib/objectStorage";
+import { getActiveUserModeration, moderationBlocksStartingDirectChat } from "../lib/userModeration";
 
 const router = Router();
 
@@ -459,6 +460,16 @@ router.post("/chats/direct", async (req, res) => {
         const result = await buildChat(found.id, uid);
         return res.json(result);
       }
+    }
+
+    const moderation = await getActiveUserModeration(uid);
+    if (moderationBlocksStartingDirectChat(moderation.type)) {
+      return res.status(403).json({
+        error: "Вам запрещено начинать новые диалоги.",
+        code: "FIRST_MESSAGE_BLOCKED",
+        banReason: moderation.reason,
+        banExpiresAt: moderation.expiresAt?.toISOString() || null,
+      });
     }
 
     const [chat] = await db.insert(chatsTable).values({ type: "direct" }).returning();

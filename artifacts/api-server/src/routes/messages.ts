@@ -448,6 +448,21 @@ router.post("/messages", async (req, res) => {
 
     // Channel restriction: only owners/admins can post standalone messages; everyone else can only comment (reply)
     const chatInfo = await db.query.chatsTable.findFirst({ where: eq(chatsTable.id, body.chatId) });
+    if (chatInfo?.type === "direct" && moderation.type === "no_first_message") {
+      const existingMessages = await db.execute(sql`
+        SELECT 1 FROM messages
+        WHERE chat_id = ${body.chatId}
+        LIMIT 1
+      `);
+      if (existingMessages.rows.length === 0) {
+        return res.status(403).json({
+          error: "Вам запрещено начинать новые диалоги.",
+          code: "FIRST_MESSAGE_BLOCKED",
+          banReason: moderation.reason,
+          banExpiresAt: moderation.expiresAt?.toISOString() || null,
+        });
+      }
+    }
     if (chatInfo?.type === "direct") {
       const botRows = await db.execute(sql`
         SELECT u.is_bot, u.username

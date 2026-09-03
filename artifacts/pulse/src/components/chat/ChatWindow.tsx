@@ -330,6 +330,12 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
     { query: { enabled: !!chatId && (!secretChat || secretUnlocked) } as any },
   );
   const { data: me } = useGetMe();
+  const moderationType = (me as any)?.moderationType as string | undefined;
+  const moderationNotice = moderationType === "no_first_message"
+    ? "Вам запрещено начинать новые личные диалоги. В уже существующих чатах отвечать можно."
+    : moderationType === "spam_ban"
+      ? "Вам запрещено отправлять сообщения из-за спама."
+      : null;
   const [calling, setCalling] = useState(false);
   const markAsRead = useMarkChatAsRead();
   const updateChat = useUpdateChat();
@@ -1449,6 +1455,13 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
           </div>
         </div>
       </header>
+
+      {moderationNotice && (
+        <div className="flex items-start gap-2 px-4 py-2.5 bg-orange-500/10 border-b border-orange-500/20 text-orange-300 text-xs font-medium shrink-0">
+          <Lock size={15} className="shrink-0 mt-0.5" />
+          <span>{moderationNotice}</span>
+        </div>
+      )}
 
       {/* Channel Announcement Banner — last admin/owner message */}
       <AnimatePresence>
