@@ -7,9 +7,12 @@ import { IncomingCall } from "@/components/calls/IncomingCall";
 import { CommandPalette } from "@/components/CommandPalette";
 import { useToast } from "@/hooks/use-toast";
 import { NetworkStatus } from "@/components/NetworkStatus";
+import { MultiChatWindows } from "@/components/chat/MultiChatWindows";
+import { MediaMiniPlayer } from "@/components/chat/MediaMiniPlayer";
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const { activeCall } = useAppContext();
+  const { selectedChatId, openChatWindow } = useAppContext();
   const { toast } = useToast();
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -34,10 +37,18 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         e.preventDefault();
         setPaletteOpen(prev => !prev);
       }
+      if (e.altKey && e.key === "Enter" && selectedChatId) {
+        e.preventDefault();
+        openChatWindow(selectedChatId);
+      }
+      if (e.key === "/" && !["INPUT", "TEXTAREA", "SELECT"].includes((e.target as HTMLElement)?.tagName || "")) {
+        e.preventDefault();
+        setPaletteOpen(true);
+      }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, []);
+  }, [selectedChatId, openChatWindow]);
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -72,6 +83,8 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/5 via-background to-background pointer-events-none" />
         {children}
       </main>
+      <MultiChatWindows />
+      <MediaMiniPlayer />
       <ActiveCall />
       <IncomingCall />
       <BottomNav

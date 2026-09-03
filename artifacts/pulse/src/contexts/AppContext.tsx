@@ -86,6 +86,9 @@ export interface AppState {
   isCallMinimized: boolean;
   minimizeCall: () => void;
   expandCall: () => void;
+  openChatWindows: number[];
+  openChatWindow: (chatId: number) => void;
+  closeChatWindow: (chatId: number) => void;
 }
 
 const AppContext = createContext<AppState | undefined>(undefined);
@@ -113,6 +116,14 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [userStatusMap, setUserStatusMap] = useState<Record<number, string>>({});
   const [isCallMinimized, setIsCallMinimized] = useState(false);
+  const [openChatWindows, setOpenChatWindows] = useState<number[]>([]);
+  const openChatWindow = useCallback((chatId: number) => {
+    if (!chatId) return;
+    setOpenChatWindows((current) => current.includes(chatId) ? current : [...current, chatId].slice(-3));
+  }, []);
+  const closeChatWindow = useCallback((chatId: number) => {
+    setOpenChatWindows((current) => current.filter((id) => id !== chatId));
+  }, []);
   const minimizeCall = useCallback(() => setIsCallMinimized(true), []);
   const expandCall = useCallback(() => setIsCallMinimized(false), []);
 
@@ -1237,6 +1248,9 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
     isCallMinimized,
     minimizeCall,
     expandCall,
+    openChatWindows,
+    openChatWindow,
+    closeChatWindow,
   };
 
   return <AppContext.Provider value={state}>{children}</AppContext.Provider>;

@@ -56,6 +56,7 @@ import NotFound from "@/pages/not-found";
 import Privacy from "@/pages/Privacy";
 import Terms from "@/pages/Terms";
 import JoinInvite from "@/pages/JoinInvite";
+import PowerFeatures from "@/pages/PowerFeatures";
 
 
 function LandscapeBlock() {
@@ -536,6 +537,7 @@ function MainAppInner({ onLogout, onSwitchAccount, onRemoveAccount, onOpenAddAcc
               <Route path="/support" component={Support} />
               <Route path="/profile" component={Profile} />
               <Route path="/settings" component={Settings} />
+              <Route path="/power-features" component={PowerFeatures} />
               <Route path="/user/:userId" component={UserProfile} />
               <Route path="/qr/:tokenId" component={QrConfirm} />
               <Route path="/privacy" component={Privacy} />

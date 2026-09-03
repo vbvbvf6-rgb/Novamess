@@ -125,7 +125,10 @@ function VoicePlayer({ src, durationSec, isMine, messageId, viewerIsPrimePlus }:
   const toggle = () => {
     const a = audioRef.current;
     if (!a) return;
-    if (playing) { a.pause(); } else { a.play(); }
+    if (playing) { a.pause(); } else {
+      a.play();
+      window.dispatchEvent(new CustomEvent("pulse:play-media", { detail: { url: src, type: "audio", title: "Голосовое сообщение" } }));
+    }
     setPlaying(!playing);
   };
 
@@ -1146,6 +1149,7 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
                 className="w-full max-w-[280px] rounded-xl"
                 style={{ height: 36 }}
                 onClick={e => e.stopPropagation()}
+                onPlay={() => window.dispatchEvent(new CustomEvent("pulse:play-media", { detail: { url: message.mediaUrl, type: "audio", title: docMeta.name } }))}
               />
               <a
                 href={message.mediaUrl}
@@ -1168,6 +1172,7 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
                 preload="metadata"
                 className="max-w-[280px] max-h-[320px] w-full block rounded-xl"
                 onClick={e => e.stopPropagation()}
+                onPlay={() => window.dispatchEvent(new CustomEvent("pulse:play-media", { detail: { url: message.mediaUrl, type: "video", title: docMeta.name } }))}
               />
               <div className={`flex items-center gap-2 px-2 pb-1 pt-1 text-[11px] ${isMine ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
                 <a

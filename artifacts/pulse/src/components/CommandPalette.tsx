@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, MessageCircle, Phone, Users, History, Settings, Rss, UserCircle, Crown, Zap, Hash, X } from "lucide-react";
+import { Search, MessageCircle, Phone, Users, History, Settings, Rss, UserCircle, Crown, Zap, Hash, X, Accessibility } from "lucide-react";
 import { useGetChats, useGetContacts } from "@workspace/api-client-react";
 import { useAppContext } from "@/contexts/AppContext";
 import { cn } from "@/lib/utils";
@@ -26,6 +26,7 @@ const NAV_PAGES = [
   { href: "/profile",    label: "Профиль",   icon: <UserCircle size={16} /> },
   { href: "/settings",   label: "Настройки", icon: <Settings size={16} /> },
   { href: "/prime",      label: "Prime",     icon: <Crown size={16} /> },
+  { href: "/power-features", label: "Доступность и сообщества", icon: <Accessibility size={16} /> },
 ];
 
 interface Props {

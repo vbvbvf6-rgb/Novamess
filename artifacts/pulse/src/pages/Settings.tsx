@@ -2076,6 +2076,7 @@ export default function Settings() {
             <NavItem id="advanced"      icon={<SlidersHorizontal size={16}/>} color="bg-slate-600"                                    label={lang==="ru"?"Расширенные":"Advanced"}              active={displaySection} onClick={setActiveSection}/>
             <NavItem id="speakers"      icon={<Headphones size={16}/>}     color="bg-orange-500"                                      label={lang==="ru"?"Динамики и камера":"Speakers & Camera"} active={displaySection} onClick={setActiveSection}/>
             <NavItem id="battery"       icon={<Battery size={16}/>}        color="bg-emerald-600"                                     label={lang==="ru"?"Батарея и анимации":"Battery & Animations"} active={displaySection} onClick={setActiveSection}/>
+            <NavItem id="power-features" icon={<ShieldCheck size={16}/>}  color="bg-primary"                                       label={lang==="ru"?"Доступность и сообщества":"Accessibility & Communities"} active={displaySection} onClick={setActiveSection} href="/power-features"/>
           </NavGroup>
 
           {/* Group 2: Interface */}

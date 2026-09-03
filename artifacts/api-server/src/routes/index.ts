@@ -24,6 +24,7 @@ import foldersRouter from "./folders";
 import platformEventsRouter from "./platform-events";
 import contactRequestsRouter from "./contact-requests";
 import clansRouter from "./clans";
+import featureHubRouter from "./feature-hub";
 
 const router: IRouter = Router();
 
@@ -52,5 +53,6 @@ router.use(foldersRouter);
 router.use(platformEventsRouter);
 router.use(contactRequestsRouter);
 router.use(clansRouter);
+router.use(featureHubRouter);
 
 export default router;

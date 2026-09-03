@@ -9,7 +9,7 @@ const SWIPE_VELOCITY = 0.4;   // px/ms — fast flick counts even if short
 
 export default function Home() {
   const [, setLocation] = useLocation();
-  const { selectedChatId, setSelectedChatId } = useAppContext();
+  const { selectedChatId, setSelectedChatId, openChatWindow } = useAppContext();
 
   // ── swipe state ──────────────────────────────────────────────────────────
   const touchStartX = useRef(0);
@@ -88,7 +88,10 @@ export default function Home() {
   useEffect(() => {
     const handler = (e: Event) => {
       const chatId = (e as CustomEvent).detail;
-      if (chatId) setSelectedChatId(Number(chatId));
+       if (chatId) {
+         const id = Number(chatId);
+         if (id > 0) setSelectedChatId(id);
+       }
     };
     window.addEventListener("open-chat", handler);
     return () => window.removeEventListener("open-chat", handler);

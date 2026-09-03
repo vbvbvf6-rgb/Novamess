@@ -7,6 +7,7 @@ import { MessageSquare, Phone, Users, Clock, CalendarDays, Settings, BadgeCheck,
 import { format } from "date-fns";
 import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
+import { PlaylistWidget } from "@/pages/PowerFeatures";
 
 const TOKEN_KEY = "pulse-token";
 const getToken = () => sessionStorage.getItem(TOKEN_KEY);
@@ -545,7 +546,10 @@ export default function Profile() {
             </div>
 
             {/* Referral Section — available to all */}
-            <ReferralSection />
+        <ReferralSection />
+        <div className="rounded-3xl border border-border bg-card p-5">
+          <PlaylistWidget compact />
+        </div>
 
             {/* Prime+ Exclusive: QR Code */}
             {isPrimePlus && user && <QRCodeSection user={user} />}
