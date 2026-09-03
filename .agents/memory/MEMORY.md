@@ -38,3 +38,4 @@
 - [Biometric screen lock](biometric-screen-lock.md) — enabling Face ID/fingerprint must also activate app lock; biometric-only mode is valid when no PIN is configured.
 - [PXXL Docker workspace manifests](pxxl-docker-workspace-manifests.md) — copy every pnpm workspace manifest before frozen-lockfile install in the container build.
 - [Imported monorepo hydration](imported-monorepo-hydration.md) — imported pnpm workspaces may have a lockfile but no node_modules; hydrate from the lockfile before diagnosing workflow code failures.
+- [Startup DDL ordering](startup-ddl-race.md) — module-level schema fixes can run before fresh-db migrations; critical DDL must also run after migrations and before serving requests.

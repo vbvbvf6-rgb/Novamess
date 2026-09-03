@@ -4,6 +4,7 @@ import { eq, and, gt, inArray, desc, count } from "drizzle-orm";
 import { CreateStoryBody } from "@workspace/api-zod";
 import { getBanwords, findBanword } from "../lib/banwords";
 import { offloadDataUrl } from "../lib/objectStorage";
+import { getActiveUserModeration, moderationBlocksWriting } from "../lib/userModeration";
 
 const router = Router();
 
@@ -71,6 +72,15 @@ router.get("/stories", async (req, res) => {
 router.post("/stories", async (req, res) => {
   try {
     const uid = req.currentUserId;
+    const moderation = await getActiveUserModeration(uid);
+    if (moderationBlocksWriting(moderation.type)) {
+      return res.status(403).json({
+        error: moderation.type === "spam_ban" ? "Вам запрещено публиковать истории из-за спама." : "Ваш аккаунт заблокирован.",
+        code: moderation.type === "spam_ban" ? "SPAM_BANNED" : "ACCOUNT_BANNED",
+        banReason: moderation.reason,
+        banExpiresAt: moderation.expiresAt?.toISOString() || null,
+      });
+    }
     const body = CreateStoryBody.parse(req.body);
     if (body.type !== "text" && body.type !== "image") {
       return res.status(400).json({ error: "В статусе можно публиковать только текст и фотографии." });

@@ -29,6 +29,7 @@ interface AdminUser {
   is_banned: boolean;
   ban_reason: string | null;
   ban_expires_at: string | null;
+  moderation_type?: "none" | "ban" | "shadow_ban" | "spam_ban";
   last_ip?: string | null;
 }
 
@@ -171,6 +172,7 @@ export default function Admin() {
   const [banConfirm, setBanConfirm] = useState<AdminUser | null>(null);
   const [banReasonInput, setBanReasonInput] = useState("");
   const [banDuration, setBanDuration] = useState<string>("permanent");
+  const [moderationTypeInput, setModerationTypeInput] = useState<"ban" | "shadow_ban" | "spam_ban">("ban");
   const [ipBan, setIpBan] = useState<{ ip: string; expiresAt: string | null; reason: string } | null>(null);
   const [ipBanInput, setIpBanInput] = useState("");
   const [ipBanReason, setIpBanReason] = useState("");
@@ -1041,17 +1043,23 @@ export default function Admin() {
     setLeaderboardLoading(false);
   };
 
-  const handleBanToggle = async (target: AdminUser, opts?: { reason?: string; durationHours?: number | null }) => {
-    const isBanned = bannedIds.has(target.id);
+  const getModerationType = (target: AdminUser) => {
+    if (target.moderation_type && target.moderation_type !== "none") return target.moderation_type;
+    return target.is_banned ? "ban" : "none";
+  };
+
+  const handleBanToggle = async (target: AdminUser, opts?: { reason?: string; durationHours?: number | null; type?: "ban" | "shadow_ban" | "spam_ban" }) => {
+    const currentType = getModerationType(target);
+    const isModerated = currentType !== "none";
     setBanLoading(true);
     try {
       const res = await fetch(`/api/admin/users/${target.id}/ban`, {
         method: "POST",
         headers: { "Content-Type": "application/json", ...getHeader() },
         body: JSON.stringify(
-          isBanned
-            ? { ban: false }
-            : { ban: true, reason: opts?.reason?.trim() || "", durationHours: opts?.durationHours ?? null }
+          isModerated
+            ? { action: "none" }
+            : { action: opts?.type || "ban", reason: opts?.reason?.trim() || "", durationHours: opts?.durationHours ?? null }
         ),
       });
       const data = await res.json();
@@ -1059,13 +1067,14 @@ export default function Admin() {
       showToast(data.message, "ok");
       setBannedIds(prev => {
         const next = new Set(prev);
-        if (!isBanned) next.add(target.id); else next.delete(target.id);
+        if (data.moderationType === "ban") next.add(target.id); else next.delete(target.id);
         return next;
       });
       // Update user in list so ban details are visible immediately
       setUsers(prev => prev.map(u => u.id === target.id ? {
         ...u,
         is_banned: !!data.isBanned,
+        moderation_type: data.moderationType || "none",
         ban_reason: data.banReason ?? null,
         ban_expires_at: data.banExpiresAt ?? null,
       } : u));
@@ -1073,11 +1082,15 @@ export default function Admin() {
         setSelectedUser(prev => prev ? {
           ...prev,
           is_banned: !!data.isBanned,
+          moderation_type: data.moderationType || "none",
           ban_reason: data.banReason ?? null,
           ban_expires_at: data.banExpiresAt ?? null,
         } : null);
       }
       setBanConfirm(null);
+      setBanReasonInput("");
+      setBanDuration("permanent");
+      setModerationTypeInput("ban");
     } catch { showToast("Ошибка соединения", "err"); }
     setBanLoading(false);
   };
@@ -1639,9 +1652,26 @@ export default function Admin() {
                 <Ban size={20} className="text-orange-400" />
               </div>
               <div>
-                <h3 className="font-bold">Заблокировать пользователя</h3>
+                <h3 className="font-bold">Ограничить пользователя</h3>
                 <p className="text-sm text-muted-foreground">@{banConfirm.username}</p>
               </div>
+            </div>
+            <div className="space-y-2 mb-3">
+              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Тип ограничения</p>
+              {[
+                { value: "ban" as const, label: "Обычный бан", description: "Нельзя войти в аккаунт", activeClass: "border-orange-500 bg-orange-500/10" },
+                { value: "shadow_ban" as const, label: "Теневой бан", description: "Сообщения видит только автор и админы", activeClass: "border-purple-500 bg-purple-500/10" },
+                { value: "spam_ban" as const, label: "Спам-бан", description: "Нельзя писать, публиковать и комментировать", activeClass: "border-red-500 bg-red-500/10" },
+              ].map(option => (
+                <button
+                  key={option.value}
+                  onClick={() => setModerationTypeInput(option.value)}
+                  className={`w-full text-left rounded-xl border px-3 py-2 transition-colors ${moderationTypeInput === option.value ? option.activeClass : "border-border hover:border-primary/30"}`}
+                >
+                  <p className="text-sm font-semibold text-foreground">{option.label}</p>
+                  <p className="text-xs text-muted-foreground">{option.description}</p>
+                </button>
+              ))}
             </div>
             <textarea
               value={banReasonInput}
@@ -1656,6 +1686,7 @@ export default function Admin() {
                 { value: "24", label: "24 часа" },
                 { value: "168", label: "7 дней" },
                 { value: "720", label: "30 дней" },
+                { value: "8760", label: "1 год" },
                 { value: "permanent", label: "Навсегда" },
               ].map(opt => (
                 <button
@@ -1672,11 +1703,11 @@ export default function Admin() {
                 Отмена
               </button>
               <button
-                onClick={() => handleBanToggle(banConfirm, { reason: banReasonInput, durationHours: banDuration === "permanent" ? null : Number(banDuration) })}
+                onClick={() => handleBanToggle(banConfirm, { type: moderationTypeInput, reason: banReasonInput, durationHours: banDuration === "permanent" ? null : Number(banDuration) })}
                 disabled={banLoading || !banReasonInput.trim()}
                 className="flex-1 py-2.5 rounded-xl bg-orange-500 text-white text-sm font-bold hover:bg-orange-600 transition-colors disabled:opacity-50"
               >
-                {banLoading ? "Блокируем..." : "Заблокировать"}
+                {banLoading ? "Сохраняем..." : "Применить"}
               </button>
             </div>
           </motion.div>
@@ -4063,7 +4094,7 @@ export default function Admin() {
                         ? <img src={user.avatar_url} alt="" className="w-full h-full object-cover rounded-full" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
                         : user.display_name[0]?.toUpperCase()}
                     </div>
-                    {bannedIds.has(user.id) && (
+                    {getModerationType(user) !== "none" && (
                       <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-orange-500 border-2 border-card flex items-center justify-center">
                         <Ban size={8} className="text-white" />
                       </div>
@@ -4081,16 +4112,18 @@ export default function Admin() {
                       {user.has_prime && <Star size={10} className="text-amber-400 fill-amber-400 shrink-0" />}
                       {user.is_admin && <span className="text-[8px] font-black uppercase px-1 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30">ADM</span>}
                       {user.is_bot && <span className="text-[8px] font-black uppercase px-1 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">BOT</span>}
+                      {getModerationType(user) === "shadow_ban" && <span className="text-[8px] font-black uppercase px-1 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30">ТЕНЬ</span>}
+                      {getModerationType(user) === "spam_ban" && <span className="text-[8px] font-black uppercase px-1 py-0.5 rounded bg-red-500/20 text-red-300 border border-red-500/30">СПАМ</span>}
                     </div>
                     <p className="text-xs text-muted-foreground">@{user.username}</p>
                   </div>
                   {/* Quick ban button */}
                   {!user.is_admin && (
                     <button
-                      onClick={e => { e.stopPropagation(); bannedIds.has(user.id) ? handleBanToggle(user) : setBanConfirm(user); }}
+                      onClick={e => { e.stopPropagation(); getModerationType(user) !== "none" ? handleBanToggle(user) : setBanConfirm(user); }}
                       disabled={banLoading}
-                      title={bannedIds.has(user.id) ? "Разблокировать" : "Заблокировать"}
-                      className={`shrink-0 w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${bannedIds.has(user.id) ? "bg-orange-500/20 text-orange-400 hover:bg-orange-500/30" : "text-muted-foreground/40 hover:bg-red-500/10 hover:text-red-400"}`}
+                      title={getModerationType(user) !== "none" ? "Снять ограничение" : "Ограничить"}
+                      className={`shrink-0 w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${getModerationType(user) !== "none" ? "bg-orange-500/20 text-orange-400 hover:bg-orange-500/30" : "text-muted-foreground/40 hover:bg-red-500/10 hover:text-red-400"}`}
                     >
                       <Ban size={14} />
                     </button>
@@ -4142,16 +4175,16 @@ export default function Admin() {
                     {/* Quick ban button in header */}
                     {!selectedUser.is_admin && (
                       <button
-                        onClick={() => bannedIds.has(selectedUser.id) ? handleBanToggle(selectedUser) : setBanConfirm(selectedUser)}
+                        onClick={() => getModerationType(selectedUser) !== "none" ? handleBanToggle(selectedUser) : setBanConfirm(selectedUser)}
                         disabled={banLoading}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                          bannedIds.has(selectedUser.id)
+                          getModerationType(selectedUser) !== "none"
                             ? "bg-orange-500/15 border border-orange-500/30 text-orange-400 hover:bg-orange-500/25"
                             : "bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20"
                         }`}
                       >
                         <Ban size={12} />
-                        {bannedIds.has(selectedUser.id) ? "Разбанить" : "Забанить"}
+                        {getModerationType(selectedUser) !== "none" ? "Снять ограничение" : "Модерация"}
                       </button>
                     )}
                   </div>
@@ -4352,9 +4385,11 @@ export default function Admin() {
                       {/* Ban / Unban */}
                       {!selectedUser.is_admin && (
                         <div className="space-y-2">
-                          {bannedIds.has(selectedUser.id) && (
+                          {getModerationType(selectedUser) !== "none" && (
                             <div className="bg-orange-500/8 border border-orange-500/25 rounded-xl px-3 py-2.5 space-y-1.5">
-                              <p className="text-[11px] font-bold uppercase tracking-widest text-orange-400">Активная блокировка</p>
+                              <p className="text-[11px] font-bold uppercase tracking-widest text-orange-400">
+                                {getModerationType(selectedUser) === "shadow_ban" ? "Теневой бан" : getModerationType(selectedUser) === "spam_ban" ? "Спам-бан" : "Активная блокировка"}
+                              </p>
                               {selectedUser.ban_reason && (
                                 <p className="text-xs text-foreground font-medium">Причина: {selectedUser.ban_reason}</p>
                               )}
@@ -4366,16 +4401,16 @@ export default function Admin() {
                             </div>
                           )}
                           <button
-                            onClick={() => bannedIds.has(selectedUser.id) ? handleBanToggle(selectedUser) : setBanConfirm(selectedUser)}
+                            onClick={() => getModerationType(selectedUser) !== "none" ? handleBanToggle(selectedUser) : setBanConfirm(selectedUser)}
                             disabled={banLoading}
                             className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-all text-sm font-medium ${
-                              bannedIds.has(selectedUser.id)
+                              getModerationType(selectedUser) !== "none"
                                 ? "bg-orange-500/10 border-orange-500/30 text-orange-400 hover:bg-orange-500/20"
                                 : "bg-card border-border text-muted-foreground hover:border-orange-500/30 hover:text-orange-400"
                             }`}
                           >
                             <Ban size={18} />
-                            {bannedIds.has(selectedUser.id) ? "Разблокировать пользователя" : "Заблокировать пользователя"}
+                            {getModerationType(selectedUser) !== "none" ? "Снять ограничение" : "Настроить модерацию"}
                           </button>
                         </div>
                       )}

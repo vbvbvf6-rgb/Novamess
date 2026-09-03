@@ -243,7 +243,7 @@ router.post("/auth/login", async (req, res) => {
       const expiresAt = user.ban_expires_at ? new Date(user.ban_expires_at) : null;
       if (expiresAt && expiresAt.getTime() <= Date.now()) {
         // Ban has expired — auto-unban and let login proceed
-        await db.execute(sql`UPDATE users SET is_banned = false, ban_reason = NULL, ban_expires_at = NULL WHERE id = ${user.id}`);
+        await db.execute(sql`UPDATE users SET is_banned = false, moderation_type = 'none', ban_reason = NULL, ban_expires_at = NULL WHERE id = ${user.id}`);
       } else {
         return res.status(403).json({
           error: "Ваш аккаунт заблокирован. Обратитесь в поддержку.",

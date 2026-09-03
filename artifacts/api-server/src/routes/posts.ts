@@ -4,6 +4,7 @@ import { eq, desc, and, sql } from "drizzle-orm";
 import { moderateContent, localModerationCheck, checkCustomBannedWords } from "../lib/moderation";
 import { getBanwords, findBanword } from "../lib/banwords";
 import { broadcastToUser, broadcastToAll } from "../lib/sse";
+import { getActiveUserModeration, moderationBlocksWriting } from "../lib/userModeration";
 
 const router = Router();
 
@@ -63,7 +64,14 @@ router.get("/posts", async (req, res) => {
   try {
     const uid = req.currentUserId;
 
-    const posts = await db.select().from(postsTable).orderBy(desc(postsTable.createdAt)).limit(100);
+    const posts = await db.select().from(postsTable)
+      .where(sql`(posts.user_id = ${uid} OR NOT EXISTS (
+        SELECT 1 FROM users shadow_user
+        WHERE shadow_user.id = posts.user_id
+          AND shadow_user.moderation_type = 'shadow_ban'
+          AND (shadow_user.ban_expires_at IS NULL OR shadow_user.ban_expires_at > NOW())
+      ))`)
+      .orderBy(desc(postsTable.createdAt)).limit(100);
 
     // A rejected post is never a published feed item, including for admins.
     // Admin moderation screens query moderation data separately.
@@ -80,6 +88,15 @@ router.get("/posts", async (req, res) => {
 router.post("/posts", async (req, res) => {
   try {
     const uid = req.currentUserId;
+    const moderation = await getActiveUserModeration(uid);
+    if (moderationBlocksWriting(moderation.type)) {
+      return res.status(403).json({
+        error: moderation.type === "spam_ban" ? "Вам запрещено публиковать из-за спама." : "Ваш аккаунт заблокирован.",
+        code: moderation.type === "spam_ban" ? "SPAM_BANNED" : "ACCOUNT_BANNED",
+        banReason: moderation.reason,
+        banExpiresAt: moderation.expiresAt?.toISOString() || null,
+      });
+    }
     const { text, imageUrl, topic } = req.body;
     if (!text && !imageUrl) return res.status(400).json({ error: "text or image required" });
 
@@ -278,7 +295,15 @@ router.get("/posts/:postId/comments", async (req, res) => {
   try {
     const postId = Number(req.params.postId);
     const comments = await db.select().from(postCommentsTable).where(eq(postCommentsTable.postId, postId)).orderBy(postCommentsTable.createdAt);
-    const built = await Promise.all(comments.map(async c => {
+    const viewerRows = await db.execute(sql`SELECT is_admin FROM users WHERE id = ${req.currentUserId} LIMIT 1`);
+    const viewerIsAdmin = !!(viewerRows.rows[0] as any)?.is_admin;
+    const visibleComments = viewerIsAdmin
+      ? comments
+      : (await Promise.all(comments.map(async comment => {
+          const moderation = await getActiveUserModeration(comment.userId);
+          return comment.userId === req.currentUserId || moderation.type !== "shadow_ban" ? comment : null;
+        }))).filter(Boolean) as typeof comments;
+    const built = await Promise.all(visibleComments.map(async c => {
       const author = await db.query.usersTable.findFirst({ where: eq(usersTable.id, c.userId) });
       return { ...c, author: author ?? null };
     }));
@@ -292,6 +317,15 @@ router.get("/posts/:postId/comments", async (req, res) => {
 router.post("/posts/:postId/comments", async (req, res) => {
   try {
     const uid = req.currentUserId;
+    const moderation = await getActiveUserModeration(uid);
+    if (moderationBlocksWriting(moderation.type)) {
+      return res.status(403).json({
+        error: moderation.type === "spam_ban" ? "Вам запрещено комментировать из-за спама." : "Ваш аккаунт заблокирован.",
+        code: moderation.type === "spam_ban" ? "SPAM_BANNED" : "ACCOUNT_BANNED",
+        banReason: moderation.reason,
+        banExpiresAt: moderation.expiresAt?.toISOString() || null,
+      });
+    }
     const postId = Number(req.params.postId);
     const { text } = req.body;
     if (!text || !String(text).trim()) return res.status(400).json({ error: "text required" });

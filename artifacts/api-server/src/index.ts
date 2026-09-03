@@ -11,6 +11,7 @@ import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { broadcastToChat } from "./lib/sse";
 import { runWeeklyScan } from "./routes/admin";
 import { testMailerConnection } from "./lib/mailer";
+import { getActiveUserModeration, moderationBlocksWriting } from "./lib/userModeration";
 
 const rawPort = process.env["PORT"];
 
@@ -61,6 +62,10 @@ if (Number.isNaN(port) || port <= 0) {
       await migrate(db, { migrationsFolder });
       logger.info("DB migrations complete ✓");
     }
+    // Some legacy schema fixes run when route modules are imported, which is
+    // before a fresh database has its tables. Ensure moderation is present
+    // after migrations so the moderation helpers are safe from first boot.
+    await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS moderation_type TEXT NOT NULL DEFAULT 'none'`);
   } catch (migErr) {
     logger.warn({ err: migErr }, "DB migration check warning (non-fatal) — server will continue");
   }
@@ -179,8 +184,18 @@ httpServer.listen(port, () => {
 
 setInterval(async () => {
   try {
-    const rows = await db.execute(sql`SELECT * FROM scheduled_messages WHERE scheduled_at <= NOW()`);
+    const rows = await db.execute(sql`
+      SELECT sm.*, u.moderation_type, u.is_banned
+      FROM scheduled_messages sm
+      JOIN users u ON u.id = sm.sender_id
+      WHERE sm.scheduled_at <= NOW()
+    `);
     for (const msg of rows.rows as any[]) {
+      const moderation = await getActiveUserModeration(Number(msg.sender_id));
+      if (moderationBlocksWriting(moderation.type)) {
+        await db.execute(sql`DELETE FROM scheduled_messages WHERE id = ${msg.id}`);
+        continue;
+      }
       const [inserted] = await db.insert(messagesTable).values({
         chatId: msg.chat_id,
         senderId: msg.sender_id,

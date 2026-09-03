@@ -17,6 +17,7 @@ const ADMIN_USER_IDS = [1, 4];
 // Run once at module load to ensure required columns/tables exist
 db.execute(sql`ALTER TABLE bot_tokens ADD COLUMN IF NOT EXISTS code_lang TEXT NOT NULL DEFAULT 'python'`).catch(() => {});
 db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_banned BOOLEAN NOT NULL DEFAULT FALSE`).catch(() => {});
+db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS moderation_type TEXT NOT NULL DEFAULT 'none'`).catch(() => {});
 db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS ban_reason TEXT`).catch(() => {});
 db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS ban_expires_at TIMESTAMP WITH TIME ZONE`).catch(() => {});
 db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_developer BOOLEAN NOT NULL DEFAULT FALSE`).catch(() => {});
@@ -183,7 +184,7 @@ router.get("/admin/check", async (req, res) => {
 router.get("/admin/users", requireAdmin, async (req, res) => {
   try {
     const rows = await db.execute(
-      sql`SELECT id, username, display_name, avatar_color, avatar_url, nickname_style, status, balance, created_at, is_verified, is_developer, is_admin, is_bot, has_prime, is_banned, ban_reason, ban_expires_at FROM users ORDER BY id`
+      sql`SELECT id, username, display_name, avatar_color, avatar_url, nickname_style, status, balance, created_at, is_verified, is_developer, is_admin, is_bot, has_prime, is_banned, moderation_type, ban_reason, ban_expires_at FROM users ORDER BY id`
     );
     res.json(rows.rows);
   } catch (err) {
@@ -674,30 +675,66 @@ router.get("/admin/leaderboard", requireAdmin, async (req, res) => {
 router.post("/admin/users/:userId/ban", requireAdmin, async (req, res) => {
   try {
     const targetId = Number(req.params.userId);
-    if (targetId === req.currentUserId) return res.status(400).json({ error: "Нельзя забанить себя" });
-    const { ban, reason, durationHours } = req.body;
-    if (ban) {
-      const expiresAt = durationHours ? new Date(Date.now() + Number(durationHours) * 3600_000).toISOString() : null;
-      await db.execute(sql`UPDATE users SET is_banned = true, ban_reason = ${reason?.trim() || null}, ban_expires_at = ${expiresAt} WHERE id = ${targetId}`);
-    } else {
-      await db.execute(sql`UPDATE users SET is_banned = false, ban_reason = NULL, ban_expires_at = NULL WHERE id = ${targetId}`);
+    if (!Number.isInteger(targetId) || targetId <= 0 || targetId === req.currentUserId) return res.status(400).json({ error: "Нельзя применить это действие к себе" });
+    const targetCheck = await db.execute(sql`SELECT id, username, is_admin FROM users WHERE id = ${targetId} LIMIT 1`);
+    const targetRow = targetCheck.rows[0] as any;
+    if (!targetRow) return res.status(404).json({ error: "Пользователь не найден" });
+    if (targetRow.is_admin === true || targetRow.is_admin === "t" || targetRow.is_admin === 1) {
+      return res.status(400).json({ error: "Нельзя применить модерацию к администратору" });
     }
-    const target = await db.execute(sql`SELECT username, is_banned, ban_reason, ban_expires_at FROM users WHERE id = ${targetId}`);
+
+    const { ban, action, reason, durationHours } = req.body || {};
+    const requestedAction = action || (ban ? "ban" : "none");
+    const validActions = ["none", "ban", "shadow_ban", "spam_ban"];
+    if (!validActions.includes(requestedAction)) return res.status(400).json({ error: "Неизвестный тип модерации" });
+    const cleanReason = typeof reason === "string" ? reason.trim().slice(0, 500) : "";
+    if (requestedAction !== "none" && !cleanReason) {
+      return res.status(400).json({ error: "Укажите причину ограничения" });
+    }
+    const parsedDuration = durationHours === null || durationHours === undefined || durationHours === "" ? null : Number(durationHours);
+    if (parsedDuration !== null && (!Number.isFinite(parsedDuration) || parsedDuration <= 0 || parsedDuration > 8760)) {
+      return res.status(400).json({ error: "Срок должен быть от 1 часа до 1 года" });
+    }
+    if (requestedAction !== "none") {
+      const expiresAt = parsedDuration ? new Date(Date.now() + parsedDuration * 3600_000).toISOString() : null;
+      await db.execute(sql`
+        UPDATE users
+        SET is_banned = ${requestedAction === "ban"},
+            moderation_type = ${requestedAction},
+            ban_reason = ${cleanReason || null},
+            ban_expires_at = ${expiresAt}
+        WHERE id = ${targetId}
+      `);
+    } else {
+      await db.execute(sql`
+        UPDATE users
+        SET is_banned = false, moderation_type = 'none', ban_reason = NULL, ban_expires_at = NULL
+        WHERE id = ${targetId}
+      `);
+    }
+    const target = await db.execute(sql`SELECT username, is_banned, moderation_type, ban_reason, ban_expires_at FROM users WHERE id = ${targetId}`);
     const row = target.rows[0] as any;
     // Kick the user in real-time via SSE if they are currently logged in
-    if (ban) {
+    if (requestedAction === "ban") {
       broadcastToAll("banned", {
         userId: targetId,
-        banReason: reason?.trim() || null,
-        banExpiresAt: durationHours ? new Date(Date.now() + Number(durationHours) * 3600_000).toISOString() : null,
+        banReason: cleanReason || null,
+        banExpiresAt: row?.ban_expires_at || null,
       });
     }
     res.json({
       success: true,
-      isBanned: row?.is_banned ?? !!ban,
+      isBanned: row?.is_banned ?? false,
+      moderationType: row?.moderation_type || "none",
       banReason: row?.ban_reason ?? null,
       banExpiresAt: row?.ban_expires_at ?? null,
-      message: ban ? `@${row?.username} заблокирован${durationHours ? ` на ${durationHours} ч.` : " навсегда"}` : `@${row?.username} разблокирован`,
+      message: requestedAction === "none"
+        ? `@${row?.username} ограничения сняты`
+        : requestedAction === "shadow_ban"
+          ? `@${row?.username} получил теневой бан${parsedDuration ? ` на ${parsedDuration} ч.` : " навсегда"}`
+          : requestedAction === "spam_ban"
+            ? `@${row?.username} получил спам-бан${parsedDuration ? ` на ${parsedDuration} ч.` : " навсегда"}`
+            : `@${row?.username} заблокирован${parsedDuration ? ` на ${parsedDuration} ч.` : " навсегда"}`,
     });
   } catch (err) {
     req.log.error(err);

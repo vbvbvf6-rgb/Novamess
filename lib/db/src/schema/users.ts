@@ -18,6 +18,7 @@ export const usersTable = pgTable("users", {
   isBot: boolean("is_bot").notNull().default(false),
   isVerified: boolean("is_verified").notNull().default(false),
   isAdmin: boolean("is_admin").notNull().default(false),
+  moderationType: text("moderation_type").notNull().default("none"),
   isDeveloper: boolean("is_developer").notNull().default(false),
   isYoutubeCreator: boolean("is_youtube_creator").notNull().default(false),
   isTiktokCreator: boolean("is_tiktok_creator").notNull().default(false),

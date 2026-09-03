@@ -8,6 +8,7 @@ import { broadcastToChat, broadcastToUser } from "../lib/sse";
 import { sendPushToUser } from "./push";
 import { SendMessageBody, EditMessageBody, AddReactionBody } from "@workspace/api-zod";
 import { offloadDataUrl } from "../lib/objectStorage";
+import { getActiveUserModeration, moderationBlocksWriting } from "../lib/userModeration";
 
 // Global Pollinations rate limiter — max 1 concurrent request per server process
 let _pollinationsLocked = false;
@@ -283,6 +284,15 @@ async function buildMessagesBatch(msgs: (typeof messagesTable.$inferSelect)[], v
 router.get("/messages/search", async (req, res) => {
   try {
     const uid = req.currentUserId;
+    const viewerIsAdmin = await isAdmin(uid);
+    const shadowVisibility = viewerIsAdmin ? sql`` : sql`
+      AND (m.sender_id = ${uid} OR NOT EXISTS (
+        SELECT 1 FROM users shadow_user
+        WHERE shadow_user.id = m.sender_id
+          AND shadow_user.moderation_type = 'shadow_ban'
+          AND (shadow_user.ban_expires_at IS NULL OR shadow_user.ban_expires_at > NOW())
+      ))
+    `;
     const q = String(req.query.q ?? "").trim();
     const chatId = req.query.chatId ? Number(req.query.chatId) : undefined;
     const limit = Math.min(Number(req.query.limit ?? 30), 100);
@@ -304,6 +314,7 @@ router.get("/messages/search", async (req, res) => {
             WHERE m.chat_id = ${chatId}
               AND m.is_deleted = false
               AND m.text ILIKE ${'%' + q + '%'}
+             ${shadowVisibility}
             ORDER BY m.created_at DESC
             LIMIT ${limit}`
       );
@@ -322,6 +333,7 @@ router.get("/messages/search", async (req, res) => {
           LEFT JOIN users cu ON cu.id = cm2.user_id
           WHERE m.is_deleted = false
             AND m.text ILIKE ${'%' + q + '%'}
+            ${shadowVisibility}
           ORDER BY m.created_at DESC
           LIMIT ${limit}`
     );
@@ -358,10 +370,21 @@ router.get("/messages", async (req, res) => {
       }
     }
 
-    let query = db.select().from(messagesTable).where(eq(messagesTable.chatId, chatId));
+    const viewerIsAdmin = await isAdmin(uid);
+    const visibility = viewerIsAdmin
+      ? undefined
+      : sql`(messages.sender_id = ${uid} OR NOT EXISTS (
+          SELECT 1 FROM users shadow_user
+          WHERE shadow_user.id = messages.sender_id
+            AND shadow_user.moderation_type = 'shadow_ban'
+            AND (shadow_user.ban_expires_at IS NULL OR shadow_user.ban_expires_at > NOW())
+        ))`;
+    let query = db.select().from(messagesTable).where(visibility ? and(eq(messagesTable.chatId, chatId), visibility) : eq(messagesTable.chatId, chatId));
     if (before) {
       query = db.select().from(messagesTable).where(
-        and(eq(messagesTable.chatId, chatId), lt(messagesTable.id, before))
+        visibility
+          ? and(eq(messagesTable.chatId, chatId), lt(messagesTable.id, before), visibility)
+          : and(eq(messagesTable.chatId, chatId), lt(messagesTable.id, before))
       );
     }
 
@@ -407,6 +430,17 @@ router.post("/messages", async (req, res) => {
     const uid = req.currentUserId;
     const body = SendMessageBody.parse(req.body);
     const effect = typeof req.body.effect === "string" ? req.body.effect : null;
+    const moderation = await getActiveUserModeration(uid);
+    if (moderationBlocksWriting(moderation.type)) {
+      return res.status(403).json({
+        error: moderation.type === "spam_ban"
+          ? "Вам запрещено отправлять сообщения за спам."
+          : "Ваш аккаунт заблокирован.",
+        code: moderation.type === "spam_ban" ? "SPAM_BANNED" : "ACCOUNT_BANNED",
+        banReason: moderation.reason,
+        banExpiresAt: moderation.expiresAt?.toISOString() || null,
+      });
+    }
 
     if (!(await isChatMember(body.chatId, uid))) {
       return res.status(403).json({ error: "Нет доступа к этому чату" });
@@ -902,6 +936,13 @@ ${inline_code}
 router.post("/messages/schedule", async (req, res) => {
   try {
     const uid = req.currentUserId;
+    const moderation = await getActiveUserModeration(uid);
+    if (moderationBlocksWriting(moderation.type)) {
+      return res.status(403).json({
+        error: moderation.type === "spam_ban" ? "Вам запрещено планировать сообщения из-за спама." : "Ваш аккаунт заблокирован.",
+        code: moderation.type === "spam_ban" ? "SPAM_BANNED" : "ACCOUNT_BANNED",
+      });
+    }
     const primeRow = await db.execute(sql`SELECT has_prime, prime_expires_at FROM users WHERE id = ${uid}`);
     const pu = primeRow.rows[0] as any;
     const hasPrime = (pu?.has_prime === true || pu?.has_prime === "t") && pu?.prime_expires_at && new Date(pu.prime_expires_at) > new Date();
