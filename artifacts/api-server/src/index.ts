@@ -127,6 +127,31 @@ const _schemaMigrations = (async () => {
   // password reset via email
   await run(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS password_reset_code TEXT`);
   await run(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS password_reset_expires_at TIMESTAMP WITH TIME ZONE`);
+
+  // Shared spaces are deliberately additive so imported databases do not need
+  // an interactive drizzle-kit migration.
+  await run(sql`
+    CREATE TABLE IF NOT EXISTS chat_space_notes (
+      id SERIAL PRIMARY KEY,
+      chat_id INTEGER NOT NULL REFERENCES chats(id) ON DELETE CASCADE,
+      title TEXT NOT NULL DEFAULT 'Без названия',
+      body TEXT NOT NULL,
+      created_by INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    )
+  `);
+  await run(sql`
+    CREATE TABLE IF NOT EXISTS chat_space_tasks (
+      id SERIAL PRIMARY KEY,
+      chat_id INTEGER NOT NULL REFERENCES chats(id) ON DELETE CASCADE,
+      title TEXT NOT NULL,
+      done BOOLEAN NOT NULL DEFAULT FALSE,
+      assignee_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      created_by INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      due_at TIMESTAMP WITH TIME ZONE,
+      created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    )
+  `);
 })();
 _schemaMigrations.catch((e) => logger.error({ err: e }, "Schema migration block failed"));
 

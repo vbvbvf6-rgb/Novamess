@@ -75,7 +75,7 @@ app.use(
 app.use((_req: Request, res: Response, next: NextFunction) => {
   res.setHeader(
     "Permissions-Policy",
-    "geolocation=(), microphone=(self), camera=(self), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()"
+    "geolocation=(self), microphone=(self), camera=(self), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()"
   );
   next();
 });
@@ -251,6 +251,7 @@ const PUBLIC_API_PATHS = [
   "/maintenance",
   // Public app changelog — visible to everyone (no auth required)
   "/updates",
+  "/public/users",
 ];
 
 // ── Session validity cache — avoids DB hit on every request ──────────────
