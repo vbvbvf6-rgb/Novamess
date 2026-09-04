@@ -265,6 +265,19 @@ export function ChatList() {
   const queryClient = useQueryClient();
   const [folder, setFolder] = useState<FolderKey>("all");
   const [showGlobalSearch, setShowGlobalSearch] = useState(false);
+  const [serverDrafts, setServerDrafts] = useState<Record<number, string>>({});
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/drafts", { headers: getAuthHeaders() })
+      .then(res => res.ok ? res.json() : [])
+      .then((drafts: Array<{ chatId: number; text: string }>) => {
+        if (cancelled) return;
+        setServerDrafts(Object.fromEntries(drafts.filter(d => d.text?.trim()).map(d => [d.chatId, d.text])));
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [currentUserId]);
 
   // Custom folders state
   const [userFolders, setUserFolders] = useState<UserFolder[]>([]);
@@ -771,7 +784,7 @@ export function ChatList() {
                   ? "📊 Голосование"
                   : `[${lastMessage.type}]`
                 : "Нет сообщений";
-              const draftText = (() => {
+              const draftText = serverDrafts[chat.id] || (() => {
                 try { return localStorage.getItem(`pulse-draft-${chat.id}`)?.trim() || ""; } catch { return ""; }
               })();
               const hasDraft = !lastMessage && !!draftText;

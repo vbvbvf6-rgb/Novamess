@@ -44,6 +44,17 @@ export const scheduledMessagesTable = pgTable("scheduled_messages", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+export const chatDraftsTable = pgTable("chat_drafts", {
+  id: serial("id").primaryKey(),
+  chatId: integer("chat_id").notNull().references(() => chatsTable.id, { onDelete: "cascade" }),
+  userId: integer("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
+  text: text("text").notNull().default(""),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  unique("chat_drafts_chat_user_unique").on(t.chatId, t.userId),
+  index("idx_chat_drafts_user_id").on(t.userId),
+]);
+
 export const pollsTable = pgTable("polls", {
   id: serial("id").primaryKey(),
   messageId: integer("message_id").notNull().references(() => messagesTable.id),

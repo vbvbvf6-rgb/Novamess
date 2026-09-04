@@ -20,3 +20,12 @@ export const callsTable = pgTable("calls", {
 export const insertCallSchema = createInsertSchema(callsTable).omit({ id: true, createdAt: true });
 export type InsertCall = z.infer<typeof insertCallSchema>;
 export type Call = typeof callsTable.$inferSelect;
+
+export const audioRoomsTable = pgTable("audio_rooms", {
+  id: serial("id").primaryKey(),
+  callId: integer("call_id").notNull().references(() => callsTable.id, { onDelete: "cascade" }),
+  hostId: integer("host_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
+  name: text("name").notNull().default("Аудиокомната"),
+  status: text("status").notNull().default("active"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});

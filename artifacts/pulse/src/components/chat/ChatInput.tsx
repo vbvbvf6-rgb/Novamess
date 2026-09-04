@@ -3,7 +3,7 @@ import { emojiToTwemojiUrl } from "@/lib/twemoji";
 import { useSendMessage, useGetMe, getGetMessagesQueryKey, getGetChatsQueryKey, Message } from "@workspace/api-client-react";
 import type { P2PChannel } from "@/hooks/useP2PChannel";
 import { useQueryClient } from "@tanstack/react-query";
-import { Paperclip, Mic, SendHorizontal, X, Square, Trash2, Images, Reply, Pencil, Clock, BarChart2, Plus, Minus, CalendarClock, Hourglass, Smile, Package, FileText, FileCode, FileArchive, File as FileIcon, Video, Camera, RefreshCw, Zap, Play, Pause } from "lucide-react";
+import { Paperclip, Mic, SendHorizontal, X, Square, Trash2, Images, Reply, Pencil, Clock, BarChart2, Plus, Minus, CalendarClock, Hourglass, Smile, Package, FileText, FileCode, FileArchive, File as FileIcon, Video, Camera, RefreshCw, Zap, Play, Pause, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface DocPreview { name: string; size: number; mime: string; data: string; }
@@ -185,6 +185,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
   const [pollSending, setPollSending] = useState(false);
   const [pollError, setPollError] = useState("");
   const [showMobileActions, setShowMobileActions] = useState(false);
+  const [locationSending, setLocationSending] = useState(false);
 
   const isPrimePlus = !!(me as any)?.hasPrime && (me as any)?.primeTier === "prime_plus";
   const isPrime = !!(me as any)?.hasPrime;
@@ -222,8 +223,21 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
   const draftKey = `pulse-draft-${chatId}`;
 
   useEffect(() => {
-    const saved = localStorage.getItem(draftKey);
-    if (saved) setText(saved);
+    let cancelled = false;
+    const localDraft = localStorage.getItem(draftKey) || "";
+    setText(localDraft);
+    const loadServerDraft = async () => {
+      try {
+        const res = await fetch(`/api/drafts/${chatId}`, { headers: getAuthHeaders() });
+        if (!res.ok || cancelled) return;
+        const serverDraft = await res.json();
+        if (cancelled) return;
+        const value = serverDraft.text || localDraft;
+        setText(value);
+        if (value) localStorage.setItem(draftKey, value);
+      } catch {}
+    };
+    void loadServerDraft();
     prevChatIdRef.current = chatId;
     return () => {
       const currentText = textValueRef.current.trim();
@@ -234,6 +248,47 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
       }
     };
   }, [chatId]);
+
+  useEffect(() => {
+    if (editMessage) return;
+    const value = text.trim();
+    localStorage.setItem(draftKey, value);
+    const timer = setTimeout(() => {
+      fetch(`/api/drafts/${chatId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+        body: JSON.stringify({ text: value }),
+      }).catch(() => {});
+    }, 450);
+    return () => clearTimeout(timer);
+  }, [text, chatId, editMessage, draftKey]);
+
+  const handleShareLocation = async () => {
+    if (!navigator.geolocation || locationSending) return;
+    setLocationSending(true);
+    navigator.geolocation.getCurrentPosition(async ({ coords }) => {
+      try {
+        const sent = await sendMessage.mutateAsync({
+          data: {
+            chatId,
+            type: "location",
+            mediaUrl: JSON.stringify({ lat: Number(coords.latitude.toFixed(6)), lng: Number(coords.longitude.toFixed(6)), accuracy: Math.round(coords.accuracy) }),
+            text: "Моя геопозиция",
+          },
+        });
+        if (sent) p2p?.send(sent as Message);
+        queryClient.invalidateQueries({ queryKey: getGetMessagesQueryKey({ chatId }) });
+        queryClient.invalidateQueries({ queryKey: getGetChatsQueryKey() });
+        setShowMobileActions(false);
+        toast({ title: "Геопозиция отправлена" });
+      } catch {
+        toast({ title: "Не удалось отправить геопозицию", variant: "destructive" });
+      } finally { setLocationSending(false); }
+    }, () => {
+      setLocationSending(false);
+      toast({ title: "Нет доступа к геопозиции", description: "Разрешите доступ к местоположению в браузере.", variant: "destructive" });
+    }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 });
+  };
 
   useEffect(() => {
     if (editMessage && editMessage !== prevEditRef.current) {
@@ -646,6 +701,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
         }
       }
       localStorage.removeItem(draftKey);
+      fetch(`/api/drafts/${chatId}`, { method: "PUT", headers, body: JSON.stringify({ text: "" }) }).catch(() => {});
       setShowEmoji(false);
       onCancelReply?.();
       queryClient.invalidateQueries({ queryKey: getGetMessagesQueryKey({ chatId }) });
@@ -1461,7 +1517,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
               transition={{ type: "spring", damping: 28, stiffness: 340 }}
               className="md:hidden mb-2 bg-card border border-border rounded-[22px] shadow-2xl overflow-hidden"
             >
-              <div className="grid grid-cols-4 gap-0 divide-x divide-border">
+               <div className="grid grid-cols-5 gap-0 divide-x divide-border">
                 <button
                   type="button"
                   onClick={() => { fileInputRef.current?.click(); setShowMobileActions(false); }}
@@ -1471,6 +1527,17 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
                     <Paperclip size={19} className="text-blue-400" />
                   </div>
                   <span className="text-[10px] font-bold leading-none">Файл</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleShareLocation}
+                  disabled={locationSending}
+                  className="flex flex-col items-center gap-1.5 py-4 px-2 hover:bg-secondary/60 transition-colors text-muted-foreground hover:text-foreground active:bg-secondary disabled:opacity-50"
+                >
+                  <div className="w-10 h-10 rounded-2xl bg-cyan-500/15 flex items-center justify-center">
+                    <MapPin size={19} className="text-cyan-400" />
+                  </div>
+                  <span className="text-[10px] font-bold leading-none">{locationSending ? "Ищем" : "Место"}</span>
                 </button>
                 <button
                   type="button"
@@ -1692,6 +1759,11 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
                       className="flex w-12 h-12 items-center justify-center rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors shrink-0 mb-[2px]"
                       title="Сделать фото">
                       <Camera size={20} />
+                    </button>
+                    <button type="button" onClick={handleShareLocation}
+                      className="hidden md:flex w-12 h-12 items-center justify-center rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors shrink-0 mb-[2px]"
+                      title="Отправить геопозицию">
+                      <MapPin size={20} />
                     </button>
                     <button type="button" onClick={() => startRecording("video")}
                       className="hidden md:flex w-12 h-12 items-center justify-center rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors shrink-0 mb-[2px]"

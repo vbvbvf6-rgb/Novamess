@@ -82,11 +82,11 @@ router.post("/stories", async (req, res) => {
       });
     }
     const body = CreateStoryBody.parse(req.body);
-    if (body.type !== "text" && body.type !== "image") {
-      return res.status(400).json({ error: "В статусе можно публиковать только текст и фотографии." });
+    if (!["text", "image", "video"].includes(body.type)) {
+      return res.status(400).json({ error: "Неподдерживаемый тип истории." });
     }
-    if (body.type === "image" && (!body.mediaUrl || /^data:video\//i.test(body.mediaUrl) || /\.(mp4|webm|mov|avi|mkv)(?:[?#]|$)/i.test(body.mediaUrl))) {
-      return res.status(400).json({ error: "Видео нельзя публиковать в статусе. Выберите изображение." });
+    if (body.type !== "text" && (!body.mediaUrl || (body.type === "video" && !/^data:video\//i.test(body.mediaUrl) && !/\.(mp4|webm|mov|avi|mkv)(?:[?#]|$)/i.test(body.mediaUrl)))) {
+      return res.status(400).json({ error: "Для медиа-истории нужен файл." });
     }
     if (body.text) {
       const banwords = await getBanwords();
@@ -105,6 +105,8 @@ router.post("/stories", async (req, res) => {
       type: body.type,
       text: body.text,
       backgroundColor: body.backgroundColor,
+      musicUrl: await offloadDataUrl(body.musicUrl, "stories"),
+      musicName: body.musicName,
       expiresAt,
     }).returning();
     const user = await db.query.usersTable.findFirst({ where: eq(usersTable.id, uid) });

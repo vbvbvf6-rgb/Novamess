@@ -68,7 +68,7 @@ export interface AppState {
   removeAccount: (userId: number) => void;
   openAddAccount: () => void;
   canAddAccount: boolean;
-  startCall: (calleeId: number, chatId: number | null, type: "audio" | "video") => Promise<void>;
+  startCall: (calleeId: number | null, chatId: number | null, type: "audio" | "video" | "group") => Promise<void>;
   acceptCall: () => Promise<void>;
   declineCall: () => Promise<void>;
   hangUp: () => Promise<void>;
@@ -544,7 +544,7 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
   }, [applySignal, createPeer]);
 
   // ── startCall ─────────────────────────────────────────────────────────────
-  const startCall = useCallback(async (calleeId: number, chatId: number | null, type: "audio" | "video") => {
+  const startCall = useCallback(async (calleeId: number | null, chatId: number | null, type: "audio" | "video" | "group") => {
     // 1. Get media — always falls back gracefully, never throws
     let stream: MediaStream;
     const getAudio = async (): Promise<MediaStream> => {
@@ -593,10 +593,11 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
     // 2. Create the call record via API — this is the fatal step
     let call: Call;
     try {
-      const res = await fetch("/api/calls", {
+      const isAudioRoom = type === "group";
+      const res = await fetch(isAudioRoom ? "/api/audio-rooms" : "/api/calls", {
         method: "POST",
         headers: getUserHeaders(),
-        body: JSON.stringify({ calleeId, ...(chatId != null ? { chatId } : {}), type }),
+        body: JSON.stringify(isAudioRoom ? { name: "Открытая аудиокомната" } : { ...(calleeId != null ? { calleeId } : {}), ...(chatId != null ? { chatId } : {}), type }),
       });
       if (!res.ok) throw new Error("Failed to create call");
       call = await res.json();

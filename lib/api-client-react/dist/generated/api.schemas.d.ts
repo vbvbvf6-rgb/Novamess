@@ -70,6 +70,7 @@ export declare const MessageType: {
     readonly call: "call";
     readonly sticker: "sticker";
     readonly system: "system";
+    readonly location: "location";
 };
 export interface Reaction {
     id: number;
@@ -202,6 +203,7 @@ export declare const SendMessageBodyType: {
     readonly sticker: "sticker";
     readonly album: "album";
     readonly document: "document";
+    readonly location: "location";
 };
 export interface SendMessageBody {
     chatId: number;
@@ -282,6 +284,8 @@ export interface Story {
     id: number;
     userId: number;
     mediaUrl?: string;
+    musicUrl?: string | null;
+    musicName?: string | null;
     type: StoryType;
     text?: string | null;
     backgroundColor?: string | null;
@@ -307,6 +311,8 @@ export interface CreateStoryBody {
     type: CreateStoryBodyType;
     text?: string;
     backgroundColor?: string;
+    musicUrl?: string;
+    musicName?: string;
 }
 export interface Post {
     id: number;

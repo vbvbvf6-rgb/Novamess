@@ -10,6 +10,8 @@ export const storiesTable = pgTable("stories", {
   type: text("type").notNull().default("text"),
   text: text("text"),
   backgroundColor: text("background_color"),
+  musicUrl: text("music_url"),
+  musicName: text("music_name"),
   expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
   viewCount: integer("view_count").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

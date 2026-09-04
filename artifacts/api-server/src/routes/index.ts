@@ -26,6 +26,8 @@ import contactRequestsRouter from "./contact-requests";
 import clansRouter from "./clans";
 import featureHubRouter from "./feature-hub";
 import enhancementsRouter from "./enhancements";
+import draftsRouter from "./drafts";
+import audioRoomsRouter from "./audio-rooms";
 
 const router: IRouter = Router();
 
@@ -56,5 +58,7 @@ router.use(contactRequestsRouter);
 router.use(clansRouter);
 router.use(featureHubRouter);
 router.use(enhancementsRouter);
+router.use(draftsRouter);
+router.use(audioRoomsRouter);
 
 export default router;

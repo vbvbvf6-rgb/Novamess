@@ -20489,27 +20489,27 @@ var require_router = __commonJS({
     var slice = Array.prototype.slice;
     var flatten = Array.prototype.flat;
     var methods = METHODS.map((method) => method.toLowerCase());
-    module.exports = Router27;
+    module.exports = Router31;
     module.exports.Route = Route;
-    function Router27(options) {
-      if (!(this instanceof Router27)) {
-        return new Router27(options);
+    function Router31(options) {
+      if (!(this instanceof Router31)) {
+        return new Router31(options);
       }
       const opts = options || {};
-      function router26(req, res, next) {
-        router26.handle(req, res, next);
+      function router30(req, res, next) {
+        router30.handle(req, res, next);
       }
-      Object.setPrototypeOf(router26, this);
-      router26.caseSensitive = opts.caseSensitive;
-      router26.mergeParams = opts.mergeParams;
-      router26.params = {};
-      router26.strict = opts.strict;
-      router26.stack = [];
-      return router26;
+      Object.setPrototypeOf(router30, this);
+      router30.caseSensitive = opts.caseSensitive;
+      router30.mergeParams = opts.mergeParams;
+      router30.params = {};
+      router30.strict = opts.strict;
+      router30.stack = [];
+      return router30;
     }
-    Router27.prototype = function() {
+    Router31.prototype = function() {
     };
-    Router27.prototype.param = function param2(name2, fn) {
+    Router31.prototype.param = function param2(name2, fn) {
       if (!name2) {
         throw new TypeError("argument name is required");
       }
@@ -20529,7 +20529,7 @@ var require_router = __commonJS({
       params.push(fn);
       return this;
     };
-    Router27.prototype.handle = function handle(req, res, callback) {
+    Router31.prototype.handle = function handle(req, res, callback) {
       if (!callback) {
         throw new TypeError("argument callback is required");
       }
@@ -20656,7 +20656,7 @@ var require_router = __commonJS({
         }
       }
     };
-    Router27.prototype.use = function use(handler) {
+    Router31.prototype.use = function use(handler) {
       let offset = 0;
       let path3 = "/";
       if (typeof handler !== "function") {
@@ -20689,7 +20689,7 @@ var require_router = __commonJS({
       }
       return this;
     };
-    Router27.prototype.route = function route(path3) {
+    Router31.prototype.route = function route(path3) {
       const route2 = new Route(path3);
       const layer = new Layer(path3, {
         sensitive: this.caseSensitive,
@@ -20704,7 +20704,7 @@ var require_router = __commonJS({
       return route2;
     };
     methods.concat("all").forEach(function(method) {
-      Router27.prototype[method] = function(path3) {
+      Router31.prototype[method] = function(path3) {
         const route = this.route(path3);
         route[method].apply(route, slice.call(arguments, 1));
         return this;
@@ -20887,13 +20887,13 @@ var require_application = __commonJS({
     var compileTrust = require_utils3().compileTrust;
     var resolve = __require("node:path").resolve;
     var once = require_once();
-    var Router27 = require_router();
+    var Router31 = require_router();
     var slice = Array.prototype.slice;
     var flatten = Array.prototype.flat;
     var app2 = exports = module.exports = {};
     var trustProxyDefaultSymbol = "@@symbol:trust_proxy_default";
     app2.init = function init2() {
-      var router26 = null;
+      var router30 = null;
       this.cache = /* @__PURE__ */ Object.create(null);
       this.engines = /* @__PURE__ */ Object.create(null);
       this.settings = /* @__PURE__ */ Object.create(null);
@@ -20902,13 +20902,13 @@ var require_application = __commonJS({
         configurable: true,
         enumerable: true,
         get: function getrouter() {
-          if (router26 === null) {
-            router26 = new Router27({
+          if (router30 === null) {
+            router30 = new Router31({
               caseSensitive: this.enabled("case sensitive routing"),
               strict: this.enabled("strict routing")
             });
           }
-          return router26;
+          return router30;
         }
       });
     };
@@ -20979,15 +20979,15 @@ var require_application = __commonJS({
       if (fns.length === 0) {
         throw new TypeError("app.use() requires a middleware function");
       }
-      var router26 = this.router;
+      var router30 = this.router;
       fns.forEach(function(fn2) {
         if (!fn2 || !fn2.handle || !fn2.set) {
-          return router26.use(path3, fn2);
+          return router30.use(path3, fn2);
         }
         debug(".use app under %s", path3);
         fn2.mountpath = path3;
         fn2.parent = this;
-        router26.use(path3, function mounted_app(req, res, next) {
+        router30.use(path3, function mounted_app(req, res, next) {
           var orig = req.app;
           fn2.handle(req, res, function(err2) {
             Object.setPrototypeOf(req, orig.request);
@@ -23514,7 +23514,7 @@ var require_express = __commonJS({
     var EventEmitter = __require("node:events").EventEmitter;
     var mixin = require_merge_descriptors();
     var proto = require_application();
-    var Router27 = require_router();
+    var Router31 = require_router();
     var req = require_request();
     var res = require_response();
     exports = module.exports = createApplication;
@@ -23536,8 +23536,8 @@ var require_express = __commonJS({
     exports.application = proto;
     exports.request = req;
     exports.response = res;
-    exports.Route = Router27.Route;
-    exports.Router = Router27;
+    exports.Route = Router31.Route;
+    exports.Router = Router31;
     exports.json = bodyParser.json;
     exports.raw = bodyParser.raw;
     exports.static = require_serve_static();
@@ -59828,7 +59828,7 @@ var init_chats = __esm({
 });
 
 // ../../lib/db/src/schema/messages.ts
-var messagesTable, reactionsTable, scheduledMessagesTable, pollsTable, pollVotesTable, insertMessageSchema, insertReactionSchema;
+var messagesTable, reactionsTable, scheduledMessagesTable, chatDraftsTable, pollsTable, pollVotesTable, insertMessageSchema, insertReactionSchema;
 var init_messages = __esm({
   "../../lib/db/src/schema/messages.ts"() {
     "use strict";
@@ -59873,6 +59873,16 @@ var init_messages = __esm({
       scheduledAt: timestamp("scheduled_at", { withTimezone: true }).notNull(),
       createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
     });
+    chatDraftsTable = pgTable("chat_drafts", {
+      id: serial("id").primaryKey(),
+      chatId: integer("chat_id").notNull().references(() => chatsTable.id, { onDelete: "cascade" }),
+      userId: integer("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
+      text: text("text").notNull().default(""),
+      updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow()
+    }, (t) => [
+      unique("chat_drafts_chat_user_unique").on(t.chatId, t.userId),
+      index("idx_chat_drafts_user_id").on(t.userId)
+    ]);
     pollsTable = pgTable("polls", {
       id: serial("id").primaryKey(),
       messageId: integer("message_id").notNull().references(() => messagesTable.id),
@@ -59897,7 +59907,7 @@ var init_messages = __esm({
 });
 
 // ../../lib/db/src/schema/calls.ts
-var callsTable, insertCallSchema;
+var callsTable, insertCallSchema, audioRoomsTable;
 var init_calls = __esm({
   "../../lib/db/src/schema/calls.ts"() {
     "use strict";
@@ -59918,6 +59928,14 @@ var init_calls = __esm({
       createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
     });
     insertCallSchema = createInsertSchema(callsTable).omit({ id: true, createdAt: true });
+    audioRoomsTable = pgTable("audio_rooms", {
+      id: serial("id").primaryKey(),
+      callId: integer("call_id").notNull().references(() => callsTable.id, { onDelete: "cascade" }),
+      hostId: integer("host_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
+      name: text("name").notNull().default("\u0410\u0443\u0434\u0438\u043E\u043A\u043E\u043C\u043D\u0430\u0442\u0430"),
+      status: text("status").notNull().default("active"),
+      createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
+    });
   }
 });
 
@@ -59936,6 +59954,8 @@ var init_stories = __esm({
       type: text("type").notNull().default("text"),
       text: text("text"),
       backgroundColor: text("background_color"),
+      musicUrl: text("music_url"),
+      musicName: text("music_name"),
       expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
       viewCount: integer("view_count").notNull().default(0),
       createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
@@ -60258,12 +60278,14 @@ var init_gifts = __esm({
 // ../../lib/db/src/schema/index.ts
 var schema_exports = {};
 __export(schema_exports, {
+  audioRoomsTable: () => audioRoomsTable,
   banwordsTable: () => banwordsTable,
   botTokensTable: () => botTokensTable,
   botUpdatesTable: () => botUpdatesTable,
   botWebhooksTable: () => botWebhooksTable,
   bugReportsTable: () => bugReportsTable,
   callsTable: () => callsTable,
+  chatDraftsTable: () => chatDraftsTable,
   chatFolderChatsTable: () => chatFolderChatsTable,
   chatFoldersTable: () => chatFoldersTable,
   chatMembersTable: () => chatMembersTable,
@@ -60331,12 +60353,14 @@ var init_schema2 = __esm({
 // ../../lib/db/src/index.ts
 var src_exports = {};
 __export(src_exports, {
+  audioRoomsTable: () => audioRoomsTable,
   banwordsTable: () => banwordsTable,
   botTokensTable: () => botTokensTable,
   botUpdatesTable: () => botUpdatesTable,
   botWebhooksTable: () => botWebhooksTable,
   bugReportsTable: () => bugReportsTable,
   callsTable: () => callsTable,
+  chatDraftsTable: () => chatDraftsTable,
   chatFolderChatsTable: () => chatFolderChatsTable,
   chatFoldersTable: () => chatFoldersTable,
   chatMembersTable: () => chatMembersTable,
@@ -63086,10 +63110,10 @@ var require_shared = __commonJS({
         options.host = url2.hostname;
       }
       if (url2.auth) {
-        const auth = url2.auth.split(":");
+        const auth3 = url2.auth.split(":");
         options.auth = {
-          user: auth.shift(),
-          pass: auth.join(":")
+          user: auth3.shift(),
+          pass: auth3.join(":")
         };
       }
       Object.keys(url2.query || {}).forEach((key) => {
@@ -72695,7 +72719,7 @@ var require_smtp_pool = __commonJS({
             callback = shared.callbackPromise(resolve, reject);
           });
         }
-        const auth = new PoolResource(this).auth;
+        const auth3 = new PoolResource(this).auth;
         this.getSocket(this.options, (err2, socketOptions) => {
           if (err2) {
             return callback(err2);
@@ -72748,8 +72772,8 @@ var require_smtp_pool = __commonJS({
             if (returned) {
               return;
             }
-            if (auth && (connection.allowsAuth || options.forceAuth)) {
-              connection.login(auth, (err3) => {
+            if (auth3 && (connection.allowsAuth || options.forceAuth)) {
+              connection.login(auth3, (err3) => {
                 if (returned) {
                   return;
                 }
@@ -72760,7 +72784,7 @@ var require_smtp_pool = __commonJS({
                 }
                 finalize();
               });
-            } else if (!auth && connection.allowsAuth && options.forceAuth) {
+            } else if (!auth3 && connection.allowsAuth && options.forceAuth) {
               const err3 = new Error("Authentication info was not provided");
               err3.code = errors.ENOAUTH;
               returned = true;
@@ -72998,11 +73022,11 @@ var require_smtp_transport = __commonJS({
             if (returned) {
               return;
             }
-            const auth = this.getAuth(mail.data.auth);
-            if (auth && (connection.allowsAuth || options.forceAuth)) {
-              connection.login(auth, (err3) => {
-                if (auth && auth !== this.auth && auth.oauth2) {
-                  auth.oauth2.removeAllListeners();
+            const auth3 = this.getAuth(mail.data.auth);
+            if (auth3 && (connection.allowsAuth || options.forceAuth)) {
+              connection.login(auth3, (err3) => {
+                if (auth3 && auth3 !== this.auth && auth3.oauth2) {
+                  auth3.oauth2.removeAllListeners();
                 }
                 if (returned) {
                   return;
@@ -93017,11 +93041,11 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
             this.socketWarningTimestamp = _NodeHttpHandler.checkSocketUsage(agent, this.socketWarningTimestamp, config2.logger);
           }, config2.socketAcquisitionWarningTimeout ?? (config2.requestTimeout ?? 2e3) + (config2.connectionTimeout ?? 1e3));
           const queryString = request.query ? buildQueryString2(request.query) : "";
-          let auth = void 0;
+          let auth3 = void 0;
           if (request.username != null || request.password != null) {
             const username = request.username ?? "";
             const password = request.password ?? "";
-            auth = `${username}:${password}`;
+            auth3 = `${username}:${password}`;
           }
           let path3 = request.path;
           if (queryString) {
@@ -93043,7 +93067,7 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
             path: path3,
             port: request.port,
             agent,
-            auth
+            auth: auth3
           };
           const requestFunc = isSSL ? node_https.request : hRequest;
           const req = requestFunc(nodeHttpsOptions, (res) => {
@@ -93421,13 +93445,13 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
             return;
           }
           const { hostname: hostname2, method, port: port2, protocol, query } = request;
-          let auth = "";
+          let auth3 = "";
           if (request.username != null || request.password != null) {
             const username = request.username ?? "";
             const password = request.password ?? "";
-            auth = `${username}:${password}@`;
+            auth3 = `${username}:${password}@`;
           }
-          const authority = `${protocol}//${auth}${hostname2}${port2 ? `:${port2}` : ""}`;
+          const authority = `${protocol}//${auth3}${hostname2}${port2 ? `:${port2}` : ""}`;
           const requestContext = { destination: new URL(authority) };
           const connectConfig = {
             requestTimeout: this.config?.sessionTimeout,
@@ -114048,8 +114072,8 @@ var require_dist4 = __commonJS({
         let payload = `CONNECT ${host}:${opts.port} HTTP/1.1\r
 `;
         if (proxy.username || proxy.password) {
-          const auth = `${decodeURIComponent(proxy.username)}:${decodeURIComponent(proxy.password)}`;
-          headers["Proxy-Authorization"] = `Basic ${Buffer.from(auth).toString("base64")}`;
+          const auth3 = `${decodeURIComponent(proxy.username)}:${decodeURIComponent(proxy.password)}`;
+          headers["Proxy-Authorization"] = `Basic ${Buffer.from(auth3).toString("base64")}`;
         }
         headers.Host = `${host}:${opts.port}`;
         if (!headers["Proxy-Connection"]) {
@@ -131416,14 +131440,14 @@ var require_client3 = __commonJS({
        * @param {Object} auth - the auth parameters
        * @private
        */
-      connect(name2, auth = {}) {
+      connect(name2, auth3 = {}) {
         if (this.server._nsps.has(name2)) {
           debug("connecting to namespace %s", name2);
-          return this.doConnect(name2, auth);
+          return this.doConnect(name2, auth3);
         }
-        this.server._checkNamespace(name2, auth, (dynamicNspName) => {
+        this.server._checkNamespace(name2, auth3, (dynamicNspName) => {
           if (dynamicNspName) {
-            this.doConnect(name2, auth);
+            this.doConnect(name2, auth3);
           } else {
             debug("creation of namespace %s was denied", name2);
             this._packet({
@@ -131444,9 +131468,9 @@ var require_client3 = __commonJS({
        *
        * @private
        */
-      doConnect(name2, auth) {
+      doConnect(name2, auth3) {
         const nsp = this.server.of(name2);
-        nsp._add(this, auth, (socket) => {
+        nsp._add(this, auth3, (socket) => {
           this.sockets.set(socket.id, socket);
           this.nsps.set(nsp.name, socket);
           if (this.connectTimeout) {
@@ -132165,7 +132189,7 @@ var require_socket2 = __commonJS({
        * @param {Object} auth
        * @package
        */
-      constructor(nsp, client2, auth, previousSession) {
+      constructor(nsp, client2, auth3, previousSession) {
         super();
         this.nsp = nsp;
         this.client = client2;
@@ -132199,7 +132223,7 @@ var require_socket2 = __commonJS({
             this.pid = base64id_1.default.generateId();
           }
         }
-        this.handshake = this.buildHandshake(auth);
+        this.handshake = this.buildHandshake(auth3);
         this.on("error", noop);
       }
       /**
@@ -132207,7 +132231,7 @@ var require_socket2 = __commonJS({
        *
        * @private
        */
-      buildHandshake(auth) {
+      buildHandshake(auth3) {
         var _a2, _b, _c5, _d;
         return {
           headers: ((_a2 = this.request) === null || _a2 === void 0 ? void 0 : _a2.headers) || {},
@@ -132220,7 +132244,7 @@ var require_socket2 = __commonJS({
           url: (_c5 = this.request) === null || _c5 === void 0 ? void 0 : _c5.url,
           // @ts-ignore
           query: ((_d = this.request) === null || _d === void 0 ? void 0 : _d._query) || {},
-          auth
+          auth: auth3
         };
       }
       /**
@@ -133184,10 +133208,10 @@ var require_namespace = __commonJS({
        * @return {Socket}
        * @private
        */
-      async _add(client2, auth, fn) {
+      async _add(client2, auth3, fn) {
         var _a2;
         debug("adding socket to nsp %s", this.name);
-        const socket = await this._createSocket(client2, auth);
+        const socket = await this._createSocket(client2, auth3);
         this._preConnectSockets.set(socket.id, socket);
         if (
           // @ts-ignore
@@ -133218,9 +133242,9 @@ var require_namespace = __commonJS({
           });
         });
       }
-      async _createSocket(client2, auth) {
-        const sessionId = auth.pid;
-        const offset = auth.offset;
+      async _createSocket(client2, auth3) {
+        const sessionId = auth3.pid;
+        const offset = auth3.offset;
         if (
           // @ts-ignore
           this.server.opts.connectionStateRecovery && typeof sessionId === "string" && typeof offset === "string"
@@ -133233,10 +133257,10 @@ var require_namespace = __commonJS({
           }
           if (session) {
             debug("connection state recovered for sid %s", session.sid);
-            return new socket_1.Socket(this, client2, auth, session);
+            return new socket_1.Socket(this, client2, auth3, session);
           }
         }
-        return new socket_1.Socket(this, client2, auth);
+        return new socket_1.Socket(this, client2, auth3);
       }
       _doConnect(socket, fn) {
         this._preConnectSockets.delete(socket.id);
@@ -135066,7 +135090,7 @@ var require_dist6 = __commonJS({
        *
        * @private
        */
-      _checkNamespace(name2, auth, fn) {
+      _checkNamespace(name2, auth3, fn) {
         if (this.parentNsps.size === 0)
           return fn(false);
         const keysIterator = this.parentNsps.keys();
@@ -135075,7 +135099,7 @@ var require_dist6 = __commonJS({
           if (nextFn.done) {
             return fn(false);
           }
-          nextFn.value(name2, auth, (err2, allow) => {
+          nextFn.value(name2, auth3, (err2, allow) => {
             if (err2 || !allow) {
               return run();
             }
@@ -135710,7 +135734,7 @@ import path2 from "node:path";
 import fs2 from "node:fs";
 
 // src/app.ts
-var import_express27 = __toESM(require_express2(), 1);
+var import_express31 = __toESM(require_express2(), 1);
 var import_cors = __toESM(require_lib3(), 1);
 
 // ../../node_modules/helmet/index.mjs
@@ -137217,7 +137241,7 @@ var rate_limit_default = rateLimit;
 var import_jsonwebtoken4 = __toESM(require_jsonwebtoken(), 1);
 
 // src/routes/index.ts
-var import_express25 = __toESM(require_express2(), 1);
+var import_express29 = __toESM(require_express2(), 1);
 
 // src/routes/health.ts
 var import_express = __toESM(require_express2(), 1);
@@ -142238,7 +142262,8 @@ var SendMessageBody = objectType({
     "file",
     "sticker",
     "album",
-    "document"
+    "document",
+    "location"
   ]).default(sendMessageBodyTypeDefault),
   mediaUrl: stringType().optional(),
   replyToId: numberType().optional()
@@ -142784,7 +142809,9 @@ var CreateStoryBody = objectType({
   mediaUrl: stringType().optional(),
   type: enumType(["image", "video", "text"]),
   text: stringType().optional(),
-  backgroundColor: stringType().optional()
+  backgroundColor: stringType().optional(),
+  musicUrl: stringType().optional(),
+  musicName: stringType().optional()
 });
 var DeleteStoryParams = objectType({
   storyId: coerce.number()
@@ -147917,10 +147944,10 @@ async function fetchXirsysIce() {
   const channel = process.env.XIRSYS_CHANNEL ?? "aura";
   if (!ident || !secret) return [];
   try {
-    const auth = Buffer.from(`${ident}:${secret}`).toString("base64");
+    const auth3 = Buffer.from(`${ident}:${secret}`).toString("base64");
     const resp = await fetch(`https://global.xirsys.net/_turn/${channel}`, {
       method: "PUT",
-      headers: { Authorization: `Basic ${auth}`, "Content-Type": "application/json" },
+      headers: { Authorization: `Basic ${auth3}`, "Content-Type": "application/json" },
       body: JSON.stringify({ format: "urls" }),
       signal: AbortSignal.timeout(4e3)
     });
@@ -148278,11 +148305,11 @@ router10.post("/stories", async (req, res) => {
       });
     }
     const body = CreateStoryBody.parse(req.body);
-    if (body.type !== "text" && body.type !== "image") {
-      return res.status(400).json({ error: "\u0412 \u0441\u0442\u0430\u0442\u0443\u0441\u0435 \u043C\u043E\u0436\u043D\u043E \u043F\u0443\u0431\u043B\u0438\u043A\u043E\u0432\u0430\u0442\u044C \u0442\u043E\u043B\u044C\u043A\u043E \u0442\u0435\u043A\u0441\u0442 \u0438 \u0444\u043E\u0442\u043E\u0433\u0440\u0430\u0444\u0438\u0438." });
+    if (!["text", "image", "video"].includes(body.type)) {
+      return res.status(400).json({ error: "\u041D\u0435\u043F\u043E\u0434\u0434\u0435\u0440\u0436\u0438\u0432\u0430\u0435\u043C\u044B\u0439 \u0442\u0438\u043F \u0438\u0441\u0442\u043E\u0440\u0438\u0438." });
     }
-    if (body.type === "image" && (!body.mediaUrl || /^data:video\//i.test(body.mediaUrl) || /\.(mp4|webm|mov|avi|mkv)(?:[?#]|$)/i.test(body.mediaUrl))) {
-      return res.status(400).json({ error: "\u0412\u0438\u0434\u0435\u043E \u043D\u0435\u043B\u044C\u0437\u044F \u043F\u0443\u0431\u043B\u0438\u043A\u043E\u0432\u0430\u0442\u044C \u0432 \u0441\u0442\u0430\u0442\u0443\u0441\u0435. \u0412\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \u0438\u0437\u043E\u0431\u0440\u0430\u0436\u0435\u043D\u0438\u0435." });
+    if (body.type !== "text" && (!body.mediaUrl || body.type === "video" && !/^data:video\//i.test(body.mediaUrl) && !/\.(mp4|webm|mov|avi|mkv)(?:[?#]|$)/i.test(body.mediaUrl))) {
+      return res.status(400).json({ error: "\u0414\u043B\u044F \u043C\u0435\u0434\u0438\u0430-\u0438\u0441\u0442\u043E\u0440\u0438\u0438 \u043D\u0443\u0436\u0435\u043D \u0444\u0430\u0439\u043B." });
     }
     if (body.text) {
       const banwords = await getBanwords();
@@ -148299,6 +148326,8 @@ router10.post("/stories", async (req, res) => {
       type: body.type,
       text: body.text,
       backgroundColor: body.backgroundColor,
+      musicUrl: await offloadDataUrl(body.musicUrl, "stories"),
+      musicName: body.musicName,
       expiresAt
     }).returning();
     const user = await db.query.usersTable.findFirst({ where: eq(usersTable.id, uid) });
@@ -151434,10 +151463,10 @@ async function ensurePrimePlusLounge(userId) {
         });
       });
     }
-    const isMember = await db.execute(sql`
+    const isMember2 = await db.execute(sql`
       SELECT 1 FROM chat_members WHERE chat_id = ${loungeId} AND user_id = ${userId} LIMIT 1
     `);
-    if (isMember.rows.length === 0) {
+    if (isMember2.rows.length === 0) {
       await db.execute(sql`
         INSERT INTO chat_members (chat_id, user_id, role) VALUES (${loungeId}, ${userId}, 'member')
       `);
@@ -152907,40 +152936,771 @@ router24.delete("/admin/clans/wars/:id", async (req, res) => {
 });
 var clans_default = router24;
 
-// src/routes/index.ts
+// src/routes/feature-hub.ts
+var import_express25 = __toESM(require_express2(), 1);
+init_src();
+init_drizzle_orm();
 var router25 = (0, import_express25.Router)();
-router25.use(health_default);
-router25.use(auth_default);
-router25.use(qr_auth_default);
-router25.use(users_default);
-router25.use(contacts_default);
-router25.use(chats_default);
-router25.use(messages_default);
-router25.use(calls_default);
-router25.use(stories_default);
-router25.use(posts_default);
-router25.use(admin_default);
-router25.use(events_default);
-router25.use(wallet_default);
-if (!process.env.DISABLE_BOTS) router25.use(bots_default);
-router25.use(support_default);
-router25.use(prime_default);
-router25.use(push_default);
-router25.use(polls_default);
-router25.use(translate_default);
-router25.use(referral_default);
-router25.use(folders_default);
-router25.use(platform_events_default);
-router25.use(contact_requests_default);
-router25.use(clans_default);
-var routes_default = router25;
+var PRIVACY_DEFAULTS = {
+  whoCanMessage: "everyone",
+  whoCanInvite: "contacts",
+  phoneVisibility: "contacts",
+  onlineVisibility: "everyone",
+  avatarVisibility: "everyone",
+  callsFrom: "contacts"
+};
+var VALID_PRIVACY_VALUES = /* @__PURE__ */ new Set(["everyone", "contacts", "nobody"]);
+var VALID_ROLES = /* @__PURE__ */ new Set(["owner", "moderator", "editor", "assistant", "analyst", "member"]);
+var ROLE_PERMISSIONS = {
+  owner: ["manage_roles", "manage_antispam", "delete_messages", "edit_messages", "view_analytics", "view_audit"],
+  moderator: ["delete_messages", "manage_antispam"],
+  editor: ["edit_messages", "pin_messages"],
+  assistant: ["invite_members", "approve_members"],
+  analyst: ["view_analytics"],
+  member: []
+};
+var schemaPromise = null;
+function ensureSchema() {
+  if (!schemaPromise) {
+    schemaPromise = (async () => {
+      await db.execute(sql`
+        CREATE TABLE IF NOT EXISTS privacy_settings (
+          user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+          who_can_message TEXT NOT NULL DEFAULT 'everyone',
+          who_can_invite TEXT NOT NULL DEFAULT 'contacts',
+          phone_visibility TEXT NOT NULL DEFAULT 'contacts',
+          online_visibility TEXT NOT NULL DEFAULT 'everyone',
+          avatar_visibility TEXT NOT NULL DEFAULT 'everyone',
+          calls_from TEXT NOT NULL DEFAULT 'contacts',
+          updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+        );
+        CREATE TABLE IF NOT EXISTS privacy_overrides (
+          user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          contact_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          who_can_message TEXT,
+          who_can_invite TEXT,
+          phone_visibility TEXT,
+          online_visibility TEXT,
+          avatar_visibility TEXT,
+          calls_from TEXT,
+          updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+          PRIMARY KEY (user_id, contact_id)
+        );
+        CREATE TABLE IF NOT EXISTS chat_antispam (
+          chat_id INTEGER PRIMARY KEY REFERENCES chats(id) ON DELETE CASCADE,
+          captcha_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+          slow_mode_seconds INTEGER NOT NULL DEFAULT 0,
+          links_new_member_seconds INTEGER NOT NULL DEFAULT 0,
+          filter_words_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+          suspicious_accounts_enabled BOOLEAN NOT NULL DEFAULT TRUE,
+          banned_words TEXT[] NOT NULL DEFAULT '{}',
+          updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+        );
+        CREATE TABLE IF NOT EXISTS chat_roles (
+          chat_id INTEGER NOT NULL REFERENCES chats(id) ON DELETE CASCADE,
+          user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          role TEXT NOT NULL DEFAULT 'member',
+          permissions JSONB NOT NULL DEFAULT '[]'::jsonb,
+          assigned_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+          updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+          PRIMARY KEY (chat_id, user_id)
+        );
+        CREATE TABLE IF NOT EXISTS chat_action_log (
+          id SERIAL PRIMARY KEY,
+          chat_id INTEGER NOT NULL REFERENCES chats(id) ON DELETE CASCADE,
+          actor_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+          action TEXT NOT NULL,
+          target_id INTEGER,
+          details JSONB NOT NULL DEFAULT '{}'::jsonb,
+          created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+        );
+        CREATE TABLE IF NOT EXISTS playlists (
+          id SERIAL PRIMARY KEY,
+          user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          name TEXT NOT NULL,
+          description TEXT,
+          is_public BOOLEAN NOT NULL DEFAULT FALSE,
+          created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+          updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+        );
+        CREATE TABLE IF NOT EXISTS playlist_tracks (
+          id SERIAL PRIMARY KEY,
+          playlist_id INTEGER NOT NULL REFERENCES playlists(id) ON DELETE CASCADE,
+          title TEXT NOT NULL,
+          artist TEXT,
+          media_url TEXT NOT NULL,
+          duration_seconds INTEGER,
+          sort_order INTEGER NOT NULL DEFAULT 0,
+          created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+        );
+      `);
+    })().catch((error41) => {
+      schemaPromise = null;
+      throw error41;
+    });
+  }
+  return schemaPromise;
+}
+function auth(req, res) {
+  const userId = Number(req.currentUserId);
+  if (!userId) {
+    res.status(401).json({ error: "\u0422\u0440\u0435\u0431\u0443\u0435\u0442\u0441\u044F \u0430\u0432\u0442\u043E\u0440\u0438\u0437\u0430\u0446\u0438\u044F" });
+    return null;
+  }
+  return userId;
+}
+async function writeAction(chatId, actorId, action, targetId = null, details = {}) {
+  await db.execute(sql`
+    INSERT INTO chat_action_log (chat_id, actor_id, action, target_id, details)
+    VALUES (${chatId}, ${actorId}, ${action}, ${targetId}, ${JSON.stringify(details)}::jsonb)
+  `);
+}
+async function canManageChat(chatId, userId) {
+  const result = await db.execute(sql`
+    SELECT cm.role, cr.role AS extended_role
+    FROM chat_members cm
+    LEFT JOIN chat_roles cr ON cr.chat_id = cm.chat_id AND cr.user_id = cm.user_id
+    WHERE cm.chat_id = ${chatId} AND cm.user_id = ${userId}
+    LIMIT 1
+  `);
+  const row = result.rows[0];
+  return row && (row.role === "owner" || row.role === "admin" || row.extended_role === "owner" || row.extended_role === "moderator");
+}
+router25.get("/privacy/settings", async (req, res) => {
+  const userId = auth(req, res);
+  if (!userId) return;
+  try {
+    await ensureSchema();
+    const result = await db.execute(sql`
+      INSERT INTO privacy_settings (user_id)
+      VALUES (${userId})
+      ON CONFLICT (user_id) DO NOTHING
+      RETURNING *
+    `);
+    if (result.rows.length) return res.json(result.rows[0]);
+    const existing = await db.execute(sql`SELECT * FROM privacy_settings WHERE user_id = ${userId}`);
+    res.json(existing.rows[0] ?? { user_id: userId, ...PRIVACY_DEFAULTS });
+  } catch (error41) {
+    req.log.error(error41);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u043D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438 \u043F\u0440\u0438\u0432\u0430\u0442\u043D\u043E\u0441\u0442\u0438" });
+  }
+});
+router25.put("/privacy/settings", async (req, res) => {
+  const userId = auth(req, res);
+  if (!userId) return;
+  try {
+    await ensureSchema();
+    const values = Object.fromEntries(
+      Object.entries(req.body ?? {}).filter(
+        ([key, value]) => ["whoCanMessage", "whoCanInvite", "phoneVisibility", "onlineVisibility", "avatarVisibility", "callsFrom"].includes(key) && typeof value === "string" && VALID_PRIVACY_VALUES.has(value)
+      )
+    );
+    if (!Object.keys(values).length) return res.status(400).json({ error: "\u041D\u0435\u0442 \u043A\u043E\u0440\u0440\u0435\u043A\u0442\u043D\u044B\u0445 \u043D\u0430\u0441\u0442\u0440\u043E\u0435\u043A" });
+    await db.execute(sql`
+      INSERT INTO privacy_settings (
+        user_id, who_can_message, who_can_invite, phone_visibility,
+        online_visibility, avatar_visibility, calls_from, updated_at
+      ) VALUES (
+        ${userId},
+        ${values.whoCanMessage ?? PRIVACY_DEFAULTS.whoCanMessage},
+        ${values.whoCanInvite ?? PRIVACY_DEFAULTS.whoCanInvite},
+        ${values.phoneVisibility ?? PRIVACY_DEFAULTS.phoneVisibility},
+        ${values.onlineVisibility ?? PRIVACY_DEFAULTS.onlineVisibility},
+        ${values.avatarVisibility ?? PRIVACY_DEFAULTS.avatarVisibility},
+        ${values.callsFrom ?? PRIVACY_DEFAULTS.callsFrom},
+        NOW()
+      )
+      ON CONFLICT (user_id) DO UPDATE SET
+        who_can_message = COALESCE(${values.whoCanMessage ?? null}, privacy_settings.who_can_message),
+        who_can_invite = COALESCE(${values.whoCanInvite ?? null}, privacy_settings.who_can_invite),
+        phone_visibility = COALESCE(${values.phoneVisibility ?? null}, privacy_settings.phone_visibility),
+        online_visibility = COALESCE(${values.onlineVisibility ?? null}, privacy_settings.online_visibility),
+        avatar_visibility = COALESCE(${values.avatarVisibility ?? null}, privacy_settings.avatar_visibility),
+        calls_from = COALESCE(${values.callsFrom ?? null}, privacy_settings.calls_from),
+        updated_at = NOW()
+    `);
+    const saved = await db.execute(sql`SELECT * FROM privacy_settings WHERE user_id = ${userId}`);
+    res.json(saved.rows[0]);
+  } catch (error41) {
+    req.log.error(error41);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0441\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C \u043D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438 \u043F\u0440\u0438\u0432\u0430\u0442\u043D\u043E\u0441\u0442\u0438" });
+  }
+});
+router25.get("/privacy/overrides", async (req, res) => {
+  const userId = auth(req, res);
+  if (!userId) return;
+  try {
+    await ensureSchema();
+    const rows = await db.execute(sql`
+      SELECT po.*, u.username, u.display_name, u.avatar_url, u.avatar_color
+      FROM privacy_overrides po
+      JOIN users u ON u.id = po.contact_id
+      WHERE po.user_id = ${userId}
+      ORDER BY u.display_name
+    `);
+    res.json(rows.rows);
+  } catch (error41) {
+    req.log.error(error41);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u0438\u0441\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u044F \u043F\u0440\u0438\u0432\u0430\u0442\u043D\u043E\u0441\u0442\u0438" });
+  }
+});
+router25.put("/privacy/overrides/:contactId", async (req, res) => {
+  const userId = auth(req, res);
+  if (!userId) return;
+  const contactId = Number(req.params.contactId);
+  if (!contactId || contactId === userId) return res.status(400).json({ error: "\u041D\u0435\u043A\u043E\u0440\u0440\u0435\u043A\u0442\u043D\u044B\u0439 \u043A\u043E\u043D\u0442\u0430\u043A\u0442" });
+  try {
+    await ensureSchema();
+    const clean = (key) => typeof req.body?.[key] === "string" && VALID_PRIVACY_VALUES.has(req.body[key]) ? req.body[key] : null;
+    await db.execute(sql`
+      INSERT INTO privacy_overrides (
+        user_id, contact_id, who_can_message, who_can_invite, phone_visibility,
+        online_visibility, avatar_visibility, calls_from, updated_at
+      ) VALUES (${userId}, ${contactId}, ${clean("whoCanMessage")}, ${clean("whoCanInvite")},
+        ${clean("phoneVisibility")}, ${clean("onlineVisibility")}, ${clean("avatarVisibility")}, ${clean("callsFrom")}, NOW())
+      ON CONFLICT (user_id, contact_id) DO UPDATE SET
+        who_can_message = EXCLUDED.who_can_message, who_can_invite = EXCLUDED.who_can_invite,
+        phone_visibility = EXCLUDED.phone_visibility, online_visibility = EXCLUDED.online_visibility,
+        avatar_visibility = EXCLUDED.avatar_visibility, calls_from = EXCLUDED.calls_from, updated_at = NOW()
+    `);
+    const saved = await db.execute(sql`SELECT * FROM privacy_overrides WHERE user_id = ${userId} AND contact_id = ${contactId}`);
+    res.json(saved.rows[0]);
+  } catch (error41) {
+    req.log.error(error41);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0441\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C \u0438\u0441\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u0435" });
+  }
+});
+router25.delete("/privacy/overrides/:contactId", async (req, res) => {
+  const userId = auth(req, res);
+  if (!userId) return;
+  try {
+    await ensureSchema();
+    await db.execute(sql`DELETE FROM privacy_overrides WHERE user_id = ${userId} AND contact_id = ${Number(req.params.contactId)}`);
+    res.status(204).send();
+  } catch (error41) {
+    req.log.error(error41);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0443\u0434\u0430\u043B\u0438\u0442\u044C \u0438\u0441\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u0435" });
+  }
+});
+router25.get("/chats/:chatId/antispam", async (req, res) => {
+  const userId = auth(req, res);
+  if (!userId) return;
+  const chatId = Number(req.params.chatId);
+  try {
+    await ensureSchema();
+    if (!await canManageChat(chatId, userId)) return res.status(403).json({ error: "\u041D\u0435\u0442 \u043F\u0440\u0430\u0432 \u043C\u043E\u0434\u0435\u0440\u0430\u0442\u043E\u0440\u0430" });
+    const result = await db.execute(sql`
+      INSERT INTO chat_antispam (chat_id) VALUES (${chatId}) ON CONFLICT (chat_id) DO NOTHING RETURNING *
+    `);
+    if (result.rows.length) return res.json(result.rows[0]);
+    const existing = await db.execute(sql`SELECT * FROM chat_antispam WHERE chat_id = ${chatId}`);
+    res.json(existing.rows[0]);
+  } catch (error41) {
+    req.log.error(error41);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u0430\u043D\u0442\u0438\u0441\u043F\u0430\u043C" });
+  }
+});
+router25.put("/chats/:chatId/antispam", async (req, res) => {
+  const userId = auth(req, res);
+  if (!userId) return;
+  const chatId = Number(req.params.chatId);
+  try {
+    await ensureSchema();
+    if (!await canManageChat(chatId, userId)) return res.status(403).json({ error: "\u041D\u0435\u0442 \u043F\u0440\u0430\u0432 \u043C\u043E\u0434\u0435\u0440\u0430\u0442\u043E\u0440\u0430" });
+    const body = req.body ?? {};
+    const slow = Math.min(86400, Math.max(0, Number(body.slowModeSeconds) || 0));
+    const links = Math.min(2592e3, Math.max(0, Number(body.linksNewMemberSeconds) || 0));
+    const words = Array.isArray(body.bannedWords) ? body.bannedWords.filter((word) => typeof word === "string").map((word) => word.trim().slice(0, 80)).filter(Boolean).slice(0, 100) : [];
+    await db.execute(sql`
+      INSERT INTO chat_antispam (chat_id, captcha_enabled, slow_mode_seconds, links_new_member_seconds,
+        filter_words_enabled, suspicious_accounts_enabled, banned_words, updated_at)
+      VALUES (${chatId}, ${Boolean(body.captchaEnabled)}, ${slow}, ${links}, ${Boolean(body.filterWordsEnabled)},
+        ${body.suspiciousAccountsEnabled !== false}, ${words}, NOW())
+      ON CONFLICT (chat_id) DO UPDATE SET
+        captcha_enabled = EXCLUDED.captcha_enabled, slow_mode_seconds = EXCLUDED.slow_mode_seconds,
+        links_new_member_seconds = EXCLUDED.links_new_member_seconds, filter_words_enabled = EXCLUDED.filter_words_enabled,
+        suspicious_accounts_enabled = EXCLUDED.suspicious_accounts_enabled, banned_words = EXCLUDED.banned_words, updated_at = NOW()
+    `);
+    await writeAction(chatId, userId, "antispam_updated", null, { captchaEnabled: Boolean(body.captchaEnabled), slowModeSeconds: slow });
+    const saved = await db.execute(sql`SELECT * FROM chat_antispam WHERE chat_id = ${chatId}`);
+    res.json(saved.rows[0]);
+  } catch (error41) {
+    req.log.error(error41);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0441\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C \u0430\u043D\u0442\u0438\u0441\u043F\u0430\u043C" });
+  }
+});
+router25.get("/chats/:chatId/roles", async (req, res) => {
+  const userId = auth(req, res);
+  if (!userId) return;
+  const chatId = Number(req.params.chatId);
+  try {
+    await ensureSchema();
+    const member2 = await db.execute(sql`
+      SELECT cm.user_id, cm.role AS legacy_role, COALESCE(cr.role, cm.role) AS role,
+             COALESCE(cr.permissions, '[]'::jsonb) AS permissions,
+             u.display_name, u.username, u.avatar_url, u.avatar_color
+      FROM chat_members cm
+      JOIN users u ON u.id = cm.user_id
+      LEFT JOIN chat_roles cr ON cr.chat_id = cm.chat_id AND cr.user_id = cm.user_id
+      WHERE cm.chat_id = ${chatId}
+      ORDER BY CASE COALESCE(cr.role, cm.role) WHEN 'owner' THEN 0 WHEN 'moderator' THEN 1 ELSE 2 END, u.display_name
+    `);
+    const viewer = member2.rows.find((row) => Number(row.user_id) === userId);
+    if (!viewer) return res.status(403).json({ error: "\u041D\u0435\u0442 \u0434\u043E\u0441\u0442\u0443\u043F\u0430 \u043A \u0447\u0430\u0442\u0443" });
+    res.json({ roles: member2.rows, permissions: ROLE_PERMISSIONS, canManage: ["owner", "admin", "moderator"].includes(viewer.role) });
+  } catch (error41) {
+    req.log.error(error41);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u0440\u043E\u043B\u0438" });
+  }
+});
+router25.patch("/chats/:chatId/roles/:memberId", async (req, res) => {
+  const userId = auth(req, res);
+  if (!userId) return;
+  const chatId = Number(req.params.chatId);
+  const memberId = Number(req.params.memberId);
+  const role = String(req.body?.role || "member");
+  if (!VALID_ROLES.has(role) || !memberId) return res.status(400).json({ error: "\u041D\u0435\u043A\u043E\u0440\u0440\u0435\u043A\u0442\u043D\u0430\u044F \u0440\u043E\u043B\u044C" });
+  try {
+    await ensureSchema();
+    if (!await canManageChat(chatId, userId)) return res.status(403).json({ error: "\u041D\u0435\u0442 \u043F\u0440\u0430\u0432 \u0432\u043B\u0430\u0434\u0435\u043B\u044C\u0446\u0430" });
+    if (role === "owner") return res.status(403).json({ error: "\u0412\u043B\u0430\u0434\u0435\u043B\u044C\u0446\u0430 \u043D\u0435\u043B\u044C\u0437\u044F \u043D\u0430\u0437\u043D\u0430\u0447\u0438\u0442\u044C \u0447\u0435\u0440\u0435\u0437 \u044D\u0442\u0443 \u0444\u043E\u0440\u043C\u0443" });
+    const permissions = Array.isArray(req.body?.permissions) ? req.body.permissions.filter((item) => typeof item === "string" && ROLE_PERMISSIONS[role]?.includes(item)) : ROLE_PERMISSIONS[role] ?? [];
+    await db.execute(sql`
+      INSERT INTO chat_roles (chat_id, user_id, role, permissions, assigned_by, updated_at)
+      VALUES (${chatId}, ${memberId}, ${role}, ${JSON.stringify(permissions)}::jsonb, ${userId}, NOW())
+      ON CONFLICT (chat_id, user_id) DO UPDATE SET role = EXCLUDED.role, permissions = EXCLUDED.permissions,
+        assigned_by = EXCLUDED.assigned_by, updated_at = NOW()
+    `);
+    await writeAction(chatId, userId, "role_updated", memberId, { role, permissions });
+    res.json({ ok: true, role, permissions });
+  } catch (error41) {
+    req.log.error(error41);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0438\u0437\u043C\u0435\u043D\u0438\u0442\u044C \u0440\u043E\u043B\u044C" });
+  }
+});
+router25.get("/chats/:chatId/action-log", async (req, res) => {
+  const userId = auth(req, res);
+  if (!userId) return;
+  const chatId = Number(req.params.chatId);
+  try {
+    await ensureSchema();
+    const member2 = await db.execute(sql`SELECT role FROM chat_members WHERE chat_id = ${chatId} AND user_id = ${userId}`);
+    if (!member2.rows.length) return res.status(403).json({ error: "\u041D\u0435\u0442 \u0434\u043E\u0441\u0442\u0443\u043F\u0430 \u043A \u0447\u0430\u0442\u0443" });
+    const rows = await db.execute(sql`
+      SELECT l.*, u.display_name AS actor_name, u.username AS actor_username
+      FROM chat_action_log l LEFT JOIN users u ON u.id = l.actor_id
+      WHERE l.chat_id = ${chatId}
+      ORDER BY l.created_at DESC LIMIT 100
+    `);
+    res.json(rows.rows);
+  } catch (error41) {
+    req.log.error(error41);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u0436\u0443\u0440\u043D\u0430\u043B \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u0439" });
+  }
+});
+router25.get("/playlists", async (req, res) => {
+  const userId = auth(req, res);
+  if (!userId) return;
+  try {
+    await ensureSchema();
+    const rows = await db.execute(sql`
+      SELECT p.*, COUNT(pt.id)::int AS track_count
+      FROM playlists p LEFT JOIN playlist_tracks pt ON pt.playlist_id = p.id
+      WHERE p.user_id = ${userId} OR p.is_public = TRUE
+      GROUP BY p.id ORDER BY p.updated_at DESC
+    `);
+    res.json(rows.rows);
+  } catch (error41) {
+    req.log.error(error41);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u043F\u043B\u0435\u0439\u043B\u0438\u0441\u0442\u044B" });
+  }
+});
+router25.post("/playlists", async (req, res) => {
+  const userId = auth(req, res);
+  if (!userId) return;
+  const name2 = String(req.body?.name || "").trim().slice(0, 80);
+  if (!name2) return res.status(400).json({ error: "\u0423\u043A\u0430\u0436\u0438\u0442\u0435 \u043D\u0430\u0437\u0432\u0430\u043D\u0438\u0435 \u043F\u043B\u0435\u0439\u043B\u0438\u0441\u0442\u0430" });
+  try {
+    await ensureSchema();
+    const created = await db.execute(sql`
+      INSERT INTO playlists (user_id, name, description, is_public)
+      VALUES (${userId}, ${name2}, ${String(req.body?.description || "").trim().slice(0, 240) || null}, ${Boolean(req.body?.isPublic)})
+      RETURNING *
+    `);
+    res.status(201).json(created.rows[0]);
+  } catch (error41) {
+    req.log.error(error41);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0441\u043E\u0437\u0434\u0430\u0442\u044C \u043F\u043B\u0435\u0439\u043B\u0438\u0441\u0442" });
+  }
+});
+router25.get("/playlists/:playlistId", async (req, res) => {
+  const userId = auth(req, res);
+  if (!userId) return;
+  try {
+    await ensureSchema();
+    const playlist = await db.execute(sql`SELECT * FROM playlists WHERE id = ${Number(req.params.playlistId)} AND (user_id = ${userId} OR is_public = TRUE)`);
+    if (!playlist.rows.length) return res.status(404).json({ error: "\u041F\u043B\u0435\u0439\u043B\u0438\u0441\u0442 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D" });
+    const tracks = await db.execute(sql`SELECT * FROM playlist_tracks WHERE playlist_id = ${Number(req.params.playlistId)} ORDER BY sort_order, id`);
+    res.json({ ...playlist.rows[0], tracks: tracks.rows });
+  } catch (error41) {
+    req.log.error(error41);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u043F\u043B\u0435\u0439\u043B\u0438\u0441\u0442" });
+  }
+});
+router25.post("/playlists/:playlistId/tracks", async (req, res) => {
+  const userId = auth(req, res);
+  if (!userId) return;
+  const playlistId = Number(req.params.playlistId);
+  const title = String(req.body?.title || "").trim().slice(0, 160);
+  const mediaUrl = String(req.body?.mediaUrl || "").trim();
+  if (!title || !mediaUrl) return res.status(400).json({ error: "\u041D\u0443\u0436\u043D\u044B \u043D\u0430\u0437\u0432\u0430\u043D\u0438\u0435 \u0438 \u0430\u0443\u0434\u0438\u043E\u0444\u0430\u0439\u043B" });
+  try {
+    await ensureSchema();
+    const owner = await db.execute(sql`SELECT id FROM playlists WHERE id = ${playlistId} AND user_id = ${userId}`);
+    if (!owner.rows.length) return res.status(403).json({ error: "\u041D\u0435\u0442 \u043F\u0440\u0430\u0432 \u043D\u0430 \u044D\u0442\u043E\u0442 \u043F\u043B\u0435\u0439\u043B\u0438\u0441\u0442" });
+    const track = await db.execute(sql`
+      INSERT INTO playlist_tracks (playlist_id, title, artist, media_url, duration_seconds, sort_order)
+      VALUES (${playlistId}, ${title}, ${String(req.body?.artist || "").trim().slice(0, 120) || null},
+        ${mediaUrl}, ${Number(req.body?.durationSeconds) || null},
+        COALESCE((SELECT MAX(sort_order) + 1 FROM playlist_tracks WHERE playlist_id = ${playlistId}), 0))
+      RETURNING *
+    `);
+    await db.execute(sql`UPDATE playlists SET updated_at = NOW() WHERE id = ${playlistId}`);
+    res.status(201).json(track.rows[0]);
+  } catch (error41) {
+    req.log.error(error41);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0434\u043E\u0431\u0430\u0432\u0438\u0442\u044C \u0442\u0440\u0435\u043A" });
+  }
+});
+router25.delete("/playlists/:playlistId/tracks/:trackId", async (req, res) => {
+  const userId = auth(req, res);
+  if (!userId) return;
+  try {
+    await ensureSchema();
+    await db.execute(sql`
+      DELETE FROM playlist_tracks pt USING playlists p
+      WHERE pt.id = ${Number(req.params.trackId)} AND pt.playlist_id = p.id
+        AND p.id = ${Number(req.params.playlistId)} AND p.user_id = ${userId}
+    `);
+    res.status(204).send();
+  } catch (error41) {
+    req.log.error(error41);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0443\u0434\u0430\u043B\u0438\u0442\u044C \u0442\u0440\u0435\u043A" });
+  }
+});
+var feature_hub_default = router25;
 
-// src/routes/botapi.ts
+// src/routes/enhancements.ts
 var import_express26 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
+var router26 = (0, import_express26.Router)();
+function auth2(req) {
+  return Number(req.currentUserId || 0);
+}
+async function isMember(chatId, userId) {
+  const result = await db.execute(sql`
+    SELECT 1 FROM chat_members WHERE chat_id = ${chatId} AND user_id = ${userId} LIMIT 1
+  `);
+  return result.rows.length > 0;
+}
+router26.get("/chats/:chatId/space", async (req, res) => {
+  const userId = auth2(req);
+  const chatId = Number(req.params.chatId);
+  if (!userId || !await isMember(chatId, userId)) return res.status(403).json({ error: "\u041D\u0435\u0442 \u0434\u043E\u0441\u0442\u0443\u043F\u0430" });
+  const [notes, tasks] = await Promise.all([
+    db.execute(sql`
+      SELECT id, title, body, created_by, updated_at
+      FROM chat_space_notes WHERE chat_id = ${chatId}
+      ORDER BY updated_at DESC LIMIT 50
+    `),
+    db.execute(sql`
+      SELECT id, title, done, assignee_id, created_by, due_at, created_at
+      FROM chat_space_tasks WHERE chat_id = ${chatId}
+      ORDER BY done ASC, created_at DESC LIMIT 100
+    `)
+  ]);
+  return res.json({ notes: notes.rows, tasks: tasks.rows });
+});
+router26.post("/chats/:chatId/space/notes", async (req, res) => {
+  const userId = auth2(req);
+  const chatId = Number(req.params.chatId);
+  if (!userId || !await isMember(chatId, userId)) return res.status(403).json({ error: "\u041D\u0435\u0442 \u0434\u043E\u0441\u0442\u0443\u043F\u0430" });
+  const title = String(req.body?.title || "\u0411\u0435\u0437 \u043D\u0430\u0437\u0432\u0430\u043D\u0438\u044F").trim().slice(0, 120);
+  const body = String(req.body?.body || "").trim().slice(0, 2e4);
+  if (!body) return res.status(400).json({ error: "\u0417\u0430\u043C\u0435\u0442\u043A\u0430 \u043D\u0435 \u043C\u043E\u0436\u0435\u0442 \u0431\u044B\u0442\u044C \u043F\u0443\u0441\u0442\u043E\u0439" });
+  const inserted = await db.execute(sql`
+    INSERT INTO chat_space_notes (chat_id, title, body, created_by)
+    VALUES (${chatId}, ${title}, ${body}, ${userId})
+    RETURNING id, title, body, created_by, updated_at
+  `);
+  return res.status(201).json(inserted.rows[0]);
+});
+router26.put("/chats/:chatId/space/notes/:noteId", async (req, res) => {
+  const userId = auth2(req);
+  const chatId = Number(req.params.chatId);
+  const noteId = Number(req.params.noteId);
+  if (!userId || !await isMember(chatId, userId)) return res.status(403).json({ error: "\u041D\u0435\u0442 \u0434\u043E\u0441\u0442\u0443\u043F\u0430" });
+  const title = String(req.body?.title || "\u0411\u0435\u0437 \u043D\u0430\u0437\u0432\u0430\u043D\u0438\u044F").trim().slice(0, 120);
+  const body = String(req.body?.body || "").trim().slice(0, 2e4);
+  const updated = await db.execute(sql`
+    UPDATE chat_space_notes SET title = ${title}, body = ${body}, updated_at = NOW()
+    WHERE id = ${noteId} AND chat_id = ${chatId}
+    RETURNING id, title, body, created_by, updated_at
+  `);
+  if (!updated.rows.length) return res.status(404).json({ error: "\u0417\u0430\u043C\u0435\u0442\u043A\u0430 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u0430" });
+  return res.json(updated.rows[0]);
+});
+router26.delete("/chats/:chatId/space/notes/:noteId", async (req, res) => {
+  const userId = auth2(req);
+  const chatId = Number(req.params.chatId);
+  if (!userId || !await isMember(chatId, userId)) return res.status(403).json({ error: "\u041D\u0435\u0442 \u0434\u043E\u0441\u0442\u0443\u043F\u0430" });
+  await db.execute(sql`DELETE FROM chat_space_notes WHERE id = ${Number(req.params.noteId)} AND chat_id = ${chatId}`);
+  return res.status(204).end();
+});
+router26.post("/chats/:chatId/space/tasks", async (req, res) => {
+  const userId = auth2(req);
+  const chatId = Number(req.params.chatId);
+  if (!userId || !await isMember(chatId, userId)) return res.status(403).json({ error: "\u041D\u0435\u0442 \u0434\u043E\u0441\u0442\u0443\u043F\u0430" });
+  const title = String(req.body?.title || "").trim().slice(0, 240);
+  if (!title) return res.status(400).json({ error: "\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u0437\u0430\u0434\u0430\u0447\u0443" });
+  const inserted = await db.execute(sql`
+    INSERT INTO chat_space_tasks (chat_id, title, assignee_id, created_by, due_at)
+    VALUES (${chatId}, ${title}, ${req.body?.assigneeId ? Number(req.body.assigneeId) : null}, ${userId},
+            ${req.body?.dueAt ? new Date(req.body.dueAt) : null})
+    RETURNING id, title, done, assignee_id, created_by, due_at, created_at
+  `);
+  return res.status(201).json(inserted.rows[0]);
+});
+router26.patch("/chats/:chatId/space/tasks/:taskId", async (req, res) => {
+  const userId = auth2(req);
+  const chatId = Number(req.params.chatId);
+  if (!userId || !await isMember(chatId, userId)) return res.status(403).json({ error: "\u041D\u0435\u0442 \u0434\u043E\u0441\u0442\u0443\u043F\u0430" });
+  const updated = await db.execute(sql`
+    UPDATE chat_space_tasks
+    SET done = COALESCE(${typeof req.body?.done === "boolean" ? req.body.done : null}, done),
+        assignee_id = COALESCE(${req.body?.assigneeId ? Number(req.body.assigneeId) : null}, assignee_id),
+        title = COALESCE(${req.body?.title ? String(req.body.title).trim().slice(0, 240) : null}, title)
+    WHERE id = ${Number(req.params.taskId)} AND chat_id = ${chatId}
+    RETURNING id, title, done, assignee_id, created_by, due_at, created_at
+  `);
+  if (!updated.rows.length) return res.status(404).json({ error: "\u0417\u0430\u0434\u0430\u0447\u0430 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u0430" });
+  return res.json(updated.rows[0]);
+});
+router26.delete("/chats/:chatId/space/tasks/:taskId", async (req, res) => {
+  const userId = auth2(req);
+  const chatId = Number(req.params.chatId);
+  if (!userId || !await isMember(chatId, userId)) return res.status(403).json({ error: "\u041D\u0435\u0442 \u0434\u043E\u0441\u0442\u0443\u043F\u0430" });
+  await db.execute(sql`DELETE FROM chat_space_tasks WHERE id = ${Number(req.params.taskId)} AND chat_id = ${chatId}`);
+  return res.status(204).end();
+});
+router26.get("/chats/:chatId/media", async (req, res) => {
+  const userId = auth2(req);
+  const chatId = Number(req.params.chatId);
+  if (!userId || !await isMember(chatId, userId)) return res.status(403).json({ error: "\u041D\u0435\u0442 \u0434\u043E\u0441\u0442\u0443\u043F\u0430" });
+  const result = await db.execute(sql`
+    SELECT id, type, media_url, text, sender_id, created_at
+    FROM messages
+    WHERE chat_id = ${chatId} AND is_deleted = FALSE
+      AND (
+        type IN ('image', 'album', 'video', 'document', 'audio', 'sticker')
+        OR (text IS NOT NULL AND text ~* 'https?://[^[:space:]]+')
+      )
+    ORDER BY created_at DESC
+    LIMIT 300
+  `);
+  return res.json(result.rows);
+});
+router26.get("/public/users/:username", async (req, res) => {
+  const username = String(req.params.username || "").trim().toLowerCase();
+  const result = await db.execute(sql`
+    SELECT id, username, display_name, bio, avatar_url, avatar_color, status_text,
+           is_verified, is_developer, is_youtube_creator, is_tiktok_creator, created_at
+    FROM users WHERE LOWER(username) = ${username} LIMIT 1
+  `);
+  if (!result.rows.length) return res.status(404).json({ error: "\u041F\u0440\u043E\u0444\u0438\u043B\u044C \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D" });
+  return res.json(result.rows[0]);
+});
+router26.get("/achievements/me", async (req, res) => {
+  const userId = auth2(req);
+  const [messages, calls, reactions, contacts, stories] = await Promise.all([
+    db.execute(sql`SELECT COUNT(*)::int AS count FROM messages WHERE sender_id = ${userId}`),
+    db.execute(sql`SELECT COUNT(*)::int AS count FROM calls WHERE caller_id = ${userId} OR callee_id = ${userId}`),
+    db.execute(sql`SELECT COUNT(*)::int AS count FROM reactions WHERE user_id = ${userId}`),
+    db.execute(sql`SELECT COUNT(*)::int AS count FROM contacts WHERE user_id = ${userId}`),
+    db.execute(sql`SELECT COUNT(*)::int AS count FROM stories WHERE user_id = ${userId}`)
+  ]);
+  const value = (rows) => Number(rows[0]?.count || 0);
+  const stats = {
+    messages: value(messages.rows),
+    calls: value(calls.rows),
+    reactions: value(reactions.rows),
+    contacts: value(contacts.rows),
+    stories: value(stories.rows)
+  };
+  const achievements = [
+    { id: "first-message", icon: "\u{1F4AC}", title: "\u041F\u0435\u0440\u0432\u044B\u0439 \u043A\u043E\u043D\u0442\u0430\u043A\u0442", description: "\u041E\u0442\u043F\u0440\u0430\u0432\u044C\u0442\u0435 \u043F\u0435\u0440\u0432\u043E\u0435 \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u0435", target: 1, value: stats.messages, metric: "messages" },
+    { id: "social", icon: "\u{1F91D}", title: "\u0421\u043E\u0446\u0438\u0430\u043B\u044C\u043D\u044B\u0439 \u043A\u0440\u0443\u0433", description: "\u0414\u043E\u0431\u0430\u0432\u044C\u0442\u0435 5 \u043A\u043E\u043D\u0442\u0430\u043A\u0442\u043E\u0432", target: 5, value: stats.contacts, metric: "contacts" },
+    { id: "voice", icon: "\u{1F4DE}", title: "\u041D\u0430 \u0441\u0432\u044F\u0437\u0438", description: "\u0421\u043E\u0432\u0435\u0440\u0448\u0438\u0442\u0435 3 \u0437\u0432\u043E\u043D\u043A\u0430", target: 3, value: stats.calls, metric: "calls" },
+    { id: "reaction", icon: "\u2728", title: "\u042D\u043C\u043E\u0446\u0438\u044F", description: "\u041F\u043E\u0441\u0442\u0430\u0432\u044C\u0442\u0435 10 \u0440\u0435\u0430\u043A\u0446\u0438\u0439", target: 10, value: stats.reactions, metric: "reactions" },
+    { id: "story", icon: "\u{1F31F}", title: "\u0412 \u044D\u0444\u0438\u0440\u0435", description: "\u041E\u043F\u0443\u0431\u043B\u0438\u043A\u0443\u0439\u0442\u0435 3 \u0438\u0441\u0442\u043E\u0440\u0438\u0438", target: 3, value: stats.stories, metric: "stories" },
+    { id: "chatter", icon: "\u{1F680}", title: "\u0410\u043A\u0442\u0438\u0432\u043D\u044B\u0439 \u0430\u0432\u0442\u043E\u0440", description: "\u041E\u0442\u043F\u0440\u0430\u0432\u044C\u0442\u0435 100 \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u0439", target: 100, value: stats.messages, metric: "messages" }
+  ].map((item) => ({ ...item, completed: item.value >= item.target, progress: Math.min(100, Math.round(item.value / item.target * 100)) }));
+  return res.json({ stats, achievements });
+});
+var enhancements_default = router26;
+
+// src/routes/drafts.ts
+var import_express27 = __toESM(require_express2(), 1);
+init_src();
+init_drizzle_orm();
+var router27 = (0, import_express27.Router)();
+async function canAccessChat(chatId, userId) {
+  const member2 = await db.query.chatMembersTable.findFirst({
+    where: and(eq(chatMembersTable.chatId, chatId), eq(chatMembersTable.userId, userId))
+  });
+  return !!member2;
+}
+router27.get("/drafts", async (req, res) => {
+  try {
+    const drafts = await db.select({
+      chatId: chatDraftsTable.chatId,
+      text: chatDraftsTable.text,
+      updatedAt: chatDraftsTable.updatedAt
+    }).from(chatDraftsTable).where(eq(chatDraftsTable.userId, req.currentUserId));
+    res.json(drafts);
+  } catch (err2) {
+    req.log.error(err2);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+router27.get("/drafts/:chatId", async (req, res) => {
+  try {
+    const chatId = Number(req.params.chatId);
+    if (!Number.isInteger(chatId) || !await canAccessChat(chatId, req.currentUserId)) {
+      return res.status(403).json({ error: "\u041D\u0435\u0442 \u0434\u043E\u0441\u0442\u0443\u043F\u0430 \u043A \u044D\u0442\u043E\u043C\u0443 \u0447\u0430\u0442\u0443" });
+    }
+    const draft = await db.query.chatDraftsTable.findFirst({
+      where: and(eq(chatDraftsTable.chatId, chatId), eq(chatDraftsTable.userId, req.currentUserId))
+    });
+    res.json({ text: draft?.text ?? "", updatedAt: draft?.updatedAt ?? null });
+  } catch (err2) {
+    req.log.error(err2);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+router27.put("/drafts/:chatId", async (req, res) => {
+  try {
+    const chatId = Number(req.params.chatId);
+    if (!Number.isInteger(chatId) || !await canAccessChat(chatId, req.currentUserId)) {
+      return res.status(403).json({ error: "\u041D\u0435\u0442 \u0434\u043E\u0441\u0442\u0443\u043F\u0430 \u043A \u044D\u0442\u043E\u043C\u0443 \u0447\u0430\u0442\u0443" });
+    }
+    const text2 = typeof req.body?.text === "string" ? req.body.text.slice(0, 4e3) : "";
+    if (!text2.trim()) {
+      await db.delete(chatDraftsTable).where(and(eq(chatDraftsTable.chatId, chatId), eq(chatDraftsTable.userId, req.currentUserId)));
+      return res.json({ text: "", updatedAt: null });
+    }
+    const [draft] = await db.insert(chatDraftsTable).values({ chatId, userId: req.currentUserId, text: text2 }).onConflictDoUpdate({
+      target: [chatDraftsTable.chatId, chatDraftsTable.userId],
+      set: { text: text2, updatedAt: /* @__PURE__ */ new Date() }
+    }).returning();
+    res.json({ text: draft.text, updatedAt: draft.updatedAt });
+  } catch (err2) {
+    req.log.error(err2);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+var drafts_default = router27;
+
+// src/routes/audio-rooms.ts
+var import_express28 = __toESM(require_express2(), 1);
+init_src();
+init_drizzle_orm();
+var router28 = (0, import_express28.Router)();
+router28.get("/audio-rooms", async (_req, res) => {
+  try {
+    const rooms = await db.select().from(audioRoomsTable).where(eq(audioRoomsTable.status, "active")).orderBy(desc(audioRoomsTable.createdAt));
+    res.json(rooms);
+  } catch (err2) {
+    _req.log.error(err2);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+router28.post("/audio-rooms", async (req, res) => {
+  try {
+    const name2 = typeof req.body?.name === "string" && req.body.name.trim() ? req.body.name.trim().slice(0, 80) : "\u0410\u0443\u0434\u0438\u043E\u043A\u043E\u043C\u043D\u0430\u0442\u0430";
+    const [call] = await db.insert(callsTable).values({
+      callerId: req.currentUserId,
+      type: "group",
+      status: "active",
+      startedAt: /* @__PURE__ */ new Date()
+    }).returning();
+    const [room] = await db.insert(audioRoomsTable).values({
+      callId: call.id,
+      hostId: req.currentUserId,
+      name: name2
+    }).returning();
+    const host = await db.query.usersTable.findFirst({ where: eq(usersTable.id, req.currentUserId) });
+    res.status(201).json({ ...call, caller: host, callee: null, roomName: room.name, roomId: room.id });
+  } catch (err2) {
+    req.log.error(err2);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0441\u043E\u0437\u0434\u0430\u0442\u044C \u0430\u0443\u0434\u0438\u043E\u043A\u043E\u043C\u043D\u0430\u0442\u0443" });
+  }
+});
+router28.delete("/audio-rooms/:roomId", async (req, res) => {
+  try {
+    const roomId = Number(req.params.roomId);
+    const room = await db.query.audioRoomsTable.findFirst({ where: eq(audioRoomsTable.id, roomId) });
+    if (!room) return res.status(404).json({ error: "\u041A\u043E\u043C\u043D\u0430\u0442\u0430 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u0430" });
+    if (room.hostId !== req.currentUserId) return res.status(403).json({ error: "\u0422\u043E\u043B\u044C\u043A\u043E \u0441\u043E\u0437\u0434\u0430\u0442\u0435\u043B\u044C \u043C\u043E\u0436\u0435\u0442 \u0437\u0430\u043A\u0440\u044B\u0442\u044C \u043A\u043E\u043C\u043D\u0430\u0442\u0443" });
+    await db.update(audioRoomsTable).set({ status: "ended" }).where(eq(audioRoomsTable.id, roomId));
+    await db.update(callsTable).set({ status: "ended", endedAt: /* @__PURE__ */ new Date() }).where(eq(callsTable.id, room.callId));
+    res.status(204).send();
+  } catch (err2) {
+    req.log.error(err2);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+var audio_rooms_default = router28;
+
+// src/routes/index.ts
+var router29 = (0, import_express29.Router)();
+router29.use(health_default);
+router29.use(auth_default);
+router29.use(qr_auth_default);
+router29.use(users_default);
+router29.use(contacts_default);
+router29.use(chats_default);
+router29.use(messages_default);
+router29.use(calls_default);
+router29.use(stories_default);
+router29.use(posts_default);
+router29.use(admin_default);
+router29.use(events_default);
+router29.use(wallet_default);
+if (!process.env.DISABLE_BOTS) router29.use(bots_default);
+router29.use(support_default);
+router29.use(prime_default);
+router29.use(push_default);
+router29.use(polls_default);
+router29.use(translate_default);
+router29.use(referral_default);
+router29.use(folders_default);
+router29.use(platform_events_default);
+router29.use(contact_requests_default);
+router29.use(clans_default);
+router29.use(feature_hub_default);
+router29.use(enhancements_default);
+router29.use(drafts_default);
+router29.use(audio_rooms_default);
+var routes_default = router29;
+
+// src/routes/botapi.ts
+var import_express30 = __toESM(require_express2(), 1);
+init_src();
+init_drizzle_orm();
 init_sse();
-var botApiRouter = (0, import_express26.Router)();
+var botApiRouter = (0, import_express30.Router)();
 async function resolveBot(token) {
   const rows = await db.execute(sql`SELECT bot_user_id FROM bot_tokens WHERE token = ${token}`);
   if (rows.rows.length === 0) return null;
@@ -153151,7 +153911,7 @@ if (!process.env.JWT_SECRET) {
 }
 var JWT_SECRET = process.env.JWT_SECRET;
 var EFFECTIVE_JWT_SECRET = JWT_SECRET;
-var app = (0, import_express27.default)();
+var app = (0, import_express31.default)();
 app.set("trust proxy", 1);
 app.use(
   helmet({
@@ -153185,7 +153945,7 @@ app.use(
 app.use((_req, res, next) => {
   res.setHeader(
     "Permissions-Policy",
-    "geolocation=(), microphone=(self), camera=(self), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()"
+    "geolocation=(self), microphone=(self), camera=(self), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()"
   );
   next();
 });
@@ -153228,17 +153988,17 @@ app.use(
     }
   })
 );
-app.use("/api/upload", import_express27.default.json({ limit: "2gb" }));
-app.use("/api/upload", import_express27.default.urlencoded({ extended: true, limit: "2gb" }));
-app.use("/api/stories", import_express27.default.json({ limit: "2gb" }));
-app.use("/api/stories", import_express27.default.urlencoded({ extended: true, limit: "2gb" }));
-app.use("/api/users/me", import_express27.default.json({ limit: "2gb" }));
-app.use("/api/messages", import_express27.default.json({ limit: "2gb" }));
-app.use("/api/messages", import_express27.default.urlencoded({ extended: true, limit: "2gb" }));
-app.use("/api/support", import_express27.default.json({ limit: "2gb" }));
-app.use("/api/support", import_express27.default.urlencoded({ extended: true, limit: "2gb" }));
-app.use(import_express27.default.json({ limit: "2mb" }));
-app.use(import_express27.default.urlencoded({ extended: true, limit: "2mb" }));
+app.use("/api/upload", import_express31.default.json({ limit: "2gb" }));
+app.use("/api/upload", import_express31.default.urlencoded({ extended: true, limit: "2gb" }));
+app.use("/api/stories", import_express31.default.json({ limit: "2gb" }));
+app.use("/api/stories", import_express31.default.urlencoded({ extended: true, limit: "2gb" }));
+app.use("/api/users/me", import_express31.default.json({ limit: "2gb" }));
+app.use("/api/messages", import_express31.default.json({ limit: "2gb" }));
+app.use("/api/messages", import_express31.default.urlencoded({ extended: true, limit: "2gb" }));
+app.use("/api/support", import_express31.default.json({ limit: "2gb" }));
+app.use("/api/support", import_express31.default.urlencoded({ extended: true, limit: "2gb" }));
+app.use(import_express31.default.json({ limit: "2mb" }));
+app.use(import_express31.default.urlencoded({ extended: true, limit: "2mb" }));
 function sanitizeString(val, maxLen = 1e3) {
   if (typeof val !== "string") return "";
   return val.trim().slice(0, maxLen).replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, "").replace(/<[^>]+>/g, "").replace(/javascript:/gi, "").replace(/on\w+\s*=/gi, "");
@@ -153324,7 +154084,8 @@ var PUBLIC_API_PATHS = [
   // Public maintenance status check (no auth — shown before login)
   "/maintenance",
   // Public app changelog — visible to everyone (no auth required)
-  "/updates"
+  "/updates",
+  "/public/users"
 ];
 var sessionCache = /* @__PURE__ */ new Map();
 var SESSION_CACHE_TTL = 2e3;
@@ -153515,7 +154276,7 @@ app.use("/api", (_req, res) => {
 });
 if (process.env.NODE_ENV === "production") {
   const staticDir = path.join(process.cwd(), "artifacts/pulse/dist");
-  app.use(import_express27.default.static(staticDir, { maxAge: "1h", index: false }));
+  app.use(import_express31.default.static(staticDir, { maxAge: "1h", index: false }));
   app.use("/{*path}", (_req, res) => {
     res.sendFile(path.join(staticDir, "index.html"));
   });
@@ -153969,6 +154730,50 @@ var _schemaMigrations = (async () => {
   await run(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAULT FALSE`);
   await run(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS password_reset_code TEXT`);
   await run(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS password_reset_expires_at TIMESTAMP WITH TIME ZONE`);
+  await run(sql`
+    CREATE TABLE IF NOT EXISTS chat_space_notes (
+      id SERIAL PRIMARY KEY,
+      chat_id INTEGER NOT NULL REFERENCES chats(id) ON DELETE CASCADE,
+      title TEXT NOT NULL DEFAULT 'Без названия',
+      body TEXT NOT NULL,
+      created_by INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    )
+  `);
+  await run(sql`
+    CREATE TABLE IF NOT EXISTS chat_space_tasks (
+      id SERIAL PRIMARY KEY,
+      chat_id INTEGER NOT NULL REFERENCES chats(id) ON DELETE CASCADE,
+      title TEXT NOT NULL,
+      done BOOLEAN NOT NULL DEFAULT FALSE,
+      assignee_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      created_by INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      due_at TIMESTAMP WITH TIME ZONE,
+      created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    )
+  `);
+  await run(sql`
+    CREATE TABLE IF NOT EXISTS chat_drafts (
+      id SERIAL PRIMARY KEY,
+      chat_id INTEGER NOT NULL REFERENCES chats(id) ON DELETE CASCADE,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      text TEXT NOT NULL DEFAULT '',
+      updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+      CONSTRAINT chat_drafts_chat_user_unique UNIQUE (chat_id, user_id)
+    )
+  `);
+  await run(sql`ALTER TABLE stories ADD COLUMN IF NOT EXISTS music_url TEXT`);
+  await run(sql`ALTER TABLE stories ADD COLUMN IF NOT EXISTS music_name TEXT`);
+  await run(sql`
+    CREATE TABLE IF NOT EXISTS audio_rooms (
+      id SERIAL PRIMARY KEY,
+      call_id INTEGER NOT NULL REFERENCES calls(id) ON DELETE CASCADE,
+      host_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      name TEXT NOT NULL DEFAULT 'Аудиокомната',
+      status TEXT NOT NULL DEFAULT 'active',
+      created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    )
+  `);
 })();
 _schemaMigrations.catch((e5) => logger.error({ err: e5 }, "Schema migration block failed"));
 db.execute(sql`

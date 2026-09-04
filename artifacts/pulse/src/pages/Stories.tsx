@@ -1,15 +1,25 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useGetStories, useCreateStory, getGetStoriesQueryKey } from "@workspace/api-client-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Play, Plus, X, Type, Image as ImageIcon, Upload, Eye, Trash2 } from "lucide-react";
+import { Play, Plus, X, Type, Image as ImageIcon, Upload, Eye, Trash2, Video, Music } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAppContext } from "@/contexts/AppContext";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
+import { prepareVideoForUpload } from "@/lib/mediaCompression";
 
 const STORY_DURATION = 5000;
+
+function readFileAsDataUrl(file: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
 
 async function compressStoryImage(file: File, maxPx = 1280, quality = 0.85): Promise<string> {
   return new Promise((resolve) => {
@@ -80,7 +90,11 @@ export default function Stories() {
   const [storyBg, setStoryBg] = useState("#1a1a2e");
   const [storyImageUrls, setStoryImageUrls] = useState<string[]>([]);
   const [storyImageCaption, setStoryImageCaption] = useState("");
-  const [storyType, setStoryType] = useState<"text" | "image">("text");
+  const [storyType, setStoryType] = useState<"text" | "image" | "video">("text");
+  const [storyVideoUrl, setStoryVideoUrl] = useState("");
+  const [musicUrl, setMusicUrl] = useState("");
+  const [musicName, setMusicName] = useState("");
+  const musicInputRef = useRef<HTMLInputElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createError, setCreateError] = useState("");
   const [viewingGroup, setViewingGroup] = useState<any>(null);
@@ -121,8 +135,17 @@ export default function Stories() {
     if (!files.length) return;
     e.target.value = "";
     const imageFiles = files.filter(file => file.type.startsWith("image/"));
-    if (imageFiles.length !== files.length) {
-      toast({ title: "Видео недоступно", description: "В статус можно добавлять только фотографии.", variant: "destructive" });
+    const videoFiles = files.filter(file => file.type.startsWith("video/"));
+    if (videoFiles.length > 0) {
+      const video = await prepareVideoForUpload(videoFiles[0]);
+      if (video) {
+        setStoryType("video");
+        setStoryVideoUrl(video);
+        setStoryImageUrls([]);
+      }
+    }
+    if (files.some(file => !file.type.startsWith("image/") && !file.type.startsWith("video/"))) {
+      toast({ title: "Неподдерживаемый файл", description: "Выберите изображение или видео.", variant: "destructive" });
     }
     const compressedImages = (await Promise.all(imageFiles.map(file => compressStoryImage(file)))).filter(Boolean);
     if (compressedImages.length) {
@@ -132,20 +155,35 @@ export default function Stories() {
     }
   };
 
+  const handleMusicChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (!file.type.startsWith("audio/") || file.size > 12 * 1024 * 1024) {
+      toast({ title: "Музыка не добавлена", description: "Нужен аудиофайл размером до 12 МБ.", variant: "destructive" });
+      return;
+    }
+    setMusicUrl(await readFileAsDataUrl(file));
+    setMusicName(file.name);
+  };
+
   const handleCreateStory = async () => {
     if (storyType === "text" && !storyText.trim()) return;
     if (storyType === "image" && storyImageUrls.length === 0) return;
+    if (storyType === "video" && !storyVideoUrl) return;
     setIsSubmitting(true);
     setCreateError("");
     try {
-      const imagesToPublish = storyType === "image" ? storyImageUrls : [undefined];
-      for (const mediaUrl of imagesToPublish) {
+      const mediaToPublish = storyType === "image" ? storyImageUrls : [storyType === "video" ? storyVideoUrl : undefined];
+      for (const mediaUrl of mediaToPublish) {
         await createStoryMutation.mutateAsync({
           data: {
             type: storyType,
             text: storyType === "text" ? storyText.trim() : (storyImageCaption.trim() || undefined),
             backgroundColor: storyBg,
             mediaUrl,
+            musicUrl: musicUrl || undefined,
+            musicName: musicName || undefined,
           }
         });
       }
@@ -153,6 +191,9 @@ export default function Stories() {
       setShowCreate(false);
       setStoryText("");
       setStoryImageUrls([]);
+      setStoryVideoUrl("");
+      setMusicUrl("");
+      setMusicName("");
       setStoryImageCaption("");
       setStoryBg("#1a1a2e");
       setStoryType("text");
@@ -273,6 +314,9 @@ export default function Stories() {
                     {latestStory?.type === "image" && latestStory.mediaUrl && (
                       <img src={latestStory.mediaUrl} alt="" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
                     )}
+                    {latestStory?.type === "video" && latestStory.mediaUrl && (
+                      <video src={latestStory.mediaUrl} muted playsInline className="w-full h-full object-cover" />
+                    )}
                     {latestStory?.type === "text" && (
                       <div className="w-full h-full flex items-center justify-center p-4 text-center">
                         <p className="text-white font-bold text-xl leading-tight drop-shadow-lg">
@@ -336,6 +380,12 @@ export default function Stories() {
               >
                 <ImageIcon size={16} /> Фото
               </button>
+              <button
+                onClick={() => setStoryType("video")}
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border text-sm font-medium transition-all ${storyType === "video" ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:border-primary/50"}`}
+              >
+                <Video size={16} /> Видео
+              </button>
             </div>
 
             <div
@@ -361,8 +411,10 @@ export default function Stories() {
                     </div>
                   )}
                 </div>
+              ) : storyType === "video" && storyVideoUrl ? (
+                <video src={storyVideoUrl} controls muted playsInline className="w-full h-48 object-contain rounded-xl bg-black/20" />
               ) : (
-                <p className="text-white/40 text-sm">{storyType === "text" ? "Предпросмотр текста" : "Предпросмотр изображения"}</p>
+                <p className="text-white/40 text-sm">{storyType === "text" ? "Предпросмотр текста" : storyType === "video" ? "Предпросмотр видео" : "Предпросмотр изображения"}</p>
               )}
             </div>
 
@@ -376,12 +428,23 @@ export default function Stories() {
                 className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-primary transition-colors resize-none"
                 autoFocus
               />
+            ) : storyType === "video" ? (
+              <div className="space-y-2">
+                <input ref={fileInputRef} type="file" accept="video/*" onChange={handleFileChange} className="hidden" />
+                <button type="button" onClick={() => fileInputRef.current?.click()}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-dashed border-primary/40 text-sm font-medium text-primary hover:bg-primary/5 hover:border-primary transition-all">
+                  <Upload size={16} /> {storyVideoUrl ? "Заменить видео" : "Выбрать видео с устройства"}
+                </button>
+                <p className="text-[11px] text-muted-foreground text-center">Видео будет доступно 24 часа. Рекомендуемый размер — до 50 МБ.</p>
+                <textarea value={storyImageCaption} onChange={e => setStoryImageCaption(e.target.value)} placeholder="Подпись к видео (необязательно)..."
+                  rows={2} maxLength={200} className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-primary transition-colors resize-none" />
+              </div>
             ) : (
               <div className="space-y-2">
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image/*"
+                   accept="image/*,video/*"
                   multiple
                   onChange={handleFileChange}
                   className="hidden"
@@ -426,6 +489,19 @@ export default function Stories() {
               </div>
             )}
 
+            <div className="space-y-2">
+              <input ref={musicInputRef} type="file" accept="audio/*" onChange={handleMusicChange} className="hidden" />
+              <button type="button" onClick={() => musicInputRef.current?.click()}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border border-border text-left hover:border-primary/50 transition-colors">
+                <div className="w-8 h-8 rounded-lg bg-fuchsia-500/15 flex items-center justify-center"><Music size={16} className="text-fuchsia-400" /></div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold">{musicName || "Добавить музыку"}</p>
+                  <p className="text-[11px] text-muted-foreground">{musicName ? "Музыка будет играть в истории" : "Аудиофайл до 12 МБ"}</p>
+                </div>
+                {musicName && <span onClick={e => { e.stopPropagation(); setMusicUrl(""); setMusicName(""); }} className="text-muted-foreground hover:text-destructive"><X size={16} /></span>}
+              </button>
+            </div>
+
             <div>
               <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 block">Фон</label>
               <div className="flex flex-wrap gap-2">
@@ -453,7 +529,7 @@ export default function Stories() {
               </button>
               <button
                 onClick={handleCreateStory}
-                disabled={isSubmitting || (storyType === "text" ? !storyText.trim() : !storyImageUrls.length)}
+                disabled={isSubmitting || (storyType === "text" ? !storyText.trim() : storyType === "image" ? !storyImageUrls.length : !storyVideoUrl)}
                 className="flex-1 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-bold hover:bg-primary/90 transition-colors disabled:opacity-50"
               >
                 {isSubmitting ? "Публикую..." : "Опубликовать"}
@@ -496,6 +572,29 @@ export default function Stories() {
                         className="w-full h-full object-cover"
                       />
                     )}
+                    {story?.type === "video" && story.mediaUrl && (
+                      <video
+                        src={story.mediaUrl}
+                        autoPlay
+                        controls
+                        playsInline
+                        className="w-full h-full object-contain bg-black"
+                        onPlay={resumeStory}
+                      />
+                    )}
+                    {story?.musicUrl && (
+                      <div className="absolute left-4 right-4 bottom-20 z-10">
+                        <audio
+                          src={story.musicUrl}
+                          autoPlay
+                          loop
+                          controls
+                          className="w-full h-9 opacity-90"
+                          onPlay={resumeStory}
+                        />
+                        <p className="text-white/80 text-[11px] mt-1 text-center truncate">{story.musicName || "Музыка"}</p>
+                      </div>
+                    )}
                     {story?.type === "text" && (
                       <div className="w-full h-full flex items-center justify-center p-8">
                         <p className="text-white font-bold text-2xl text-center leading-tight drop-shadow-lg">
@@ -503,7 +602,7 @@ export default function Stories() {
                         </p>
                       </div>
                     )}
-                    {story?.text && story?.type === "image" && (
+                    {story?.text && (story?.type === "image" || story?.type === "video") && (
                       <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-6 pb-20">
                         <p className="text-white text-base font-medium text-center drop-shadow">{story.text}</p>
                       </div>

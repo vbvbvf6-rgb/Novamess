@@ -7,7 +7,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getGetMessagesQueryKey, getGetChatsQueryKey } from "@workspace/api-client-react";
 import { cn } from "@/lib/utils";
-import { Check, CheckCheck, Clock, X, Info, Play, Pause, Mic, Phone, Reply, Pencil, Trash2, Copy, SmilePlus, Languages, Pin, PinOff, BarChart2, Eye, Crown, Wand2, MessageSquare, Shield, Sparkles, Forward, Search, Download } from "lucide-react";
+import { Check, CheckCheck, Clock, X, Info, Play, Pause, Mic, Phone, Reply, Pencil, Trash2, Copy, SmilePlus, Languages, Pin, PinOff, BarChart2, Eye, Crown, Wand2, MessageSquare, Shield, Sparkles, Forward, Search, Download, MapPin } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { BOT_AVATAR_URL } from "@/lib/botAvatar";
 import { decryptMessage, isEncryptedMessage } from "@/lib/e2e";
@@ -989,6 +989,28 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
             {message.text && <p className="text-[15px] mt-3 px-2 mb-1 font-medium">{message.text}</p>}
           </div>
         );
+      case "location": {
+        let coords: { lat?: number; lng?: number; accuracy?: number } = {};
+        try { coords = JSON.parse(message.mediaUrl || "{}"); } catch {}
+        if (!Number.isFinite(coords.lat) || !Number.isFinite(coords.lng)) return <p>Геопозиция недоступна</p>;
+        const mapUrl = `https://www.openstreetmap.org/?mlat=${coords.lat}&mlon=${coords.lng}#map=16/${coords.lat}/${coords.lng}`;
+        return (
+          <a href={mapUrl} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
+            className={cn("flex items-center gap-3 min-w-[220px] rounded-2xl p-3 transition-colors", isMine ? "bg-white/10 hover:bg-white/15" : "bg-primary/10 hover:bg-primary/15")}>
+            <div className={cn("w-11 h-11 rounded-full flex items-center justify-center shrink-0", isMine ? "bg-white/15" : "bg-primary/15")}>
+              <MapPin size={22} className={isMine ? "text-white" : "text-primary"} />
+            </div>
+            <div className="min-w-0">
+              <p className="font-bold text-[14px]">Геопозиция</p>
+              <p className={cn("text-[11px] truncate", isMine ? "text-white/65" : "text-muted-foreground")}>
+                {coords.lat?.toFixed(5)}, {coords.lng?.toFixed(5)}
+                {coords.accuracy ? ` · ±${coords.accuracy} м` : ""}
+              </p>
+              <p className={cn("text-[11px] font-semibold mt-0.5", isMine ? "text-white/80" : "text-primary")}>Открыть карту</p>
+            </div>
+          </a>
+        );
+      }
       case "album": {
         let albumUrls: string[] = [];
         let albumCaption = "";

@@ -8,3 +8,9 @@ An imported pnpm workspace can retain its lockfile while lacking all installed p
 **Why:** A fresh GitHub import does not necessarily include the workspace's ignored node_modules tree, so startup errors can look like broken app code even when the lockfile is valid.
 
 **How to apply:** Check for node_modules and the lockfile before debugging application behavior. If the lockfile is present, hydrate with a frozen pnpm install, then restart only the workflows needed for the requested artifact and verify its HTTP response and preview.
+
+When editing generated workspace API types, force the referenced TypeScript project build if consumers still report the old declaration shape; project references may resolve stale `dist/*.d.ts` files.
+
+**Why:** The React client exports source files, but the consuming app's project reference can retain older emitted declarations until a forced build.
+
+**How to apply:** After changing generated schema source, run `pnpm exec tsc -b <package> --force` before diagnosing a type error as a code problem.

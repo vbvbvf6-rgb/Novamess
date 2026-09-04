@@ -8085,18 +8085,18 @@ export declare const sendMessageBodyTypeDefault = "text";
 export declare const SendMessageBody: zod.ZodObject<{
     chatId: zod.ZodNumber;
     text: zod.ZodOptional<zod.ZodString>;
-    type: zod.ZodDefault<zod.ZodEnum<["text", "image", "video", "audio", "file", "sticker", "album", "document"]>>;
+    type: zod.ZodDefault<zod.ZodEnum<["text", "image", "video", "audio", "file", "sticker", "album", "document", "location"]>>;
     mediaUrl: zod.ZodOptional<zod.ZodString>;
     replyToId: zod.ZodOptional<zod.ZodNumber>;
 }, "strip", zod.ZodTypeAny, {
-    type: "text" | "image" | "video" | "audio" | "file" | "sticker" | "album" | "document";
+    type: "text" | "image" | "video" | "audio" | "file" | "sticker" | "album" | "document" | "location";
     chatId: number;
     text?: string | undefined;
     mediaUrl?: string | undefined;
     replyToId?: number | undefined;
 }, {
     chatId: number;
-    type?: "text" | "image" | "video" | "audio" | "file" | "sticker" | "album" | "document" | undefined;
+    type?: "text" | "image" | "video" | "audio" | "file" | "sticker" | "album" | "document" | "location" | undefined;
     text?: string | undefined;
     mediaUrl?: string | undefined;
     replyToId?: number | undefined;
@@ -11420,16 +11420,22 @@ export declare const CreateStoryBody: zod.ZodObject<{
     type: zod.ZodEnum<["image", "video", "text"]>;
     text: zod.ZodOptional<zod.ZodString>;
     backgroundColor: zod.ZodOptional<zod.ZodString>;
+    musicUrl: zod.ZodOptional<zod.ZodString>;
+    musicName: zod.ZodOptional<zod.ZodString>;
 }, "strip", zod.ZodTypeAny, {
     type: "text" | "image" | "video";
     text?: string | undefined;
     mediaUrl?: string | undefined;
     backgroundColor?: string | undefined;
+    musicUrl?: string | undefined;
+    musicName?: string | undefined;
 }, {
     type: "text" | "image" | "video";
     text?: string | undefined;
     mediaUrl?: string | undefined;
     backgroundColor?: string | undefined;
+    musicUrl?: string | undefined;
+    musicName?: string | undefined;
 }>;
 export declare const DeleteStoryParams: zod.ZodObject<{
     storyId: zod.ZodNumber;

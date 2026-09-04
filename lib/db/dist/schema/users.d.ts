@@ -258,6 +258,23 @@ export declare const usersTable: import("drizzle-orm/pg-core").PgTableWithColumn
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
+        moderationType: import("drizzle-orm/pg-core").PgColumn<{
+            name: "moderation_type";
+            tableName: "users";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
         isDeveloper: import("drizzle-orm/pg-core").PgColumn<{
             name: "is_developer";
             tableName: "users";
@@ -752,6 +769,7 @@ export declare const insertUserSchema: z.ZodObject<{
     isBot: z.ZodOptional<z.ZodBoolean>;
     isVerified: z.ZodOptional<z.ZodBoolean>;
     isAdmin: z.ZodOptional<z.ZodBoolean>;
+    moderationType: z.ZodOptional<z.ZodString>;
     isDeveloper: z.ZodOptional<z.ZodBoolean>;
     isYoutubeCreator: z.ZodOptional<z.ZodBoolean>;
     isTiktokCreator: z.ZodOptional<z.ZodBoolean>;

@@ -105,6 +105,40 @@ export declare const storiesTable: import("drizzle-orm/pg-core").PgTableWithColu
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
+        musicUrl: import("drizzle-orm/pg-core").PgColumn<{
+            name: "music_url";
+            tableName: "stories";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        musicName: import("drizzle-orm/pg-core").PgColumn<{
+            name: "music_name";
+            tableName: "stories";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
         expiresAt: import("drizzle-orm/pg-core").PgColumn<{
             name: "expires_at";
             tableName: "stories";
@@ -240,6 +274,8 @@ export declare const insertStorySchema: z.ZodObject<{
     text: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     mediaUrl: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     backgroundColor: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    musicUrl: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    musicName: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     expiresAt: z.ZodDate;
 }, {
     out: {};

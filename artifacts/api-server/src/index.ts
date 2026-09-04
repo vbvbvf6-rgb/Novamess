@@ -152,6 +152,28 @@ const _schemaMigrations = (async () => {
       created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
     )
   `);
+  await run(sql`
+    CREATE TABLE IF NOT EXISTS chat_drafts (
+      id SERIAL PRIMARY KEY,
+      chat_id INTEGER NOT NULL REFERENCES chats(id) ON DELETE CASCADE,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      text TEXT NOT NULL DEFAULT '',
+      updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+      CONSTRAINT chat_drafts_chat_user_unique UNIQUE (chat_id, user_id)
+    )
+  `);
+  await run(sql`ALTER TABLE stories ADD COLUMN IF NOT EXISTS music_url TEXT`);
+  await run(sql`ALTER TABLE stories ADD COLUMN IF NOT EXISTS music_name TEXT`);
+  await run(sql`
+    CREATE TABLE IF NOT EXISTS audio_rooms (
+      id SERIAL PRIMARY KEY,
+      call_id INTEGER NOT NULL REFERENCES calls(id) ON DELETE CASCADE,
+      host_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      name TEXT NOT NULL DEFAULT 'Аудиокомната',
+      status TEXT NOT NULL DEFAULT 'active',
+      created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    )
+  `);
 })();
 _schemaMigrations.catch((e) => logger.error({ err: e }, "Schema migration block failed"));
 

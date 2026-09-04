@@ -82,6 +82,7 @@ export const MessageType = {
   call: "call",
   sticker: "sticker",
   system: "system",
+  location: "location",
 } as const;
 
 export interface Reaction {
@@ -241,6 +242,7 @@ export const SendMessageBodyType = {
   sticker: "sticker",
   album: "album",
   document: "document",
+  location: "location",
 } as const;
 
 export interface SendMessageBody {
@@ -341,6 +343,8 @@ export interface Story {
   id: number;
   userId: number;
   mediaUrl?: string;
+  musicUrl?: string | null;
+  musicName?: string | null;
   type: StoryType;
   text?: string | null;
   backgroundColor?: string | null;
@@ -371,6 +375,8 @@ export interface CreateStoryBody {
   type: CreateStoryBodyType;
   text?: string;
   backgroundColor?: string;
+  musicUrl?: string;
+  musicName?: string;
 }
 
 export interface Post {

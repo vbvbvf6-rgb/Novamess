@@ -1293,6 +1293,7 @@ export const SendMessageBody = zod.object({
       "sticker",
       "album",
       "document",
+      "location",
     ])
     .default(sendMessageBodyTypeDefault),
   mediaUrl: zod.string().optional(),
@@ -1924,6 +1925,8 @@ export const CreateStoryBody = zod.object({
   type: zod.enum(["image", "video", "text"]),
   text: zod.string().optional(),
   backgroundColor: zod.string().optional(),
+  musicUrl: zod.string().optional(),
+  musicName: zod.string().optional(),
 });
 
 export const DeleteStoryParams = zod.object({

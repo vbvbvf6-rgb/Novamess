@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useGetCallHistory, getGetCallHistoryQueryKey } from "@workspace/api-client-react";
 import type { Call } from "@workspace/api-client-react";
-import { Phone, Video, PhoneMissed, PhoneForwarded, PhoneIncoming, PhoneCall, Search, X, Trash2 } from "lucide-react";
+import { Phone, Video, PhoneMissed, PhoneForwarded, PhoneIncoming, PhoneCall, Search, X, Trash2, Headphones } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -98,6 +98,22 @@ export default function Calls() {
           >
             <PhoneCall size={14} />
             Новый звонок
+          </button>
+          <button
+            onClick={async () => {
+              try {
+                const name = window.prompt("Название аудиокомнаты", "Открытая аудиокомната") || "Открытая аудиокомната";
+                await startCall(null, null, "group");
+                toast({ title: `${name} создана`, description: "Пригласите участников в окне звонка." });
+              } catch {
+                toast({ title: "Не удалось создать аудиокомнату", variant: "destructive" });
+              }
+            }}
+            className="flex items-center gap-2 px-3 py-2 rounded-2xl text-sm font-bold border border-primary/30 text-primary hover:bg-primary/10 transition-all active:scale-95"
+            title="Создать аудиокомнату"
+          >
+            <Headphones size={15} />
+            <span className="hidden sm:inline">Аудиокомната</span>
           </button>
         </div>
       </header>
