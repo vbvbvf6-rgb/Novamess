@@ -145784,7 +145784,11 @@ router6.delete("/chats/bulk", async (req, res) => {
   try {
     const uid = req.currentUserId;
     const rawIds = Array.isArray(req.body?.chatIds) ? req.body.chatIds : [];
-    const chatIds = [...new Set(rawIds.map(Number).filter((id) => Number.isInteger(id) && id > 0))];
+    const chatIds = Array.from(
+      new Set(
+        rawIds.map((id) => Number(id)).filter((id) => Number.isInteger(id) && id > 0)
+      )
+    );
     if (!chatIds.length) return res.status(400).json({ error: "\u0423\u043A\u0430\u0436\u0438\u0442\u0435 \u0445\u043E\u0442\u044F \u0431\u044B \u043E\u0434\u0438\u043D \u0447\u0430\u0442" });
     if (chatIds.length > 100) return res.status(400).json({ error: "\u0417\u0430 \u043E\u0434\u0438\u043D \u0440\u0430\u0437 \u043C\u043E\u0436\u043D\u043E \u0443\u0434\u0430\u043B\u0438\u0442\u044C \u043D\u0435 \u0431\u043E\u043B\u0435\u0435 100 \u0447\u0430\u0442\u043E\u0432" });
     const deleted = [];
@@ -147466,10 +147470,18 @@ ${inline_code}
                   proc.kill("SIGKILL");
                   resolve({ out: "", err: "\u23F1 Timeout: \u0441\u043A\u0440\u0438\u043F\u0442 \u0432\u044B\u043F\u043E\u043B\u043D\u044F\u043B\u0441\u044F \u0434\u043E\u043B\u044C\u0448\u0435 10 \u0441\u0435\u043A\u0443\u043D\u0434 \u0438 \u0431\u044B\u043B \u043E\u0441\u0442\u0430\u043D\u043E\u0432\u043B\u0435\u043D.", killed: true });
                 }, 1e4);
-                proc.stdout.on("data", (d5) => {
+                const stdout = proc.stdout;
+                const stderr = proc.stderr;
+                const stdin = proc.stdin;
+                if (!stdout || !stderr || !stdin) {
+                  clearTimeout(timer);
+                  resolve({ out: "", err: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0437\u0430\u043F\u0443\u0441\u0442\u0438\u0442\u044C \u043E\u043A\u0440\u0443\u0436\u0435\u043D\u0438\u0435 \u0431\u043E\u0442\u0430.", killed: false });
+                  return;
+                }
+                stdout.on("data", (d5) => {
                   out += d5.toString();
                 });
-                proc.stderr.on("data", (d5) => {
+                stderr.on("data", (d5) => {
                   err2 += d5.toString();
                 });
                 proc.on("close", () => {
@@ -147483,8 +147495,8 @@ ${inline_code}
                   resolve({ out: "", err: e5.message, killed: false });
                 });
                 try {
-                  proc.stdin.write(JSON.stringify(payload));
-                  proc.stdin.end();
+                  stdin.write(JSON.stringify(payload));
+                  stdin.end();
                 } catch {
                 }
               });
@@ -153354,14 +153366,18 @@ router25.post("/playlists/:playlistId/tracks", async (req, res) => {
   const title = String(req.body?.title || "").trim().slice(0, 160);
   const mediaUrl = String(req.body?.mediaUrl || "").trim();
   if (!title || !mediaUrl) return res.status(400).json({ error: "\u041D\u0443\u0436\u043D\u044B \u043D\u0430\u0437\u0432\u0430\u043D\u0438\u0435 \u0438 \u0430\u0443\u0434\u0438\u043E\u0444\u0430\u0439\u043B" });
+  if (mediaUrl.startsWith("data:audio/") && mediaUrl.length > 16 * 1024 * 1024) {
+    return res.status(413).json({ error: "\u0410\u0443\u0434\u0438\u043E\u0444\u0430\u0439\u043B \u0441\u043B\u0438\u0448\u043A\u043E\u043C \u0431\u043E\u043B\u044C\u0448\u043E\u0439. \u041C\u0430\u043A\u0441\u0438\u043C\u0443\u043C \u2014 12 \u041C\u0411." });
+  }
   try {
     await ensureSchema();
     const owner = await db.execute(sql`SELECT id FROM playlists WHERE id = ${playlistId} AND user_id = ${userId}`);
     if (!owner.rows.length) return res.status(403).json({ error: "\u041D\u0435\u0442 \u043F\u0440\u0430\u0432 \u043D\u0430 \u044D\u0442\u043E\u0442 \u043F\u043B\u0435\u0439\u043B\u0438\u0441\u0442" });
+    const storedMediaUrl = await offloadDataUrl(mediaUrl, "playlists");
     const track = await db.execute(sql`
       INSERT INTO playlist_tracks (playlist_id, title, artist, media_url, duration_seconds, sort_order)
       VALUES (${playlistId}, ${title}, ${String(req.body?.artist || "").trim().slice(0, 120) || null},
-        ${mediaUrl}, ${Number(req.body?.durationSeconds) || null},
+        ${storedMediaUrl}, ${Number(req.body?.durationSeconds) || null},
         COALESCE((SELECT MAX(sort_order) + 1 FROM playlist_tracks WHERE playlist_id = ${playlistId}), 0))
       RETURNING *
     `);
@@ -154040,7 +154056,7 @@ var messageLimiter = rate_limit_default({
   message: { error: "\u0421\u043B\u0438\u0448\u043A\u043E\u043C \u043C\u043D\u043E\u0433\u043E \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u0439. \u041F\u043E\u0434\u043E\u0436\u0434\u0438\u0442\u0435 \u043D\u0435\u043C\u043D\u043E\u0433\u043E." },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => req.currentUserId ? `user:${req.currentUserId}` : ipKeyGenerator(req),
+  keyGenerator: (req) => req.currentUserId ? `user:${req.currentUserId}` : ipKeyGenerator(req.ip ?? "unknown"),
   skip: (req) => !req.currentUserId
 });
 app.use("/api/messages", messageLimiter);
@@ -154050,7 +154066,7 @@ var uploadLimiter = rate_limit_default({
   message: { error: "\u0421\u043B\u0438\u0448\u043A\u043E\u043C \u043C\u043D\u043E\u0433\u043E \u0437\u0430\u0433\u0440\u0443\u0437\u043E\u043A. \u041F\u043E\u0434\u043E\u0436\u0434\u0438\u0442\u0435 \u043D\u0435\u043C\u043D\u043E\u0433\u043E." },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => req.currentUserId ? `upload:${req.currentUserId}` : ipKeyGenerator(req)
+  keyGenerator: (req) => req.currentUserId ? `upload:${req.currentUserId}` : ipKeyGenerator(req.ip ?? "unknown")
 });
 app.use("/api/upload", uploadLimiter);
 app.use("/api/stories", uploadLimiter);
@@ -154060,7 +154076,7 @@ var adminLimiter = rate_limit_default({
   message: { error: "\u0421\u043B\u0438\u0448\u043A\u043E\u043C \u043C\u043D\u043E\u0433\u043E \u0437\u0430\u043F\u0440\u043E\u0441\u043E\u0432 \u043A \u043F\u0430\u043D\u0435\u043B\u0438 \u0430\u0434\u043C\u0438\u043D\u0438\u0441\u0442\u0440\u0430\u0442\u043E\u0440\u0430." },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => req.currentUserId ? `admin:${req.currentUserId}` : ipKeyGenerator(req)
+  keyGenerator: (req) => req.currentUserId ? `admin:${req.currentUserId}` : ipKeyGenerator(req.ip ?? "unknown")
 });
 app.use("/api/admin", adminLimiter);
 var PUBLIC_API_PATHS = [
@@ -154337,7 +154353,7 @@ function initSocketIO(server) {
     const userId = socket.data.userId;
     db.execute(sql`UPDATE users SET status = 'online' WHERE id = ${userId}`).catch(() => {
     });
-    io2.emit("user-status", { userId, status: "online" });
+    io2?.emit("user-status", { userId, status: "online" });
     socket.on("join-call", ({ callId }) => {
       if (!callId) return;
       const room = io2?.sockets.adapter.rooms.get(`call:${callId}`);
