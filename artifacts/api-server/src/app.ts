@@ -200,7 +200,7 @@ const messageLimiter = rateLimit({
   message: { error: "Слишком много сообщений. Подождите немного." },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => req.currentUserId ? `user:${req.currentUserId}` : ipKeyGenerator(req),
+  keyGenerator: (req) => req.currentUserId ? `user:${req.currentUserId}` : ipKeyGenerator(req.ip ?? "unknown"),
   skip: (req) => !req.currentUserId,
 });
 app.use("/api/messages", messageLimiter);
@@ -212,7 +212,7 @@ const uploadLimiter = rateLimit({
   message: { error: "Слишком много загрузок. Подождите немного." },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => req.currentUserId ? `upload:${req.currentUserId}` : ipKeyGenerator(req),
+  keyGenerator: (req) => req.currentUserId ? `upload:${req.currentUserId}` : ipKeyGenerator(req.ip ?? "unknown"),
 });
 app.use("/api/upload", uploadLimiter);
 app.use("/api/stories", uploadLimiter);
@@ -224,7 +224,7 @@ const adminLimiter = rateLimit({
   message: { error: "Слишком много запросов к панели администратора." },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => req.currentUserId ? `admin:${req.currentUserId}` : ipKeyGenerator(req),
+  keyGenerator: (req) => req.currentUserId ? `admin:${req.currentUserId}` : ipKeyGenerator(req.ip ?? "unknown"),
 });
 app.use("/api/admin", adminLimiter);
 

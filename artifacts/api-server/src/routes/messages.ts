@@ -735,8 +735,16 @@ ${inline_code}
                   proc.kill("SIGKILL");
                   resolve({ out: "", err: "⏱ Timeout: скрипт выполнялся дольше 10 секунд и был остановлен.", killed: true });
                 }, 10000);
-                proc.stdout.on("data", (d: Buffer) => { out += d.toString(); });
-                proc.stderr.on("data", (d: Buffer) => { err += d.toString(); });
+                const stdout = proc.stdout;
+                const stderr = proc.stderr;
+                const stdin = proc.stdin;
+                if (!stdout || !stderr || !stdin) {
+                  clearTimeout(timer);
+                  resolve({ out: "", err: "Не удалось запустить окружение бота.", killed: false });
+                  return;
+                }
+                stdout.on("data", (d: Buffer) => { out += d.toString(); });
+                stderr.on("data", (d: Buffer) => { err += d.toString(); });
                 proc.on("close", () => {
                   if (!killed) {
                     clearTimeout(timer);
@@ -745,8 +753,8 @@ ${inline_code}
                 });
                 proc.on("error", (e: Error) => { clearTimeout(timer); resolve({ out: "", err: e.message, killed: false }); });
                 try {
-                  proc.stdin.write(JSON.stringify(payload));
-                  proc.stdin.end();
+                  stdin.write(JSON.stringify(payload));
+                  stdin.end();
                 } catch {}
               });
 

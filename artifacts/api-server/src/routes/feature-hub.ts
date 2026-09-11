@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
 import { sql } from "drizzle-orm";
+import { offloadDataUrl } from "../lib/objectStorage";
 
 const router = Router();
 
@@ -439,14 +440,18 @@ router.post("/playlists/:playlistId/tracks", async (req, res) => {
   const title = String(req.body?.title || "").trim().slice(0, 160);
   const mediaUrl = String(req.body?.mediaUrl || "").trim();
   if (!title || !mediaUrl) return res.status(400).json({ error: "Нужны название и аудиофайл" });
+  if (mediaUrl.startsWith("data:audio/") && mediaUrl.length > 16 * 1024 * 1024) {
+    return res.status(413).json({ error: "Аудиофайл слишком большой. Максимум — 12 МБ." });
+  }
   try {
     await ensureSchema();
     const owner = await db.execute(sql`SELECT id FROM playlists WHERE id = ${playlistId} AND user_id = ${userId}`);
     if (!owner.rows.length) return res.status(403).json({ error: "Нет прав на этот плейлист" });
+    const storedMediaUrl = await offloadDataUrl(mediaUrl, "playlists");
     const track = await db.execute(sql`
       INSERT INTO playlist_tracks (playlist_id, title, artist, media_url, duration_seconds, sort_order)
       VALUES (${playlistId}, ${title}, ${String(req.body?.artist || "").trim().slice(0, 120) || null},
-        ${mediaUrl}, ${Number(req.body?.durationSeconds) || null},
+        ${storedMediaUrl}, ${Number(req.body?.durationSeconds) || null},
         COALESCE((SELECT MAX(sort_order) + 1 FROM playlist_tracks WHERE playlist_id = ${playlistId}), 0))
       RETURNING *
     `);

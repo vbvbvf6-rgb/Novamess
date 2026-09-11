@@ -66,6 +66,7 @@ export function ScreenLock({ children }: ScreenLockProps) {
       const id = window.setTimeout(() => { void unlockWithBiometric(); }, 250);
       return () => window.clearTimeout(id);
     }
+    return undefined;
   }, [locked]);
 
   const doUnlock = (candidate: string) => {

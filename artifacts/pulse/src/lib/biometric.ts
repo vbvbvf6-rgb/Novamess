@@ -59,13 +59,17 @@ export async function authenticateBiometric(): Promise<boolean> {
   if (!encodedId) return false;
 
   try {
+    const decodedId = fromBase64(encodedId);
     const credential = await navigator.credentials.get({
       publicKey: {
         challenge: crypto.getRandomValues(new Uint8Array(32)),
         rpId: window.location.hostname,
         allowCredentials: [{
           type: "public-key",
-          id: fromBase64(encodedId),
+          id: decodedId.buffer.slice(
+            decodedId.byteOffset,
+            decodedId.byteOffset + decodedId.byteLength,
+          ) as ArrayBuffer,
         }],
         userVerification: "required",
         timeout: 60_000,

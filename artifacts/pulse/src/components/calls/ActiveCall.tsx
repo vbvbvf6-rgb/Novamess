@@ -218,6 +218,8 @@ export function ActiveCall() {
     isScreenSharing, startScreenShare, stopScreenShare, reacquireCamera, flipCamera,
     isCallMinimized, minimizeCall, expandCall,
   } = useAppContext();
+  const { data: contacts } = useGetContacts();
+  const contactById = (id: number) => contacts?.find((contact: any) => contact.id === id);
 
   const [duration, setDuration] = useState(0);
   const [isMuted, setIsMuted] = useState(false);

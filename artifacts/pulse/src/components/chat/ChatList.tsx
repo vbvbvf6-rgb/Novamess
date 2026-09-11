@@ -441,7 +441,7 @@ export function ChatList() {
     if (!contextMenuChat) return;
     const isNova = contextMenuChat.type === "direct" &&
       ["nova_security", "nova", "nova_ai"].includes(String((contextMenuChat.otherUser as any)?.username || "").toLowerCase());
-    if (isNova || contextMenuChat.type === "saved") {
+    if (isNova || (contextMenuChat as any).type === "saved") {
       toast({ title: "Этот системный чат нельзя удалить", variant: "destructive" });
       return;
     }
@@ -774,13 +774,13 @@ export function ChatList() {
                   ? "📞 Звонок"
                   : lastMessage.type === "sticker"
                   ? "🎨 Стикер"
-                  : lastMessage.type === "album"
+                  : (lastMessage as any).type === "album"
                   ? "📷 Фото"
-                  : lastMessage.type === "document"
+                  : (lastMessage as any).type === "document"
                   ? "📎 Файл"
                   : lastMessage.type === "video"
                   ? "🎥 Видео"
-                  : lastMessage.type === "poll"
+                  : (lastMessage as any).type === "poll"
                   ? "📊 Голосование"
                   : `[${lastMessage.type}]`
                 : "Нет сообщений";

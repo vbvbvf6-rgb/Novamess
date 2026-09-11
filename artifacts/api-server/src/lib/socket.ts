@@ -46,7 +46,7 @@ export function initSocketIO(server: HttpServer): SocketIOServer {
 
     // Mark user online and broadcast to all clients
     db.execute(sql`UPDATE users SET status = 'online' WHERE id = ${userId}`).catch(() => {});
-    io.emit("user-status", { userId, status: "online" });
+    io?.emit("user-status", { userId, status: "online" });
 
     socket.on("join-call", ({ callId }: { callId: number }) => {
       if (!callId) return;

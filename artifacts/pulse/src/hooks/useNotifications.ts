@@ -161,7 +161,7 @@ export function useNotifications() {
       const notifIcon = options.senderAvatar || options.icon || "/icon-192.png";
 
       const isSilent = localStorage.getItem("pulse-notify-sounds") === "false";
-      const notifOpts: NotificationOptions = {
+      const notifOpts: NotificationOptions & { vibrate?: number[]; timestamp?: number } = {
         body,
         icon: notifIcon,
         badge: "/badge-96.png",

@@ -606,7 +606,13 @@ router.delete("/chats/bulk", async (req, res) => {
   try {
     const uid = req.currentUserId;
     const rawIds = Array.isArray(req.body?.chatIds) ? req.body.chatIds : [];
-    const chatIds = [...new Set(rawIds.map(Number).filter((id: number) => Number.isInteger(id) && id > 0))];
+    const chatIds: number[] = Array.from(
+      new Set(
+        rawIds
+          .map((id: unknown) => Number(id))
+          .filter((id: number) => Number.isInteger(id) && id > 0),
+      ),
+    );
     if (!chatIds.length) return res.status(400).json({ error: "Укажите хотя бы один чат" });
     if (chatIds.length > 100) return res.status(400).json({ error: "За один раз можно удалить не более 100 чатов" });
 

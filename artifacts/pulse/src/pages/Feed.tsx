@@ -21,7 +21,7 @@ async function compressImage(file: File): Promise<string | null> {
   return new Promise((resolve) => {
     const reader = new FileReader();
     reader.onload = () => {
-      const image = new Image();
+      const image = new window.Image();
       image.onload = () => {
         const max = 1280;
         const scale = Math.min(1, max / Math.max(image.width, image.height));

@@ -7,6 +7,12 @@ import { sendPushToUser } from "./push.js";
 
 const router = Router();
 
+type RTCIceServer = {
+  urls: string | string[];
+  username?: string;
+  credential?: string;
+};
+
 // ── ICE server config (served from backend so TURN creds stay server-side) ──
 
 // Metered.ca: generates per-request time-limited credentials (recommended, free tier available)
