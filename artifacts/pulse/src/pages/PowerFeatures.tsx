@@ -112,14 +112,22 @@ export function RolesPanel() {
   </div></Card>;
 }
 
-type Playlist = { id: number; name: string; description?: string; track_count?: number };
+type Playlist = { id: number; name: string; description?: string; track_count?: number; is_public?: boolean };
 type Track = { id: number; title: string; artist?: string; media_url: string };
 
 export function PlaylistWidget({ compact = false }: { compact?: boolean }) {
-  const [playlists, setPlaylists] = useState<Playlist[]>([]); const [selected, setSelected] = useState<any>(null); const [name, setName] = useState(""); const [title, setTitle] = useState(""); const [artist, setArtist] = useState(""); const [url, setUrl] = useState(""); const [playing, setPlaying] = useState<number | null>(null); const [error, setError] = useState(""); const [isAdding, setIsAdding] = useState(false); const trackInputRef = React.useRef<HTMLInputElement>(null);
+  const [playlists, setPlaylists] = useState<Playlist[]>([]); const [selected, setSelected] = useState<any>(null); const [name, setName] = useState(""); const [title, setTitle] = useState(""); const [artist, setArtist] = useState(""); const [url, setUrl] = useState(""); const [playing, setPlaying] = useState<number | null>(null); const [error, setError] = useState(""); const [isAdding, setIsAdding] = useState(false); const [isPublic, setIsPublic] = useState(true); const trackInputRef = React.useRef<HTMLInputElement>(null);
   const load = async () => { try { setPlaylists(await api<Playlist[]>("/api/playlists")); } catch (e) { setError((e as Error).message); } };
   useEffect(() => { load(); }, []);
-  const create = async () => { if (!name.trim()) return; await api("/api/playlists", { method: "POST", body: JSON.stringify({ name }) }); setName(""); load(); };
+  const create = async () => {
+    if (!name.trim()) return;
+    setError("");
+    try {
+      await api("/api/playlists", { method: "POST", body: JSON.stringify({ name, isPublic }) });
+      setName("");
+      await load();
+    } catch (e) { setError((e as Error).message); }
+  };
   const open = async (id: number) => setSelected(await api<any>(`/api/playlists/${id}`));
   const addTrack = async () => {
     if (!selected || !title.trim() || !url.trim()) return;
@@ -150,10 +158,65 @@ export function PlaylistWidget({ compact = false }: { compact?: boolean }) {
   const removeTrack = async (id: number) => { await api(`/api/playlists/${selected.id}/tracks/${id}`, { method: "DELETE" }); open(selected.id); load(); };
   return <div className={cn("space-y-3", compact && "text-sm")}><div className="flex items-center gap-2"><ListMusic size={18} className="text-primary" /><h3 className="font-bold">Плейлисты</h3></div>
     <div className="flex gap-2"><input value={name} onChange={e => setName(e.target.value)} placeholder="Новый плейлист" className="flex-1 rounded-xl border border-border bg-background px-3 py-2 text-sm" /><button onClick={create} className="rounded-xl bg-primary px-3 text-primary-foreground"><Plus size={16} /></button></div>
+    <label className="flex items-center gap-2 text-xs text-muted-foreground"><input type="checkbox" checked={isPublic} onChange={e => setIsPublic(e.target.checked)} className="accent-primary" /> Показывать плейлист в моём профиле</label>
     <div className="flex gap-2 overflow-x-auto pb-1">{playlists.map(p => <button key={p.id} onClick={() => open(p.id)} className={cn("shrink-0 rounded-xl border px-3 py-2 text-left", selected?.id === p.id ? "border-primary bg-primary/10" : "border-border")}><span className="block font-semibold">{p.name}</span><span className="text-[11px] text-muted-foreground">{p.track_count || 0} треков</span></button>)}</div>
     {selected && <div className="rounded-2xl border border-border bg-background/50 p-3 space-y-2"><p className="font-bold">{selected.name}</p>{(selected.tracks as Track[]).map(track => <div key={track.id} className="flex items-center gap-2 rounded-xl bg-secondary/50 p-2"><button onClick={() => setPlaying(playing === track.id ? null : track.id)} aria-label={playing === track.id ? "Пауза" : "Воспроизвести"} className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center">{playing === track.id ? <Pause size={14} /> : <Play size={14} />}</button><div className="min-w-0 flex-1"><p className="text-sm font-semibold truncate">{track.title}</p><p className="text-xs text-muted-foreground truncate">{track.artist || "Nova"}</p></div><button onClick={() => removeTrack(track.id)} aria-label="Удалить трек" className="text-muted-foreground hover:text-destructive"><Trash2 size={14} /></button>{playing === track.id && <audio src={track.media_url} controls autoPlay className="w-full max-w-[240px]" onEnded={() => setPlaying(null)} />}</div>)}
        <div className="grid sm:grid-cols-3 gap-2 pt-2"><input value={title} onChange={e => setTitle(e.target.value)} placeholder="Название трека" className="rounded-xl border border-border bg-background px-3 py-2 text-sm" /><input value={artist} onChange={e => setArtist(e.target.value)} placeholder="Исполнитель" className="rounded-xl border border-border bg-background px-3 py-2 text-sm" /><input value={url.startsWith("data:") ? "" : url} onChange={e => setUrl(e.target.value)} placeholder="Ссылка на аудио" type="url" className="rounded-xl border border-border bg-background px-3 py-2 text-sm" /></div><input ref={trackInputRef} type="file" accept="audio/*" onChange={handleTrackFile} className="hidden" /><div className="flex flex-wrap gap-2"><button type="button" onClick={() => trackInputRef.current?.click()} className="inline-flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/10 px-3 py-2 text-xs font-semibold text-primary"><FileAudio size={14} /> Выбрать аудиофайл</button><button onClick={addTrack} disabled={isAdding || !title.trim() || !url.trim()} className="inline-flex items-center gap-2 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground disabled:opacity-50"><Plus size={14} /> {isAdding ? "Добавляю…" : "Добавить трек"}</button></div>
     </div>}{error && <p className="text-xs text-destructive">{error}</p>}</div>;
+}
+
+export function PublicPlaylistWidget({ userId }: { userId: number }) {
+  const [playlists, setPlaylists] = useState<Array<Playlist & { tracks: Track[] }>>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    api<Array<Playlist & { tracks: Track[] }>>(`/api/users/${userId}/playlists`)
+      .then((items) => { if (active) setPlaylists(items); })
+      .catch(() => { if (active) setPlaylists([]); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [userId]);
+
+  if (loading || playlists.length === 0) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="rounded-3xl border border-border bg-card overflow-hidden"
+    >
+      <div className="px-5 pt-4 pb-3 border-b border-border flex items-center gap-2">
+        <ListMusic size={17} className="text-primary" />
+        <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground">Плейлист</h3>
+      </div>
+      <div className="p-4 space-y-3">
+        {playlists.map((playlist) => (
+          <div key={playlist.id} className="rounded-2xl border border-border/70 bg-background/50 p-3">
+            <div className="flex items-center justify-between gap-3 mb-2">
+              <p className="font-bold truncate">{playlist.name}</p>
+              <span className="text-[11px] text-muted-foreground shrink-0">{playlist.tracks.length} треков</span>
+            </div>
+            <div className="space-y-2">
+              {playlist.tracks.map((track) => (
+                <div key={track.id} className="flex items-center gap-3 rounded-xl bg-secondary/50 p-2">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                    <Play size={13} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold truncate">{track.title}</p>
+                    <p className="text-xs text-muted-foreground truncate">{track.artist || "Nova"}</p>
+                  </div>
+                  <audio src={track.media_url} controls preload="none" className="w-[150px] max-w-[42%] h-8" />
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </motion.div>
+  );
 }
 
 export default function PowerFeatures() {

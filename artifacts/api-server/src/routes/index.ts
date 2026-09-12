@@ -28,6 +28,7 @@ import featureHubRouter from "./feature-hub";
 import enhancementsRouter from "./enhancements";
 import draftsRouter from "./drafts";
 import audioRoomsRouter from "./audio-rooms";
+import pluginsRouter from "./plugins";
 
 const router: IRouter = Router();
 
@@ -60,5 +61,6 @@ router.use(featureHubRouter);
 router.use(enhancementsRouter);
 router.use(draftsRouter);
 router.use(audioRoomsRouter);
+router.use(pluginsRouter);
 
 export default router;

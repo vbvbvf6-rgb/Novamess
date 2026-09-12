@@ -138,6 +138,8 @@ app.use("/api/messages", express.json({ limit: "2gb" }));
 app.use("/api/messages", express.urlencoded({ extended: true, limit: "2gb" }));
 app.use("/api/support", express.json({ limit: "2gb" }));
 app.use("/api/support", express.urlencoded({ extended: true, limit: "2gb" }));
+app.use("/api/playlists", express.json({ limit: "24mb" }));
+app.use("/api/playlists", express.urlencoded({ extended: true, limit: "24mb" }));
 app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true, limit: "2mb" }));
 

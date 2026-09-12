@@ -399,6 +399,47 @@ router.get("/playlists", async (req, res) => {
   }
 });
 
+router.get("/users/:userId/playlists", async (req, res) => {
+  const viewerId = auth(req, res);
+  if (!viewerId) return;
+  const profileUserId = Number(req.params.userId);
+  if (!Number.isInteger(profileUserId) || profileUserId <= 0) {
+    return res.status(400).json({ error: "Некорректный userId" });
+  }
+  try {
+    await ensureSchema();
+    const playlists = await db.execute(sql`
+      SELECT p.*, COUNT(pt.id)::int AS track_count
+      FROM playlists p
+      LEFT JOIN playlist_tracks pt ON pt.playlist_id = p.id
+      WHERE p.user_id = ${profileUserId} AND p.is_public = TRUE
+      GROUP BY p.id
+      ORDER BY p.updated_at DESC
+    `);
+    const tracks = await db.execute(sql`
+      SELECT pt.*
+      FROM playlist_tracks pt
+      JOIN playlists p ON p.id = pt.playlist_id
+      WHERE p.user_id = ${profileUserId} AND p.is_public = TRUE
+      ORDER BY pt.playlist_id, pt.sort_order, pt.id
+    `);
+    const tracksByPlaylist = new Map<number, unknown[]>();
+    for (const track of tracks.rows as any[]) {
+      const playlistId = Number(track.playlist_id);
+      const current = tracksByPlaylist.get(playlistId) ?? [];
+      current.push(track);
+      tracksByPlaylist.set(playlistId, current);
+    }
+    res.json((playlists.rows as any[]).map((playlist) => ({
+      ...playlist,
+      tracks: tracksByPlaylist.get(Number(playlist.id)) ?? [],
+    })));
+  } catch (error) {
+    req.log.error(error);
+    res.status(500).json({ error: "Не удалось загрузить публичные плейлисты" });
+  }
+});
+
 router.post("/playlists", async (req, res) => {
   const userId = auth(req, res);
   if (!userId) return;

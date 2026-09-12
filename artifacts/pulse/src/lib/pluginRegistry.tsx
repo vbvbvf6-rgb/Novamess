@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { LucideIcon } from "lucide-react";
-import { StickyNote } from "lucide-react";
+import { Puzzle, StickyNote } from "lucide-react";
 import { QuickNotesPlugin } from "@/pages/plugins/QuickNotesPlugin";
 import { useAppContext } from "@/contexts/AppContext";
 
@@ -16,6 +16,9 @@ export interface NovaPlugin {
   route: string;
   defaultEnabled?: boolean;
   component: React.ComponentType;
+  source?: "builtin" | "remote";
+  serverId?: number;
+  entryUrl?: string;
 }
 
 export const NOVA_PLUGINS: readonly NovaPlugin[] = [
@@ -44,6 +47,41 @@ interface PluginSystemValue {
 const PluginSystemContext = createContext<PluginSystemValue | undefined>(undefined);
 const STORAGE_PREFIX = "nova-plugins";
 
+function createRemotePluginComponent(entryUrl: string, name: string) {
+  return function RemotePluginFrame() {
+    return (
+      <div className="overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
+        <iframe
+          src={entryUrl}
+          title={name}
+          sandbox="allow-scripts allow-forms allow-popups"
+          referrerPolicy="no-referrer"
+          className="h-[min(720px,75dvh)] w-full border-0 bg-white"
+        />
+      </div>
+    );
+  };
+}
+
+function mapRemotePlugin(raw: any): NovaPlugin | null {
+  if (!raw || !Number.isInteger(Number(raw.id)) || typeof raw.entry_url !== "string") return null;
+  const id = `remote-${Number(raw.id)}`;
+  const name = String(raw.name || "Plugin").slice(0, 80);
+  return {
+    id,
+    name: { ru: name, en: name },
+    description: { ru: String(raw.description || ""), en: String(raw.description || "") },
+    version: String(raw.version || "1.0.0"),
+    author: String(raw.author_display_name || raw.author_username || "Nova user"),
+    icon: Puzzle,
+    route: `/plugins/${id}`,
+    component: createRemotePluginComponent(raw.entry_url, name),
+    source: "remote",
+    serverId: Number(raw.id),
+    entryUrl: raw.entry_url,
+  };
+}
+
 function storageKey(userId: number | null) {
   return `${STORAGE_PREFIX}:${userId ?? "guest"}`;
 }
@@ -61,12 +99,29 @@ function readEnabledIds(userId: number | null): string[] {
 export function PluginProvider({ children }: { children: React.ReactNode }) {
   const { currentUserId } = useAppContext();
   const [enabledIds, setEnabledIds] = useState<string[]>(() => readEnabledIds(currentUserId));
+  const [remotePlugins, setRemotePlugins] = useState<NovaPlugin[]>([]);
   const loadedUserIdRef = useRef<number | null>(currentUserId);
 
   useEffect(() => {
     loadedUserIdRef.current = currentUserId;
     const ids = readEnabledIds(currentUserId);
     setEnabledIds(ids);
+  }, [currentUserId]);
+
+  useEffect(() => {
+    let active = true;
+    if (!currentUserId) {
+      setRemotePlugins([]);
+      return () => { active = false; };
+    }
+    const token = sessionStorage.getItem("pulse-token");
+    fetch("/api/plugins", { headers: token ? { Authorization: `Bearer ${token}` } : {} })
+      .then((response) => response.ok ? response.json() : [])
+      .then((items: any[]) => {
+        if (active) setRemotePlugins(items.map(mapRemotePlugin).filter((item): item is NovaPlugin => item !== null));
+      })
+      .catch(() => { if (active) setRemotePlugins([]); });
+    return () => { active = false; };
   }, [currentUserId]);
 
   useEffect(() => {
@@ -92,14 +147,12 @@ export function PluginProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  const enabledPlugins = useMemo(
-    () => NOVA_PLUGINS.filter((plugin) => isEnabled(plugin.id)),
-    [isEnabled],
-  );
+  const plugins = useMemo(() => [...NOVA_PLUGINS, ...remotePlugins], [remotePlugins]);
+  const enabledPlugins = useMemo(() => plugins.filter((plugin) => isEnabled(plugin.id)), [isEnabled, plugins]);
 
   const value = useMemo(
-    () => ({ plugins: NOVA_PLUGINS, enabledPlugins, isEnabled, setEnabled }),
-    [enabledPlugins, isEnabled, setEnabled],
+    () => ({ plugins, enabledPlugins, isEnabled, setEnabled }),
+    [enabledPlugins, isEnabled, plugins, setEnabled],
   );
 
   return <PluginSystemContext.Provider value={value}>{children}</PluginSystemContext.Provider>;

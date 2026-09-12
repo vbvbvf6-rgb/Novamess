@@ -40,6 +40,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
+import { PublicPlaylistWidget } from "@/pages/PowerFeatures";
 
 const getToken = () => sessionStorage.getItem("pulse-token");
 
@@ -628,6 +629,8 @@ export default function UserProfile() {
               </div>
             </motion.div>
           )}
+
+          {!isMe && <PublicPlaylistWidget userId={userId} />}
 
           {!isMe && commonChats.length > 0 && (
             <motion.div
