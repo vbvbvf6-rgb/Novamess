@@ -549,7 +549,10 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
     setIsSending(true);
     try {
       if (videoBlob) {
-        const base64 = await readFileAsDataUrl(videoBlob);
+        const uploadBlob = await prepareVideoForUpload(
+          new File([videoBlob], "video-note.webm", { type: videoBlob.type || "video/webm" }),
+        );
+        const base64 = uploadBlob;
         const sent = await sendMessage.mutateAsync({
           data: {
             chatId,
@@ -747,28 +750,13 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
       chunksRef.current = [];
       cancelRecordingRef.current = false;
       let recorderStream = stream;
-      if (
-        kind === "video" &&
-        typeof document !== "undefined" &&
-        typeof HTMLCanvasElement !== "undefined" &&
-        typeof HTMLCanvasElement.prototype.captureStream === "function"
-      ) {
-        const canvas = document.createElement("canvas");
-        canvas.width = 720;
-        canvas.height = 720;
-        const context = canvas.getContext("2d");
-        if (context) {
-          const canvasStream = canvas.captureStream(30);
-          stream.getAudioTracks().forEach(track => canvasStream.addTrack(track));
-          recorderStream = canvasStream;
-          recordingCanvasRef.current = canvas;
-        }
-      }
       let activeRecorder: MediaRecorder;
       try {
         activeRecorder = new MediaRecorder(recorderStream, {
           mimeType,
-          ...(kind === "audio" ? { audioBitsPerSecond: 32000 } : {}),
+          ...(kind === "audio"
+            ? { audioBitsPerSecond: 32000 }
+            : { videoBitsPerSecond: 650_000, audioBitsPerSecond: 64_000 }),
         });
       } catch (error) {
         recorderStream.getTracks().forEach(track => track.stop());
@@ -851,12 +839,12 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
     if (!currentStream || !currentTrack) return;
 
     try {
-      // Keep the same camera track whenever possible. The recorder writes from
-      // a stable canvas stream, so changing this preview track cannot finish
-      // the recording on mobile browsers.
+      // Keep the same camera track whenever possible. This also keeps the
+      // MediaRecorder stream alive while the phone changes lenses.
       await currentTrack.applyConstraints({ facingMode: { exact: nextFacingMode } });
       setCameraFacingMode(nextFacingMode);
       if (videoPreviewRef.current) {
+        videoPreviewRef.current.srcObject = currentStream;
         await videoPreviewRef.current.play().catch(() => {});
       }
       return;
@@ -871,12 +859,15 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
       });
       const nextTrack = replacement.getVideoTracks()[0];
       if (!nextTrack) return;
-      const audioTracks = currentStream.getAudioTracks();
-      const nextCameraStream = new MediaStream([...audioTracks, nextTrack]);
+      // Keep the original MediaStream object so MediaRecorder stays attached
+      // while the browser replaces the camera track.
+      currentStream.removeTrack(currentTrack);
+      currentStream.addTrack(nextTrack);
       currentTrack.stop();
-      cameraStreamRef.current = nextCameraStream;
+      cameraStreamRef.current = currentStream;
       if (videoPreviewRef.current) {
-        videoPreviewRef.current.srcObject = nextCameraStream;
+        videoPreviewRef.current.srcObject = null;
+        videoPreviewRef.current.srcObject = currentStream;
         await videoPreviewRef.current.play().catch(() => {});
       }
       setCameraFacingMode(nextFacingMode);
@@ -1596,7 +1587,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
           <motion.div
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="relative mx-auto w-full max-w-[430px] min-h-[520px] max-h-[calc(100dvh-5rem)] overflow-hidden rounded-[30px] bg-black shadow-2xl"
+            className="relative mx-auto flex h-[min(78dvh,620px)] min-h-[420px] w-full max-w-[430px] items-center justify-center overflow-hidden rounded-[30px] bg-black shadow-2xl"
           >
             <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/60 pointer-events-none" />
             <video
@@ -1604,7 +1595,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
               autoPlay
               muted
               playsInline
-              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(92vw,430px)] aspect-square rounded-full object-cover ring-2 ring-white/80 shadow-[0_0_0_10px_rgba(255,255,255,0.06)]"
+              className="absolute left-1/2 top-1/2 z-[1] aspect-square w-[min(78vw,390px)] -translate-x-1/2 -translate-y-1/2 rounded-full object-cover ring-2 ring-white/80 shadow-[0_0_0_10px_rgba(255,255,255,0.06)]"
             />
 
             <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/35 backdrop-blur-md text-white">
@@ -1616,16 +1607,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
               <span className="text-[15px] font-black font-mono tabular-nums">{formatDuration(recordSeconds)}</span>
             </div>
 
-            <button
-              type="button"
-              onClick={toggleRecordingPause}
-              className="absolute top-4 right-4 w-12 h-12 rounded-full flex items-center justify-center bg-white/90 text-slate-900 shadow-lg active:scale-90 transition-transform"
-              aria-label={isRecordingPaused ? "Продолжить запись" : "Поставить запись на паузу"}
-            >
-              {isRecordingPaused ? <Play size={19} fill="currentColor" /> : <Pause size={19} />}
-            </button>
-
-            <div className="absolute left-5 bottom-[82px] flex items-center gap-2">
+            <div className="absolute bottom-[88px] left-1/2 z-10 flex -translate-x-1/2 items-center gap-3">
               <button
                 type="button"
                 onClick={switchCamera}
@@ -1644,6 +1626,14 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
                 aria-label="Включить вспышку"
               >
                 <Zap size={21} fill={flashEnabled ? "currentColor" : "none"} />
+              </button>
+              <button
+                type="button"
+                onClick={toggleRecordingPause}
+                className="w-12 h-12 rounded-full flex items-center justify-center bg-white/90 text-slate-900 shadow-lg active:scale-90 transition-transform"
+                aria-label={isRecordingPaused ? "Продолжить запись" : "Поставить запись на паузу"}
+              >
+                {isRecordingPaused ? <Play size={19} fill="currentColor" /> : <Pause size={19} />}
               </button>
             </div>
 

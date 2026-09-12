@@ -29,6 +29,13 @@ Anonymous functions passed to `addEventListener` cannot be removed. Always store
 ### Autofocus on mobile
 `inputRef.current?.focus()` in a useEffect causes the keyboard to pop up on mobile. Gate with `window.matchMedia("(hover: hover)").matches` to restrict autofocus to pointer devices only.
 
+### Video note camera switching
+For mobile video notes, record the camera `MediaStream` directly with bounded video/audio bitrates. If `applyConstraints` is unavailable, replace the video track on the same stream object instead of creating a new stream; this keeps `MediaRecorder` alive and avoids a dark/frozen recording after a lens switch.
+
+**Why:** recording a canvas fed by a preview element can turn dark when mobile browsers reinitialize the camera during a front/rear switch, and swapping streams can end the recorder.
+
+**How to apply:** keep the preview circular with CSS/object-cover, but do not use the preview canvas as the recording source unless a platform-specific fallback is required.
+
 ### Image processing race condition
 When multiple images can be selected in rapid succession, use a ref-based request ID counter to cancel stale callbacks:
 ```js

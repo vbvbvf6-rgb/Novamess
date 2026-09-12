@@ -378,10 +378,21 @@ export async function customFetch<T = unknown>(
 
   const requestInfo = { method, url: resolveUrl(input) };
 
-  // 30-second timeout for all requests (except SSE / streaming, which have no body read)
-  const timeoutMs = 30_000;
+  // Keep regular requests responsive, but allow media uploads and story
+  // publishing enough time to transfer a base64 payload and offload it to
+  // object storage. The server uses the same 60s/5min split.
+  const requestPath = requestInfo.url.split("?")[0];
+  const isMediaUpload =
+    requestPath.includes("/api/messages") ||
+    requestPath.includes("/api/stories") ||
+    requestPath.includes("/api/upload") ||
+    requestPath.includes("/api/users/me");
+  const timeoutMs = isMediaUpload ? 5 * 60_000 : 60_000;
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(new DOMException("Request timed out after 30s", "TimeoutError")), timeoutMs);
+  const timeoutId = setTimeout(
+    () => controller.abort(new DOMException(`Request timed out after ${timeoutMs / 1000}s`, "TimeoutError")),
+    timeoutMs,
+  );
   const mergedSignal = init.signal
     ? combineSignals(init.signal as AbortSignal, controller.signal)
     : controller.signal;

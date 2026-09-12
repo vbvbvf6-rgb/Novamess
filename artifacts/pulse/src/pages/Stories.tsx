@@ -92,6 +92,7 @@ export default function Stories() {
   const [storyImageCaption, setStoryImageCaption] = useState("");
   const [storyType, setStoryType] = useState<"text" | "image" | "video">("text");
   const [storyVideoUrl, setStoryVideoUrl] = useState("");
+  const [storyVideoPreviewUrl, setStoryVideoPreviewUrl] = useState("");
   const [musicUrl, setMusicUrl] = useState("");
   const [musicName, setMusicName] = useState("");
   const musicInputRef = useRef<HTMLInputElement>(null);
@@ -137,10 +138,14 @@ export default function Stories() {
     const imageFiles = files.filter(file => file.type.startsWith("image/"));
     const videoFiles = files.filter(file => file.type.startsWith("video/"));
     if (videoFiles.length > 0) {
-      const video = await prepareVideoForUpload(videoFiles[0]);
-      if (video) {
+      const [video, preview] = await Promise.all([
+        prepareVideoForUpload(videoFiles[0]),
+        readFileAsDataUrl(videoFiles[0]),
+      ]);
+      if (video && preview) {
         setStoryType("video");
         setStoryVideoUrl(video);
+        setStoryVideoPreviewUrl(preview);
         setStoryImageUrls([]);
       }
     }
@@ -192,6 +197,7 @@ export default function Stories() {
       setStoryText("");
       setStoryImageUrls([]);
       setStoryVideoUrl("");
+      setStoryVideoPreviewUrl("");
       setMusicUrl("");
       setMusicName("");
       setStoryImageCaption("");
@@ -412,7 +418,17 @@ export default function Stories() {
                   )}
                 </div>
               ) : storyType === "video" && storyVideoUrl ? (
-                <video src={storyVideoUrl} controls muted playsInline className="w-full h-48 object-contain rounded-xl bg-black/20" />
+                <video
+                  src={storyVideoPreviewUrl || storyVideoUrl}
+                  controls
+                  muted
+                  playsInline
+                  preload="metadata"
+                  className="w-full h-48 object-contain rounded-xl bg-black/20"
+                  onError={(e) => {
+                    e.currentTarget.poster = "";
+                  }}
+                />
               ) : (
                 <p className="text-white/40 text-sm">{storyType === "text" ? "Предпросмотр текста" : storyType === "video" ? "Предпросмотр видео" : "Предпросмотр изображения"}</p>
               )}

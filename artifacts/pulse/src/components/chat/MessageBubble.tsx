@@ -48,6 +48,47 @@ function TwemojiInlineGlyph({ emoji, className = "" }: { emoji: string; classNam
   );
 }
 
+function MessageImage({
+  src,
+  alt,
+  className,
+  onClick,
+}: {
+  src: string;
+  alt: string;
+  className?: string;
+  onClick?: () => void;
+}) {
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    setFailed(false);
+  }, [src]);
+
+  if (failed) {
+    return (
+      <div
+        className={cn(
+          className,
+          "flex items-center justify-center bg-secondary text-muted-foreground text-xs font-semibold",
+        )}
+      >
+        Фото недоступно
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      alt={alt}
+      className={className}
+      onClick={onClick}
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
 function EffectOverlay({ effect, onDone }: { effect: string; onDone: () => void }) {
   const particles = useMemo(() => {
     const count = effect === "confetti" ? 40 : effect === "snow" ? 30 : 25;
@@ -968,12 +1009,11 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
       case "image":
         return (
           <div className="rounded-xl overflow-hidden -mx-1 -mt-1 mb-1 relative group">
-            <img
+            <MessageImage
               src={message.mediaUrl || ""}
               alt="photo"
-            className="max-w-full w-auto max-h-[360px] object-contain block cursor-zoom-in"
+              className="max-w-full w-auto max-h-[360px] object-contain block cursor-zoom-in"
               onClick={() => setLightbox({ urls: [message.mediaUrl || ""], idx: 0 })}
-              onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
             />
             {message.mediaUrl && (
               <a
@@ -1035,23 +1075,21 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
             {isThree ? (
               <div className="flex flex-col gap-[1px]">
                 <div className="relative overflow-hidden bg-secondary" style={{ aspectRatio: "16/9" }}>
-                  <img
+                  <MessageImage
                     src={albumUrls[0]}
                     alt="photo 1"
                     className="w-full h-full object-cover cursor-zoom-in block"
                     onClick={() => setLightbox({ urls: albumUrls, idx: 0 })}
-                    onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
                   />
                 </div>
                 <div className="flex gap-[1px]">
                   {[1, 2].map((i) => (
                     <div key={i} className="relative flex-1 overflow-hidden bg-secondary" style={{ aspectRatio: "3/2" }}>
-                      <img
+                      <MessageImage
                         src={albumUrls[i]}
                         alt={`photo ${i + 1}`}
                         className="w-full h-full object-cover cursor-zoom-in block"
                         onClick={() => setLightbox({ urls: albumUrls, idx: i })}
-                        onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
                       />
                     </div>
                   ))}
@@ -1065,12 +1103,11 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
                     className="relative overflow-hidden bg-secondary"
                     style={{ aspectRatio: visibleCount === 1 ? "4/3" : "4/3" }}
                   >
-                    <img
+                    <MessageImage
                       src={url}
                       alt={`photo ${i + 1}`}
                       className="w-full h-full object-cover cursor-zoom-in block"
                       onClick={() => setLightbox({ urls: albumUrls, idx: i })}
-                      onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
                     />
                     {i === 3 && extra > 0 && (
                       <div
