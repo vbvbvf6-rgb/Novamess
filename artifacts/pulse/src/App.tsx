@@ -57,6 +57,8 @@ import Privacy from "@/pages/Privacy";
 import Terms from "@/pages/Terms";
 import JoinInvite from "@/pages/JoinInvite";
 import PowerFeatures from "@/pages/PowerFeatures";
+import Plugins, { PluginRoute } from "@/pages/Plugins";
+import { PluginProvider } from "@/lib/pluginRegistry";
 
 
 function LandscapeBlock() {
@@ -509,6 +511,7 @@ function MainAppInner({ onLogout, onSwitchAccount, onRemoveAccount, onOpenAddAcc
       onRemoveAccount={onRemoveAccount}
       onOpenAddAccount={onOpenAddAccount}
     >
+      <PluginProvider>
       <TooltipProvider>
         <MainAppEffects />
         <GlobalNotificationListener />
@@ -538,6 +541,8 @@ function MainAppInner({ onLogout, onSwitchAccount, onRemoveAccount, onOpenAddAcc
               <Route path="/profile" component={Profile} />
               <Route path="/settings" component={Settings} />
               <Route path="/power-features" component={PowerFeatures} />
+              <Route path="/plugins/:pluginId" component={PluginRoute} />
+              <Route path="/plugins" component={Plugins} />
               <Route path="/user/:userId" component={UserProfile} />
               <Route path="/qr/:tokenId" component={QrConfirm} />
               <Route path="/privacy" component={Privacy} />
@@ -549,6 +554,7 @@ function MainAppInner({ onLogout, onSwitchAccount, onRemoveAccount, onOpenAddAcc
         </ScreenLock>
         <Toaster />
       </TooltipProvider>
+      </PluginProvider>
     </AppProvider>
   );
 }

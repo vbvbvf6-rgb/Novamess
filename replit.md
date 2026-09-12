@@ -30,6 +30,18 @@ A Telegram-inspired messenger app called Pulse, featuring real-time-style chats,
 - `lib/db/src/schema/` — Drizzle table definitions (users, chats, messages, calls, gifts, stories)
 - `artifacts/api-server/src/routes/` — Express route handlers
 - `artifacts/pulse/src/` — React frontend (pages, components, contexts)
+- `artifacts/pulse/src/lib/pluginRegistry.tsx` — trusted frontend plugin registry and per-account enablement
+- `artifacts/pulse/src/pages/plugins/` — built-in plugin implementations
+
+## Plugin system
+
+The frontend plugin system is intentionally registry-based: each plugin is a typed module in `src/lib/pluginRegistry.tsx` with a manifest, route, icon, and React component. Enabled plugin IDs are stored in `localStorage` per account (`nova-plugins:<userId>`), and enabled plugins appear in the sidebar automatically.
+
+To add a plugin:
+
+1. Create its component under `artifacts/pulse/src/pages/plugins/`.
+2. Add a `NovaPlugin` entry to `NOVA_PLUGINS` with a unique ID, localized metadata, route, icon, and component.
+3. Keep plugin code within the app bundle. Do not evaluate arbitrary JavaScript loaded from a URL.
 
 ## Media storage (object storage, optional)
 

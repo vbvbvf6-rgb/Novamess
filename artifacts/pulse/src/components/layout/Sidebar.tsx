@@ -28,6 +28,7 @@ import {
   CalendarDays,
   Bot,
   Newspaper,
+  Puzzle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAppContext } from "@/contexts/AppContext";
@@ -42,6 +43,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SavedAccount } from "@/lib/accounts";
 import PulseLogo from "@/components/PulseLogo";
+import { getPluginText, usePluginSystem } from "@/lib/pluginRegistry";
 
 function AccountRow({
   account,
@@ -188,7 +190,8 @@ interface SidebarProps {
 export function Sidebar({ mobileSidebarOpen, onMobileClose, onMobileOpen, onOpenPalette }: SidebarProps) {
   const [location, navigate] = useLocation();
   const { logout, currentUserId, savedAccounts, switchAccount, removeAccount, openAddAccount, canAddAccount, isDark, toggleTheme } = useAppContext();
-  const { t } = useLanguage();
+  const { enabledPlugins } = usePluginSystem();
+  const { t, lang } = useLanguage();
   const { data: me } = useGetMe();
   const { data: chats } = useGetChats();
   const [isAdmin, setIsAdmin] = useState(false);
@@ -258,6 +261,8 @@ export function Sidebar({ mobileSidebarOpen, onMobileClose, onMobileOpen, onOpen
     { href: "/changelog",    icon: Newspaper,      label: t("nav.changelog") },
     { href: "/profile",      icon: UserCircle,     label: t("nav.profile") },
     { href: "/settings",     icon: Settings,       label: t("nav.settings") },
+    { href: "/plugins",      icon: Puzzle,          label: t("nav.plugins") },
+    ...enabledPlugins.map((plugin) => ({ href: plugin.route, icon: plugin.icon, label: getPluginText(plugin, lang, "name") })),
   ];
 
   const AccountsSection = (
