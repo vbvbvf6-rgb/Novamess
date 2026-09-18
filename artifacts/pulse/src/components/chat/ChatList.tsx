@@ -5,7 +5,7 @@ import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
 import { Search, Pin, VolumeX, Users, Radio, Bot, HeadphonesIcon, Bug,
   SquarePen, X, ChevronRight, Check, CheckCheck, Clock, ArrowLeft, Crown, Bookmark,
-  FolderPlus, Folder, Trash2, FolderOpen, Plus, MessageCircle, Star, Flame, Briefcase,
+  FolderPlus, Folder, Trash2, FolderOpen, Archive, ArchiveRestore, Plus, MessageCircle, Star, Flame, Briefcase,
   Home, Gamepad2, BookOpen, Heart, Music, Globe, Dumbbell, Palette, Wallet, Handshake,
   PawPrint, Newspaper, Plane, PartyPopper, type LucideIcon } from "lucide-react";
 import { useLocation } from "wouter";
@@ -22,7 +22,7 @@ import { cn } from "@/lib/utils";
 import { isEncryptedMessage } from "@/lib/e2e";
 import { BOT_AVATAR_URL } from "@/lib/botAvatar";
 
-type FolderKey = "all" | "unread" | "groups" | "direct" | `folder:${number}`;
+type FolderKey = "all" | "unread" | "groups" | "direct" | "archived" | `folder:${number}`;
 
 interface UserFolder {
   id: number;
@@ -36,6 +36,7 @@ const SYSTEM_FOLDERS: { key: FolderKey; label: string }[] = [
   { key: "unread", label: "Новые" },
   { key: "direct", label: "Контакты" },
   { key: "groups", label: "Каналы/Группы" },
+  { key: "archived", label: "Архив" },
 ];
 
 const FOLDER_ICON_MAP: Record<string, LucideIcon> = {
@@ -437,6 +438,28 @@ export function ChatList() {
     setContextMenuChat(null);
   };
 
+  const toggleArchive = async () => {
+    if (!contextMenuChat) return;
+    const nextArchived = !(contextMenuChat as any).isArchived;
+    try {
+      const res = await fetch(`/api/chats/${contextMenuChat.id}/archive`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+        body: JSON.stringify({ archived: nextArchived }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Не удалось изменить архив");
+      queryClient.setQueryData(getGetChatsQueryKey(), (old: any[] | undefined) =>
+        old?.map(chat => chat.id === contextMenuChat.id ? { ...chat, isArchived: nextArchived } : chat)
+      );
+      setContextMenuChat(null);
+      setShowFolderPicker(false);
+      toast({ title: nextArchived ? "Чат добавлен в архив" : "Чат восстановлен из архива" });
+    } catch (error: any) {
+      toast({ title: error?.message || "Не удалось изменить архив", variant: "destructive" });
+    }
+  };
+
   const leaveChat = async () => {
     if (!contextMenuChat) return;
     const isNova = contextMenuChat.type === "direct" &&
@@ -530,6 +553,9 @@ export function ChatList() {
 
   const filtered = chats?.filter((chat: Chat) => {
     if ((chat as any).type === "saved") return false;
+    const isArchived = Boolean((chat as any).isArchived);
+    if (folder === "archived") return isArchived;
+    if (isArchived) return false;
     if (folder === "unread") return (chat.unreadCount ?? 0) > 0;
     if (folder === "groups") return chat.type === "group" || chat.type === "channel";
     if (folder === "direct") return chat.type === "direct" && !(chat.otherUser as any)?.isBot && !(chat.otherUser as any)?.is_bot;
@@ -1205,6 +1231,19 @@ export function ChatList() {
                       <FolderOpen size={18} className="text-primary" />
                     </div>
                     <span className="font-bold text-[15px] text-foreground">Добавить в папку</span>
+                  </button>
+                  <button
+                    onClick={toggleArchive}
+                    className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-secondary transition-colors text-left"
+                  >
+                    <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                      {(contextMenuChat as any).isArchived
+                        ? <ArchiveRestore size={18} className="text-primary" />
+                        : <Archive size={18} className="text-primary" />}
+                    </div>
+                    <span className="font-bold text-[15px] text-foreground">
+                      {(contextMenuChat as any).isArchived ? "Вернуть из архива" : "Архивировать"}
+                    </span>
                   </button>
                   {folder.startsWith("folder:") && (
                     <button

@@ -27,6 +27,7 @@ export const chatMembersTable = pgTable("chat_members", {
   role: text("role").notNull().default("member"),
   isPinned: boolean("is_pinned").notNull().default(false),
   isMuted: boolean("is_muted").notNull().default(false),
+  isArchived: boolean("is_archived").notNull().default(false),
   lastReadAt: timestamp("last_read_at", { withTimezone: true }),
   lastDeliveredAt: timestamp("last_delivered_at", { withTimezone: true }),
   joinedAt: timestamp("joined_at", { withTimezone: true }).notNull().defaultNow(),

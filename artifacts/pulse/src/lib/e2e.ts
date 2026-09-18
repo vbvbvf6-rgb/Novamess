@@ -106,9 +106,12 @@ export async function encryptForUser(plaintext: string, recipientId: number): Pr
   await ensureE2EIdentity();
   const identity = await identityPromise!;
   const response = await fetch(`/api/users/${recipientId}/encryption-key`, { headers: authHeaders() });
-  if (!response.ok) throw new Error("Получатель ещё не включил защищённые сообщения");
+  // E2E is an optional transport enhancement. A user must still be able to
+  // start a conversation with somebody who has not opened the app yet or has
+  // not published an encryption key.
+  if (!response.ok) return plaintext;
   const { publicKey: recipientJwk } = await response.json() as { publicKey: JsonWebKey | null };
-  if (!recipientJwk) throw new Error("Получатель ещё не включил защищённые сообщения");
+  if (!recipientJwk) return plaintext;
 
   const recipientPublicKey = await crypto.subtle.importKey("jwk", recipientJwk, { name: "ECDH", namedCurve: "P-256" }, true, []);
   const contentKey = await crypto.subtle.generateKey({ name: "AES-GCM", length: 256 }, true, ["encrypt", "decrypt"]);

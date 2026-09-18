@@ -649,9 +649,16 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
       } else {
         const textToSend = text.trim();
         const capturedReplyTo = replyTo;
-        const transportText = recipientUserId && !isBot
-          ? await encryptForUser(textToSend, recipientUserId)
-          : textToSend;
+        let transportText = textToSend;
+        if (recipientUserId && !isBot) {
+          try {
+            transportText = await encryptForUser(textToSend, recipientUserId);
+          } catch {
+            // Protected transport is optional. It must never prevent a user
+            // from starting or continuing a normal conversation.
+            transportText = textToSend;
+          }
+        }
 
         // Clear input immediately for instant feel
         setText("");

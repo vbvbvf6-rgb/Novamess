@@ -16,7 +16,7 @@ export function BottomNav({ onOpenPalette, onOpenSidebar }: BottomNavProps) {
   const { data: chats } = useGetChats();
   const { selectedChatId, activeCall } = useAppContext();
 
-  const totalUnread = chats?.reduce((sum: number, c: any) => sum + (c.unreadCount || 0), 0) ?? 0;
+  const totalUnread = chats?.reduce((sum: number, c: any) => sum + (c.isArchived ? 0 : (c.unreadCount || 0)), 0) ?? 0;
   const [pendingRequests, setPendingRequests] = useState(0);
   const fetchPendingNav = () => {
     const token = sessionStorage.getItem("pulse-token");

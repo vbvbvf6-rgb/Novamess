@@ -159,6 +159,7 @@ async function buildChat(chatId: number, currentUserId: number) {
     ...chat,
     isPinned: myMember?.member.isPinned ?? false,
     isMuted: myMember?.member.isMuted ?? false,
+    isArchived: (myMember?.member as any)?.isArchived ?? false,
     unreadCount,
     lastMessage,
     members: memberRows.map(m => ({ ...m.member, user: m.user })),
@@ -173,7 +174,7 @@ async function buildChat(chatId: number, currentUserId: number) {
 async function buildChatsForUser(uid: number) {
   // 1. Membership rows for this user
   const membershipRows = await db.execute(sql`
-    SELECT chat_id, is_pinned, is_muted, last_read_at, last_delivered_at
+    SELECT chat_id, is_pinned, is_muted, is_archived, last_read_at, last_delivered_at
     FROM chat_members WHERE user_id = ${uid}
   `);
   const memberships = membershipRows.rows as any[];
@@ -356,6 +357,7 @@ async function buildChatsForUser(uid: number) {
       avatarColor: chat.avatar_color,
       isPinned: mem.is_pinned ?? false,
       isMuted: mem.is_muted ?? false,
+      isArchived: mem.is_archived ?? false,
       unreadCount: unreadMap.get(chatId) ?? 0,
       lastMessage,
       members: chatMembers.map((m: any) => ({
@@ -593,6 +595,27 @@ router.put("/chats/:chatId", async (req, res) => {
 
     const chat = await buildChat(chatId, uid);
     res.json(chat);
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Archive state belongs to the current user's membership, not to the shared
+// chat, so archiving a conversation never hides it for other participants.
+router.put("/chats/:chatId/archive", async (req, res) => {
+  try {
+    const uid = req.currentUserId;
+    const chatId = Number(req.params.chatId);
+    const archived = req.body?.archived !== false;
+    const result = await db.execute(sql`
+      UPDATE chat_members
+      SET is_archived = ${archived}
+      WHERE chat_id = ${chatId} AND user_id = ${uid}
+      RETURNING chat_id
+    `);
+    if (!(result.rows as any[]).length) return res.status(404).json({ error: "Чат не найден" });
+    res.json(await buildChat(chatId, uid));
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });

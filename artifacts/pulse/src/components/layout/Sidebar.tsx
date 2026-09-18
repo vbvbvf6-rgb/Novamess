@@ -219,7 +219,7 @@ export function Sidebar({ mobileSidebarOpen, onMobileClose, onMobileOpen, onOpen
     return () => window.removeEventListener("pulse:events-toggle", handler);
   }, []);
 
-  const totalUnread = chats?.reduce((sum: number, c: any) => sum + (c.unreadCount || 0), 0) ?? 0;
+  const totalUnread = chats?.reduce((sum: number, c: any) => sum + (c.isArchived ? 0 : (c.unreadCount || 0)), 0) ?? 0;
   const initial = me?.displayName?.[0]?.toUpperCase() || "U";
   const isPremium = (me as any)?.hasPrime ?? false;
 
