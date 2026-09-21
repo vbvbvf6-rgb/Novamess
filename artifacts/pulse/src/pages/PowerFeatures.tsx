@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { motion } from "framer-motion";
 import { useGetContacts } from "@workspace/api-client-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import AccessibilityPanel from "@/components/feature-panels/AccessibilityPanel";

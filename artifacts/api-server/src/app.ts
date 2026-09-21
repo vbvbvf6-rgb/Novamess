@@ -486,7 +486,10 @@ if (process.env.NODE_ENV === "production") {
     res.sendFile(path.join(staticDir, "index.html"));
   });
 } else {
-  const VITE_PORT = 5000;
+  // Keep the API's dev fallback configurable. Replit runs the imported
+  // frontend on 23821, while local development commonly uses 5000.
+  const defaultVitePort = process.env.REPL_ID ? 23821 : 5000;
+  const VITE_PORT = Number(process.env.VITE_DEV_SERVER_PORT || process.env.FRONTEND_PORT || defaultVitePort);
   app.use("/{*path}", (req: Request, res: Response) => {
     const options = {
       hostname: "localhost",

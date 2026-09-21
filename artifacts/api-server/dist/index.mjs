@@ -20489,27 +20489,27 @@ var require_router = __commonJS({
     var slice = Array.prototype.slice;
     var flatten = Array.prototype.flat;
     var methods = METHODS.map((method) => method.toLowerCase());
-    module.exports = Router31;
+    module.exports = Router32;
     module.exports.Route = Route;
-    function Router31(options) {
-      if (!(this instanceof Router31)) {
-        return new Router31(options);
+    function Router32(options) {
+      if (!(this instanceof Router32)) {
+        return new Router32(options);
       }
       const opts = options || {};
-      function router30(req, res, next) {
-        router30.handle(req, res, next);
+      function router31(req, res, next) {
+        router31.handle(req, res, next);
       }
-      Object.setPrototypeOf(router30, this);
-      router30.caseSensitive = opts.caseSensitive;
-      router30.mergeParams = opts.mergeParams;
-      router30.params = {};
-      router30.strict = opts.strict;
-      router30.stack = [];
-      return router30;
+      Object.setPrototypeOf(router31, this);
+      router31.caseSensitive = opts.caseSensitive;
+      router31.mergeParams = opts.mergeParams;
+      router31.params = {};
+      router31.strict = opts.strict;
+      router31.stack = [];
+      return router31;
     }
-    Router31.prototype = function() {
+    Router32.prototype = function() {
     };
-    Router31.prototype.param = function param2(name2, fn) {
+    Router32.prototype.param = function param2(name2, fn) {
       if (!name2) {
         throw new TypeError("argument name is required");
       }
@@ -20529,7 +20529,7 @@ var require_router = __commonJS({
       params.push(fn);
       return this;
     };
-    Router31.prototype.handle = function handle(req, res, callback) {
+    Router32.prototype.handle = function handle(req, res, callback) {
       if (!callback) {
         throw new TypeError("argument callback is required");
       }
@@ -20656,7 +20656,7 @@ var require_router = __commonJS({
         }
       }
     };
-    Router31.prototype.use = function use(handler) {
+    Router32.prototype.use = function use(handler) {
       let offset = 0;
       let path3 = "/";
       if (typeof handler !== "function") {
@@ -20689,7 +20689,7 @@ var require_router = __commonJS({
       }
       return this;
     };
-    Router31.prototype.route = function route(path3) {
+    Router32.prototype.route = function route(path3) {
       const route2 = new Route(path3);
       const layer = new Layer(path3, {
         sensitive: this.caseSensitive,
@@ -20704,7 +20704,7 @@ var require_router = __commonJS({
       return route2;
     };
     methods.concat("all").forEach(function(method) {
-      Router31.prototype[method] = function(path3) {
+      Router32.prototype[method] = function(path3) {
         const route = this.route(path3);
         route[method].apply(route, slice.call(arguments, 1));
         return this;
@@ -20887,13 +20887,13 @@ var require_application = __commonJS({
     var compileTrust = require_utils3().compileTrust;
     var resolve = __require("node:path").resolve;
     var once = require_once();
-    var Router31 = require_router();
+    var Router32 = require_router();
     var slice = Array.prototype.slice;
     var flatten = Array.prototype.flat;
     var app2 = exports = module.exports = {};
     var trustProxyDefaultSymbol = "@@symbol:trust_proxy_default";
     app2.init = function init2() {
-      var router30 = null;
+      var router31 = null;
       this.cache = /* @__PURE__ */ Object.create(null);
       this.engines = /* @__PURE__ */ Object.create(null);
       this.settings = /* @__PURE__ */ Object.create(null);
@@ -20902,13 +20902,13 @@ var require_application = __commonJS({
         configurable: true,
         enumerable: true,
         get: function getrouter() {
-          if (router30 === null) {
-            router30 = new Router31({
+          if (router31 === null) {
+            router31 = new Router32({
               caseSensitive: this.enabled("case sensitive routing"),
               strict: this.enabled("strict routing")
             });
           }
-          return router30;
+          return router31;
         }
       });
     };
@@ -20979,15 +20979,15 @@ var require_application = __commonJS({
       if (fns.length === 0) {
         throw new TypeError("app.use() requires a middleware function");
       }
-      var router30 = this.router;
+      var router31 = this.router;
       fns.forEach(function(fn2) {
         if (!fn2 || !fn2.handle || !fn2.set) {
-          return router30.use(path3, fn2);
+          return router31.use(path3, fn2);
         }
         debug(".use app under %s", path3);
         fn2.mountpath = path3;
         fn2.parent = this;
-        router30.use(path3, function mounted_app(req, res, next) {
+        router31.use(path3, function mounted_app(req, res, next) {
           var orig = req.app;
           fn2.handle(req, res, function(err2) {
             Object.setPrototypeOf(req, orig.request);
@@ -23514,7 +23514,7 @@ var require_express = __commonJS({
     var EventEmitter = __require("node:events").EventEmitter;
     var mixin = require_merge_descriptors();
     var proto = require_application();
-    var Router31 = require_router();
+    var Router32 = require_router();
     var req = require_request();
     var res = require_response();
     exports = module.exports = createApplication;
@@ -23536,8 +23536,8 @@ var require_express = __commonJS({
     exports.application = proto;
     exports.request = req;
     exports.response = res;
-    exports.Route = Router31.Route;
-    exports.Router = Router31;
+    exports.Route = Router32.Route;
+    exports.Router = Router32;
     exports.json = bodyParser.json;
     exports.raw = bodyParser.raw;
     exports.static = require_serve_static();
@@ -59802,6 +59802,7 @@ var init_chats = __esm({
       role: text("role").notNull().default("member"),
       isPinned: boolean("is_pinned").notNull().default(false),
       isMuted: boolean("is_muted").notNull().default(false),
+      isArchived: boolean("is_archived").notNull().default(false),
       lastReadAt: timestamp("last_read_at", { withTimezone: true }),
       lastDeliveredAt: timestamp("last_delivered_at", { withTimezone: true }),
       joinedAt: timestamp("joined_at", { withTimezone: true }).notNull().defaultNow()
@@ -135734,7 +135735,7 @@ import path2 from "node:path";
 import fs2 from "node:fs";
 
 // src/app.ts
-var import_express31 = __toESM(require_express2(), 1);
+var import_express32 = __toESM(require_express2(), 1);
 var import_cors = __toESM(require_lib3(), 1);
 
 // ../../node_modules/helmet/index.mjs
@@ -137241,7 +137242,7 @@ var rate_limit_default = rateLimit;
 var import_jsonwebtoken4 = __toESM(require_jsonwebtoken(), 1);
 
 // src/routes/index.ts
-var import_express29 = __toESM(require_express2(), 1);
+var import_express30 = __toESM(require_express2(), 1);
 
 // src/routes/health.ts
 var import_express = __toESM(require_express2(), 1);
@@ -144593,7 +144594,7 @@ router4.get("/users/me", async (req, res) => {
     const hasPrime = row?.has_prime === true || row?.has_prime === "t" || row?.has_prime === 1;
     const primeTier = row?.prime_tier ?? null;
     const ageVerified = row?.age_verified === true || row?.age_verified === "t" || row?.age_verified === 1;
-    const isAdmin3 = row?.is_admin === true || row?.is_admin === "t" || row?.is_admin === 1;
+    const isAdmin4 = row?.is_admin === true || row?.is_admin === "t" || row?.is_admin === 1;
     const isDeveloper = row?.is_developer === true || row?.is_developer === "t" || row?.is_developer === 1;
     const isYoutubeCreator = row?.is_youtube_creator === true || row?.is_youtube_creator === "t" || row?.is_youtube_creator === 1;
     const isTiktokCreator = row?.is_tiktok_creator === true || row?.is_tiktok_creator === "t" || row?.is_tiktok_creator === 1;
@@ -144608,7 +144609,7 @@ router4.get("/users/me", async (req, res) => {
       primeExpiresAt: row?.prime_expires_at ?? null,
       usernameChangedAt: row?.username_changed_at ?? null,
       ageVerified,
-      isAdmin: isAdmin3,
+      isAdmin: isAdmin4,
       isDeveloper,
       isYoutubeCreator,
       isTiktokCreator,
@@ -145277,7 +145278,7 @@ async function isNovaSecurityChat(chatId) {
   `);
   return row.rows.length > 0;
 }
-async function buildChat(chatId, currentUserId) {
+async function buildChat(chatId, currentUserId2) {
   const chat = await db.query.chatsTable.findFirst({ where: eq(chatsTable.id, chatId) });
   if (!chat) return null;
   let pinnedMessage = null;
@@ -145322,7 +145323,7 @@ async function buildChat(chatId, currentUserId) {
   } catch {
   }
   const memberRows = await db.select({ member: chatMembersTable, user: usersTable }).from(chatMembersTable).innerJoin(usersTable, eq(chatMembersTable.userId, usersTable.id)).where(eq(chatMembersTable.chatId, chatId));
-  const myMember = memberRows.find((m3) => m3.member.userId === currentUserId);
+  const myMember = memberRows.find((m3) => m3.member.userId === currentUserId2);
   const [lastMessageRow] = await db.select().from(messagesTable).where(eq(messagesTable.chatId, chatId)).orderBy(desc(messagesTable.createdAt)).limit(1);
   let lastMessage = null;
   if (lastMessageRow) {
@@ -145331,12 +145332,12 @@ async function buildChat(chatId, currentUserId) {
     const otherMembers2 = await db.select({
       lastReadAt: chatMembersTable.lastReadAt,
       lastDeliveredAt: chatMembersTable.lastDeliveredAt
-    }).from(chatMembersTable).where(and(eq(chatMembersTable.chatId, chatId), ne(chatMembersTable.userId, currentUserId)));
+    }).from(chatMembersTable).where(and(eq(chatMembersTable.chatId, chatId), ne(chatMembersTable.userId, currentUserId2)));
     const msgTime = new Date(lastMessageRow.createdAt).getTime();
     const maxRead2 = otherMembers2.reduce((mx, m3) => Math.max(mx, m3.lastReadAt ? new Date(m3.lastReadAt).getTime() : 0), 0);
     const maxDel2 = otherMembers2.reduce((mx, m3) => Math.max(mx, m3.lastDeliveredAt ? new Date(m3.lastDeliveredAt).getTime() : 0), 0);
-    const lmIsRead = lastMessageRow.senderId === currentUserId ? maxRead2 >= msgTime : true;
-    const lmIsDelivered = lastMessageRow.senderId === currentUserId ? maxDel2 >= msgTime : true;
+    const lmIsRead = lastMessageRow.senderId === currentUserId2 ? maxRead2 >= msgTime : true;
+    const lmIsDelivered = lastMessageRow.senderId === currentUserId2 ? maxDel2 >= msgTime : true;
     lastMessage = { ...lastMessageRow, sender, reactions, isRead: lmIsRead, isDelivered: lmIsDelivered };
   }
   let unreadCount = 0;
@@ -145345,19 +145346,19 @@ async function buildChat(chatId, currentUserId) {
     const [r5] = await db.select({ count: count() }).from(messagesTable).where(and(
       eq(messagesTable.chatId, chatId),
       gt(messagesTable.createdAt, lastReadAt),
-      ne(messagesTable.senderId, currentUserId)
+      ne(messagesTable.senderId, currentUserId2)
     ));
     unreadCount = Number(r5?.count ?? 0);
   } else {
     const [r5] = await db.select({ count: count() }).from(messagesTable).where(and(
       eq(messagesTable.chatId, chatId),
-      ne(messagesTable.senderId, currentUserId)
+      ne(messagesTable.senderId, currentUserId2)
     ));
     unreadCount = Number(r5?.count ?? 0);
   }
   let otherUser = null;
   if (chat.type === "direct") {
-    const other = memberRows.find((m3) => m3.member.userId !== currentUserId);
+    const other = memberRows.find((m3) => m3.member.userId !== currentUserId2);
     if (other?.user) {
       try {
         const primeRow = await db.execute(sql`SELECT has_prime, prime_tier, prime_expires_at FROM users WHERE id = ${other.user.id}`);
@@ -145373,6 +145374,7 @@ async function buildChat(chatId, currentUserId) {
     ...chat,
     isPinned: myMember?.member.isPinned ?? false,
     isMuted: myMember?.member.isMuted ?? false,
+    isArchived: myMember?.member?.isArchived ?? false,
     unreadCount,
     lastMessage,
     members: memberRows.map((m3) => ({ ...m3.member, user: m3.user })),
@@ -145383,7 +145385,7 @@ async function buildChat(chatId, currentUserId) {
 }
 async function buildChatsForUser(uid) {
   const membershipRows = await db.execute(sql`
-    SELECT chat_id, is_pinned, is_muted, last_read_at, last_delivered_at
+    SELECT chat_id, is_pinned, is_muted, is_archived, last_read_at, last_delivered_at
     FROM chat_members WHERE user_id = ${uid}
   `);
   const memberships = membershipRows.rows;
@@ -145557,6 +145559,7 @@ async function buildChatsForUser(uid) {
       avatarColor: chat.avatar_color,
       isPinned: mem.is_pinned ?? false,
       isMuted: mem.is_muted ?? false,
+      isArchived: mem.is_archived ?? false,
       unreadCount: unreadMap.get(chatId) ?? 0,
       lastMessage,
       members: chatMembers.map((m3) => ({
@@ -145775,6 +145778,24 @@ router6.put("/chats/:chatId", async (req, res) => {
     }
     const chat = await buildChat(chatId, uid);
     res.json(chat);
+  } catch (err2) {
+    req.log.error(err2);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+router6.put("/chats/:chatId/archive", async (req, res) => {
+  try {
+    const uid = req.currentUserId;
+    const chatId = Number(req.params.chatId);
+    const archived = req.body?.archived !== false;
+    const result = await db.execute(sql`
+      UPDATE chat_members
+      SET is_archived = ${archived}
+      WHERE chat_id = ${chatId} AND user_id = ${uid}
+      RETURNING chat_id
+    `);
+    if (!result.rows.length) return res.status(404).json({ error: "\u0427\u0430\u0442 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D" });
+    res.json(await buildChat(chatId, uid));
   } catch (err2) {
     req.log.error(err2);
     res.status(500).json({ error: "Internal server error" });
@@ -148412,7 +148433,7 @@ init_src();
 init_drizzle_orm();
 init_sse();
 var router11 = (0, import_express11.Router)();
-async function buildPost(postId, currentUserId) {
+async function buildPost(postId, currentUserId2) {
   const post = await db.query.postsTable.findFirst({ where: eq(postsTable.id, postId) });
   if (!post) return null;
   const author = await db.query.usersTable.findFirst({ where: eq(usersTable.id, post.userId) });
@@ -148423,7 +148444,7 @@ async function buildPost(postId, currentUserId) {
   } catch {
   }
   const likeRow = await db.query.postLikesTable.findFirst({
-    where: and(eq(postLikesTable.postId, postId), eq(postLikesTable.userId, currentUserId))
+    where: and(eq(postLikesTable.postId, postId), eq(postLikesTable.userId, currentUserId2))
   });
   let appeal = null;
   try {
@@ -148487,8 +148508,8 @@ router11.post("/posts", async (req, res) => {
     const { text: text2, imageUrl, topic } = req.body;
     if (!text2 && !imageUrl) return res.status(400).json({ error: "text or image required" });
     const isAdminRow = await db.execute(sql`SELECT is_admin FROM users WHERE id = ${uid}`);
-    const isAdmin3 = !!isAdminRow.rows[0]?.is_admin;
-    if (!isAdmin3 && await isUserFeedMuted(uid)) {
+    const isAdmin4 = !!isAdminRow.rows[0]?.is_admin;
+    if (!isAdmin4 && await isUserFeedMuted(uid)) {
       return res.status(429).json({
         error: "\u0412\u044B \u0432\u0440\u0435\u043C\u0435\u043D\u043D\u043E \u043E\u0433\u0440\u0430\u043D\u0438\u0447\u0435\u043D\u044B \u0432 \u043F\u0443\u0431\u043B\u0438\u043A\u0430\u0446\u0438\u044F\u0445 \u0438\u0437-\u0437\u0430 \u043D\u0430\u0440\u0443\u0448\u0435\u043D\u0438\u0439 \u043F\u0440\u0430\u0432\u0438\u043B. \u041E\u0433\u0440\u0430\u043D\u0438\u0447\u0435\u043D\u0438\u0435 \u0441\u043D\u0438\u043C\u0430\u0435\u0442\u0441\u044F \u0447\u0435\u0440\u0435\u0437 24 \u0447\u0430\u0441\u0430.",
         code: "FEED_MUTED"
@@ -148515,7 +148536,7 @@ router11.post("/posts", async (req, res) => {
         });
       }
     }
-    if (isAdmin3) {
+    if (isAdmin4) {
       const [post2] = await db.insert(postsTable).values({
         userId: uid,
         text: text2,
@@ -148634,9 +148655,9 @@ router11.delete("/posts/:postId", async (req, res) => {
     const postId = Number(req.params.postId);
     const post = await db.query.postsTable.findFirst({ where: eq(postsTable.id, postId) });
     const isAdminRow = await db.execute(sql`SELECT is_admin FROM users WHERE id = ${uid}`);
-    const isAdmin3 = !!isAdminRow.rows[0]?.is_admin;
+    const isAdmin4 = !!isAdminRow.rows[0]?.is_admin;
     if (!post) return res.status(404).json({ error: "Not found" });
-    if (post.userId !== uid && !isAdmin3) return res.status(403).json({ error: "Forbidden" });
+    if (post.userId !== uid && !isAdmin4) return res.status(403).json({ error: "Forbidden" });
     await db.execute(sql`DELETE FROM moderation_appeals WHERE post_id = ${postId}`);
     await db.delete(postCommentsTable).where(eq(postCommentsTable.postId, postId));
     await db.delete(postLikesTable).where(eq(postLikesTable.postId, postId));
@@ -148749,13 +148770,13 @@ router11.delete("/posts/:postId/comments/:commentId", async (req, res) => {
     const postId = Number(req.params.postId);
     const commentId = Number(req.params.commentId);
     const userRows = await db.execute(sql`SELECT is_admin FROM users WHERE id = ${uid} LIMIT 1`);
-    const isAdmin3 = userRows.rows[0]?.is_admin === true;
+    const isAdmin4 = userRows.rows[0]?.is_admin === true;
     const rows = await db.execute(
       sql`SELECT id, user_id FROM post_comments WHERE id = ${commentId} AND post_id = ${postId} LIMIT 1`
     );
     const comment = rows.rows[0];
     if (!comment) return res.status(404).json({ error: "\u041A\u043E\u043C\u043C\u0435\u043D\u0442\u0430\u0440\u0438\u0439 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D" });
-    if (comment.user_id !== uid && !isAdmin3) {
+    if (comment.user_id !== uid && !isAdmin4) {
       return res.status(403).json({ error: "\u041D\u0435\u0442 \u043F\u0440\u0430\u0432 \u0434\u043B\u044F \u0443\u0434\u0430\u043B\u0435\u043D\u0438\u044F" });
     }
     await db.execute(sql`DELETE FROM post_comments WHERE id = ${commentId}`);
@@ -149313,13 +149334,13 @@ router12.post("/admin/creator-verifications/:id/review", requireAdmin, async (re
 });
 router12.post("/admin/set-admin", requireAdmin, async (req, res) => {
   try {
-    const { userId, isAdmin: isAdmin3 } = req.body;
+    const { userId, isAdmin: isAdmin4 } = req.body;
     if (!userId) return res.status(400).json({ error: "\u0423\u043A\u0430\u0436\u0438\u0442\u0435 userId" });
     const targetId = Number(userId);
     if (ADMIN_USER_IDS.includes(targetId)) {
       return res.status(400).json({ error: "\u041D\u0435\u043B\u044C\u0437\u044F \u0438\u0437\u043C\u0435\u043D\u0438\u0442\u044C \u043F\u0440\u0430\u0432\u0430 \u0441\u0443\u043F\u0435\u0440\u0430\u0434\u043C\u0438\u043D\u0438\u0441\u0442\u0440\u0430\u0442\u043E\u0440\u0430" });
     }
-    await db.execute(sql`UPDATE users SET is_admin = ${!!isAdmin3} WHERE id = ${targetId}`);
+    await db.execute(sql`UPDATE users SET is_admin = ${!!isAdmin4} WHERE id = ${targetId}`);
     res.json({ success: true });
   } catch (err2) {
     req.log.error(err2);
@@ -153327,6 +153348,46 @@ router25.get("/playlists", async (req, res) => {
     res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u043F\u043B\u0435\u0439\u043B\u0438\u0441\u0442\u044B" });
   }
 });
+router25.get("/users/:userId/playlists", async (req, res) => {
+  const viewerId = auth(req, res);
+  if (!viewerId) return;
+  const profileUserId = Number(req.params.userId);
+  if (!Number.isInteger(profileUserId) || profileUserId <= 0) {
+    return res.status(400).json({ error: "\u041D\u0435\u043A\u043E\u0440\u0440\u0435\u043A\u0442\u043D\u044B\u0439 userId" });
+  }
+  try {
+    await ensureSchema();
+    const playlists = await db.execute(sql`
+      SELECT p.*, COUNT(pt.id)::int AS track_count
+      FROM playlists p
+      LEFT JOIN playlist_tracks pt ON pt.playlist_id = p.id
+      WHERE p.user_id = ${profileUserId} AND p.is_public = TRUE
+      GROUP BY p.id
+      ORDER BY p.updated_at DESC
+    `);
+    const tracks = await db.execute(sql`
+      SELECT pt.*
+      FROM playlist_tracks pt
+      JOIN playlists p ON p.id = pt.playlist_id
+      WHERE p.user_id = ${profileUserId} AND p.is_public = TRUE
+      ORDER BY pt.playlist_id, pt.sort_order, pt.id
+    `);
+    const tracksByPlaylist = /* @__PURE__ */ new Map();
+    for (const track of tracks.rows) {
+      const playlistId = Number(track.playlist_id);
+      const current = tracksByPlaylist.get(playlistId) ?? [];
+      current.push(track);
+      tracksByPlaylist.set(playlistId, current);
+    }
+    res.json(playlists.rows.map((playlist) => ({
+      ...playlist,
+      tracks: tracksByPlaylist.get(Number(playlist.id)) ?? []
+    })));
+  } catch (error41) {
+    req.log.error(error41);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u043F\u0443\u0431\u043B\u0438\u0447\u043D\u044B\u0435 \u043F\u043B\u0435\u0439\u043B\u0438\u0441\u0442\u044B" });
+  }
+});
 router25.post("/playlists", async (req, res) => {
   const userId = auth(req, res);
   if (!userId) return;
@@ -153679,44 +153740,218 @@ router28.delete("/audio-rooms/:roomId", async (req, res) => {
 });
 var audio_rooms_default = router28;
 
-// src/routes/index.ts
+// src/routes/plugins.ts
+var import_express29 = __toESM(require_express2(), 1);
+init_src();
+init_drizzle_orm();
 var router29 = (0, import_express29.Router)();
-router29.use(health_default);
-router29.use(auth_default);
-router29.use(qr_auth_default);
-router29.use(users_default);
-router29.use(contacts_default);
-router29.use(chats_default);
-router29.use(messages_default);
-router29.use(calls_default);
-router29.use(stories_default);
-router29.use(posts_default);
-router29.use(admin_default);
-router29.use(events_default);
-router29.use(wallet_default);
-if (!process.env.DISABLE_BOTS) router29.use(bots_default);
-router29.use(support_default);
-router29.use(prime_default);
-router29.use(push_default);
-router29.use(polls_default);
-router29.use(translate_default);
-router29.use(referral_default);
-router29.use(folders_default);
-router29.use(platform_events_default);
-router29.use(contact_requests_default);
-router29.use(clans_default);
-router29.use(feature_hub_default);
-router29.use(enhancements_default);
-router29.use(drafts_default);
-router29.use(audio_rooms_default);
-var routes_default = router29;
+var schemaPromise2 = null;
+function ensureSchema2() {
+  if (!schemaPromise2) {
+    schemaPromise2 = db.execute(sql`
+      CREATE TABLE IF NOT EXISTS plugin_submissions (
+        id SERIAL PRIMARY KEY,
+        submitted_by INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        name TEXT NOT NULL,
+        description TEXT NOT NULL DEFAULT '',
+        version TEXT NOT NULL DEFAULT '1.0.0',
+        entry_url TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'pending',
+        review_note TEXT,
+        reviewed_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+        reviewed_at TIMESTAMP WITH TIME ZONE,
+        created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+      )
+    `).then(() => void 0).catch((error41) => {
+      schemaPromise2 = null;
+      throw error41;
+    });
+  }
+  return schemaPromise2;
+}
+function currentUserId(req, res) {
+  const userId = Number(req.currentUserId);
+  if (!userId) {
+    res.status(401).json({ error: "\u0422\u0440\u0435\u0431\u0443\u0435\u0442\u0441\u044F \u0430\u0432\u0442\u043E\u0440\u0438\u0437\u0430\u0446\u0438\u044F" });
+    return null;
+  }
+  return userId;
+}
+async function isAdmin3(userId) {
+  const rows = await db.execute(sql`SELECT is_admin FROM users WHERE id = ${userId}`);
+  const value = rows.rows[0]?.is_admin;
+  return value === true || value === "t" || value === 1;
+}
+async function requireAdmin2(req, res) {
+  const userId = currentUserId(req, res);
+  if (!userId) return null;
+  if (!await isAdmin3(userId)) {
+    res.status(403).json({ error: "\u0414\u043E\u0441\u0442\u0443\u043F \u0437\u0430\u043F\u0440\u0435\u0449\u0451\u043D" });
+    return null;
+  }
+  return userId;
+}
+function validateEntryUrl(raw) {
+  if (typeof raw !== "string" || raw.length > 2048) return null;
+  try {
+    const url2 = new URL(raw.trim());
+    if (url2.protocol !== "https:" && !(url2.protocol === "http:" && url2.hostname === "localhost")) return null;
+    return url2.toString();
+  } catch {
+    return null;
+  }
+}
+router29.get("/plugins", async (req, res) => {
+  const userId = currentUserId(req, res);
+  if (!userId) return;
+  try {
+    await ensureSchema2();
+    const rows = await db.execute(sql`
+      SELECT ps.id, ps.name, ps.description, ps.version, ps.entry_url, ps.submitted_by,
+             u.username AS author_username, u.display_name AS author_display_name
+      FROM plugin_submissions ps
+      JOIN users u ON u.id = ps.submitted_by
+      WHERE ps.status = 'approved'
+      ORDER BY ps.updated_at DESC, ps.id DESC
+    `);
+    res.json(rows.rows);
+  } catch (error41) {
+    req.log.error(error41);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u043A\u0430\u0442\u0430\u043B\u043E\u0433 \u043F\u043B\u0430\u0433\u0438\u043D\u043E\u0432" });
+  }
+});
+router29.get("/plugins/submissions/mine", async (req, res) => {
+  const userId = currentUserId(req, res);
+  if (!userId) return;
+  try {
+    await ensureSchema2();
+    const rows = await db.execute(sql`
+      SELECT id, name, description, version, entry_url, status, review_note, created_at, reviewed_at
+      FROM plugin_submissions
+      WHERE submitted_by = ${userId}
+      ORDER BY created_at DESC
+    `);
+    res.json(rows.rows);
+  } catch (error41) {
+    req.log.error(error41);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u0432\u0430\u0448\u0438 \u0437\u0430\u044F\u0432\u043A\u0438" });
+  }
+});
+router29.post("/plugins/submissions", async (req, res) => {
+  const userId = currentUserId(req, res);
+  if (!userId) return;
+  const name2 = String(req.body?.name || "").trim().slice(0, 80);
+  const description = String(req.body?.description || "").trim().slice(0, 500);
+  const version3 = String(req.body?.version || "1.0.0").trim().slice(0, 30);
+  const entryUrl = validateEntryUrl(req.body?.entryUrl);
+  if (!name2 || !description || !entryUrl) {
+    return res.status(400).json({ error: "\u0423\u043A\u0430\u0436\u0438\u0442\u0435 \u043D\u0430\u0437\u0432\u0430\u043D\u0438\u0435, \u043E\u043F\u0438\u0441\u0430\u043D\u0438\u0435 \u0438 HTTPS-\u0441\u0441\u044B\u043B\u043A\u0443 \u043D\u0430 \u0441\u0442\u0440\u0430\u043D\u0438\u0446\u0443 \u043F\u043B\u0430\u0433\u0438\u043D\u0430" });
+  }
+  try {
+    await ensureSchema2();
+    const duplicate = await db.execute(sql`
+      SELECT id FROM plugin_submissions
+      WHERE submitted_by = ${userId} AND entry_url = ${entryUrl} AND status IN ('pending', 'approved')
+      LIMIT 1
+    `);
+    if (duplicate.rows.length) {
+      return res.status(409).json({ error: "\u0422\u0430\u043A\u0430\u044F \u0437\u0430\u044F\u0432\u043A\u0430 \u0443\u0436\u0435 \u043E\u0442\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0430 \u0438\u043B\u0438 \u043E\u0434\u043E\u0431\u0440\u0435\u043D\u0430" });
+    }
+    const created = await db.execute(sql`
+      INSERT INTO plugin_submissions (submitted_by, name, description, version, entry_url)
+      VALUES (${userId}, ${name2}, ${description}, ${version3 || "1.0.0"}, ${entryUrl})
+      RETURNING id, name, description, version, entry_url, status, created_at
+    `);
+    res.status(201).json(created.rows[0]);
+  } catch (error41) {
+    req.log.error(error41);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u043E\u0442\u043F\u0440\u0430\u0432\u0438\u0442\u044C \u0437\u0430\u044F\u0432\u043A\u0443" });
+  }
+});
+router29.get("/admin/plugin-submissions", async (req, res) => {
+  const adminId = await requireAdmin2(req, res);
+  if (!adminId) return;
+  try {
+    await ensureSchema2();
+    const rows = await db.execute(sql`
+      SELECT ps.*, u.username, u.display_name, u.avatar_url, u.avatar_color
+      FROM plugin_submissions ps
+      JOIN users u ON u.id = ps.submitted_by
+      ORDER BY CASE WHEN ps.status = 'pending' THEN 0 ELSE 1 END, ps.created_at DESC
+    `);
+    res.json(rows.rows);
+  } catch (error41) {
+    req.log.error(error41);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u0437\u0430\u044F\u0432\u043A\u0438 \u043D\u0430 \u043F\u043B\u0430\u0433\u0438\u043D\u044B" });
+  }
+});
+router29.post("/admin/plugin-submissions/:id/review", async (req, res) => {
+  const adminId = await requireAdmin2(req, res);
+  if (!adminId) return;
+  const submissionId = Number(req.params.id);
+  const status = req.body?.status;
+  if (!Number.isInteger(submissionId) || !["approved", "rejected"].includes(status)) {
+    return res.status(400).json({ error: "\u0423\u043A\u0430\u0436\u0438\u0442\u0435 \u043A\u043E\u0440\u0440\u0435\u043A\u0442\u043D\u044B\u0439 \u0441\u0442\u0430\u0442\u0443\u0441 \u0437\u0430\u044F\u0432\u043A\u0438" });
+  }
+  try {
+    await ensureSchema2();
+    const note = String(req.body?.reviewNote || "").trim().slice(0, 500) || null;
+    const updated = await db.execute(sql`
+      UPDATE plugin_submissions
+      SET status = ${status}, review_note = ${note}, reviewed_by = ${adminId},
+          reviewed_at = NOW(), updated_at = NOW()
+      WHERE id = ${submissionId}
+      RETURNING *
+    `);
+    if (!updated.rows.length) return res.status(404).json({ error: "\u0417\u0430\u044F\u0432\u043A\u0430 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u0430" });
+    res.json(updated.rows[0]);
+  } catch (error41) {
+    req.log.error(error41);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u043E\u0431\u043D\u043E\u0432\u0438\u0442\u044C \u0437\u0430\u044F\u0432\u043A\u0443" });
+  }
+});
+var plugins_default = router29;
+
+// src/routes/index.ts
+var router30 = (0, import_express30.Router)();
+router30.use(health_default);
+router30.use(auth_default);
+router30.use(qr_auth_default);
+router30.use(users_default);
+router30.use(contacts_default);
+router30.use(chats_default);
+router30.use(messages_default);
+router30.use(calls_default);
+router30.use(stories_default);
+router30.use(posts_default);
+router30.use(admin_default);
+router30.use(events_default);
+router30.use(wallet_default);
+if (!process.env.DISABLE_BOTS) router30.use(bots_default);
+router30.use(support_default);
+router30.use(prime_default);
+router30.use(push_default);
+router30.use(polls_default);
+router30.use(translate_default);
+router30.use(referral_default);
+router30.use(folders_default);
+router30.use(platform_events_default);
+router30.use(contact_requests_default);
+router30.use(clans_default);
+router30.use(feature_hub_default);
+router30.use(enhancements_default);
+router30.use(drafts_default);
+router30.use(audio_rooms_default);
+router30.use(plugins_default);
+var routes_default = router30;
 
 // src/routes/botapi.ts
-var import_express30 = __toESM(require_express2(), 1);
+var import_express31 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
 init_sse();
-var botApiRouter = (0, import_express30.Router)();
+var botApiRouter = (0, import_express31.Router)();
 async function resolveBot(token) {
   const rows = await db.execute(sql`SELECT bot_user_id FROM bot_tokens WHERE token = ${token}`);
   if (rows.rows.length === 0) return null;
@@ -153927,7 +154162,7 @@ if (!process.env.JWT_SECRET) {
 }
 var JWT_SECRET = process.env.JWT_SECRET;
 var EFFECTIVE_JWT_SECRET = JWT_SECRET;
-var app = (0, import_express31.default)();
+var app = (0, import_express32.default)();
 app.set("trust proxy", 1);
 app.use(
   helmet({
@@ -154004,17 +154239,19 @@ app.use(
     }
   })
 );
-app.use("/api/upload", import_express31.default.json({ limit: "2gb" }));
-app.use("/api/upload", import_express31.default.urlencoded({ extended: true, limit: "2gb" }));
-app.use("/api/stories", import_express31.default.json({ limit: "2gb" }));
-app.use("/api/stories", import_express31.default.urlencoded({ extended: true, limit: "2gb" }));
-app.use("/api/users/me", import_express31.default.json({ limit: "2gb" }));
-app.use("/api/messages", import_express31.default.json({ limit: "2gb" }));
-app.use("/api/messages", import_express31.default.urlencoded({ extended: true, limit: "2gb" }));
-app.use("/api/support", import_express31.default.json({ limit: "2gb" }));
-app.use("/api/support", import_express31.default.urlencoded({ extended: true, limit: "2gb" }));
-app.use(import_express31.default.json({ limit: "2mb" }));
-app.use(import_express31.default.urlencoded({ extended: true, limit: "2mb" }));
+app.use("/api/upload", import_express32.default.json({ limit: "2gb" }));
+app.use("/api/upload", import_express32.default.urlencoded({ extended: true, limit: "2gb" }));
+app.use("/api/stories", import_express32.default.json({ limit: "2gb" }));
+app.use("/api/stories", import_express32.default.urlencoded({ extended: true, limit: "2gb" }));
+app.use("/api/users/me", import_express32.default.json({ limit: "2gb" }));
+app.use("/api/messages", import_express32.default.json({ limit: "2gb" }));
+app.use("/api/messages", import_express32.default.urlencoded({ extended: true, limit: "2gb" }));
+app.use("/api/support", import_express32.default.json({ limit: "2gb" }));
+app.use("/api/support", import_express32.default.urlencoded({ extended: true, limit: "2gb" }));
+app.use("/api/playlists", import_express32.default.json({ limit: "24mb" }));
+app.use("/api/playlists", import_express32.default.urlencoded({ extended: true, limit: "24mb" }));
+app.use(import_express32.default.json({ limit: "2mb" }));
+app.use(import_express32.default.urlencoded({ extended: true, limit: "2mb" }));
 function sanitizeString(val, maxLen = 1e3) {
   if (typeof val !== "string") return "";
   return val.trim().slice(0, maxLen).replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, "").replace(/<[^>]+>/g, "").replace(/javascript:/gi, "").replace(/on\w+\s*=/gi, "");
@@ -154292,12 +154529,13 @@ app.use("/api", (_req, res) => {
 });
 if (process.env.NODE_ENV === "production") {
   const staticDir = path.join(process.cwd(), "artifacts/pulse/dist");
-  app.use(import_express31.default.static(staticDir, { maxAge: "1h", index: false }));
+  app.use(import_express32.default.static(staticDir, { maxAge: "1h", index: false }));
   app.use("/{*path}", (_req, res) => {
     res.sendFile(path.join(staticDir, "index.html"));
   });
 } else {
-  const VITE_PORT = 5e3;
+  const defaultVitePort = process.env.REPL_ID ? 23821 : 5e3;
+  const VITE_PORT = Number(process.env.VITE_DEV_SERVER_PORT || process.env.FRONTEND_PORT || defaultVitePort);
   app.use("/{*path}", (req, res) => {
     const options = {
       hostname: "localhost",
@@ -154705,6 +154943,8 @@ if (Number.isNaN(port) || port <= 0) {
     await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS moderation_type TEXT NOT NULL DEFAULT 'none'`);
     await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS ban_reason TEXT`);
     await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS ban_expires_at TIMESTAMP WITH TIME ZONE`);
+    await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS nickname_style TEXT`);
+    await db.execute(sql`ALTER TABLE chat_members ADD COLUMN IF NOT EXISTS is_archived BOOLEAN NOT NULL DEFAULT FALSE`);
   } catch (migErr) {
     logger.warn({ err: migErr }, "DB migration check warning (non-fatal) \u2014 server will continue");
   }
