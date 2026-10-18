@@ -166,8 +166,10 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
 
   const toggleTheme = () => {
     const next = !isDark;
-    localStorage.setItem("pulse-app-theme", next ? "dark" : "light");
+    const themeId = next ? "dark" : "light";
+    localStorage.setItem("pulse-app-theme", themeId);
     setIsDark(next);
+    window.dispatchEvent(new CustomEvent("pulse:app-theme", { detail: themeId }));
   };
 
   useEffect(() => {

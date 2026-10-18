@@ -19593,6 +19593,9 @@ var require_proxy_addr = __commonJS({
       return function trust(addr) {
         if (!isip(addr)) return false;
         var ip = parseip(addr);
+        if (ip.kind() === "ipv6" && ip.isIPv4MappedAddress()) {
+          ip = ip.toIPv4Address();
+        }
         var ipconv;
         var kind = ip.kind();
         for (var i5 = 0; i5 < subnets.length; i5++) {
@@ -19605,10 +19608,15 @@ var require_proxy_addr = __commonJS({
             if (subnetkind === "ipv4" && !ip.isIPv4MappedAddress()) {
               continue;
             }
+            if (subnetkind !== "ipv4" && !(subnetrange >= 96 && subnetip.isIPv4MappedAddress())) {
+              continue;
+            }
             if (!ipconv) {
               ipconv = subnetkind === "ipv4" ? ip.toIPv4Address() : ip.toIPv4MappedAddress();
             }
             trusted = ipconv;
+          } else if (kind === "ipv6" && subnetip.isIPv4MappedAddress()) {
+            continue;
           }
           if (trusted.match(subnetip, subnetrange)) {
             return true;
@@ -19625,12 +19633,20 @@ var require_proxy_addr = __commonJS({
       return function trust(addr) {
         if (!isip(addr)) return false;
         var ip = parseip(addr);
+        if (ip.kind() === "ipv6" && ip.isIPv4MappedAddress()) {
+          ip = ip.toIPv4Address();
+        }
         var kind = ip.kind();
         if (kind !== subnetkind) {
           if (subnetisipv4 && !ip.isIPv4MappedAddress()) {
             return false;
           }
+          if (!subnetisipv4 && !(subnetrange >= 96 && subnetip.isIPv4MappedAddress())) {
+            return false;
+          }
           ip = subnetisipv4 ? ip.toIPv4Address() : ip.toIPv4MappedAddress();
+        } else if (kind === "ipv6" && subnetip.isIPv4MappedAddress()) {
+          return false;
         }
         return ip.match(subnetip, subnetrange);
       };
@@ -30724,12 +30740,12 @@ var require_jwa = __commonJS({
       };
     }
     var bufferEqual;
-    var timingSafeEqual = "timingSafeEqual" in crypto6 ? function timingSafeEqual2(a5, b5) {
+    var timingSafeEqual2 = "timingSafeEqual" in crypto6 ? function timingSafeEqual3(a5, b5) {
       if (a5.byteLength !== b5.byteLength) {
         return false;
       }
       return crypto6.timingSafeEqual(a5, b5);
-    } : function timingSafeEqual2(a5, b5) {
+    } : function timingSafeEqual3(a5, b5) {
       if (!bufferEqual) {
         bufferEqual = require_buffer_equal_constant_time();
       }
@@ -30738,7 +30754,7 @@ var require_jwa = __commonJS({
     function createHmacVerifier(bits) {
       return function verify(thing, signature, secret) {
         var computedSig = createHmacSigner(bits)(thing, secret);
-        return timingSafeEqual(Buffer3.from(signature), Buffer3.from(computedSig));
+        return timingSafeEqual2(Buffer3.from(signature), Buffer3.from(computedSig));
       };
     }
     function createKeySigner(bits) {
@@ -59739,6 +59755,8 @@ var init_users = __esm({
       emailVerified: boolean("email_verified").notNull().default(false),
       emailVerificationCode: text("email_verification_code"),
       emailVerificationExpiresAt: timestamp("email_verification_expires_at", { withTimezone: true }),
+      loginCodeHash: text("login_code_hash"),
+      loginCodeExpiresAt: timestamp("login_code_expires_at", { withTimezone: true }),
       showOnlineStatus: boolean("show_online_status").notNull().default(true),
       readReceiptsEnabled: boolean("read_receipts_enabled").notNull().default(true),
       referralCode: text("referral_code").unique(),
@@ -79844,7 +79862,7 @@ var init_serdePlugin = __esm({
 });
 
 // ../../node_modules/@smithy/core/dist-es/submodules/serde/hash-node/hash-node.js
-import { createHash as createHash4, createHmac as createHmac2 } from "node:crypto";
+import { createHash as createHash4, createHmac as createHmac3 } from "node:crypto";
 function castSourceData(toCast, encoding) {
   if (Buffer.isBuffer(toCast)) {
     return toCast;
@@ -79878,7 +79896,7 @@ var init_hash_node = __esm({
         return Promise.resolve(this.hash.digest());
       }
       reset() {
-        this.hash = this.secret ? createHmac2(this.algorithmIdentifier, castSourceData(this.secret)) : createHash4(this.algorithmIdentifier);
+        this.hash = this.secret ? createHmac3(this.algorithmIdentifier, castSourceData(this.secret)) : createHash4(this.algorithmIdentifier);
       }
     };
   }
@@ -81411,7 +81429,7 @@ var init_Sha256Js = __esm({
 });
 
 // ../../node_modules/@smithy/core/dist-es/submodules/checksum/sha256/Sha256Node.js
-import { createHash as createHash6, createHmac as createHmac3 } from "node:crypto";
+import { createHash as createHash6, createHmac as createHmac4 } from "node:crypto";
 function buildNativeClass3() {
   return class Sha256Node {
     digestLength = 32;
@@ -81445,7 +81463,7 @@ function buildNativeClass3() {
       this.finished = false;
     }
     createHash() {
-      return this.secret ? createHmac3("sha256", toBuffer(this.secret)) : createHash6("sha256");
+      return this.secret ? createHmac4("sha256", toBuffer(this.secret)) : createHash6("sha256");
     }
   };
 }
@@ -98745,7 +98763,7 @@ var init_Sha1Js = __esm({
 });
 
 // ../../node_modules/@aws-sdk/checksums/dist-es/submodules/sha/sha1/Sha1Node.js
-import { createHash as createHash7, createHmac as createHmac4 } from "node:crypto";
+import { createHash as createHash7, createHmac as createHmac5 } from "node:crypto";
 function buildNativeClass4() {
   return class Sha1Node {
     digestLength = 20;
@@ -98779,7 +98797,7 @@ function buildNativeClass4() {
       this.finished = false;
     }
     createHash() {
-      return this.secret ? createHmac4("sha1", toBuffer2(this.secret)) : createHash7("sha1");
+      return this.secret ? createHmac5("sha1", toBuffer2(this.secret)) : createHash7("sha1");
     }
   };
 }
@@ -142975,7 +142993,7 @@ init_src();
 init_drizzle_orm();
 init_bcryptjs();
 var import_jsonwebtoken = __toESM(require_jsonwebtoken(), 1);
-import { createHash as createHash2, randomUUID } from "node:crypto";
+import { createHash as createHash2, createHmac as createHmac2, randomInt, randomUUID, timingSafeEqual } from "node:crypto";
 init_sse();
 
 // src/lib/totp.ts
@@ -143343,6 +143361,23 @@ async function sendVerificationEmail(to, code) {
     `
   });
 }
+async function sendLoginCodeEmail(to, code) {
+  return sendMail({
+    to,
+    subject: `${code} \u2014 \u043A\u043E\u0434 \u0432\u0445\u043E\u0434\u0430 \u0432 Nova`,
+    text: `\u0412\u0430\u0448 \u043A\u043E\u0434 \u0434\u043B\u044F \u0432\u0445\u043E\u0434\u0430 \u0432 Nova: ${code}
+
+\u041A\u043E\u0434 \u0434\u0435\u0439\u0441\u0442\u0432\u0443\u0435\u0442 10 \u043C\u0438\u043D\u0443\u0442. \u0415\u0441\u043B\u0438 \u0432\u044B \u043D\u0435 \u0432\u0445\u043E\u0434\u0438\u0442\u0435 \u0432 \u0430\u043A\u043A\u0430\u0443\u043D\u0442, \u043F\u0440\u043E\u0438\u0433\u043D\u043E\u0440\u0438\u0440\u0443\u0439\u0442\u0435 \u044D\u0442\u043E \u043F\u0438\u0441\u044C\u043C\u043E.`,
+    html: `
+      <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px;">
+        <h2 style="color:#2563eb;">\u0412\u0445\u043E\u0434 \u0432 Nova</h2>
+        <p>\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u044D\u0442\u043E\u0442 \u043A\u043E\u0434, \u0447\u0442\u043E\u0431\u044B \u0432\u043E\u0439\u0442\u0438 \u0432 \u0430\u043A\u043A\u0430\u0443\u043D\u0442:</p>
+        <div style="font-size:32px;font-weight:bold;letter-spacing:6px;background:#f1f5f9;padding:16px 24px;border-radius:8px;text-align:center;margin:16px 0;">${code}</div>
+        <p style="color:#64748b;font-size:14px;">\u041A\u043E\u0434 \u0434\u0435\u0439\u0441\u0442\u0432\u0443\u0435\u0442 10 \u043C\u0438\u043D\u0443\u0442. \u0415\u0441\u043B\u0438 \u0432\u044B \u043D\u0435 \u0432\u0445\u043E\u0434\u0438\u0442\u0435 \u0432 Nova \u2014 \u043F\u0440\u043E\u0441\u0442\u043E \u043F\u0440\u043E\u0438\u0433\u043D\u043E\u0440\u0438\u0440\u0443\u0439\u0442\u0435 \u044D\u0442\u043E \u043F\u0438\u0441\u044C\u043C\u043E.</p>
+      </div>
+    `
+  });
+}
 
 // src/routes/auth.ts
 var router2 = (0, import_express2.Router)();
@@ -143398,6 +143433,14 @@ function generateReferralCode() {
 }
 var TOKEN_TTL = "90d";
 var PENDING_2FA_TTL = "5m";
+var PENDING_LOGIN_CODE_TTL = "10m";
+var LOGIN_CODE_TTL_MS = 10 * 60 * 1e3;
+var LOGIN_CODE_RESEND_COOLDOWN_MS = 60 * 1e3;
+var MAX_LOGIN_CODE_ATTEMPTS = 5;
+var LOGIN_CODE_LOCKOUT_MS = 60 * 1e3;
+var loginCodeCooldowns = /* @__PURE__ */ new Map();
+var loginCodeDeliveryStatus = /* @__PURE__ */ new Map();
+var loginCodeAttempts = /* @__PURE__ */ new Map();
 var sha256 = (pass2) => createHash2("sha256").update(pass2).digest("hex");
 function signToken(userId, sessionId) {
   return import_jsonwebtoken.default.sign({ userId, ...sessionId ? { sid: sessionId } : {} }, EFFECTIVE_JWT_SECRET, { expiresIn: TOKEN_TTL });
@@ -143405,12 +143448,51 @@ function signToken(userId, sessionId) {
 function signPending2faToken(userId) {
   return import_jsonwebtoken.default.sign({ userId, pending2fa: true }, EFFECTIVE_JWT_SECRET, { expiresIn: PENDING_2FA_TTL });
 }
+function signPendingLoginCodeToken(userId) {
+  return import_jsonwebtoken.default.sign({ userId, pendingLoginCode: true }, EFFECTIVE_JWT_SECRET, { expiresIn: PENDING_LOGIN_CODE_TTL });
+}
+function hashLoginCode(code, userId, email3) {
+  return createHmac2("sha256", EFFECTIVE_JWT_SECRET).update(`nova-login:${userId}:${email3.trim().toLowerCase()}:${code}`).digest();
+}
+function loginCodeMatches(code, storedHash, userId, email3) {
+  if (!/^\d{6}$/.test(code) || !/^[a-f0-9]{64}$/i.test(storedHash)) return false;
+  return timingSafeEqual(hashLoginCode(code, userId, email3), Buffer.from(storedHash, "hex"));
+}
+function maskEmail(email3) {
+  const [local, domain2] = email3.split("@");
+  if (!local || !domain2) return "\u0432\u0430\u0448\u0443 \u043F\u043E\u0447\u0442\u0443";
+  const visible = local.length > 2 ? local.slice(0, 2) : local.slice(0, 1);
+  return `${visible}${"*".repeat(Math.max(2, local.length - visible.length))}@${domain2}`;
+}
+function authUserPayload(user) {
+  const ageVerified = user.age_verified === true || user.age_verified === "t" || user.age_verified === 1;
+  return {
+    userId: user.id,
+    ageVerified,
+    user: {
+      id: user.id,
+      username: user.username,
+      displayName: user.display_name,
+      avatarColor: user.avatar_color,
+      avatarUrl: user.avatar_url,
+      bio: user.bio,
+      status: user.status,
+      statusText: user.status_text,
+      isVerified: user.is_verified,
+      isAdmin: user.is_admin === true || user.is_admin === "t" || user.is_admin === 1,
+      isBot: user.is_bot === true || user.is_bot === "t" || user.is_bot === 1,
+      balance: Number(user.balance ?? 0),
+      createdAt: user.created_at,
+      ageVerified
+    }
+  };
+}
 var NOVA_SECURITY_ICON = `data:image/svg+xml;utf8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#22d3ee"/><stop offset="1" stop-color="#7c3aed"/></linearGradient></defs><rect width="128" height="128" rx="32" fill="url(#g)"/><path d="M64 22c4 20 12 28 32 32-20 4-28 12-32 32-4-20-12-28-32-32 20-4 28-12 32-32Z" fill="white"/></svg>`)}`;
-async function notifyNovaVerification(userId, code, email3) {
+async function notifyNovaVerification(userId, code, email3, purpose = "\u041A\u043E\u0434 \u043F\u043E\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043D\u0438\u044F", validMinutes = 30) {
   try {
     const bot = await db.execute(sql`SELECT id FROM users WHERE username IN ('nova_security', 'nova', 'nova_ai') AND is_bot = true ORDER BY CASE WHEN username = 'nova_security' THEN 0 ELSE 1 END LIMIT 1`);
     const botId = Number(bot.rows[0]?.id || 0);
-    if (!botId) return;
+    if (!botId) return false;
     const existing = await db.execute(sql`
       SELECT c.id FROM chats c
       JOIN chat_members a ON a.chat_id = c.id AND a.user_id = ${userId}
@@ -143428,16 +143510,18 @@ async function notifyNovaVerification(userId, code, email3) {
     }
     await db.execute(sql`
       INSERT INTO messages (chat_id, sender_id, type, text, created_at, updated_at)
-      VALUES (${chatId}, ${botId}, 'text', ${`\u{1F510} \u041A\u043E\u0434 \u043F\u043E\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043D\u0438\u044F Nova
+      VALUES (${chatId}, ${botId}, 'text', ${`\u{1F510} ${purpose} Nova
 
 \u0412\u0430\u0448 \u043A\u043E\u0434: ${code}
 Email: ${email3}
-\u041A\u043E\u0434 \u0434\u0435\u0439\u0441\u0442\u0432\u0443\u0435\u0442 30 \u043C\u0438\u043D\u0443\u0442.`}, NOW(), NOW())
+\u041A\u043E\u0434 \u0434\u0435\u0439\u0441\u0442\u0432\u0443\u0435\u0442 ${validMinutes} \u043C\u0438\u043D\u0443\u0442.`}, NOW(), NOW())
     `);
     await db.execute(sql`UPDATE chats SET updated_at = NOW() WHERE id = ${chatId}`);
     broadcastToUser(userId, "new-message", { chatId, senderId: botId });
+    return true;
   } catch (err2) {
     console.warn("[auth] Could not deliver verification code to Nova", err2);
+    return false;
   }
 }
 async function notifyNovaSecurity(userId, ip, device) {
@@ -143485,6 +143569,75 @@ IP: ${ip}
     console.warn("[security] Could not create Nova Security notification", err2);
   }
 }
+async function createLoginSession(userId, req) {
+  const sessionId = randomUUID();
+  const ua = String(req.headers["user-agent"] || "Unknown");
+  const ip = req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.ip || "unknown";
+  const deviceName = ua.length > 200 ? ua.slice(0, 200) : ua;
+  await ensureSessionTable();
+  await db.execute(sql`
+    INSERT INTO user_sessions (id, user_id, device, ip_address, created_at, last_active_at)
+    VALUES (${sessionId}, ${userId}, ${deviceName}, ${ip}, NOW(), NOW())
+  `);
+  await notifyNovaSecurity(userId, ip, deviceName);
+  return sessionId;
+}
+async function issueLoginCode(userId, email3) {
+  const now = Date.now();
+  const lastSent = loginCodeCooldowns.get(userId) ?? 0;
+  const waitMs = LOGIN_CODE_RESEND_COOLDOWN_MS - (now - lastSent);
+  if (waitMs > 0) {
+    const current = await db.execute(sql`
+      SELECT login_code_hash, login_code_expires_at FROM users WHERE id = ${userId} LIMIT 1
+    `);
+    const row = current.rows[0];
+    if (row?.login_code_hash && new Date(row.login_code_expires_at).getTime() > now) {
+      return {
+        ok: true,
+        emailSent: true,
+        novaSent: loginCodeDeliveryStatus.get(userId)?.novaSent ?? false,
+        resendAfterSeconds: Math.ceil(waitMs / 1e3),
+        reused: true
+      };
+    }
+    return { ok: false, reason: "cooldown", retryAfterSeconds: Math.ceil(waitMs / 1e3) };
+  }
+  if (!isMailerConfigured()) {
+    return { ok: false, reason: "mailer" };
+  }
+  const code = String(randomInt(0, 1e6)).padStart(6, "0");
+  const expiry = new Date(now + LOGIN_CODE_TTL_MS);
+  await db.execute(sql`
+    UPDATE users SET login_code_hash = ${hashLoginCode(code, userId, email3).toString("hex")},
+      login_code_expires_at = ${expiry.toISOString()} WHERE id = ${userId}
+  `);
+  loginCodeCooldowns.set(userId, now);
+  const emailSent = await sendLoginCodeEmail(email3, code).catch(() => false);
+  const novaSent = emailSent ? await notifyNovaVerification(userId, code, email3, "\u041A\u043E\u0434 \u0434\u043B\u044F \u0432\u0445\u043E\u0434\u0430", 10) : false;
+  loginCodeDeliveryStatus.set(userId, { novaSent });
+  if (!emailSent) {
+    await db.execute(sql`
+      UPDATE users SET login_code_hash = NULL, login_code_expires_at = NULL WHERE id = ${userId}
+    `);
+    return { ok: false, reason: "email" };
+  }
+  return {
+    ok: true,
+    emailSent: true,
+    novaSent,
+    resendAfterSeconds: Math.ceil(LOGIN_CODE_RESEND_COOLDOWN_MS / 1e3),
+    reused: false
+  };
+}
+function pendingLoginCodeUserId(token) {
+  if (typeof token !== "string" || !token) return null;
+  try {
+    const payload = import_jsonwebtoken.default.verify(token, EFFECTIVE_JWT_SECRET);
+    return payload.pendingLoginCode && Number(payload.userId) > 0 ? Number(payload.userId) : null;
+  } catch {
+    return null;
+  }
+}
 var sessionTableReady = null;
 async function ensureSessionTable() {
   if (!sessionTableReady) {
@@ -143523,6 +143676,7 @@ router2.post("/auth/login", async (req, res) => {
     const rows = await db.execute(
       sql`SELECT id, username, display_name, avatar_color, avatar_url, bio, status, status_text,
                  is_verified, is_bot, is_admin, is_banned, ban_reason, ban_expires_at, created_at, balance, password_hash,
+                 email, email_verified,
                  COALESCE(totp_enabled, false) as totp_enabled,
                  COALESCE(age_verified, false) as age_verified
           FROM users
@@ -143584,21 +143738,30 @@ router2.post("/auth/login", async (req, res) => {
     }
     clearFailures(ukey);
     clearFailures(ipKey);
-    const sessionId = randomUUID();
-    const ua = req.headers["user-agent"] || "Unknown";
-    const ip = req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.ip || "unknown";
-    const deviceName = ua.length > 200 ? ua.slice(0, 200) : ua;
-    try {
-      await ensureSessionTable();
-      await db.execute(sql`
-        INSERT INTO user_sessions (id, user_id, device, ip_address, created_at, last_active_at)
-        VALUES (${sessionId}, ${user.id}, ${deviceName}, ${ip}, NOW(), NOW())
-      `);
-    } catch (err2) {
-      req.log.error({ err: err2 }, "Could not create login session");
-      return res.status(503).json({ error: "\u0421\u0435\u0440\u0432\u0438\u0441 \u0432\u0445\u043E\u0434\u0430 \u0435\u0449\u0451 \u0437\u0430\u043F\u0443\u0441\u043A\u0430\u0435\u0442\u0441\u044F. \u041F\u043E\u0432\u0442\u043E\u0440\u0438\u0442\u0435 \u0447\u0435\u0440\u0435\u0437 \u043D\u0435\u0441\u043A\u043E\u043B\u044C\u043A\u043E \u0441\u0435\u043A\u0443\u043D\u0434." });
+    const loginEmail = String(user.email || "").trim();
+    if (loginEmail) {
+      if (!isMailerConfigured()) {
+        return res.status(503).json({ error: "\u0421\u0435\u0440\u0432\u0438\u0441 \u043E\u0442\u043F\u0440\u0430\u0432\u043A\u0438 \u043A\u043E\u0434\u043E\u0432 \u043D\u0430 \u043F\u043E\u0447\u0442\u0443 \u0432\u0440\u0435\u043C\u0435\u043D\u043D\u043E \u043D\u0435\u0434\u043E\u0441\u0442\u0443\u043F\u0435\u043D. \u041F\u043E\u0432\u0442\u043E\u0440\u0438\u0442\u0435 \u043F\u043E\u0437\u0436\u0435." });
+      }
+      const delivery = await issueLoginCode(Number(user.id), loginEmail);
+      if (!delivery.ok) {
+        if (delivery.reason === "cooldown") {
+          return res.status(429).json({ error: `\u0417\u0430\u043F\u0440\u043E\u0441\u0438\u0442\u0435 \u043D\u043E\u0432\u044B\u0439 \u043A\u043E\u0434 \u0447\u0435\u0440\u0435\u0437 ${delivery.retryAfterSeconds} \u0441\u0435\u043A.` });
+        }
+        if (delivery.reason === "mailer") {
+          return res.status(503).json({ error: "\u0421\u0435\u0440\u0432\u0438\u0441 \u043E\u0442\u043F\u0440\u0430\u0432\u043A\u0438 \u043A\u043E\u0434\u043E\u0432 \u043D\u0430 \u043F\u043E\u0447\u0442\u0443 \u0432\u0440\u0435\u043C\u0435\u043D\u043D\u043E \u043D\u0435\u0434\u043E\u0441\u0442\u0443\u043F\u0435\u043D. \u041F\u043E\u0432\u0442\u043E\u0440\u0438\u0442\u0435 \u043F\u043E\u0437\u0436\u0435." });
+        }
+        return res.status(502).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u043E\u0442\u043F\u0440\u0430\u0432\u0438\u0442\u044C \u043A\u043E\u0434 \u043D\u0430 \u043F\u043E\u0447\u0442\u0443. \u041F\u043E\u043F\u0440\u043E\u0431\u0443\u0439\u0442\u0435 \u043F\u043E\u0437\u0436\u0435." });
+      }
+      return res.json({
+        requiresLoginCode: true,
+        pendingToken: signPendingLoginCodeToken(Number(user.id)),
+        maskedEmail: maskEmail(loginEmail),
+        emailSent: delivery.emailSent,
+        novaSent: delivery.novaSent,
+        resendAfterSeconds: delivery.resendAfterSeconds
+      });
     }
-    await notifyNovaSecurity(user.id, ip, deviceName);
     if (user.totp_enabled) {
       const pendingToken = signPending2faToken(user.id);
       return res.json({
@@ -143612,28 +143775,106 @@ router2.post("/auth/login", async (req, res) => {
         }
       });
     }
-    const token = signToken(user.id, sessionId);
-    const ageVerified = user.age_verified === true || user.age_verified === "t" || user.age_verified === 1;
-    res.json({
-      userId: user.id,
-      token,
-      ageVerified,
-      user: {
-        id: user.id,
-        username: user.username,
-        displayName: user.display_name,
-        avatarColor: user.avatar_color,
-        avatarUrl: user.avatar_url,
-        bio: user.bio,
-        status: user.status,
-        statusText: user.status_text,
-        isVerified: user.is_verified,
-        isAdmin: user.is_admin === true || user.is_admin === "t" || user.is_admin === 1,
-        isBot: user.is_bot === true || user.is_bot === "t" || user.is_bot === 1,
-        balance: Number(user.balance ?? 0),
-        createdAt: user.created_at,
-        ageVerified
+    try {
+      const sessionId = await createLoginSession(Number(user.id), req);
+      res.json({ ...authUserPayload(user), token: signToken(user.id, sessionId) });
+    } catch (err2) {
+      req.log.error({ err: err2 }, "Could not create login session");
+      return res.status(503).json({ error: "\u0421\u0435\u0440\u0432\u0438\u0441 \u0432\u0445\u043E\u0434\u0430 \u0435\u0449\u0451 \u0437\u0430\u043F\u0443\u0441\u043A\u0430\u0435\u0442\u0441\u044F. \u041F\u043E\u0432\u0442\u043E\u0440\u0438\u0442\u0435 \u0447\u0435\u0440\u0435\u0437 \u043D\u0435\u0441\u043A\u043E\u043B\u044C\u043A\u043E \u0441\u0435\u043A\u0443\u043D\u0434." });
+    }
+  } catch (err2) {
+    req.log.error(err2);
+    res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
+  }
+});
+router2.post("/auth/login/verify-code", async (req, res) => {
+  try {
+    const { pendingToken, code: rawCode } = req.body;
+    const userId = pendingLoginCodeUserId(pendingToken);
+    const code = String(rawCode || "").trim();
+    if (!userId) return res.status(401).json({ error: "\u0421\u0435\u0441\u0441\u0438\u044F \u0432\u0445\u043E\u0434\u0430 \u0438\u0441\u0442\u0435\u043A\u043B\u0430. \u0412\u043E\u0439\u0434\u0438\u0442\u0435 \u0437\u0430\u043D\u043E\u0432\u043E." });
+    if (!/^\d{6}$/.test(code)) return res.status(400).json({ error: "\u0412\u0432\u0435\u0434\u0438\u0442\u0435 6-\u0437\u043D\u0430\u0447\u043D\u044B\u0439 \u043A\u043E\u0434" });
+    const attempts = loginCodeAttempts.get(userId);
+    if (attempts && attempts.lockedUntil > Date.now()) {
+      return res.status(429).json({ error: "\u0421\u043B\u0438\u0448\u043A\u043E\u043C \u043C\u043D\u043E\u0433\u043E \u043D\u0435\u0432\u0435\u0440\u043D\u044B\u0445 \u043A\u043E\u0434\u043E\u0432. \u041F\u043E\u0434\u043E\u0436\u0434\u0438\u0442\u0435 \u043C\u0438\u043D\u0443\u0442\u0443 \u0438 \u043F\u043E\u043F\u0440\u043E\u0431\u0443\u0439\u0442\u0435 \u0441\u043D\u043E\u0432\u0430." });
+    }
+    const rows = await db.execute(sql`
+      SELECT id, username, display_name, avatar_color, avatar_url, bio, status, status_text,
+             is_verified, is_bot, is_admin, balance, created_at, password_hash, email,
+             login_code_hash, login_code_expires_at, totp_secret,
+             COALESCE(totp_enabled, false) AS totp_enabled,
+             COALESCE(age_verified, false) AS age_verified
+      FROM users WHERE id = ${userId} LIMIT 1
+    `);
+    const user = rows.rows[0];
+    if (!user || !user.login_code_hash || !user.login_code_expires_at) {
+      return res.status(400).json({ error: "\u041A\u043E\u0434 \u043D\u0435 \u0437\u0430\u043F\u0440\u0430\u0448\u0438\u0432\u0430\u043B\u0441\u044F. \u0412\u0435\u0440\u043D\u0438\u0442\u0435\u0441\u044C \u043A\u043E \u0432\u0445\u043E\u0434\u0443 \u0438 \u043F\u043E\u043F\u0440\u043E\u0431\u0443\u0439\u0442\u0435 \u0441\u043D\u043E\u0432\u0430." });
+    }
+    if (new Date(user.login_code_expires_at).getTime() <= Date.now()) {
+      await db.execute(sql`UPDATE users SET login_code_hash = NULL, login_code_expires_at = NULL WHERE id = ${userId}`);
+      return res.status(400).json({ error: "\u041A\u043E\u0434 \u0438\u0441\u0442\u0451\u043A. \u0417\u0430\u043F\u0440\u043E\u0441\u0438\u0442\u0435 \u043D\u043E\u0432\u044B\u0439." });
+    }
+    if (!loginCodeMatches(code, String(user.login_code_hash), userId, String(user.email || ""))) {
+      const next = attempts ?? { count: 0, lockedUntil: 0 };
+      next.count += 1;
+      if (next.count >= MAX_LOGIN_CODE_ATTEMPTS) {
+        next.count = 0;
+        next.lockedUntil = Date.now() + LOGIN_CODE_LOCKOUT_MS;
       }
+      loginCodeAttempts.set(userId, next);
+      return res.status(next.lockedUntil > Date.now() ? 429 : 401).json({
+        error: next.lockedUntil > Date.now() ? "\u0421\u043B\u0438\u0448\u043A\u043E\u043C \u043C\u043D\u043E\u0433\u043E \u043D\u0435\u0432\u0435\u0440\u043D\u044B\u0445 \u043A\u043E\u0434\u043E\u0432. \u041F\u043E\u0434\u043E\u0436\u0434\u0438\u0442\u0435 \u043C\u0438\u043D\u0443\u0442\u0443 \u0438 \u043F\u043E\u043F\u0440\u043E\u0431\u0443\u0439\u0442\u0435 \u0441\u043D\u043E\u0432\u0430." : "\u041D\u0435\u0432\u0435\u0440\u043D\u044B\u0439 \u043A\u043E\u0434. \u041F\u0440\u043E\u0432\u0435\u0440\u044C\u0442\u0435 \u043F\u043E\u0447\u0442\u0443 \u0438\u043B\u0438 \u0447\u0430\u0442 Nova."
+      });
+    }
+    loginCodeAttempts.delete(userId);
+    await db.execute(sql`
+      UPDATE users SET email_verified = true, login_code_hash = NULL, login_code_expires_at = NULL
+      WHERE id = ${userId}
+    `);
+    if (user.totp_enabled) {
+      return res.json({
+        requiresTwoFactor: true,
+        pendingToken: signPending2faToken(userId),
+        user: {
+          id: user.id,
+          username: user.username,
+          displayName: user.display_name,
+          avatarColor: user.avatar_color
+        }
+      });
+    }
+    const sessionId = await createLoginSession(userId, req);
+    res.json({ ...authUserPayload(user), token: signToken(userId, sessionId) });
+  } catch (err2) {
+    req.log.error(err2);
+    res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
+  }
+});
+router2.post("/auth/login/resend-code", async (req, res) => {
+  try {
+    const userId = pendingLoginCodeUserId(req.body.pendingToken);
+    if (!userId) return res.status(401).json({ error: "\u0421\u0435\u0441\u0441\u0438\u044F \u0432\u0445\u043E\u0434\u0430 \u0438\u0441\u0442\u0435\u043A\u043B\u0430. \u0412\u043E\u0439\u0434\u0438\u0442\u0435 \u0437\u0430\u043D\u043E\u0432\u043E." });
+    const rows = await db.execute(sql`SELECT email FROM users WHERE id = ${userId} LIMIT 1`);
+    const email3 = String(rows.rows[0]?.email || "").trim();
+    if (!email3) return res.status(400).json({ error: "\u0423 \u0430\u043A\u043A\u0430\u0443\u043D\u0442\u0430 \u043D\u0435 \u0443\u043A\u0430\u0437\u0430\u043D email" });
+    if (!isMailerConfigured()) {
+      return res.status(503).json({ error: "\u0421\u0435\u0440\u0432\u0438\u0441 \u043E\u0442\u043F\u0440\u0430\u0432\u043A\u0438 \u043A\u043E\u0434\u043E\u0432 \u043D\u0430 \u043F\u043E\u0447\u0442\u0443 \u0432\u0440\u0435\u043C\u0435\u043D\u043D\u043E \u043D\u0435\u0434\u043E\u0441\u0442\u0443\u043F\u0435\u043D." });
+    }
+    const delivery = await issueLoginCode(userId, email3);
+    if (!delivery.ok) {
+      if (delivery.reason === "cooldown") {
+        return res.status(429).json({ error: `\u0417\u0430\u043F\u0440\u043E\u0441\u0438\u0442\u0435 \u043D\u043E\u0432\u044B\u0439 \u043A\u043E\u0434 \u0447\u0435\u0440\u0435\u0437 ${delivery.retryAfterSeconds} \u0441\u0435\u043A.` });
+      }
+      return res.status(502).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u043E\u0442\u043F\u0440\u0430\u0432\u0438\u0442\u044C \u043A\u043E\u0434 \u043D\u0430 \u043F\u043E\u0447\u0442\u0443. \u041F\u043E\u043F\u0440\u043E\u0431\u0443\u0439\u0442\u0435 \u043F\u043E\u0437\u0436\u0435." });
+    }
+    if (delivery.reused) {
+      return res.status(429).json({ error: `\u041A\u043E\u0434 \u0443\u0436\u0435 \u043E\u0442\u043F\u0440\u0430\u0432\u043B\u0435\u043D. \u041F\u043E\u0434\u043E\u0436\u0434\u0438\u0442\u0435 ${delivery.resendAfterSeconds} \u0441\u0435\u043A.` });
+    }
+    res.json({
+      success: true,
+      emailSent: delivery.emailSent,
+      novaSent: delivery.novaSent,
+      resendAfterSeconds: delivery.resendAfterSeconds
     });
   } catch (err2) {
     req.log.error(err2);
@@ -143668,29 +143909,8 @@ router2.post("/auth/2fa/complete", async (req, res) => {
     if (!verifyTotp(user.totp_secret, String(code))) {
       return res.status(401).json({ error: "\u041D\u0435\u0432\u0435\u0440\u043D\u044B\u0439 \u043A\u043E\u0434. \u041F\u0440\u043E\u0432\u0435\u0440\u044C\u0442\u0435 \u043F\u0440\u0438\u043B\u043E\u0436\u0435\u043D\u0438\u0435 \u0430\u0443\u0442\u0435\u043D\u0442\u0438\u0444\u0438\u043A\u0430\u0446\u0438\u0438." });
     }
-    const token = signToken(user.id);
-    const ageVerified = user.age_verified === true || user.age_verified === "t" || user.age_verified === 1;
-    res.json({
-      userId: user.id,
-      token,
-      ageVerified,
-      user: {
-        id: user.id,
-        username: user.username,
-        displayName: user.display_name,
-        avatarColor: user.avatar_color,
-        avatarUrl: user.avatar_url,
-        bio: user.bio,
-        status: user.status,
-        statusText: user.status_text,
-        isVerified: user.is_verified,
-        isAdmin: user.is_admin === true || user.is_admin === "t" || user.is_admin === 1,
-        isBot: user.is_bot === true || user.is_bot === "t" || user.is_bot === 1,
-        balance: Number(user.balance ?? 0),
-        createdAt: user.created_at,
-        ageVerified
-      }
-    });
+    const sessionId = await createLoginSession(Number(user.id), req);
+    res.json({ ...authUserPayload(user), token: signToken(user.id, sessionId) });
   } catch (err2) {
     req.log.error(err2);
     res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
@@ -143824,7 +144044,7 @@ router2.post("/auth/resend-verification", async (req, res) => {
       sql`UPDATE users SET email_verification_code = ${code}, email_verification_expires_at = ${expiry.toISOString()} WHERE id = ${uid}`
     );
     resendCooldowns.set(uid, Date.now());
-    const sent = await sendVerificationEmail(String(user.email), code);
+    const sent = await sendVerificationEmail(String(user.email), code).catch(() => false);
     await notifyNovaVerification(Number(userId), code, String(user.email));
     if (!sent) {
       return res.status(502).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u043E\u0442\u043F\u0440\u0430\u0432\u0438\u0442\u044C \u043F\u0438\u0441\u044C\u043C\u043E. \u041F\u043E\u043F\u0440\u043E\u0431\u0443\u0439\u0442\u0435 \u043F\u043E\u0437\u0436\u0435." });
@@ -143931,14 +144151,13 @@ router2.post("/auth/register", async (req, res) => {
     const token = signToken(newUser.id);
     let emailSent = false;
     if (rawEmail && verificationCode) {
-      try {
-        emailSent = await sendVerificationEmail(rawEmail, verificationCode);
-        await notifyNovaVerification(newUser.id, verificationCode, rawEmail);
-        if (!emailSent) {
-          console.error(`[mailer] Email NOT delivered to ${rawEmail} \u2014 returned false. Check MAIL_FROM + Elastic Email verified senders.`);
-        }
-      } catch (err2) {
+      emailSent = await sendVerificationEmail(rawEmail, verificationCode).catch((err2) => {
         console.error("[mailer] Registration email threw:", err2?.message ?? err2);
+        return false;
+      });
+      await notifyNovaVerification(newUser.id, verificationCode, rawEmail);
+      if (!emailSent) {
+        console.error(`[mailer] Email NOT delivered to ${rawEmail} \u2014 returned false. Check MAIL_FROM + Elastic Email verified senders.`);
       }
     }
     res.status(201).json({
@@ -145028,7 +145247,11 @@ router4.put("/users/me/email", async (req, res) => {
     const waitMs = EMAIL_CHANGE_COOLDOWN_MS - (Date.now() - lastSent);
     if (waitMs > 0) return res.status(429).json({ error: `\u041F\u043E\u0434\u043E\u0436\u0434\u0438\u0442\u0435 ${Math.ceil(waitMs / 1e3)} \u0441\u0435\u043A` });
     if (!isMailerConfigured()) {
-      await db.execute(sql`UPDATE users SET email = ${rawEmail}, email_verified = false WHERE id = ${uid}`);
+      await db.execute(sql`
+        UPDATE users SET email = ${rawEmail}, email_verified = false,
+          login_code_hash = NULL, login_code_expires_at = NULL
+        WHERE id = ${uid}
+      `);
       return res.json({ success: true, codeSent: false, message: "Email \u0441\u043E\u0445\u0440\u0430\u043D\u0451\u043D (\u043F\u043E\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043D\u0438\u0435 \u043D\u0435\u0434\u043E\u0441\u0442\u0443\u043F\u043D\u043E)" });
     }
     const code = String(Math.floor(1e5 + Math.random() * 9e5));
@@ -145038,7 +145261,9 @@ router4.put("/users/me/email", async (req, res) => {
       SET email = ${rawEmail},
           email_verified = false,
           email_verification_code = ${code},
-          email_verification_expires_at = ${expiry.toISOString()}
+          email_verification_expires_at = ${expiry.toISOString()},
+          login_code_hash = NULL,
+          login_code_expires_at = NULL
       WHERE id = ${uid}
     `);
     emailChangeCooldowns.set(uid, Date.now());
@@ -154944,6 +155169,8 @@ if (Number.isNaN(port) || port <= 0) {
     await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS ban_reason TEXT`);
     await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS ban_expires_at TIMESTAMP WITH TIME ZONE`);
     await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS nickname_style TEXT`);
+    await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS login_code_hash TEXT`);
+    await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS login_code_expires_at TIMESTAMP WITH TIME ZONE`);
     await db.execute(sql`ALTER TABLE chat_members ADD COLUMN IF NOT EXISTS is_archived BOOLEAN NOT NULL DEFAULT FALSE`);
   } catch (migErr) {
     logger.warn({ err: migErr }, "DB migration check warning (non-fatal) \u2014 server will continue");

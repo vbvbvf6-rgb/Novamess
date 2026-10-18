@@ -12,8 +12,8 @@ import {
   ChevronRight, User, Radio, BellOff, Volume2, VolumeX, Clock, MessageSquare,
   PhoneCall, Monitor, Zap, AlertTriangle, X, Flame, Upload, Camera, Crown,
   ShieldCheck, BadgeCheck, QrCode, Fingerprint, LogIn, HelpCircle, RefreshCw,
-  Battery, FolderOpen, ArrowLeft, Mic, Headphones, Bot,
-  SlidersHorizontal, Layers, Calendar, Play, FileText, MapPin, Mail, SendHorizonal
+  Battery, FolderOpen, ArrowLeft, Mic, Headphones,
+  SlidersHorizontal, Calendar, Play, FileText, MapPin, Mail, SendHorizonal, Puzzle
 } from "lucide-react";
 import { APP_VERSION } from "@/lib/version";
 import { useLocation } from "wouter";
@@ -38,6 +38,7 @@ import type { Lang } from "@/i18n/translations";
 import { APP_THEMES, applyAppTheme } from "@/lib/appThemes";
 import { disableBiometric, isBiometricSupported, registerBiometric } from "@/lib/biometric";
 import { localStoragePersister } from "@/lib/queryClient";
+import Plugins from "@/pages/Plugins";
 
 const AVATAR_COLORS = [
   "#000000","#3B82F6","#EC4899","#10B981","#F59E0B","#8B5CF6",
@@ -1495,12 +1496,46 @@ export default function Settings() {
   }, [(user as any)?.hasPrime, primeTheme]);
 
   const handleAppThemeSelect = (themeId: string) => {
+    if (themeId === "halloween" && appTheme !== "halloween") {
+      localStorage.setItem("pulse-pre-halloween-theme", appTheme);
+    }
     setAppTheme(themeId);
     localStorage.setItem("pulse-app-theme", themeId);
     applyAppTheme(themeId);
     window.dispatchEvent(new CustomEvent("pulse:app-theme", { detail: themeId }));
-    toast({ title: lang === "ru" ? "Тема применена" : "Theme applied" });
+    toast({
+      title: themeId === "halloween"
+        ? (lang === "ru" ? "Хэллоуинская тема включена" : "Halloween theme enabled")
+        : (lang === "ru" ? "Тема применена" : "Theme applied"),
+      description: themeId === "halloween"
+        ? (lang === "ru" ? "Парящие тыквы и летучие мыши можно отключить здесь же." : "Floating pumpkins and bats can be turned off here.")
+        : undefined,
+    });
   };
+
+  const toggleHalloweenTheme = (enabled: boolean) => {
+    if (enabled) {
+      handleAppThemeSelect("halloween");
+      return;
+    }
+
+    const previousTheme = localStorage.getItem("pulse-pre-halloween-theme");
+    const fallbackTheme = isDark ? "dark" : "light";
+    const restoreTheme = previousTheme && previousTheme !== "halloween" && APP_THEMES.some(theme => theme.id === previousTheme)
+      ? previousTheme
+      : fallbackTheme;
+    localStorage.removeItem("pulse-pre-halloween-theme");
+    handleAppThemeSelect(restoreTheme);
+  };
+
+  useEffect(() => {
+    const syncThemeSelection = (event: Event) => {
+      const themeId = (event as CustomEvent<string>).detail;
+      if (typeof themeId === "string") setAppTheme(themeId);
+    };
+    window.addEventListener("pulse:app-theme", syncThemeSelection);
+    return () => window.removeEventListener("pulse:app-theme", syncThemeSelection);
+  }, []);
 
   // Avatar file upload
   const avatarFileRef = useRef<HTMLInputElement>(null);
@@ -1791,9 +1826,6 @@ export default function Settings() {
   // Settings navigation — sidebar active section (null = show sidebar on mobile)
   const [activeSection, setActiveSection] = useState<string | null>(null);
 
-  // Events
-  const [showEvents, setShowEvents] = useState(() => lsb("pulse-show-events", true));
-
   // Chat Settings
   const [linkPreview, setLinkPreview] = useState(() => lsb("pulse-link-preview", true));
   const [sendOnEnter, setSendOnEnter] = useState(() => lsb("pulse-send-on-enter", true));
@@ -2076,12 +2108,12 @@ export default function Settings() {
             <NavItem id="advanced"      icon={<SlidersHorizontal size={16}/>} color="bg-slate-600"                                    label={lang==="ru"?"Расширенные":"Advanced"}              active={displaySection} onClick={setActiveSection}/>
             <NavItem id="speakers"      icon={<Headphones size={16}/>}     color="bg-orange-500"                                      label={lang==="ru"?"Динамики и камера":"Speakers & Camera"} active={displaySection} onClick={setActiveSection}/>
             <NavItem id="battery"       icon={<Battery size={16}/>}        color="bg-emerald-600"                                     label={lang==="ru"?"Батарея и анимации":"Battery & Animations"} active={displaySection} onClick={setActiveSection}/>
-            <NavItem id="power-features" icon={<ShieldCheck size={16}/>}  color="bg-primary"                                       label={lang==="ru"?"Доступность и сообщества":"Accessibility & Communities"} active={displaySection} onClick={setActiveSection} href="/power-features"/>
           </NavGroup>
 
           {/* Group 2: Interface */}
           <NavGroup>
             <NavItem id="language" icon={<Globe size={16}/>}   color="bg-blue-600"   label={lang==="ru"?"Язык":"Language"}             badge={lang==="ru"?"Русский":"English"}  active={displaySection} onClick={setActiveSection}/>
+            <NavItem id="plugins" icon={<Puzzle size={16}/>} color="bg-violet-600" label={lang==="ru"?"Плагины":"Plugins"} active={displaySection} onClick={setActiveSection}/>
           </NavGroup>
 
           {/* Group 3: Premium */}
@@ -2141,6 +2173,7 @@ export default function Settings() {
             : displaySection === "speakers"      ? (lang==="ru"?"Динамики и камера":"Speakers & Camera")
             : displaySection === "battery"       ? (lang==="ru"?"Батарея и анимации":"Battery & Animations")
             : displaySection === "language"      ? (lang==="ru"?"Язык":"Language")
+            : displaySection === "plugins"       ? (lang==="ru"?"Плагины":"Plugins")
             : displaySection === "prime"         ? "Nova Prime"
 
             : displaySection === "faq"           ? "Nova FAQ"
@@ -2311,6 +2344,13 @@ export default function Settings() {
               </Section>
 
               <Section title={lang === "ru" ? "Тема интерфейса" : "Interface theme"} icon={<Palette size={13}/>}>
+                <Row
+                  icon={<Flame size={18}/>}
+                  color="bg-orange-500/10 text-orange-500"
+                  label={lang === "ru" ? "Хэллоуинское обновление" : "Halloween update"}
+                  desc={lang === "ru" ? "Тыквы, летучие мыши и тёмная оранжевая палитра. Можно отключить в любой момент." : "Pumpkins, bats, and a dark orange palette. Turn it off anytime."}
+                  right={<Switch checked={appTheme === "halloween"} onCheckedChange={toggleHalloweenTheme} />}
+                />
                 <div className="p-4">
                   <p className="text-xs text-muted-foreground mb-3">
                     {lang === "ru" ? "Выберите цветовую палитру Nova для этого устройства." : "Choose a Nova color palette for this device."}
@@ -2842,20 +2882,11 @@ export default function Settings() {
             </div>
           )}
 
+          {displaySection === "plugins" && <Plugins />}
+
           {/* ─── CHAT SETTINGS ─────────────────────────────── */}
           {displaySection === "chat-settings" && (
             <div className="max-w-2xl mx-auto space-y-6">
-              <Section title={lang==="ru"?"Интерфейс":"Interface"} icon={<Layers size={13}/>}>
-                <Row icon={<Calendar size={18}/>} color="bg-violet-500/10 text-violet-500"
-                  label={lang==="ru"?"События в меню":"Events in Sidebar"}
-                  desc={lang==="ru"?"Показывать раздел «События» в боковом меню":"Show the Events section in the sidebar"}
-                  right={<Switch checked={showEvents} onCheckedChange={v => {
-                    setShowEvents(v);
-                    setLs("pulse-show-events", v);
-                    window.dispatchEvent(new CustomEvent("pulse:events-toggle"));
-                    toast({ title: v ? (lang==="ru"?"События включены":"Events enabled") : (lang==="ru"?"События скрыты":"Events hidden") });
-                  }}/>}/>
-              </Section>
               <Section title={lang==="ru"?"Настройки чатов":"Chat Settings"} icon={<MessageSquare size={13}/>}>
                 <Row icon={<Link size={18}/>} color="bg-blue-500/10 text-blue-500"
                   label={lang==="ru"?"Предпросмотр ссылок":"Link Preview"}

@@ -499,6 +499,47 @@
     radial-gradient(ellipse at 50% 50%, hsl(var(--background)) 40%, hsl(224 28% 5%) 100%);
 }
 
+/* Seasonal Halloween ambience is opt-in through the theme picker. */
+.halloween-effects {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+html[data-app-theme="halloween"] .halloween-effects {
+  display: block;
+}
+
+.halloween-effects span {
+  position: absolute;
+  display: block;
+  font-size: 1.2rem;
+  opacity: 0.28;
+  filter: drop-shadow(0 0 10px hsl(25 95% 55% / 0.3));
+  animation: halloween-drift 9s ease-in-out infinite;
+}
+
+html[data-app-theme="halloween"] .chat-bg {
+  background-image:
+    radial-gradient(ellipse at 16% 12%, hsl(25 95% 55% / 0.1) 0%, transparent 38%),
+    radial-gradient(ellipse at 88% 83%, hsl(270 55% 48% / 0.1) 0%, transparent 42%),
+    radial-gradient(ellipse at 50% 50%, hsl(var(--background)) 40%, hsl(267 35% 5%) 100%);
+}
+
+html[data-app-theme="halloween"] .bubble-mine {
+  background: linear-gradient(145deg, hsl(25 95% 55%), hsl(17 86% 43%));
+  border-color: hsl(25 95% 55% / 0.85);
+  box-shadow: 0 4px 20px -2px hsl(25 95% 55% / 0.28), inset 0 1px 1px rgba(255,255,255,0.2);
+}
+
+@keyframes halloween-drift {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(-8deg); }
+  50% { transform: translate3d(5px, -12px, 0) rotate(8deg); }
+}
+
 /* ── Message bubbles ────────────────────────────────────────────────────── */
 .bubble-mine {
   background: linear-gradient(145deg, hsl(var(--primary)), hsl(213 94% 40%));

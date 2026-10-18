@@ -1,7 +1,8 @@
-import React from "react";
+import React, { lazy, Suspense } from "react";
 import { X, Layers } from "lucide-react";
-import { ChatWindow } from "./ChatWindow";
 import { useAppContext } from "@/contexts/AppContext";
+
+const ChatWindow = lazy(() => import("./ChatWindow").then(module => ({ default: module.ChatWindow })));
 
 export function MultiChatWindows() {
   const { openChatWindows, closeChatWindow } = useAppContext();
@@ -20,7 +21,9 @@ export function MultiChatWindows() {
             </button>
           </div>
           <div className="flex-1 min-h-0">
-            <ChatWindow chatId={chatId} />
+            <Suspense fallback={<div className="h-full animate-pulse rounded-lg bg-card/70" />}>
+              <ChatWindow chatId={chatId} />
+            </Suspense>
           </div>
         </section>
       ))}

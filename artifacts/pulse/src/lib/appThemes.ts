@@ -143,6 +143,23 @@ export const APP_THEMES: AppTheme[] = [
       "--border": "223 40% 21%", "--input": "223 40% 21%", "--ring": "217 91% 60%",
     },
   },
+  {
+    id: "halloween",
+    name: "Хэллоуин",
+    emoji: "🎃",
+    mode: "dark",
+    preview: "linear-gradient(135deg, #160d1f, #7c2d12 58%, #f97316)",
+    vars: {
+      "--background": "267 35% 7%", "--foreground": "35 35% 94%",
+      "--card": "264 28% 11%", "--card-foreground": "35 35% 94%", "--card-border": "270 22% 20%",
+      "--popover": "264 28% 11%", "--popover-foreground": "35 35% 94%", "--popover-border": "270 22% 20%",
+      "--primary": "25 95% 55%", "--primary-foreground": "18 65% 8%",
+      "--secondary": "265 24% 17%", "--secondary-foreground": "35 28% 92%",
+      "--muted": "265 22% 16%", "--muted-foreground": "265 12% 67%",
+      "--accent": "25 95% 55%", "--accent-foreground": "18 65% 8%",
+      "--border": "270 22% 20%", "--input": "270 22% 20%", "--ring": "25 95% 55%",
+    },
+  },
 ];
 
 const CSS_VAR_KEYS = [

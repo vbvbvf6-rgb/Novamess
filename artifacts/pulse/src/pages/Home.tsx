@@ -1,8 +1,9 @@
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { lazy, Suspense, useEffect, useRef, useState, useCallback } from "react";
 import { useLocation } from "wouter";
 import { ChatList } from "@/components/chat/ChatList";
-import { ChatWindow } from "@/components/chat/ChatWindow";
 import { useAppContext } from "@/contexts/AppContext";
+
+const ChatWindow = lazy(() => import("@/components/chat/ChatWindow").then(module => ({ default: module.ChatWindow })));
 
 const SWIPE_THRESHOLD = 90;   // px needed to trigger close
 const SWIPE_VELOCITY = 0.4;   // px/ms — fast flick counts even if short
@@ -120,7 +121,9 @@ export default function Home() {
       <ChatList />
       <div className="flex-1 hidden md:flex">
         {selectedChatId ? (
-          <ChatWindow chatId={selectedChatId} />
+          <Suspense fallback={<div className="flex-1 animate-pulse bg-background" />}>
+            <ChatWindow chatId={selectedChatId} />
+          </Suspense>
         ) : (
           <div className="flex-1 flex items-center justify-center bg-background/50 relative overflow-hidden">
             <div className="absolute inset-0 pointer-events-none">
@@ -200,7 +203,9 @@ export default function Home() {
                 }}
               />
             )}
-            <ChatWindow chatId={selectedChatId} />
+            <Suspense fallback={<div className="flex-1 animate-pulse bg-background" />}>
+              <ChatWindow chatId={selectedChatId} />
+            </Suspense>
           </div>
         </>
       )}

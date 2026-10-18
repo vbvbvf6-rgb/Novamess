@@ -11,7 +11,6 @@ import {
   Rss,
   Wallet,
   Package,
-  Gift,
   MoreHorizontal,
   LogOut,
   Shield,
@@ -21,14 +20,10 @@ import {
   UserPlus,
   Check,
   Trash2,
-  Trophy,
   Sun,
   Moon,
   Search,
-  CalendarDays,
-  Bot,
   Newspaper,
-  Puzzle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAppContext } from "@/contexts/AppContext";
@@ -43,7 +38,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SavedAccount } from "@/lib/accounts";
 import PulseLogo from "@/components/PulseLogo";
-import { getPluginText, usePluginSystem } from "@/lib/pluginRegistry";
 
 function AccountRow({
   account,
@@ -190,12 +184,10 @@ interface SidebarProps {
 export function Sidebar({ mobileSidebarOpen, onMobileClose, onMobileOpen, onOpenPalette }: SidebarProps) {
   const [location, navigate] = useLocation();
   const { logout, currentUserId, savedAccounts, switchAccount, removeAccount, openAddAccount, canAddAccount, isDark, toggleTheme } = useAppContext();
-  const { enabledPlugins } = usePluginSystem();
-  const { t, lang } = useLanguage();
+  const { t } = useLanguage();
   const { data: me } = useGetMe();
   const { data: chats } = useGetChats();
   const [isAdmin, setIsAdmin] = useState(false);
-  const [showEvents, setShowEvents] = useState(() => localStorage.getItem("pulse-show-events") !== "false");
 
   useEffect(() => {
     const token = sessionStorage.getItem("pulse-token");
@@ -212,12 +204,6 @@ export function Sidebar({ mobileSidebarOpen, onMobileClose, onMobileOpen, onOpen
       .then((data) => setIsAdmin(data.isAdmin === true))
       .catch(() => setIsAdmin((me as any)?.isAdmin === true));
   }, [me, currentUserId]);
-
-  useEffect(() => {
-    const handler = () => setShowEvents(localStorage.getItem("pulse-show-events") === "true");
-    window.addEventListener("pulse:events-toggle", handler);
-    return () => window.removeEventListener("pulse:events-toggle", handler);
-  }, []);
 
   const totalUnread = chats?.reduce((sum: number, c: any) => sum + (c.isArchived ? 0 : (c.unreadCount || 0)), 0) ?? 0;
   const initial = me?.displayName?.[0]?.toUpperCase() || "U";
@@ -252,17 +238,11 @@ export function Sidebar({ mobileSidebarOpen, onMobileClose, onMobileOpen, onOpen
     { href: "/feed",         icon: Rss,            label: t("nav.feed") },
     { href: "/contacts",     icon: Users,          label: t("nav.contacts") },
     { href: "/stories",      icon: History,        label: t("nav.stories") },
-    ...(showEvents ? [{ href: "/events", icon: CalendarDays, label: t("nav.events") }] : []),
     { href: "/wallet",       icon: Wallet,         label: t("nav.wallet") },
     { href: "/inventory",    icon: Package,        label: "Инвентарь" },
-    { href: "/redeem",       icon: Gift,            label: "Призовой код" },
-    { href: "/leaderboard",  icon: Trophy,         label: t("nav.leaderboard") },
-    { href: "/bots",         icon: Bot,            label: t("nav.bots") },
     { href: "/changelog",    icon: Newspaper,      label: t("nav.changelog") },
     { href: "/profile",      icon: UserCircle,     label: t("nav.profile") },
     { href: "/settings",     icon: Settings,       label: t("nav.settings") },
-    { href: "/plugins",      icon: Puzzle,          label: t("nav.plugins") },
-    ...enabledPlugins.map((plugin) => ({ href: plugin.route, icon: plugin.icon, label: getPluginText(plugin, lang, "name") })),
   ];
 
   const AccountsSection = (

@@ -168,7 +168,7 @@ export function PluginRoute() {
   const plugin = plugins.find((item) => item.id === pluginId);
 
   useEffect(() => {
-    if (!plugin || !isEnabled(plugin.id)) navigate("/plugins");
+    if (!plugin || !isEnabled(plugin.id)) navigate("/settings");
   }, [isEnabled, navigate, plugin]);
 
   if (!plugin || !isEnabled(plugin.id)) {
@@ -181,7 +181,7 @@ export function PluginRoute() {
   return (
     <div className="h-full w-full overflow-y-auto">
       <div className="mx-auto max-w-4xl px-4 py-5 md:px-8 md:py-8">
-        <Link href="/plugins" className="mb-6 inline-flex items-center gap-2 text-sm font-bold text-muted-foreground transition-colors hover:text-foreground">
+        <Link href="/settings" className="mb-6 inline-flex items-center gap-2 text-sm font-bold text-muted-foreground transition-colors hover:text-foreground">
           <ArrowLeft size={16} /> {lang === "ru" ? "Все плагины" : "All plugins"}
         </Link>
         <div className="mb-6 flex items-center gap-3 rounded-2xl border border-border/50 bg-card px-4 py-3">

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { lazy, Suspense, useState, useEffect, useRef } from "react";
 import { Switch, Route, Router as WouterRouter, useLocation, useParams } from "wouter";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { queryClient, localStoragePersister, clearPersistedQueryCache } from "@/lib/queryClient";
@@ -26,39 +26,43 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { WhatsNewModal } from "@/components/WhatsNewModal";
 import { OnboardingModal } from "@/components/OnboardingModal";
 import { LoginSplash } from "@/components/LoginSplash";
+import { HalloweenEffects } from "@/components/HalloweenEffects";
 import { isEncryptedMessage } from "@/lib/e2e";
 
-import Home from "@/pages/Home";
-import Calls from "@/pages/Calls";
-import Contacts from "@/pages/Contacts";
-import Stories from "@/pages/Stories";
-import Profile from "@/pages/Profile";
-import Settings from "@/pages/Settings";
-import UserProfile from "@/pages/UserProfile";
-import Feed from "@/pages/Feed";
-import Wallet from "@/pages/Wallet";
-import Inventory from "@/pages/Inventory";
-import RedeemCode from "@/pages/RedeemCode";
-import Admin from "@/pages/Admin";
-import Prime from "@/pages/Prime";
-
-import Bots from "@/pages/Bots";
-import Changelog from "@/pages/Changelog";
-import Clans from "@/pages/Clans";
-import Leaderboard from "@/pages/Leaderboard";
-import Events from "@/pages/Events";
-import Support from "@/pages/Support";
-import Login from "@/pages/Login";
-import Register from "@/pages/Register";
-import ForgotPassword from "@/pages/ForgotPassword";
-import QrConfirm from "@/pages/QrConfirm";
-import NotFound from "@/pages/not-found";
-import Privacy from "@/pages/Privacy";
-import Terms from "@/pages/Terms";
-import JoinInvite from "@/pages/JoinInvite";
-import PowerFeatures from "@/pages/PowerFeatures";
-import Plugins, { PluginRoute } from "@/pages/Plugins";
 import { PluginProvider } from "@/lib/pluginRegistry";
+
+const Home = lazy(() => import("@/pages/Home"));
+const Calls = lazy(() => import("@/pages/Calls"));
+const Contacts = lazy(() => import("@/pages/Contacts"));
+const Stories = lazy(() => import("@/pages/Stories"));
+const Profile = lazy(() => import("@/pages/Profile"));
+const Settings = lazy(() => import("@/pages/Settings"));
+const UserProfile = lazy(() => import("@/pages/UserProfile"));
+const Feed = lazy(() => import("@/pages/Feed"));
+const Wallet = lazy(() => import("@/pages/Wallet"));
+const Inventory = lazy(() => import("@/pages/Inventory"));
+const Admin = lazy(() => import("@/pages/Admin"));
+const Prime = lazy(() => import("@/pages/Prime"));
+const Changelog = lazy(() => import("@/pages/Changelog"));
+const Support = lazy(() => import("@/pages/Support"));
+const Login = lazy(() => import("@/pages/Login"));
+const Register = lazy(() => import("@/pages/Register"));
+const ForgotPassword = lazy(() => import("@/pages/ForgotPassword"));
+const QrConfirm = lazy(() => import("@/pages/QrConfirm"));
+const NotFound = lazy(() => import("@/pages/not-found"));
+const Privacy = lazy(() => import("@/pages/Privacy"));
+const Terms = lazy(() => import("@/pages/Terms"));
+const JoinInvite = lazy(() => import("@/pages/JoinInvite"));
+const PowerFeatures = lazy(() => import("@/pages/PowerFeatures"));
+const PluginRoute = lazy(() => import("@/pages/Plugins").then(module => ({ default: module.PluginRoute })));
+
+function PageLoading() {
+  return (
+    <div className="flex h-full w-full items-center justify-center bg-background" role="status" aria-label="Загрузка страницы">
+      <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+    </div>
+  );
+}
 
 
 function LandscapeBlock() {
@@ -514,6 +518,7 @@ function MainAppInner({ onLogout, onSwitchAccount, onRemoveAccount, onOpenAddAcc
       <PluginProvider>
       <TooltipProvider>
         <MainAppEffects />
+        <HalloweenEffects />
         <GlobalNotificationListener />
         <InAppMessageBanner />
         <PwaUpdateBanner />
@@ -521,35 +526,32 @@ function MainAppInner({ onLogout, onSwitchAccount, onRemoveAccount, onOpenAddAcc
         <OnboardingModal />
         <ScreenLock>
           <AppLayout>
-            <Switch>
-              <Route path="/" component={Home} />
-              <Route path="/calls" component={Calls} />
-              <Route path="/feed" component={Feed} />
-              <Route path="/contacts" component={Contacts} />
-              <Route path="/stories" component={Stories} />
-              <Route path="/wallet" component={Wallet} />
-              <Route path="/inventory" component={Inventory} />
-              <Route path="/redeem" component={RedeemCode} />
-              <Route path="/admin" component={Admin} />
-              <Route path="/prime" component={Prime} />
+            <Suspense fallback={<PageLoading />}>
+              <Switch>
+                <Route path="/" component={Home} />
+                <Route path="/calls" component={Calls} />
+                <Route path="/feed" component={Feed} />
+                <Route path="/contacts" component={Contacts} />
+                <Route path="/stories" component={Stories} />
+                <Route path="/wallet" component={Wallet} />
+                <Route path="/inventory" component={Inventory} />
+                <Route path="/admin" component={Admin} />
+                <Route path="/prime" component={Prime} />
 
-              <Route path="/bots" component={Bots} />
-              <Route path="/changelog" component={Changelog} />
-              <Route path="/leaderboard" component={Leaderboard} />
-              <Route path="/events" component={Events} />
-              <Route path="/support" component={Support} />
-              <Route path="/profile" component={Profile} />
-              <Route path="/settings" component={Settings} />
-              <Route path="/power-features" component={PowerFeatures} />
-              <Route path="/plugins/:pluginId" component={PluginRoute} />
-              <Route path="/plugins" component={Plugins} />
-              <Route path="/user/:userId" component={UserProfile} />
-              <Route path="/qr/:tokenId" component={QrConfirm} />
-              <Route path="/privacy" component={Privacy} />
-              <Route path="/terms" component={Terms} />
-              <Route path="/invite/:token" component={JoinInvite} />
-              <Route component={NotFound} />
-            </Switch>
+                <Route path="/changelog" component={Changelog} />
+                <Route path="/support" component={Support} />
+                <Route path="/profile" component={Profile} />
+                <Route path="/settings" component={Settings} />
+                <Route path="/power-features" component={PowerFeatures} />
+                <Route path="/plugins/:pluginId" component={PluginRoute} />
+                <Route path="/user/:userId" component={UserProfile} />
+                <Route path="/qr/:tokenId" component={QrConfirm} />
+                <Route path="/privacy" component={Privacy} />
+                <Route path="/terms" component={Terms} />
+                <Route path="/invite/:token" component={JoinInvite} />
+                <Route component={NotFound} />
+              </Switch>
+            </Suspense>
           </AppLayout>
         </ScreenLock>
         <Toaster />
@@ -588,14 +590,16 @@ function AuthPages({ onLogin }: { onLogin: (userId: number) => void }) {
   };
 
   return (
-    <Switch>
-      <Route path="/register" component={() => <Register onLogin={handleLogin} />} />
-      <Route path="/forgot-password" component={ForgotPassword} />
-      <Route path="/qr/:tokenId" component={QrLoginGate} />
-      <Route path="/privacy" component={Privacy} />
-      <Route path="/terms" component={Terms} />
-      <Route component={() => <Login onLogin={handleLogin} />} />
-    </Switch>
+    <Suspense fallback={<PageLoading />}>
+      <Switch>
+        <Route path="/register" component={() => <Register onLogin={handleLogin} />} />
+        <Route path="/forgot-password" component={ForgotPassword} />
+        <Route path="/qr/:tokenId" component={QrLoginGate} />
+        <Route path="/privacy" component={Privacy} />
+        <Route path="/terms" component={Terms} />
+        <Route component={() => <Login onLogin={handleLogin} />} />
+      </Switch>
+    </Suspense>
   );
 }
 
