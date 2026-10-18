@@ -521,7 +521,11 @@ router.put("/users/me/email", async (req, res) => {
 
     if (!isMailerConfigured()) {
       // Save email without verification (mailer not set up)
-      await db.execute(sql`UPDATE users SET email = ${rawEmail}, email_verified = false WHERE id = ${uid}`);
+      await db.execute(sql`
+        UPDATE users SET email = ${rawEmail}, email_verified = false,
+          login_code_hash = NULL, login_code_expires_at = NULL
+        WHERE id = ${uid}
+      `);
       return res.json({ success: true, codeSent: false, message: "Email сохранён (подтверждение недоступно)" });
     }
 
@@ -532,7 +536,9 @@ router.put("/users/me/email", async (req, res) => {
       SET email = ${rawEmail},
           email_verified = false,
           email_verification_code = ${code},
-          email_verification_expires_at = ${expiry.toISOString()}
+          email_verification_expires_at = ${expiry.toISOString()},
+          login_code_hash = NULL,
+          login_code_expires_at = NULL
       WHERE id = ${uid}
     `);
     emailChangeCooldowns.set(uid, Date.now());

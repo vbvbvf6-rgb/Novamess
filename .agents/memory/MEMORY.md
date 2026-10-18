@@ -40,3 +40,4 @@
 - [Imported monorepo hydration](imported-monorepo-hydration.md) — imported pnpm workspaces may have a lockfile but no node_modules; hydrate from the lockfile before diagnosing workflow code failures.
 - [Workflow hydration after import](workflow-hydration.md) — after installing an imported workspace, restart the artifact-specific workflows; older duplicate workflows may retain pre-install failure logs.
 - [Startup DDL ordering](startup-ddl-race.md) — module-level schema fixes can run before fresh-db migrations; critical DDL must also run after migrations and before serving requests.
+- [Login OTP security](login-otp-security.md) — pending codes are bound to the account and current email; create sessions only after OTP and any configured TOTP.

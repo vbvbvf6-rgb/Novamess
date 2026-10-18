@@ -41,6 +41,8 @@ export const usersTable = pgTable("users", {
   emailVerified: boolean("email_verified").notNull().default(false),
   emailVerificationCode: text("email_verification_code"),
   emailVerificationExpiresAt: timestamp("email_verification_expires_at", { withTimezone: true }),
+  loginCodeHash: text("login_code_hash"),
+  loginCodeExpiresAt: timestamp("login_code_expires_at", { withTimezone: true }),
   showOnlineStatus: boolean("show_online_status").notNull().default(true),
   readReceiptsEnabled: boolean("read_receipts_enabled").notNull().default(true),
   referralCode: text("referral_code").unique(),

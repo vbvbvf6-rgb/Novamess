@@ -74,6 +74,8 @@ if (Number.isNaN(port) || port <= 0) {
     // module bootstrap can run before a fresh database has been migrated.
     // Keep essential read-path columns here so a new DB is usable immediately.
     await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS nickname_style TEXT`);
+    await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS login_code_hash TEXT`);
+    await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS login_code_expires_at TIMESTAMP WITH TIME ZONE`);
     await db.execute(sql`ALTER TABLE chat_members ADD COLUMN IF NOT EXISTS is_archived BOOLEAN NOT NULL DEFAULT FALSE`);
   } catch (migErr) {
     logger.warn({ err: migErr }, "DB migration check warning (non-fatal) — server will continue");

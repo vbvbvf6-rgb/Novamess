@@ -49,11 +49,14 @@ export default function Login({ onLogin }: LoginProps) {
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
   const [accountNotice, setAccountNotice] = useState<{ kind: "deleted" | "banned"; reason: string; expiresAt?: string | null } | null>(null);
 
-  const [step, setStep] = useState<"credentials" | "2fa" | "qr">("credentials");
+  const [step, setStep] = useState<"credentials" | "login-code" | "2fa" | "qr">("credentials");
   const [twoFaCode, setTwoFaCode] = useState("");
   const [pendingToken, setPendingToken] = useState("");
   const [twoFaLoading, setTwoFaLoading] = useState(false);
   const [twoFaError, setTwoFaError] = useState("");
+  const [loginCodeEmail, setLoginCodeEmail] = useState("");
+  const [loginCodeNotice, setLoginCodeNotice] = useState("");
+  const [loginCodeResendSeconds, setLoginCodeResendSeconds] = useState(0);
 
   const [qrTokenId, setQrTokenId] = useState<string | null>(null);
   const [qrExpiresAt, setQrExpiresAt] = useState<number>(0);
@@ -79,6 +82,14 @@ export default function Login({ onLogin }: LoginProps) {
     }
     return () => clearQrIntervals();
   }, []);
+
+  useEffect(() => {
+    if (step !== "login-code" || loginCodeResendSeconds <= 0) return;
+    const timer = window.setTimeout(() => {
+      setLoginCodeResendSeconds((seconds) => Math.max(0, seconds - 1));
+    }, 1000);
+    return () => window.clearTimeout(timer);
+  }, [step, loginCodeResendSeconds]);
 
   const startQrLogin = async () => {
     clearQrIntervals();
@@ -156,6 +167,20 @@ export default function Login({ onLogin }: LoginProps) {
         setError(data.error || "Неверный никнейм или пароль");
         return;
       }
+      if (data.requiresLoginCode) {
+        setPendingToken(data.pendingToken);
+        setLoginCodeEmail(data.maskedEmail || "");
+        setLoginCodeNotice(
+          data.novaSent
+            ? `Код отправлен на ${data.maskedEmail} и в чат Nova.`
+            : `Код отправлен на ${data.maskedEmail}. Не удалось доставить его в чат Nova.`,
+        );
+        setLoginCodeResendSeconds(Number(data.resendAfterSeconds) || 60);
+        setTwoFaCode("");
+        setTwoFaError("");
+        setStep("login-code");
+        return;
+      }
       if (data.requiresTwoFactor) {
         setPendingToken(data.pendingToken);
         setStep("2fa");
@@ -180,6 +205,71 @@ export default function Login({ onLogin }: LoginProps) {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleLoginCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const code = twoFaCode.replace(/\s/g, "");
+    if (code.length !== 6) {
+      setTwoFaError("Введите 6-значный код");
+      return;
+    }
+    setTwoFaLoading(true);
+    setTwoFaError("");
+    try {
+      const res = await fetch("/api/auth/login/verify-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pendingToken, code }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setTwoFaError(data.error || "Неверный код");
+        return;
+      }
+      if (data.requiresTwoFactor) {
+        setPendingToken(data.pendingToken);
+        setTwoFaCode("");
+        setStep("2fa");
+        return;
+      }
+      if (data.token) sessionStorage.setItem("pulse-token", data.token);
+      sessionStorage.setItem("pulse-user-id", String(data.userId));
+      sessionStorage.setItem("pulse-user", JSON.stringify(data.user));
+      sessionStorage.setItem("pulse-tab-owned", "1");
+      onLogin(data.userId);
+    } catch {
+      setTwoFaError("Ошибка подключения к серверу");
+    } finally {
+      setTwoFaLoading(false);
+    }
+  };
+
+  const handleResendLoginCode = async () => {
+    if (loginCodeResendSeconds > 0) return;
+    setTwoFaError("");
+    try {
+      const res = await fetch("/api/auth/login/resend-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pendingToken }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setTwoFaError(data.error || "Не удалось отправить код повторно");
+        const seconds = Number(String(data.error || "").match(/(\d+)\s*сек/)?.[1]);
+        if (seconds) setLoginCodeResendSeconds(seconds);
+        return;
+      }
+      setLoginCodeResendSeconds(Number(data.resendAfterSeconds) || 60);
+      setLoginCodeNotice(
+        data.novaSent
+          ? `Новый код отправлен на ${loginCodeEmail} и в чат Nova.`
+          : `Новый код отправлен на ${loginCodeEmail}. Не удалось доставить его в чат Nova.`,
+      );
+    } catch {
+      setTwoFaError("Ошибка подключения к серверу");
     }
   };
 
@@ -227,18 +317,20 @@ export default function Login({ onLogin }: LoginProps) {
   };
 
   const getStepIcon = () => {
-    if (step === "2fa") return <ShieldCheck size={32} className="text-primary" />;
+    if (step === "2fa" || step === "login-code") return <ShieldCheck size={32} className="text-primary" />;
     if (step === "qr") return <QrCode size={32} className="text-primary" />;
     return <Zap size={32} className="text-primary" />;
   };
 
   const getStepTitle = () => {
+    if (step === "login-code") return "Код входа";
     if (step === "2fa") return "Верификация";
     if (step === "qr") return "QR вход";
     return "Nova";
   };
 
   const getStepSubtitle = () => {
+    if (step === "login-code") return "Подтвердите вход кодом из письма";
     if (step === "2fa") return "Введите код из приложения";
     if (step === "qr") return "Отсканируйте с другого устройства";
     return "С возвращением";
@@ -518,6 +610,91 @@ export default function Login({ onLogin }: LoginProps) {
                   <Link href="/privacy" className="underline underline-offset-2 hover:text-muted-foreground transition-colors">Политику конфиденциальности</Link>
                 </p>
 
+              </motion.div>
+            )}
+
+            {step === "login-code" && (
+              <motion.div
+                key="login-code"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <form onSubmit={handleLoginCode} className="flex flex-col gap-5">
+                  <p className="text-sm text-muted-foreground text-center">
+                    {loginCodeNotice || `Введите код, отправленный на ${loginCodeEmail} и в чат Nova.`}
+                  </p>
+                  <div className={cn(
+                    "relative flex items-center bg-background/50 border rounded-2xl transition-all duration-300",
+                    focusedInput === "login-code" ? "border-primary ring-4 ring-primary/10 bg-background" : "border-border"
+                  )}>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      pattern="\d{6}"
+                      maxLength={6}
+                      autoComplete="one-time-code"
+                      value={twoFaCode}
+                      onChange={(e) => setTwoFaCode(e.target.value.replace(/\D/g, ""))}
+                      placeholder="000000"
+                      autoFocus={typeof window !== "undefined" && window.matchMedia("(hover: hover)").matches}
+                      onFocus={() => setFocusedInput("login-code")}
+                      onBlur={() => setFocusedInput(null)}
+                      className="w-full bg-transparent border-none outline-none py-6 text-4xl font-mono tracking-[0.5em] font-black text-center text-foreground placeholder:text-muted-foreground/30"
+                    />
+                  </div>
+
+                  <AnimatePresence>
+                    {twoFaError && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="bg-destructive/10 border border-destructive/20 text-destructive rounded-xl p-3 text-sm font-semibold text-center"
+                      >
+                        {twoFaError}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  <motion.button
+                    type="submit"
+                    disabled={twoFaLoading || twoFaCode.length !== 6}
+                    className={cn(
+                      "w-full py-3 sm:py-4 rounded-2xl font-bold text-[15px] shadow-lg transition-all",
+                      twoFaLoading || twoFaCode.length !== 6
+                        ? "bg-muted text-muted-foreground cursor-not-allowed shadow-none"
+                        : "bg-primary text-primary-foreground shadow-primary/25"
+                    )}
+                  >
+                    {twoFaLoading ? "Проверка..." : "Подтвердить вход"}
+                  </motion.button>
+
+                  <button
+                    type="button"
+                    disabled={loginCodeResendSeconds > 0}
+                    onClick={handleResendLoginCode}
+                    className="py-2 text-sm font-semibold text-primary disabled:text-muted-foreground disabled:cursor-not-allowed"
+                  >
+                    {loginCodeResendSeconds > 0
+                      ? `Отправить код повторно через ${loginCodeResendSeconds} сек.`
+                      : "Отправить код повторно"}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStep("credentials");
+                      setTwoFaCode("");
+                      setTwoFaError("");
+                      setPendingToken("");
+                    }}
+                    className="py-2 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Вернуться ко входу
+                  </button>
+                </form>
               </motion.div>
             )}
 
