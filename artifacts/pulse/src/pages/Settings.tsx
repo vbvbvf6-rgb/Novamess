@@ -2348,7 +2348,7 @@ export default function Settings() {
                   icon={<Flame size={18}/>}
                   color="bg-orange-500/10 text-orange-500"
                   label={lang === "ru" ? "Хэллоуинское обновление" : "Halloween update"}
-                  desc={lang === "ru" ? "Полуночный фиолетовый, медное свечение и тонкая паутина с летучими мышами. Можно отключить в любой момент." : "Midnight plum, copper glow, and subtle spiderwebs with bats. Turn it off anytime."}
+                  desc={lang === "ru" ? "Тыквенно-оранжевый, ведьмински-зелёный и призраки, летучие мыши, паутина. Можно отключить в любой момент." : "Pumpkin orange, witch-green glow, ghosts, bats, and webs. Turn it off anytime."}
                   right={<Switch checked={appTheme === "halloween"} onCheckedChange={toggleHalloweenTheme} />}
                 />
                 <div className="p-4">
