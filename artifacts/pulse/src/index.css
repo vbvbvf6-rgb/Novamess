@@ -507,37 +507,120 @@
   z-index: 30;
   overflow: hidden;
   pointer-events: none;
+  isolation: isolate;
 }
 
 html[data-app-theme="halloween"] .halloween-effects {
   display: block;
 }
 
-.halloween-effects span {
+.halloween-effects::before {
+  content: "";
+  position: absolute;
+  inset: -8%;
+  z-index: -1;
+  background:
+    radial-gradient(ellipse at 0% 0%, hsl(28 92% 58% / 0.1), transparent 34%),
+    radial-gradient(ellipse at 100% 100%, hsl(274 62% 60% / 0.1), transparent 38%);
+  opacity: 0.65;
+}
+
+.halloween-decoration {
   position: absolute;
   display: block;
-  font-size: 1.2rem;
-  opacity: 0.28;
-  filter: drop-shadow(0 0 10px hsl(25 95% 55% / 0.3));
-  animation: halloween-drift 9s ease-in-out infinite;
+  color: hsl(33 85% 77% / 0.58);
+  filter: drop-shadow(0 0 12px hsl(28 92% 58% / 0.38));
+  animation: halloween-drift 10s ease-in-out infinite;
+}
+
+.halloween-decoration svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.halloween-bat {
+  color: hsl(276 29% 80% / 0.46);
+  animation-name: halloween-bat-drift;
+  animation-duration: 15s;
+}
+
+.halloween-moon {
+  color: hsl(39 75% 76% / 0.52);
+  filter: drop-shadow(0 0 16px hsl(38 85% 67% / 0.44));
+}
+
+.halloween-spark {
+  color: hsl(34 96% 72% / 0.72);
+  filter: drop-shadow(0 0 9px hsl(35 95% 63% / 0.62));
+}
+
+.halloween-web {
+  position: absolute;
+  width: clamp(7rem, 13vw, 12rem);
+  height: clamp(7rem, 13vw, 12rem);
+  color: hsl(35 46% 82% / 0.17);
+}
+
+.halloween-web svg {
+  width: 100%;
+  height: 100%;
+  stroke: currentColor;
+  stroke-width: 0.85;
+}
+
+.halloween-web-top {
+  top: 0;
+  right: 0;
+}
+
+.halloween-web-bottom {
+  bottom: 0;
+  left: 0;
+  transform: rotate(180deg);
 }
 
 html[data-app-theme="halloween"] .chat-bg {
   background-image:
-    radial-gradient(ellipse at 16% 12%, hsl(25 95% 55% / 0.1) 0%, transparent 38%),
-    radial-gradient(ellipse at 88% 83%, hsl(270 55% 48% / 0.1) 0%, transparent 42%),
-    radial-gradient(ellipse at 50% 50%, hsl(var(--background)) 40%, hsl(267 35% 5%) 100%);
+    radial-gradient(ellipse at 12% 8%, hsl(28 92% 58% / 0.105) 0%, transparent 34%),
+    radial-gradient(ellipse at 88% 86%, hsl(274 62% 60% / 0.11) 0%, transparent 39%),
+    radial-gradient(circle at 1px 1px, hsl(37 50% 85% / 0.035) 1px, transparent 1.4px),
+    linear-gradient(145deg, hsl(270 32% 6%), hsl(274 30% 8%) 55%, hsl(270 32% 6%));
+  background-size: auto, auto, 26px 26px, auto;
 }
 
 html[data-app-theme="halloween"] .bubble-mine {
-  background: linear-gradient(145deg, hsl(25 95% 55%), hsl(17 86% 43%));
-  border-color: hsl(25 95% 55% / 0.85);
-  box-shadow: 0 4px 20px -2px hsl(25 95% 55% / 0.28), inset 0 1px 1px rgba(255,255,255,0.2);
+  background: linear-gradient(145deg, hsl(29 95% 64%), hsl(20 84% 49%));
+  border-color: hsl(31 94% 69% / 0.78);
+  box-shadow: 0 5px 24px -4px hsl(26 92% 53% / 0.34), inset 0 1px 1px hsl(38 100% 94% / 0.3);
+  color: hsl(22 48% 9%);
+}
+
+html[data-app-theme="halloween"] .post-card {
+  background-image: linear-gradient(145deg, hsl(270 27% 12%), hsl(276 28% 8%));
+}
+
+html[data-app-theme="halloween"] .wallet-hero {
+  background:
+    radial-gradient(ellipse at 85% 0%, hsl(28 92% 58% / 0.14), transparent 42%),
+    linear-gradient(135deg, hsl(270 27% 10%), hsl(276 28% 13%) 52%, hsl(270 27% 9%));
+  border-color: hsl(29 56% 48% / 0.3);
 }
 
 @keyframes halloween-drift {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(0.92); opacity: 0.65; }
+  50% { transform: translate3d(0, -7px, 0) scale(1.08); opacity: 1; }
+}
+
+@keyframes halloween-bat-drift {
   0%, 100% { transform: translate3d(0, 0, 0) rotate(-8deg); }
-  50% { transform: translate3d(5px, -12px, 0) rotate(8deg); }
+  50% { transform: translate3d(6px, -8px, 0) rotate(7deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .halloween-decoration {
+    animation: none;
+  }
 }
 
 /* ── Message bubbles ────────────────────────────────────────────────────── */
