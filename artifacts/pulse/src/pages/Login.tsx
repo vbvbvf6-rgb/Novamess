@@ -826,6 +826,13 @@ export default function Login({ onLogin }: LoginProps) {
                     >
                       Войти по паролю
                     </button>
+                    <Link
+                      href="/qr-scan"
+                      className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-primary/25 bg-primary/5 py-3 text-sm font-semibold text-primary transition-colors hover:bg-primary/10"
+                    >
+                      <QrCode size={17} />
+                      Сканировать QR-код в мессенджере
+                    </Link>
                   </div>
                 )}
               </motion.div>

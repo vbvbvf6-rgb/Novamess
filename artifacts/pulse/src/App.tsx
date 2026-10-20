@@ -594,6 +594,7 @@ function AuthPages({ onLogin }: { onLogin: (userId: number) => void }) {
   return (
     <Suspense fallback={<PageLoading />}>
       <Switch>
+        <Route path="/qr-scan" component={QrScanner} />
         <Route path="/register" component={() => <Register onLogin={handleLogin} />} />
         <Route path="/forgot-password" component={ForgotPassword} />
         <Route path="/qr/:tokenId" component={QrLoginGate} />

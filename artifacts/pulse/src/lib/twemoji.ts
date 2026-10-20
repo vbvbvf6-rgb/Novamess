@@ -4,10 +4,12 @@
  * Handles simple emoji, variation selectors, and ZWJ sequences.
  */
 export function emojiToTwemojiUrl(emoji: string): string {
-  const cps = [...emoji].map(c => c.codePointAt(0)!.toString(16));
-  const hasZWJ = cps.includes("200d");
-  const filtered = hasZWJ ? cps : cps.filter(cp => cp !== "fe0f");
-  return `https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/${filtered.join("-")}.svg`;
+  // Twemoji filenames omit VS16 even for joined sequences. Keeping it in
+  // ZWJ filenames makes valid SVG assets miss and fall back to system glyphs.
+  const codepoints = [...emoji]
+    .map(character => character.codePointAt(0)!.toString(16))
+    .filter(codepoint => codepoint !== "fe0f");
+  return `https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/${codepoints.join("-")}.svg`;
 }
 
 /**

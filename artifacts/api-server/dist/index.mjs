@@ -146850,6 +146850,9 @@ var VAPID_EMAIL = process.env.VAPID_EMAIL ?? "mailto:admin@pulse.app";
 if (VAPID_PUBLIC && VAPID_PRIVATE) {
   import_web_push.default.setVapidDetails(VAPID_EMAIL, VAPID_PUBLIC, VAPID_PRIVATE);
 }
+if (!process.env.FIREBASE_SERVICE_ACCOUNT) {
+  console.warn("[push] FCM is disabled; configure FIREBASE_SERVICE_ACCOUNT in Replit Secrets for native Android push notifications.");
+}
 var _fcmAccessToken = null;
 var _fcmTokenExpiry = 0;
 async function getFcmAccessToken() {
@@ -153651,7 +153654,12 @@ router25.post("/playlists/:playlistId/tracks", async (req, res) => {
   const playlistId = Number(req.params.playlistId);
   const title = String(req.body?.title || "").trim().slice(0, 160);
   const mediaUrl = String(req.body?.mediaUrl || "").trim();
-  if (!title || !mediaUrl) return res.status(400).json({ error: "\u041D\u0443\u0436\u043D\u044B \u043D\u0430\u0437\u0432\u0430\u043D\u0438\u0435 \u0438 \u0430\u0443\u0434\u0438\u043E\u0444\u0430\u0439\u043B" });
+  if (!title || !mediaUrl.startsWith("data:audio/")) {
+    return res.status(400).json({ error: "\u0412\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \u0430\u0443\u0434\u0438\u043E\u0444\u0430\u0439\u043B \u0441 \u0443\u0441\u0442\u0440\u043E\u0439\u0441\u0442\u0432\u0430" });
+  }
+  if (!/^data:audio\/[a-z0-9.+-]+;base64,[a-z0-9+/=]+$/i.test(mediaUrl)) {
+    return res.status(400).json({ error: "\u0424\u0430\u0439\u043B \u0430\u0443\u0434\u0438\u043E \u0438\u043C\u0435\u0435\u0442 \u043D\u0435\u0432\u0435\u0440\u043D\u044B\u0439 \u0444\u043E\u0440\u043C\u0430\u0442" });
+  }
   if (mediaUrl.startsWith("data:audio/") && mediaUrl.length > 16 * 1024 * 1024) {
     return res.status(413).json({ error: "\u0410\u0443\u0434\u0438\u043E\u0444\u0430\u0439\u043B \u0441\u043B\u0438\u0448\u043A\u043E\u043C \u0431\u043E\u043B\u044C\u0448\u043E\u0439. \u041C\u0430\u043A\u0441\u0438\u043C\u0443\u043C \u2014 12 \u041C\u0411." });
   }

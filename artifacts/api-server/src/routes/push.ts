@@ -14,6 +14,10 @@ if (VAPID_PUBLIC && VAPID_PRIVATE) {
   webpush.setVapidDetails(VAPID_EMAIL, VAPID_PUBLIC, VAPID_PRIVATE);
 }
 
+if (!process.env.FIREBASE_SERVICE_ACCOUNT) {
+  console.warn("[push] FCM is disabled; configure FIREBASE_SERVICE_ACCOUNT in Replit Secrets for native Android push notifications.");
+}
+
 export interface PushPayload {
   title: string;
   body: string;
