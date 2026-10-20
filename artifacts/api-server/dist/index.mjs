@@ -31195,9 +31195,9 @@ var require_timespan = __commonJS({
   }
 });
 
-// ../../node_modules/jsonwebtoken/node_modules/semver/internal/constants.js
+// ../../node_modules/semver/internal/constants.js
 var require_constants4 = __commonJS({
-  "../../node_modules/jsonwebtoken/node_modules/semver/internal/constants.js"(exports, module) {
+  "../../node_modules/semver/internal/constants.js"(exports, module) {
     "use strict";
     var SEMVER_SPEC_VERSION = "2.0.0";
     var MAX_LENGTH = 256;
@@ -31227,9 +31227,9 @@ var require_constants4 = __commonJS({
   }
 });
 
-// ../../node_modules/jsonwebtoken/node_modules/semver/internal/debug.js
+// ../../node_modules/semver/internal/debug.js
 var require_debug = __commonJS({
-  "../../node_modules/jsonwebtoken/node_modules/semver/internal/debug.js"(exports, module) {
+  "../../node_modules/semver/internal/debug.js"(exports, module) {
     "use strict";
     var debug = typeof process === "object" && process.env && process.env.NODE_DEBUG && /\bsemver\b/i.test(process.env.NODE_DEBUG) ? (...args) => console.error("SEMVER", ...args) : () => {
     };
@@ -31237,9 +31237,9 @@ var require_debug = __commonJS({
   }
 });
 
-// ../../node_modules/jsonwebtoken/node_modules/semver/internal/re.js
+// ../../node_modules/semver/internal/re.js
 var require_re = __commonJS({
-  "../../node_modules/jsonwebtoken/node_modules/semver/internal/re.js"(exports, module) {
+  "../../node_modules/semver/internal/re.js"(exports, module) {
     "use strict";
     var {
       MAX_SAFE_COMPONENT_LENGTH,
@@ -31325,9 +31325,9 @@ var require_re = __commonJS({
   }
 });
 
-// ../../node_modules/jsonwebtoken/node_modules/semver/internal/parse-options.js
+// ../../node_modules/semver/internal/parse-options.js
 var require_parse_options = __commonJS({
-  "../../node_modules/jsonwebtoken/node_modules/semver/internal/parse-options.js"(exports, module) {
+  "../../node_modules/semver/internal/parse-options.js"(exports, module) {
     "use strict";
     var looseOption = Object.freeze({ loose: true });
     var emptyOpts = Object.freeze({});
@@ -31344,9 +31344,9 @@ var require_parse_options = __commonJS({
   }
 });
 
-// ../../node_modules/jsonwebtoken/node_modules/semver/internal/identifiers.js
+// ../../node_modules/semver/internal/identifiers.js
 var require_identifiers = __commonJS({
-  "../../node_modules/jsonwebtoken/node_modules/semver/internal/identifiers.js"(exports, module) {
+  "../../node_modules/semver/internal/identifiers.js"(exports, module) {
     "use strict";
     var numeric2 = /^[0-9]+$/;
     var compareIdentifiers = (a5, b5) => {
@@ -31369,9 +31369,9 @@ var require_identifiers = __commonJS({
   }
 });
 
-// ../../node_modules/jsonwebtoken/node_modules/semver/classes/semver.js
+// ../../node_modules/semver/classes/semver.js
 var require_semver = __commonJS({
-  "../../node_modules/jsonwebtoken/node_modules/semver/classes/semver.js"(exports, module) {
+  "../../node_modules/semver/classes/semver.js"(exports, module) {
     "use strict";
     var debug = require_debug();
     var { MAX_LENGTH, MAX_SAFE_INTEGER } = require_constants4();
@@ -31648,9 +31648,9 @@ var require_semver = __commonJS({
   }
 });
 
-// ../../node_modules/jsonwebtoken/node_modules/semver/functions/parse.js
+// ../../node_modules/semver/functions/parse.js
 var require_parse2 = __commonJS({
-  "../../node_modules/jsonwebtoken/node_modules/semver/functions/parse.js"(exports, module) {
+  "../../node_modules/semver/functions/parse.js"(exports, module) {
     "use strict";
     var SemVer = require_semver();
     var parse4 = (version3, options, throwErrors = false) => {
@@ -31670,9 +31670,9 @@ var require_parse2 = __commonJS({
   }
 });
 
-// ../../node_modules/jsonwebtoken/node_modules/semver/functions/valid.js
+// ../../node_modules/semver/functions/valid.js
 var require_valid = __commonJS({
-  "../../node_modules/jsonwebtoken/node_modules/semver/functions/valid.js"(exports, module) {
+  "../../node_modules/semver/functions/valid.js"(exports, module) {
     "use strict";
     var parse4 = require_parse2();
     var valid = (version3, options) => {
@@ -31683,9 +31683,9 @@ var require_valid = __commonJS({
   }
 });
 
-// ../../node_modules/jsonwebtoken/node_modules/semver/functions/clean.js
+// ../../node_modules/semver/functions/clean.js
 var require_clean = __commonJS({
-  "../../node_modules/jsonwebtoken/node_modules/semver/functions/clean.js"(exports, module) {
+  "../../node_modules/semver/functions/clean.js"(exports, module) {
     "use strict";
     var parse4 = require_parse2();
     var clean = (version3, options) => {
@@ -31696,9 +31696,9 @@ var require_clean = __commonJS({
   }
 });
 
-// ../../node_modules/jsonwebtoken/node_modules/semver/functions/inc.js
+// ../../node_modules/semver/functions/inc.js
 var require_inc = __commonJS({
-  "../../node_modules/jsonwebtoken/node_modules/semver/functions/inc.js"(exports, module) {
+  "../../node_modules/semver/functions/inc.js"(exports, module) {
     "use strict";
     var SemVer = require_semver();
     var inc = (version3, release2, options, identifier, identifierBase) => {
@@ -31720,9 +31720,9 @@ var require_inc = __commonJS({
   }
 });
 
-// ../../node_modules/jsonwebtoken/node_modules/semver/functions/diff.js
+// ../../node_modules/semver/functions/diff.js
 var require_diff = __commonJS({
-  "../../node_modules/jsonwebtoken/node_modules/semver/functions/diff.js"(exports, module) {
+  "../../node_modules/semver/functions/diff.js"(exports, module) {
     "use strict";
     var parse4 = require_parse2();
     var diff = (version1, version22) => {
@@ -31764,9 +31764,9 @@ var require_diff = __commonJS({
   }
 });
 
-// ../../node_modules/jsonwebtoken/node_modules/semver/functions/major.js
+// ../../node_modules/semver/functions/major.js
 var require_major = __commonJS({
-  "../../node_modules/jsonwebtoken/node_modules/semver/functions/major.js"(exports, module) {
+  "../../node_modules/semver/functions/major.js"(exports, module) {
     "use strict";
     var SemVer = require_semver();
     var major = (a5, loose) => new SemVer(a5, loose).major;
@@ -31774,9 +31774,9 @@ var require_major = __commonJS({
   }
 });
 
-// ../../node_modules/jsonwebtoken/node_modules/semver/functions/minor.js
+// ../../node_modules/semver/functions/minor.js
 var require_minor = __commonJS({
-  "../../node_modules/jsonwebtoken/node_modules/semver/functions/minor.js"(exports, module) {
+  "../../node_modules/semver/functions/minor.js"(exports, module) {
     "use strict";
     var SemVer = require_semver();
     var minor = (a5, loose) => new SemVer(a5, loose).minor;
@@ -31784,9 +31784,9 @@ var require_minor = __commonJS({
   }
 });
 
-// ../../node_modules/jsonwebtoken/node_modules/semver/functions/patch.js
+// ../../node_modules/semver/functions/patch.js
 var require_patch = __commonJS({
-  "../../node_modules/jsonwebtoken/node_modules/semver/functions/patch.js"(exports, module) {
+  "../../node_modules/semver/functions/patch.js"(exports, module) {
     "use strict";
     var SemVer = require_semver();
     var patch = (a5, loose) => new SemVer(a5, loose).patch;
@@ -31794,9 +31794,9 @@ var require_patch = __commonJS({
   }
 });
 
-// ../../node_modules/jsonwebtoken/node_modules/semver/functions/prerelease.js
+// ../../node_modules/semver/functions/prerelease.js
 var require_prerelease = __commonJS({
-  "../../node_modules/jsonwebtoken/node_modules/semver/functions/prerelease.js"(exports, module) {
+  "../../node_modules/semver/functions/prerelease.js"(exports, module) {
     "use strict";
     var parse4 = require_parse2();
     var prerelease = (version3, options) => {
@@ -31807,9 +31807,9 @@ var require_prerelease = __commonJS({
   }
 });
 
-// ../../node_modules/jsonwebtoken/node_modules/semver/functions/compare.js
+// ../../node_modules/semver/functions/compare.js
 var require_compare = __commonJS({
-  "../../node_modules/jsonwebtoken/node_modules/semver/functions/compare.js"(exports, module) {
+  "../../node_modules/semver/functions/compare.js"(exports, module) {
     "use strict";
     var SemVer = require_semver();
     var compare2 = (a5, b5, loose) => new SemVer(a5, loose).compare(new SemVer(b5, loose));
@@ -31817,9 +31817,9 @@ var require_compare = __commonJS({
   }
 });
 
-// ../../node_modules/jsonwebtoken/node_modules/semver/functions/rcompare.js
+// ../../node_modules/semver/functions/rcompare.js
 var require_rcompare = __commonJS({
-  "../../node_modules/jsonwebtoken/node_modules/semver/functions/rcompare.js"(exports, module) {
+  "../../node_modules/semver/functions/rcompare.js"(exports, module) {
     "use strict";
     var compare2 = require_compare();
     var rcompare = (a5, b5, loose) => compare2(b5, a5, loose);
@@ -31827,9 +31827,9 @@ var require_rcompare = __commonJS({
   }
 });
 
-// ../../node_modules/jsonwebtoken/node_modules/semver/functions/compare-loose.js
+// ../../node_modules/semver/functions/compare-loose.js
 var require_compare_loose = __commonJS({
-  "../../node_modules/jsonwebtoken/node_modules/semver/functions/compare-loose.js"(exports, module) {
+  "../../node_modules/semver/functions/compare-loose.js"(exports, module) {
     "use strict";
     var compare2 = require_compare();
     var compareLoose = (a5, b5) => compare2(a5, b5, true);
@@ -31837,9 +31837,9 @@ var require_compare_loose = __commonJS({
   }
 });
 
-// ../../node_modules/jsonwebtoken/node_modules/semver/functions/compare-build.js
+// ../../node_modules/semver/functions/compare-build.js
 var require_compare_build = __commonJS({
-  "../../node_modules/jsonwebtoken/node_modules/semver/functions/compare-build.js"(exports, module) {
+  "../../node_modules/semver/functions/compare-build.js"(exports, module) {
     "use strict";
     var SemVer = require_semver();
     var compareBuild = (a5, b5, loose) => {
@@ -31851,9 +31851,9 @@ var require_compare_build = __commonJS({
   }
 });
 
-// ../../node_modules/jsonwebtoken/node_modules/semver/functions/sort.js
+// ../../node_modules/semver/functions/sort.js
 var require_sort = __commonJS({
-  "../../node_modules/jsonwebtoken/node_modules/semver/functions/sort.js"(exports, module) {
+  "../../node_modules/semver/functions/sort.js"(exports, module) {
     "use strict";
     var compareBuild = require_compare_build();
     var sort = (list2, loose) => list2.sort((a5, b5) => compareBuild(a5, b5, loose));
@@ -31861,9 +31861,9 @@ var require_sort = __commonJS({
   }
 });
 
-// ../../node_modules/jsonwebtoken/node_modules/semver/functions/rsort.js
+// ../../node_modules/semver/functions/rsort.js
 var require_rsort = __commonJS({
-  "../../node_modules/jsonwebtoken/node_modules/semver/functions/rsort.js"(exports, module) {
+  "../../node_modules/semver/functions/rsort.js"(exports, module) {
     "use strict";
     var compareBuild = require_compare_build();
     var rsort = (list2, loose) => list2.sort((a5, b5) => compareBuild(b5, a5, loose));
@@ -31871,9 +31871,9 @@ var require_rsort = __commonJS({
   }
 });
 
-// ../../node_modules/jsonwebtoken/node_modules/semver/functions/gt.js
+// ../../node_modules/semver/functions/gt.js
 var require_gt = __commonJS({
-  "../../node_modules/jsonwebtoken/node_modules/semver/functions/gt.js"(exports, module) {
+  "../../node_modules/semver/functions/gt.js"(exports, module) {
     "use strict";
     var compare2 = require_compare();
     var gt4 = (a5, b5, loose) => compare2(a5, b5, loose) > 0;
@@ -31881,9 +31881,9 @@ var require_gt = __commonJS({
   }
 });
 
-// ../../node_modules/jsonwebtoken/node_modules/semver/functions/lt.js
+// ../../node_modules/semver/functions/lt.js
 var require_lt = __commonJS({
-  "../../node_modules/jsonwebtoken/node_modules/semver/functions/lt.js"(exports, module) {
+  "../../node_modules/semver/functions/lt.js"(exports, module) {
     "use strict";
     var compare2 = require_compare();
     var lt2 = (a5, b5, loose) => compare2(a5, b5, loose) < 0;
@@ -31891,9 +31891,9 @@ var require_lt = __commonJS({
   }
 });
 
-// ../../node_modules/jsonwebtoken/node_modules/semver/functions/eq.js
+// ../../node_modules/semver/functions/eq.js
 var require_eq = __commonJS({
-  "../../node_modules/jsonwebtoken/node_modules/semver/functions/eq.js"(exports, module) {
+  "../../node_modules/semver/functions/eq.js"(exports, module) {
     "use strict";
     var compare2 = require_compare();
     var eq3 = (a5, b5, loose) => compare2(a5, b5, loose) === 0;
@@ -31901,9 +31901,9 @@ var require_eq = __commonJS({
   }
 });
 
-// ../../node_modules/jsonwebtoken/node_modules/semver/functions/neq.js
+// ../../node_modules/semver/functions/neq.js
 var require_neq = __commonJS({
-  "../../node_modules/jsonwebtoken/node_modules/semver/functions/neq.js"(exports, module) {
+  "../../node_modules/semver/functions/neq.js"(exports, module) {
     "use strict";
     var compare2 = require_compare();
     var neq = (a5, b5, loose) => compare2(a5, b5, loose) !== 0;
@@ -31911,9 +31911,9 @@ var require_neq = __commonJS({
   }
 });
 
-// ../../node_modules/jsonwebtoken/node_modules/semver/functions/gte.js
+// ../../node_modules/semver/functions/gte.js
 var require_gte = __commonJS({
-  "../../node_modules/jsonwebtoken/node_modules/semver/functions/gte.js"(exports, module) {
+  "../../node_modules/semver/functions/gte.js"(exports, module) {
     "use strict";
     var compare2 = require_compare();
     var gte2 = (a5, b5, loose) => compare2(a5, b5, loose) >= 0;
@@ -31921,9 +31921,9 @@ var require_gte = __commonJS({
   }
 });
 
-// ../../node_modules/jsonwebtoken/node_modules/semver/functions/lte.js
+// ../../node_modules/semver/functions/lte.js
 var require_lte = __commonJS({
-  "../../node_modules/jsonwebtoken/node_modules/semver/functions/lte.js"(exports, module) {
+  "../../node_modules/semver/functions/lte.js"(exports, module) {
     "use strict";
     var compare2 = require_compare();
     var lte2 = (a5, b5, loose) => compare2(a5, b5, loose) <= 0;
@@ -31931,9 +31931,9 @@ var require_lte = __commonJS({
   }
 });
 
-// ../../node_modules/jsonwebtoken/node_modules/semver/functions/cmp.js
+// ../../node_modules/semver/functions/cmp.js
 var require_cmp = __commonJS({
-  "../../node_modules/jsonwebtoken/node_modules/semver/functions/cmp.js"(exports, module) {
+  "../../node_modules/semver/functions/cmp.js"(exports, module) {
     "use strict";
     var eq3 = require_eq();
     var neq = require_neq();
@@ -31981,9 +31981,9 @@ var require_cmp = __commonJS({
   }
 });
 
-// ../../node_modules/jsonwebtoken/node_modules/semver/functions/coerce.js
+// ../../node_modules/semver/functions/coerce.js
 var require_coerce = __commonJS({
-  "../../node_modules/jsonwebtoken/node_modules/semver/functions/coerce.js"(exports, module) {
+  "../../node_modules/semver/functions/coerce.js"(exports, module) {
     "use strict";
     var SemVer = require_semver();
     var parse4 = require_parse2();
@@ -32027,9 +32027,9 @@ var require_coerce = __commonJS({
   }
 });
 
-// ../../node_modules/jsonwebtoken/node_modules/semver/internal/lrucache.js
+// ../../node_modules/semver/internal/lrucache.js
 var require_lrucache = __commonJS({
-  "../../node_modules/jsonwebtoken/node_modules/semver/internal/lrucache.js"(exports, module) {
+  "../../node_modules/semver/internal/lrucache.js"(exports, module) {
     "use strict";
     var LRUCache = class {
       constructor() {
@@ -32065,9 +32065,9 @@ var require_lrucache = __commonJS({
   }
 });
 
-// ../../node_modules/jsonwebtoken/node_modules/semver/classes/range.js
+// ../../node_modules/semver/classes/range.js
 var require_range2 = __commonJS({
-  "../../node_modules/jsonwebtoken/node_modules/semver/classes/range.js"(exports, module) {
+  "../../node_modules/semver/classes/range.js"(exports, module) {
     "use strict";
     var SPACE_CHARACTERS = /\s+/g;
     var Range = class _Range {
@@ -32442,9 +32442,9 @@ var require_range2 = __commonJS({
   }
 });
 
-// ../../node_modules/jsonwebtoken/node_modules/semver/classes/comparator.js
+// ../../node_modules/semver/classes/comparator.js
 var require_comparator = __commonJS({
-  "../../node_modules/jsonwebtoken/node_modules/semver/classes/comparator.js"(exports, module) {
+  "../../node_modules/semver/classes/comparator.js"(exports, module) {
     "use strict";
     var ANY = /* @__PURE__ */ Symbol("SemVer ANY");
     var Comparator = class _Comparator {
@@ -32555,9 +32555,9 @@ var require_comparator = __commonJS({
   }
 });
 
-// ../../node_modules/jsonwebtoken/node_modules/semver/functions/satisfies.js
+// ../../node_modules/semver/functions/satisfies.js
 var require_satisfies = __commonJS({
-  "../../node_modules/jsonwebtoken/node_modules/semver/functions/satisfies.js"(exports, module) {
+  "../../node_modules/semver/functions/satisfies.js"(exports, module) {
     "use strict";
     var Range = require_range2();
     var satisfies = (version3, range2, options) => {
@@ -32572,9 +32572,9 @@ var require_satisfies = __commonJS({
   }
 });
 
-// ../../node_modules/jsonwebtoken/node_modules/semver/ranges/to-comparators.js
+// ../../node_modules/semver/ranges/to-comparators.js
 var require_to_comparators = __commonJS({
-  "../../node_modules/jsonwebtoken/node_modules/semver/ranges/to-comparators.js"(exports, module) {
+  "../../node_modules/semver/ranges/to-comparators.js"(exports, module) {
     "use strict";
     var Range = require_range2();
     var toComparators = (range2, options) => new Range(range2, options).set.map((comp) => comp.map((c5) => c5.value).join(" ").trim().split(" "));
@@ -32582,9 +32582,9 @@ var require_to_comparators = __commonJS({
   }
 });
 
-// ../../node_modules/jsonwebtoken/node_modules/semver/ranges/max-satisfying.js
+// ../../node_modules/semver/ranges/max-satisfying.js
 var require_max_satisfying = __commonJS({
-  "../../node_modules/jsonwebtoken/node_modules/semver/ranges/max-satisfying.js"(exports, module) {
+  "../../node_modules/semver/ranges/max-satisfying.js"(exports, module) {
     "use strict";
     var SemVer = require_semver();
     var Range = require_range2();
@@ -32611,9 +32611,9 @@ var require_max_satisfying = __commonJS({
   }
 });
 
-// ../../node_modules/jsonwebtoken/node_modules/semver/ranges/min-satisfying.js
+// ../../node_modules/semver/ranges/min-satisfying.js
 var require_min_satisfying = __commonJS({
-  "../../node_modules/jsonwebtoken/node_modules/semver/ranges/min-satisfying.js"(exports, module) {
+  "../../node_modules/semver/ranges/min-satisfying.js"(exports, module) {
     "use strict";
     var SemVer = require_semver();
     var Range = require_range2();
@@ -32640,9 +32640,9 @@ var require_min_satisfying = __commonJS({
   }
 });
 
-// ../../node_modules/jsonwebtoken/node_modules/semver/ranges/min-version.js
+// ../../node_modules/semver/ranges/min-version.js
 var require_min_version = __commonJS({
-  "../../node_modules/jsonwebtoken/node_modules/semver/ranges/min-version.js"(exports, module) {
+  "../../node_modules/semver/ranges/min-version.js"(exports, module) {
     "use strict";
     var SemVer = require_semver();
     var Range = require_range2();
@@ -32699,9 +32699,9 @@ var require_min_version = __commonJS({
   }
 });
 
-// ../../node_modules/jsonwebtoken/node_modules/semver/ranges/valid.js
+// ../../node_modules/semver/ranges/valid.js
 var require_valid2 = __commonJS({
-  "../../node_modules/jsonwebtoken/node_modules/semver/ranges/valid.js"(exports, module) {
+  "../../node_modules/semver/ranges/valid.js"(exports, module) {
     "use strict";
     var Range = require_range2();
     var validRange = (range2, options) => {
@@ -32715,9 +32715,9 @@ var require_valid2 = __commonJS({
   }
 });
 
-// ../../node_modules/jsonwebtoken/node_modules/semver/ranges/outside.js
+// ../../node_modules/semver/ranges/outside.js
 var require_outside = __commonJS({
-  "../../node_modules/jsonwebtoken/node_modules/semver/ranges/outside.js"(exports, module) {
+  "../../node_modules/semver/ranges/outside.js"(exports, module) {
     "use strict";
     var SemVer = require_semver();
     var Comparator = require_comparator();
@@ -32784,9 +32784,9 @@ var require_outside = __commonJS({
   }
 });
 
-// ../../node_modules/jsonwebtoken/node_modules/semver/ranges/gtr.js
+// ../../node_modules/semver/ranges/gtr.js
 var require_gtr = __commonJS({
-  "../../node_modules/jsonwebtoken/node_modules/semver/ranges/gtr.js"(exports, module) {
+  "../../node_modules/semver/ranges/gtr.js"(exports, module) {
     "use strict";
     var outside = require_outside();
     var gtr = (version3, range2, options) => outside(version3, range2, ">", options);
@@ -32794,9 +32794,9 @@ var require_gtr = __commonJS({
   }
 });
 
-// ../../node_modules/jsonwebtoken/node_modules/semver/ranges/ltr.js
+// ../../node_modules/semver/ranges/ltr.js
 var require_ltr = __commonJS({
-  "../../node_modules/jsonwebtoken/node_modules/semver/ranges/ltr.js"(exports, module) {
+  "../../node_modules/semver/ranges/ltr.js"(exports, module) {
     "use strict";
     var outside = require_outside();
     var ltr = (version3, range2, options) => outside(version3, range2, "<", options);
@@ -32804,9 +32804,9 @@ var require_ltr = __commonJS({
   }
 });
 
-// ../../node_modules/jsonwebtoken/node_modules/semver/ranges/intersects.js
+// ../../node_modules/semver/ranges/intersects.js
 var require_intersects = __commonJS({
-  "../../node_modules/jsonwebtoken/node_modules/semver/ranges/intersects.js"(exports, module) {
+  "../../node_modules/semver/ranges/intersects.js"(exports, module) {
     "use strict";
     var Range = require_range2();
     var intersects = (r1, r22, options) => {
@@ -32818,9 +32818,9 @@ var require_intersects = __commonJS({
   }
 });
 
-// ../../node_modules/jsonwebtoken/node_modules/semver/ranges/simplify.js
+// ../../node_modules/semver/ranges/simplify.js
 var require_simplify = __commonJS({
-  "../../node_modules/jsonwebtoken/node_modules/semver/ranges/simplify.js"(exports, module) {
+  "../../node_modules/semver/ranges/simplify.js"(exports, module) {
     "use strict";
     var satisfies = require_satisfies();
     var compare2 = require_compare();
@@ -32868,9 +32868,9 @@ var require_simplify = __commonJS({
   }
 });
 
-// ../../node_modules/jsonwebtoken/node_modules/semver/ranges/subset.js
+// ../../node_modules/semver/ranges/subset.js
 var require_subset = __commonJS({
-  "../../node_modules/jsonwebtoken/node_modules/semver/ranges/subset.js"(exports, module) {
+  "../../node_modules/semver/ranges/subset.js"(exports, module) {
     "use strict";
     var Range = require_range2();
     var Comparator = require_comparator();
@@ -33030,9 +33030,9 @@ var require_subset = __commonJS({
   }
 });
 
-// ../../node_modules/jsonwebtoken/node_modules/semver/index.js
+// ../../node_modules/semver/index.js
 var require_semver2 = __commonJS({
-  "../../node_modules/jsonwebtoken/node_modules/semver/index.js"(exports, module) {
+  "../../node_modules/semver/index.js"(exports, module) {
     "use strict";
     var internalRe = require_re();
     var constants = require_constants4();
@@ -144796,6 +144796,8 @@ db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS prime_months INT
 });
 db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS nickname_style TEXT`).catch(() => {
 });
+db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS avatar_frame TEXT`).catch(() => {
+});
 db.execute(sql`CREATE TABLE IF NOT EXISTS prize_code_redemptions (
   id SERIAL PRIMARY KEY, code_id INTEGER NOT NULL REFERENCES prize_codes(id) ON DELETE CASCADE,
   user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE, redeemed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -144871,11 +144873,12 @@ router4.post("/users/me/prize-codes/redeem", async (req, res) => {
     await db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS prize_type TEXT NOT NULL DEFAULT 'sparks'`);
     await db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS prime_months INTEGER`);
     await db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS nickname_style TEXT`);
+    await db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS avatar_frame TEXT`);
     const code = String(req.body?.code || "").trim().toUpperCase();
     if (!/^[A-Z0-9-]{4,40}$/.test(code)) return res.status(400).json({ error: "\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043A\u043E\u0440\u0440\u0435\u043A\u0442\u043D\u044B\u0439 \u043A\u043E\u0434" });
     const result = await db.transaction(async (tx) => {
       const codeRows = await tx.execute(sql`
-        SELECT id, prize_amount, prize_description, prize_type, prime_months, nickname_style, max_uses, uses, expires_at
+        SELECT id, prize_amount, prize_description, prize_type, prime_months, nickname_style, avatar_frame, max_uses, uses, expires_at
         FROM prize_codes WHERE code = ${code} FOR UPDATE
       `);
       const prize = codeRows.rows[0];
@@ -144898,12 +144901,44 @@ router4.post("/users/me/prize-codes/redeem", async (req, res) => {
             prime_expires_at = GREATEST(COALESCE(prime_expires_at, NOW()), NOW()) + make_interval(months => ${Math.min(24, Math.max(1, Number(prize.prime_months) || 1))})
           WHERE id = ${req.currentUserId}
         `);
-      } else if (prize.prize_type === "nickname") {
-        await tx.execute(sql`UPDATE users SET nickname_style = ${prize.nickname_style} WHERE id = ${req.currentUserId}`);
+      } else if (prize.prize_type === "nickname" || prize.prize_type === "halloween") {
+        const styleSlug = prize.prize_type === "halloween" ? "halloween" : String(prize.nickname_style || "");
+        const styleRows = await tx.execute(sql`SELECT id FROM nickname_styles WHERE slug = ${styleSlug} AND active = TRUE`);
+        if (!styleRows.rows.length) throw Object.assign(new Error("\u0421\u0442\u0438\u043B\u044C \u043D\u0430\u0433\u0440\u0430\u0434\u044B \u0431\u043E\u043B\u044C\u0448\u0435 \u043D\u0435\u0434\u043E\u0441\u0442\u0443\u043F\u0435\u043D"), { status: 410 });
+        await tx.execute(sql`
+          INSERT INTO user_nickname_styles (user_id, style_id, source)
+          VALUES (${req.currentUserId}, ${styleRows.rows[0].id}, 'prize-code')
+          ON CONFLICT (user_id, style_id) DO NOTHING
+        `);
+        await tx.execute(sql`UPDATE users SET nickname_style = ${styleSlug} WHERE id = ${req.currentUserId}`);
+        if (prize.prize_type === "halloween") {
+          await tx.execute(sql`
+            INSERT INTO user_avatar_frames (user_id, frame_slug, source)
+            VALUES (${req.currentUserId}, 'halloween', 'prize-code')
+            ON CONFLICT (user_id, frame_slug) DO NOTHING
+          `);
+          await tx.execute(sql`UPDATE users SET avatar_frame = 'halloween' WHERE id = ${req.currentUserId}`);
+        }
+      } else if (prize.prize_type === "frame") {
+        const frameSlug = String(prize.avatar_frame || "");
+        if (frameSlug !== "halloween") throw Object.assign(new Error("\u0420\u0430\u043C\u043A\u0430 \u043D\u0430\u0433\u0440\u0430\u0434\u044B \u0431\u043E\u043B\u044C\u0448\u0435 \u043D\u0435\u0434\u043E\u0441\u0442\u0443\u043F\u043D\u0430"), { status: 410 });
+        await tx.execute(sql`
+          INSERT INTO user_avatar_frames (user_id, frame_slug, source)
+          VALUES (${req.currentUserId}, ${frameSlug}, 'prize-code')
+          ON CONFLICT (user_id, frame_slug) DO NOTHING
+        `);
+        await tx.execute(sql`UPDATE users SET avatar_frame = ${frameSlug} WHERE id = ${req.currentUserId}`);
       } else {
         await tx.execute(sql`UPDATE users SET balance = COALESCE(balance, 0) + ${Number(prize.prize_amount)} WHERE id = ${req.currentUserId}`);
       }
-      return { amount: prize.prize_type === "sparks" ? Number(prize.prize_amount) : 0, prizeType: prize.prize_type, primeMonths: prize.prime_months, nicknameStyle: prize.nickname_style, description: prize.prize_description };
+      return {
+        amount: prize.prize_type === "sparks" ? Number(prize.prize_amount) : 0,
+        prizeType: prize.prize_type,
+        primeMonths: prize.prime_months,
+        nicknameStyle: prize.prize_type === "halloween" ? "halloween" : prize.nickname_style,
+        avatarFrame: ["frame", "halloween"].includes(prize.prize_type) ? prize.avatar_frame || "halloween" : null,
+        description: prize.prize_description
+      };
     });
     res.json({ ok: true, ...result });
   } catch (err2) {
@@ -144942,6 +144977,130 @@ router4.post("/users/me/nickname-styles/:styleId/equip", async (req, res) => {
     res.json({ success: true, nicknameStyle: rows.rows[0].slug });
   } catch {
     res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u043D\u0430\u0434\u0435\u0442\u044C \u0441\u0442\u0438\u043B\u044C" });
+  }
+});
+router4.get("/users/me/avatar-frames", async (req, res) => {
+  try {
+    const rows = await db.execute(sql`
+      SELECT uf.id, uf.frame_slug AS slug, uf.source, uf.granted_at,
+             (u.avatar_frame = uf.frame_slug) AS equipped
+      FROM user_avatar_frames uf
+      JOIN users u ON u.id = uf.user_id
+      WHERE uf.user_id = ${req.currentUserId}
+      ORDER BY uf.granted_at DESC, uf.id DESC
+    `);
+    res.json(rows.rows.map((frame) => ({
+      ...frame,
+      name: frame.slug === "halloween" ? "\u0425\u044D\u043B\u043B\u043E\u0443\u0438\u043D\u0441\u043A\u0430\u044F \u0440\u0430\u043C\u043A\u0430" : frame.slug,
+      description: frame.slug === "halloween" ? "\u0422\u044B\u043A\u0432\u0435\u043D\u043D\u0430\u044F \u0440\u0430\u043C\u043A\u0430 \u043F\u0440\u043E\u0444\u0438\u043B\u044F" : ""
+    })));
+  } catch (err2) {
+    req.log.error(err2);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u0440\u0430\u043C\u043A\u0438" });
+  }
+});
+router4.post("/users/me/avatar-frames/:frameSlug/equip", async (req, res) => {
+  try {
+    const frameSlug = String(req.params.frameSlug);
+    if (frameSlug === "none") {
+      await db.execute(sql`UPDATE users SET avatar_frame = NULL WHERE id = ${req.currentUserId}`);
+      return res.json({ success: true, avatarFrame: null });
+    }
+    if (frameSlug !== "halloween") return res.status(400).json({ error: "\u041D\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043D\u0430\u044F \u0440\u0430\u043C\u043A\u0430" });
+    const owned = await db.execute(sql`
+      SELECT 1 FROM user_avatar_frames
+      WHERE user_id = ${req.currentUserId} AND frame_slug = ${frameSlug}
+    `);
+    if (!owned.rows.length) return res.status(403).json({ error: "\u042D\u0442\u043E\u0439 \u0440\u0430\u043C\u043A\u0438 \u043D\u0435\u0442 \u0432 \u0432\u0430\u0448\u0435\u043C \u0438\u043D\u0432\u0435\u043D\u0442\u0430\u0440\u0435" });
+    await db.execute(sql`UPDATE users SET avatar_frame = ${frameSlug} WHERE id = ${req.currentUserId}`);
+    res.json({ success: true, avatarFrame: frameSlug });
+  } catch (err2) {
+    req.log.error(err2);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u043D\u0430\u0434\u0435\u0442\u044C \u0440\u0430\u043C\u043A\u0443" });
+  }
+});
+var HALLOWEEN_QUEST_START = "2026-10-20T00:00:00.000Z";
+var HALLOWEEN_QUEST_END = "2026-11-08T00:00:00.000Z";
+var HALLOWEEN_QUEST_GOAL = 13;
+async function getHalloweenQuestState(userId) {
+  const [progressRows, claimRows] = await Promise.all([
+    db.execute(sql`
+      SELECT COUNT(*)::int AS progress
+      FROM messages
+      WHERE sender_id = ${userId}
+        AND created_at >= ${HALLOWEEN_QUEST_START}
+        AND created_at < ${HALLOWEEN_QUEST_END}
+    `),
+    db.execute(sql`SELECT 1 FROM user_halloween_quest_claims WHERE user_id = ${userId} LIMIT 1`)
+  ]);
+  const now = Date.now();
+  return {
+    progress: Number(progressRows.rows[0]?.progress ?? 0),
+    goal: HALLOWEEN_QUEST_GOAL,
+    claimed: claimRows.rows.length > 0,
+    startsAt: HALLOWEEN_QUEST_START,
+    endsAt: HALLOWEEN_QUEST_END,
+    active: now >= Date.parse(HALLOWEEN_QUEST_START) && now < Date.parse(HALLOWEEN_QUEST_END)
+  };
+}
+router4.get("/users/me/halloween-quest", async (req, res) => {
+  try {
+    res.json(await getHalloweenQuestState(req.currentUserId));
+  } catch (err2) {
+    req.log.error(err2);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u0445\u044D\u043B\u043B\u043E\u0443\u0438\u043D\u0441\u043A\u0438\u0439 \u043A\u0432\u0435\u0441\u0442" });
+  }
+});
+router4.post("/users/me/halloween-quest/claim", async (req, res) => {
+  try {
+    if (Date.now() < Date.parse(HALLOWEEN_QUEST_START) || Date.now() >= Date.parse(HALLOWEEN_QUEST_END)) {
+      return res.status(410).json({ error: "\u0425\u044D\u043B\u043B\u043E\u0443\u0438\u043D\u0441\u043A\u0438\u0439 \u043A\u0432\u0435\u0441\u0442 \u0441\u0435\u0439\u0447\u0430\u0441 \u043D\u0435 \u0430\u043A\u0442\u0438\u0432\u0435\u043D" });
+    }
+    const result = await db.transaction(async (tx) => {
+      const progressRows = await tx.execute(sql`
+        SELECT COUNT(*)::int AS progress
+        FROM messages
+        WHERE sender_id = ${req.currentUserId}
+          AND created_at >= ${HALLOWEEN_QUEST_START}
+          AND created_at < ${HALLOWEEN_QUEST_END}
+      `);
+      const progress = Number(progressRows.rows[0]?.progress ?? 0);
+      if (progress < HALLOWEEN_QUEST_GOAL) {
+        throw Object.assign(new Error("\u0421\u043D\u0430\u0447\u0430\u043B\u0430 \u043E\u0442\u043F\u0440\u0430\u0432\u044C\u0442\u0435 13 \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u0439 \u0432 \u0447\u0430\u0442\u0430\u0445"), { status: 400 });
+      }
+      const claim = await tx.execute(sql`
+        INSERT INTO user_halloween_quest_claims (user_id)
+        VALUES (${req.currentUserId})
+        ON CONFLICT (user_id) DO NOTHING
+        RETURNING user_id
+      `);
+      if (!claim.rows.length) throw Object.assign(new Error("\u041D\u0430\u0433\u0440\u0430\u0434\u0430 \u0437\u0430 \u043A\u0432\u0435\u0441\u0442 \u0443\u0436\u0435 \u043F\u043E\u043B\u0443\u0447\u0435\u043D\u0430"), { status: 409 });
+      const styleRows = await tx.execute(sql`
+        SELECT id FROM nickname_styles WHERE slug = 'halloween' AND active = TRUE LIMIT 1
+      `);
+      if (!styleRows.rows.length) throw new Error("\u0425\u044D\u043B\u043B\u043E\u0443\u0438\u043D\u0441\u043A\u0438\u0439 \u0441\u0442\u0438\u043B\u044C \u043F\u043E\u043A\u0430 \u043D\u0435\u0434\u043E\u0441\u0442\u0443\u043F\u0435\u043D");
+      await tx.execute(sql`
+        INSERT INTO user_nickname_styles (user_id, style_id, source)
+        VALUES (${req.currentUserId}, ${styleRows.rows[0].id}, 'halloween-quest')
+        ON CONFLICT (user_id, style_id) DO NOTHING
+      `);
+      await tx.execute(sql`
+        INSERT INTO user_avatar_frames (user_id, frame_slug, source)
+        VALUES (${req.currentUserId}, 'halloween', 'halloween-quest')
+        ON CONFLICT (user_id, frame_slug) DO NOTHING
+      `);
+      await tx.execute(sql`
+        UPDATE users SET nickname_style = 'halloween', avatar_frame = 'halloween'
+        WHERE id = ${req.currentUserId}
+      `);
+      return { success: true, nicknameStyle: "halloween", avatarFrame: "halloween" };
+    });
+    res.json(result);
+  } catch (err2) {
+    const status = Number(err2?.status) || 500;
+    if (status < 500) return res.status(status).json({ error: err2.message });
+    req.log.error(err2);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u043F\u043E\u043B\u0443\u0447\u0438\u0442\u044C \u043D\u0430\u0433\u0440\u0430\u0434\u0443 \u0437\u0430 \u043A\u0432\u0435\u0441\u0442" });
   }
 });
 router4.get("/users/me/creator-verifications", async (req, res) => {
@@ -149167,7 +149326,8 @@ db.execute(sql`
   ('ruby', 'Рубин', 'Глубокий алый градиент', 'premium', 'linear-gradient(90deg,#be123c,#f43f5e,#fb7185,#881337)', 9),
   ('mint', 'Мятный', 'Мягкий мятный неон', 'common', 'linear-gradient(90deg,#0f766e,#2dd4bf,#a7f3d0,#0d9488)', 10),
   ('starlight', 'Звёздный свет', 'Светящийся небесный градиент', 'premium', 'linear-gradient(90deg,#f8fafc,#93c5fd,#c4b5fd,#fef08a)', 11),
-  ('cyber', 'Кибер', 'Яркий неоновый перелив', 'premium', 'linear-gradient(90deg,#22d3ee,#a3e635,#f0abfc,#38bdf8)', 12)
+  ('cyber', 'Кибер', 'Яркий неоновый перелив', 'premium', 'linear-gradient(90deg,#22d3ee,#a3e635,#f0abfc,#38bdf8)', 12),
+  ('halloween', 'Хэллоуин', 'Тыквенно-фиолетовый стиль для хэллоуинского события', 'event', 'linear-gradient(90deg,#fb923c,#f97316,#c084fc,#7c3aed,#fb923c)', 13)
   ON CONFLICT (slug) DO NOTHING
 `).catch(() => {
 });
@@ -149286,7 +149446,7 @@ router12.get("/admin/check", async (req, res) => {
 router12.get("/admin/users", requireAdmin, async (req, res) => {
   try {
     const rows = await db.execute(
-      sql`SELECT id, username, display_name, avatar_color, avatar_url, nickname_style, status, balance, created_at, is_verified, is_developer, is_admin, is_bot, has_prime, is_banned, moderation_type, ban_reason, ban_expires_at FROM users ORDER BY id`
+      sql`SELECT id, username, display_name, avatar_color, avatar_url, nickname_style, avatar_frame, status, balance, created_at, is_verified, is_developer, is_admin, is_bot, has_prime, is_banned, moderation_type, ban_reason, ban_expires_at FROM users ORDER BY id`
     );
     res.json(rows.rows);
   } catch (err2) {
@@ -149351,6 +149511,63 @@ router12.delete("/admin/users/:userId/nickname-styles/:styleId", requireAdmin, a
     res.json({ success: true });
   } catch {
     res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0443\u0434\u0430\u043B\u0438\u0442\u044C \u0441\u0442\u0438\u043B\u044C" });
+  }
+});
+router12.get("/admin/users/:userId/avatar-frames", requireAdmin, async (req, res) => {
+  try {
+    const rows = await db.execute(sql`
+      SELECT id, frame_slug AS slug, source, granted_at
+      FROM user_avatar_frames
+      WHERE user_id = ${Number(req.params.userId)}
+      ORDER BY granted_at DESC, id DESC
+    `);
+    res.json(rows.rows);
+  } catch (err2) {
+    req.log.error(err2);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u0440\u0430\u043C\u043A\u0438 \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044F" });
+  }
+});
+router12.post("/admin/users/:userId/avatar-frames", requireAdmin, async (req, res) => {
+  try {
+    const userId = Number(req.params.userId);
+    const frameSlug = String(req.body?.frameSlug || "").trim();
+    if (!Number.isInteger(userId) || frameSlug !== "halloween") {
+      return res.status(400).json({ error: "\u0423\u043A\u0430\u0436\u0438\u0442\u0435 \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044F \u0438 \u0434\u043E\u0441\u0442\u0443\u043F\u043D\u0443\u044E \u0440\u0430\u043C\u043A\u0443" });
+    }
+    const target = await db.execute(sql`SELECT id FROM users WHERE id = ${userId}`);
+    if (!target.rows.length) return res.status(404).json({ error: "\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D" });
+    await db.execute(sql`
+      INSERT INTO user_avatar_frames (user_id, frame_slug, source, granted_by)
+      VALUES (${userId}, ${frameSlug}, 'admin', ${req.currentUserId})
+      ON CONFLICT (user_id, frame_slug) DO NOTHING
+    `);
+    await db.execute(sql`UPDATE users SET avatar_frame = ${frameSlug} WHERE id = ${userId}`);
+    res.json({ success: true, frameSlug });
+  } catch (err2) {
+    req.log.error(err2);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0432\u044B\u0434\u0430\u0442\u044C \u0440\u0430\u043C\u043A\u0443" });
+  }
+});
+router12.delete("/admin/users/:userId/avatar-frames/:frameSlug", requireAdmin, async (req, res) => {
+  try {
+    const userId = Number(req.params.userId);
+    const frameSlug = String(req.params.frameSlug);
+    await db.execute(sql`
+      DELETE FROM user_avatar_frames WHERE user_id = ${userId} AND frame_slug = ${frameSlug}
+    `);
+    const remaining = await db.execute(sql`
+      SELECT frame_slug FROM user_avatar_frames
+      WHERE user_id = ${userId}
+      ORDER BY granted_at DESC, id DESC LIMIT 1
+    `);
+    await db.execute(sql`
+      UPDATE users SET avatar_frame = ${remaining.rows[0]?.frame_slug ?? null}
+      WHERE id = ${userId}
+    `);
+    res.json({ success: true });
+  } catch (err2) {
+    req.log.error(err2);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0437\u0430\u0431\u0440\u0430\u0442\u044C \u0440\u0430\u043C\u043A\u0443" });
   }
 });
 router12.post("/admin/give-currency", requireAdmin, async (req, res) => {
@@ -150669,8 +150886,9 @@ router12.get("/admin/prize-codes", requireAdmin, async (_req, res) => {
     await db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS prize_type TEXT NOT NULL DEFAULT 'sparks'`);
     await db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS prime_months INTEGER`);
     await db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS nickname_style TEXT`);
+    await db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS avatar_frame TEXT`);
     const rows = await db.execute(sql`
-      SELECT id, code, prize_amount, prize_description, prize_type, prime_months, nickname_style, max_uses, uses, expires_at, created_at
+      SELECT id, code, prize_amount, prize_description, prize_type, prime_months, nickname_style, avatar_frame, max_uses, uses, expires_at, created_at
       FROM prize_codes ORDER BY created_at DESC LIMIT 500
     `);
     res.json(rows.rows);
@@ -150683,16 +150901,24 @@ router12.post("/admin/prize-codes", requireAdmin, async (req, res) => {
     await db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS prize_type TEXT NOT NULL DEFAULT 'sparks'`);
     await db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS prime_months INTEGER`);
     await db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS nickname_style TEXT`);
-    const prizeType = ["sparks", "prime", "nickname"].includes(String(req.body?.prizeType)) ? String(req.body.prizeType) : "sparks";
+    await db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS avatar_frame TEXT`);
+    const allowedTypes = ["sparks", "prime", "nickname", "frame", "halloween"];
+    const prizeType = allowedTypes.includes(String(req.body?.prizeType)) ? String(req.body.prizeType) : "sparks";
     const amount = Math.floor(Number(req.body?.prizeAmount || (prizeType === "sparks" ? 0 : 1)));
     const primeMonths = Math.min(24, Math.max(1, Math.floor(Number(req.body?.primeMonths) || 1)));
     const nicknameStyle = String(req.body?.nicknameStyle || "").trim().slice(0, 64) || null;
+    const avatarFrame = String(req.body?.avatarFrame || "").trim().slice(0, 64) || null;
     const count2 = Math.min(100, Math.max(1, Math.floor(Number(req.body?.count) || 1)));
     const maxUses = Math.min(1e3, Math.max(1, Math.floor(Number(req.body?.maxUses) || 1)));
     const description = String(req.body?.prizeDescription || "").trim().slice(0, 200) || null;
     const expiresAt = req.body?.expiresAt ? new Date(req.body.expiresAt) : null;
     if (prizeType === "sparks" && (!Number.isFinite(amount) || amount <= 0)) return res.status(400).json({ error: "\u041F\u0440\u0438\u0437 \u0434\u043E\u043B\u0436\u0435\u043D \u0431\u044B\u0442\u044C \u0431\u043E\u043B\u044C\u0448\u0435 \u043D\u0443\u043B\u044F" });
     if (prizeType === "nickname" && !nicknameStyle) return res.status(400).json({ error: "\u0423\u043A\u0430\u0436\u0438\u0442\u0435 \u0441\u0442\u0438\u043B\u044C \u0446\u0432\u0435\u0442\u043D\u043E\u0433\u043E \u043D\u0438\u043A\u0430" });
+    if (prizeType === "nickname") {
+      const style = await db.execute(sql`SELECT 1 FROM nickname_styles WHERE slug = ${nicknameStyle} AND active = TRUE`);
+      if (!style.rows.length) return res.status(400).json({ error: "\u0423\u043A\u0430\u0437\u0430\u043D\u043D\u044B\u0439 \u0441\u0442\u0438\u043B\u044C \u043D\u0438\u043A\u0430 \u043D\u0435\u0434\u043E\u0441\u0442\u0443\u043F\u0435\u043D" });
+    }
+    if (prizeType === "frame" && avatarFrame !== "halloween") return res.status(400).json({ error: "\u0423\u043A\u0430\u0436\u0438\u0442\u0435 \u0434\u043E\u0441\u0442\u0443\u043F\u043D\u0443\u044E \u0440\u0430\u043C\u043A\u0443" });
     if (expiresAt && Number.isNaN(expiresAt.getTime())) return res.status(400).json({ error: "\u041D\u0435\u043A\u043E\u0440\u0440\u0435\u043A\u0442\u043D\u0430\u044F \u0434\u0430\u0442\u0430 \u043E\u043A\u043E\u043D\u0447\u0430\u043D\u0438\u044F" });
     const codes = [];
     await db.transaction(async (tx) => {
@@ -150701,8 +150927,8 @@ router12.post("/admin/prize-codes", requireAdmin, async (req, res) => {
         for (let attempt = 0; attempt < 5; attempt++) {
           const candidate = `NOVA-${randomBytes3(5).toString("hex").toUpperCase()}`;
           const inserted = await tx.execute(sql`
-            INSERT INTO prize_codes (code, prize_amount, prize_description, prize_type, prime_months, nickname_style, max_uses, expires_at, created_by)
-            VALUES (${candidate}, ${Math.max(1, amount || 1)}, ${description}, ${prizeType}, ${prizeType === "prime" ? primeMonths : null}, ${prizeType === "nickname" ? nicknameStyle : null}, ${maxUses}, ${expiresAt}, ${req.currentUserId})
+            INSERT INTO prize_codes (code, prize_amount, prize_description, prize_type, prime_months, nickname_style, avatar_frame, max_uses, expires_at, created_by)
+            VALUES (${candidate}, ${Math.max(1, amount || 1)}, ${description}, ${prizeType}, ${prizeType === "prime" ? primeMonths : null}, ${prizeType === "nickname" ? nicknameStyle : prizeType === "halloween" ? "halloween" : null}, ${prizeType === "frame" ? avatarFrame : prizeType === "halloween" ? "halloween" : null}, ${maxUses}, ${expiresAt}, ${req.currentUserId})
             ON CONFLICT (code) DO NOTHING RETURNING code
           `);
           if (inserted.rows.length) {
@@ -155178,9 +155404,72 @@ if (Number.isNaN(port) || port <= 0) {
     await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS ban_reason TEXT`);
     await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS ban_expires_at TIMESTAMP WITH TIME ZONE`);
     await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS nickname_style TEXT`);
+    await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_frame TEXT`);
     await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS login_code_hash TEXT`);
     await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS login_code_expires_at TIMESTAMP WITH TIME ZONE`);
     await db.execute(sql`ALTER TABLE chat_members ADD COLUMN IF NOT EXISTS is_archived BOOLEAN NOT NULL DEFAULT FALSE`);
+    await db.execute(sql`CREATE TABLE IF NOT EXISTS nickname_styles (
+      id SERIAL PRIMARY KEY,
+      slug TEXT NOT NULL UNIQUE,
+      name TEXT NOT NULL,
+      description TEXT NOT NULL DEFAULT '',
+      category TEXT NOT NULL DEFAULT 'common',
+      preview_css TEXT NOT NULL,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      active BOOLEAN NOT NULL DEFAULT TRUE
+    )`);
+    await db.execute(sql`CREATE TABLE IF NOT EXISTS user_nickname_styles (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      style_id INTEGER NOT NULL REFERENCES nickname_styles(id) ON DELETE CASCADE,
+      source TEXT NOT NULL DEFAULT 'admin',
+      granted_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      granted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      UNIQUE (user_id, style_id)
+    )`);
+    await db.execute(sql`INSERT INTO nickname_styles
+      (slug, name, description, category, preview_css, sort_order)
+      VALUES ('halloween', 'Хэллоуин', 'Тыквенно-фиолетовый стиль для хэллоуинского события', 'event',
+        'linear-gradient(90deg,#fb923c,#f97316,#c084fc,#7c3aed,#fb923c)', 13)
+      ON CONFLICT (slug) DO UPDATE SET
+        name = EXCLUDED.name, description = EXCLUDED.description,
+        category = EXCLUDED.category, preview_css = EXCLUDED.preview_css, active = TRUE
+    `);
+    await db.execute(sql`CREATE TABLE IF NOT EXISTS user_avatar_frames (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      frame_slug TEXT NOT NULL,
+      source TEXT NOT NULL DEFAULT 'admin',
+      granted_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      granted_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+      UNIQUE (user_id, frame_slug)
+    )`);
+    await db.execute(sql`CREATE TABLE IF NOT EXISTS user_halloween_quest_claims (
+      user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+      claimed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    )`);
+    await db.execute(sql`CREATE TABLE IF NOT EXISTS prize_codes (
+      id SERIAL PRIMARY KEY,
+      code TEXT NOT NULL UNIQUE,
+      prize_amount INTEGER NOT NULL DEFAULT 1,
+      prize_description TEXT,
+      max_uses INTEGER NOT NULL DEFAULT 1,
+      uses INTEGER NOT NULL DEFAULT 0,
+      expires_at TIMESTAMP WITH TIME ZONE,
+      created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    )`);
+    await db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS prize_type TEXT NOT NULL DEFAULT 'sparks'`);
+    await db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS prime_months INTEGER`);
+    await db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS nickname_style TEXT`);
+    await db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS avatar_frame TEXT`);
+    await db.execute(sql`CREATE TABLE IF NOT EXISTS prize_code_redemptions (
+      id SERIAL PRIMARY KEY,
+      code_id INTEGER NOT NULL REFERENCES prize_codes(id) ON DELETE CASCADE,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      redeemed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      UNIQUE (code_id, user_id)
+    )`);
   } catch (migErr) {
     logger.warn({ err: migErr }, "DB migration check warning (non-fatal) \u2014 server will continue");
   }
