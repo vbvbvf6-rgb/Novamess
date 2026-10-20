@@ -171,6 +171,7 @@ const _schemaMigrations = (async () => {
   `);
   await run(sql`ALTER TABLE stories ADD COLUMN IF NOT EXISTS music_url TEXT`);
   await run(sql`ALTER TABLE stories ADD COLUMN IF NOT EXISTS music_name TEXT`);
+  await run(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_frame TEXT`);
   await run(sql`
     CREATE TABLE IF NOT EXISTS audio_rooms (
       id SERIAL PRIMARY KEY,
