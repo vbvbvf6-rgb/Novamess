@@ -12,6 +12,14 @@ A Telegram-inspired messenger app called Pulse, featuring real-time-style chats,
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
 - Required env: `DATABASE_URL` — Postgres connection string
 
+## Android APK
+
+- Build the frontend with `pnpm --filter @workspace/pulse run build`.
+- Sync the current web build with Android using `pnpm --filter @workspace/pulse exec cap sync android` (the Capacitor CLI requires Node.js 22+).
+- Build an installable debug APK with `cd artifacts/pulse/android && ./gradlew assembleDebug` (JDK 21 and Android SDK platform/build-tools 36 are required).
+- The APK is written to `artifacts/pulse/android/app/build/outputs/apk/debug/app-debug.apk` and uses Android's debug signing key.
+- Set `SERVER_URL` to the published app URL before syncing/building an APK for distribution. Without it, builds inside Replit use the current development domain, which is temporary and intended only for testing.
+
 ## Stack
 
 - pnpm workspaces, Node.js 24, TypeScript 5.9
