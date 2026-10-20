@@ -68,7 +68,7 @@ export interface AppState {
   removeAccount: (userId: number) => void;
   openAddAccount: () => void;
   canAddAccount: boolean;
-  startCall: (calleeId: number | null, chatId: number | null, type: "audio" | "video" | "group") => Promise<void>;
+  startCall: (calleeId: number | null, chatId: number | null, type: "audio" | "video" | "group", roomName?: string) => Promise<void>;
   acceptCall: () => Promise<void>;
   declineCall: () => Promise<void>;
   hangUp: () => Promise<void>;
@@ -240,6 +240,7 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
 
     localStreamRef.current?.getTracks().forEach((t) => t.stop());
     localStreamRef.current = null;
+    cameraVideoTrackRef.current = null;
 
     pendingSignalsRef.current.clear();
 
@@ -554,7 +555,7 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
   }, [applySignal, createPeer, cleanupCall, toast]);
 
   // ── startCall ─────────────────────────────────────────────────────────────
-  const startCall = useCallback(async (calleeId: number | null, chatId: number | null, type: "audio" | "video" | "group") => {
+  const startCall = useCallback(async (calleeId: number | null, chatId: number | null, type: "audio" | "video" | "group", roomName?: string) => {
     // 1. Get media — always falls back gracefully, never throws
     let stream: MediaStream;
     const getAudio = async (): Promise<MediaStream> => {
@@ -598,6 +599,7 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
       stream = createSilentStream();
     }
     localStreamRef.current = stream;
+    cameraVideoTrackRef.current = stream.getVideoTracks()[0] ?? null;
     setLocalStream(stream);
 
     // 2. Create the call record via API — this is the fatal step
@@ -607,7 +609,7 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
       const res = await fetch(isAudioRoom ? "/api/audio-rooms" : "/api/calls", {
         method: "POST",
         headers: getUserHeaders(),
-        body: JSON.stringify(isAudioRoom ? { name: "Открытая аудиокомната" } : { ...(calleeId != null ? { calleeId } : {}), ...(chatId != null ? { chatId } : {}), type }),
+        body: JSON.stringify(isAudioRoom ? { name: roomName?.trim() || "Открытая аудиокомната" } : { ...(calleeId != null ? { calleeId } : {}), ...(chatId != null ? { chatId } : {}), type }),
       });
       if (!res.ok) throw new Error("Failed to create call");
       call = await res.json();
@@ -656,7 +658,7 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
     } catch (rtcErr) {
       console.warn("startCall: WebRTC setup failed (call UI still active):", rtcErr);
     }
-  }, [getUserHeaders, createPeer, cleanupCall, getSocket, setupCallSocket]);
+  }, [getUserHeaders, createPeer, cleanupCall, getSocket, setupCallSocket, roomName]);
 
   // ── acceptCall ────────────────────────────────────────────────────────────
   const acceptCall = useCallback(async () => {
@@ -705,6 +707,7 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
       stream = createSilentStream();
     }
     localStreamRef.current = stream;
+    cameraVideoTrackRef.current = stream.getVideoTracks()[0] ?? null;
     setLocalStream(stream);
 
     // 2. Update call status via API — fatal if this fails
@@ -830,14 +833,17 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
     const call = activeCallRef.current;
     if (!call) return;
     const roomId = groupRoomIdRef.current ?? call.id;
-    // Socket.IO fans out to every participant in group calls; the status API
-    // still updates the caller/callee history record below.
+    const audioRoomId = call.type === "group" ? Number((call as any).roomId) : 0;
+    // Socket.IO ends the live session for everyone; the API updates call
+    // history, or closes a hosted audio-room record.
     if (roomId) socketRef.current?.emit("end-call", { callId: roomId });
     try {
-      await fetch(`/api/calls/${call.id}`, {
-        method: "PUT",
-        headers: getUserHeaders(),
-        body: JSON.stringify({ status: "ended" }),
+      await fetch(audioRoomId
+        ? `/api/audio-rooms/${audioRoomId}`
+        : `/api/calls/${call.id}`, {
+        method: audioRoomId ? "DELETE" : "PUT",
+        headers: audioRoomId ? getUserHeaders() : { ...getUserHeaders(), "Content-Type": "application/json" },
+        ...(!audioRoomId ? { body: JSON.stringify({ status: "ended" }) } : {}),
       });
     } catch {}
     cleanupCall();
@@ -862,7 +868,10 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
   // ── screen sharing ────────────────────────────────────────────────────────
   const startScreenShare = useCallback(async () => {
     try {
-      const screenStream = await (navigator.mediaDevices as any).getDisplayMedia({
+      if (!navigator.mediaDevices?.getDisplayMedia) {
+        throw new Error("Демонстрация экрана не поддерживается этим браузером");
+      }
+      const screenStream = await navigator.mediaDevices.getDisplayMedia({
         video: true,
         audio: true,
       });
@@ -898,6 +907,11 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
       };
     } catch (err) {
       console.warn("getDisplayMedia error:", err);
+      window.dispatchEvent(new CustomEvent("pulse:call-error", {
+        detail: { message: err instanceof Error && err.name === "NotAllowedError"
+          ? "Доступ к демонстрации экрана запрещён"
+          : err instanceof Error ? err.message : "Не удалось показать экран" },
+      }));
     }
   }, []);
 
@@ -942,51 +956,79 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
   // constraint. Fall back to enumerating video input devices and swapping to
   // a different physical camera via getUserMedia + replaceTrack.
   const flipCamera = useCallback(async () => {
-    const vt = localStreamRef.current?.getVideoTracks()[0];
-    if (!vt) return;
-    const currentFacing = vt.getSettings().facingMode;
-    const targetFacing = currentFacing === "environment" ? "user" : "environment";
+    const currentTrack = cameraVideoTrackRef.current ?? localStreamRef.current?.getVideoTracks()[0];
+    if (!currentTrack || !navigator.mediaDevices?.getUserMedia) {
+      window.dispatchEvent(new CustomEvent("pulse:call-error", { detail: { message: "Камера сейчас недоступна" } }));
+      return;
+    }
+    const targetFacing = currentTrack.getSettings().facingMode === "environment" ? "user" : "environment";
 
-    // Attempt 1: cheap in-place constraint switch (works on most desktop/iOS browsers)
     try {
-      await vt.applyConstraints({ facingMode: { ideal: targetFacing } });
-      const applied = vt.getSettings().facingMode;
-      if (applied === targetFacing || (!currentFacing && applied)) return;
-    } catch {}
+      const cameras = (await navigator.mediaDevices.enumerateDevices?.() ?? [])
+        .filter((device) => device.kind === "videoinput");
+      const currentDeviceId = currentTrack.getSettings().deviceId;
+      const currentIndex = cameras.findIndex((device) => device.deviceId === currentDeviceId);
+      const facingLabel = targetFacing === "environment"
+        ? /back|rear|environment|world|задн/i
+        : /front|user|facetime|передн/i;
+      const targetDevice = cameras.find((device) =>
+        device.deviceId !== currentDeviceId && facingLabel.test(device.label)
+      ) ?? (cameras.length > 1
+        ? cameras[(Math.max(0, currentIndex) + 1) % cameras.length]
+        : undefined);
 
-    // Attempt 2: enumerate devices and pick a different physical camera
-    try {
-      if (!navigator.mediaDevices?.enumerateDevices) throw new Error("no enumerateDevices");
-      const devices = await navigator.mediaDevices.enumerateDevices();
-      const cams = devices.filter((d) => d.kind === "videoinput");
-      if (cams.length < 2) return; // only one camera — nothing to flip to
-      const currentDeviceId = vt.getSettings().deviceId;
-      const currentIndex = cams.findIndex((c) => c.deviceId === currentDeviceId);
-      const nextCam = cams[(currentIndex + 1) % cams.length];
+      let replacement: MediaStream;
+      try {
+        replacement = await navigator.mediaDevices.getUserMedia({
+          audio: false,
+          video: targetDevice?.deviceId
+            ? { deviceId: { exact: targetDevice.deviceId }, width: { ideal: 1280 }, height: { ideal: 720 } }
+            : { facingMode: { exact: targetFacing }, width: { ideal: 1280 }, height: { ideal: 720 } },
+        });
+      } catch (firstError) {
+        if (!targetDevice?.deviceId) throw firstError;
+        replacement = await navigator.mediaDevices.getUserMedia({
+          audio: false,
+          video: { facingMode: { exact: targetFacing }, width: { ideal: 1280 }, height: { ideal: 720 } },
+        });
+      }
 
-      const newStream = await navigator.mediaDevices.getUserMedia({
-        audio: false,
-        video: { deviceId: { exact: nextCam.deviceId }, width: { ideal: 1280 }, height: { ideal: 720 } },
-      });
-      const newTrack = newStream.getVideoTracks()[0];
-      if (!newTrack) return;
+      const newTrack = replacement.getVideoTracks()[0];
+      if (!newTrack) {
+        replacement.getTracks().forEach((track) => track.stop());
+        throw new Error("Браузер не вернул видеопоток");
+      }
 
-      // Swap into every peer connection sender
-      peersRef.current.forEach((pc) => {
-        const sender = pc.getSenders().find((s) => s.track?.kind === "video");
-        sender?.replaceTrack(newTrack).catch(() => {});
-      });
-
-      // Swap into the local stream shown to the user
-      const audioTracks = localStreamRef.current?.getAudioTracks() ?? [];
-      vt.stop();
-      const combined = new MediaStream([newTrack, ...audioTracks]);
-      localStreamRef.current = combined;
+      const sharingScreen = !!screenStreamRef.current;
+      const previousCamera = cameraVideoTrackRef.current;
       cameraVideoTrackRef.current = newTrack;
-      setLocalStream(combined);
+      if (!sharingScreen) {
+        const stream = localStreamRef.current;
+        const audioTracks = stream?.getAudioTracks() ?? [];
+        stream?.getVideoTracks().forEach((track) => {
+          if (track !== newTrack) stream?.removeTrack(track);
+        });
+        if (stream) {
+          stream.addTrack(newTrack);
+          setLocalStream(new MediaStream([newTrack, ...audioTracks]));
+        } else {
+          const nextStream = new MediaStream([newTrack, ...audioTracks]);
+          localStreamRef.current = nextStream;
+          setLocalStream(nextStream);
+        }
+        await Promise.all([...peersRef.current.values()].map(async (pc) => {
+          const sender = pc.getSenders().find((candidate) => candidate.track?.kind === "video");
+          if (sender) await sender.replaceTrack(newTrack);
+          else pc.addTrack(newTrack, localStreamRef.current!);
+        }));
+      }
+      if (previousCamera && previousCamera !== newTrack) previousCamera.stop();
+      setLocalStream((current) => current ? new MediaStream(current.getTracks()) : current);
     } catch (err) {
       console.warn("flipCamera fallback failed:", err);
-      window.dispatchEvent(new CustomEvent("pulse:call-error", { detail: { message: "Не удалось переключить камеру" } }));
+      window.dispatchEvent(new CustomEvent("pulse:call-error", {
+        detail: { message: err instanceof Error ? err.message : "Не удалось переключить камеру" },
+      }));
     }
   }, []);
 

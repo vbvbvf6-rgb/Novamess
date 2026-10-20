@@ -217,6 +217,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
   const cameraStreamRef = useRef<MediaStream | null>(null);
   const videoPreviewRef = useRef<HTMLVideoElement>(null);
   const recordingCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const recordingSourceVideoRef = useRef<HTMLVideoElement | null>(null);
   const drawFrameRef = useRef<number | null>(null);
   const cancelRecordingRef = useRef(false);
   const pendingVideoSendRef = useRef(false);
@@ -334,6 +335,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
   useEffect(() => {
     const preview = videoPreviewRef.current;
     const cameraStream = cameraStreamRef.current;
+    const sourceVideo = recordingSourceVideoRef.current;
     if (isRecording && recordingKind === "video" && preview && cameraStream) {
       preview.srcObject = cameraStream;
       preview.play().catch(() => {});
@@ -341,8 +343,8 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
       const canvas = recordingCanvasRef.current;
       const context = canvas?.getContext("2d");
       const drawFrame = () => {
-        if (!canvas || !context || !videoPreviewRef.current || !isRecording || recordingKind !== "video") return;
-        const video = videoPreviewRef.current;
+        if (!canvas || !context || !sourceVideo || !isRecording || recordingKind !== "video") return;
+        const video = sourceVideo;
         if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA && video.videoWidth > 0 && video.videoHeight > 0) {
           const size = Math.min(canvas.width, canvas.height);
           const sourceSize = Math.min(video.videoWidth, video.videoHeight);
@@ -372,9 +374,12 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
       if (stopTypingTimeoutRef.current) clearTimeout(stopTypingTimeoutRef.current);
       mediaRecorderRef.current?.stream?.getTracks().forEach(t => t.stop());
       cameraStreamRef.current?.getTracks().forEach(t => t.stop());
+      recordingSourceVideoRef.current?.pause();
+      if (recordingSourceVideoRef.current) recordingSourceVideoRef.current.srcObject = null;
       recordingStreamRef.current = null;
       cameraStreamRef.current = null;
       recordingCanvasRef.current = null;
+      recordingSourceVideoRef.current = null;
       if (videoPreviewRef.current) videoPreviewRef.current.srcObject = null;
     };
   }, []);
@@ -566,10 +571,9 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
     setIsSending(true);
     try {
       if (videoBlob) {
-        const uploadBlob = await prepareVideoForUpload(
-          new File([videoBlob], "video-note.webm", { type: videoBlob.type || "video/webm" }),
-        );
-        const base64 = uploadBlob;
+        // Video notes are already recorded at a chat-friendly bitrate. Avoid
+        // decoding and re-encoding them a second time before they are sent.
+        const base64 = await readFileAsDataUrl(videoBlob);
         const sent = await sendMessage.mutateAsync({
           data: {
             chatId,
@@ -759,7 +763,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
     try {
       const stream = await navigator.mediaDevices.getUserMedia(
         kind === "video"
-          ? { video: { facingMode: cameraFacingMode, width: { ideal: 720 }, height: { ideal: 720 } }, audio: true }
+          ? { video: { facingMode: cameraFacingMode, width: { ideal: 480 }, height: { ideal: 480 } }, audio: true }
           : { audio: true },
       );
       const mimeType = kind === "video"
@@ -774,13 +778,32 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
       chunksRef.current = [];
       cancelRecordingRef.current = false;
       let recorderStream = stream;
+      if (kind === "video") {
+        const canvas = document.createElement("canvas");
+        canvas.width = 480;
+        canvas.height = 480;
+        const sourceVideo = document.createElement("video");
+        sourceVideo.muted = true;
+        sourceVideo.playsInline = true;
+        sourceVideo.srcObject = stream;
+        recordingCanvasRef.current = canvas;
+        recordingSourceVideoRef.current = sourceVideo;
+        await sourceVideo.play();
+        if (typeof canvas.captureStream === "function") {
+          const canvasStream = canvas.captureStream(24);
+          recorderStream = new MediaStream([
+            ...canvasStream.getVideoTracks(),
+            ...stream.getAudioTracks(),
+          ]);
+        }
+      }
       let activeRecorder: MediaRecorder;
       try {
         activeRecorder = new MediaRecorder(recorderStream, {
           mimeType,
           ...(kind === "audio"
             ? { audioBitsPerSecond: 32000 }
-            : { videoBitsPerSecond: 650_000, audioBitsPerSecond: 64_000 }),
+            : { videoBitsPerSecond: 320_000, audioBitsPerSecond: 48_000 }),
         });
       } catch (error) {
         recorderStream.getTracks().forEach(track => track.stop());
@@ -809,9 +832,12 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
         mediaRecorderRef.current = null;
         activeRecorder.stream.getTracks().forEach(t => t.stop());
         cameraStreamRef.current?.getTracks().forEach(t => t.stop());
+        recordingSourceVideoRef.current?.pause();
+        if (recordingSourceVideoRef.current) recordingSourceVideoRef.current.srcObject = null;
         recordingStreamRef.current = null;
         cameraStreamRef.current = null;
         recordingCanvasRef.current = null;
+        recordingSourceVideoRef.current = null;
         if (videoPreviewRef.current) videoPreviewRef.current.srcObject = null;
         cancelRecordingRef.current = false;
       };
@@ -863,40 +889,66 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
     if (!currentStream || !currentTrack) return;
 
     try {
-      // Keep the same camera track whenever possible. This also keeps the
-      // MediaRecorder stream alive while the phone changes lenses.
-      await currentTrack.applyConstraints({ facingMode: { exact: nextFacingMode } });
-      setCameraFacingMode(nextFacingMode);
-      if (videoPreviewRef.current) {
-        videoPreviewRef.current.srcObject = currentStream;
-        await videoPreviewRef.current.play().catch(() => {});
-      }
-      return;
-    } catch {
-      // Some browsers do not support switching cameras via constraints.
-      // Fall back to replacing the track for those devices.
-    }
+      const cameras = (await navigator.mediaDevices.enumerateDevices())
+        .filter((device) => device.kind === "videoinput");
+      const currentDeviceId = currentTrack.getSettings().deviceId;
+      const currentIndex = cameras.findIndex((device) => device.deviceId === currentDeviceId);
+      const facingLabel = nextFacingMode === "environment"
+        ? /back|rear|environment|world|задн/i
+        : /front|user|facetime|передн/i;
+      const target = cameras.find((device) =>
+        device.deviceId !== currentDeviceId && facingLabel.test(device.label)
+      ) ?? (cameras.length > 1
+        ? cameras[(Math.max(0, currentIndex) + 1) % cameras.length]
+        : undefined);
+      const constraints: MediaTrackConstraints = target?.deviceId
+        ? { deviceId: { exact: target.deviceId }, width: { ideal: 480 }, height: { ideal: 480 } }
+        : { facingMode: { exact: nextFacingMode }, width: { ideal: 480 }, height: { ideal: 480 } };
+      const openTargetCamera = () => navigator.mediaDevices.getUserMedia({ video: constraints, audio: false });
 
-    try {
-      const replacement = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: nextFacingMode, width: { ideal: 720 }, height: { ideal: 720 } },
-      });
+      let replacement: MediaStream;
+      try {
+        replacement = await openTargetCamera();
+      } catch {
+        // Some phones refuse a second camera stream while the first is active.
+        // The recorder uses a stable canvas track, so releasing this camera
+        // track does not interrupt the recording.
+        currentTrack.stop();
+        try {
+          replacement = await openTargetCamera();
+        } catch {
+          replacement = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: { ideal: nextFacingMode }, width: { ideal: 480 }, height: { ideal: 480 } },
+            audio: false,
+          });
+        }
+      }
       const nextTrack = replacement.getVideoTracks()[0];
-      if (!nextTrack) return;
-      // Keep the original MediaStream object so MediaRecorder stays attached
-      // while the browser replaces the camera track.
-      currentStream.removeTrack(currentTrack);
-      currentStream.addTrack(nextTrack);
-      currentTrack.stop();
-      cameraStreamRef.current = currentStream;
+      if (!nextTrack) {
+        replacement.getTracks().forEach((track) => track.stop());
+        throw new Error("Браузер не вернул видеопоток");
+      }
+      const combinedStream = new MediaStream([
+        nextTrack,
+        ...currentStream.getAudioTracks(),
+      ]);
+      cameraStreamRef.current = combinedStream;
+      if (recordingSourceVideoRef.current) {
+        recordingSourceVideoRef.current.srcObject = combinedStream;
+        await recordingSourceVideoRef.current.play().catch(() => {});
+      }
       if (videoPreviewRef.current) {
-        videoPreviewRef.current.srcObject = null;
-        videoPreviewRef.current.srcObject = currentStream;
+        videoPreviewRef.current.srcObject = combinedStream;
         await videoPreviewRef.current.play().catch(() => {});
       }
-      setCameraFacingMode(nextFacingMode);
-    } catch {
-      toast({ title: "Не удалось сменить камеру", description: "Проверьте доступ к камере в браузере", variant: "destructive" });
+      if (currentTrack !== nextTrack) currentTrack.stop();
+      setCameraFacingMode(nextTrack.getSettings().facingMode === "environment" ? "environment" : nextFacingMode);
+    } catch (error) {
+      toast({
+        title: "Не удалось сменить камеру",
+        description: error instanceof Error ? error.message : "Проверьте доступ к камере в браузере",
+        variant: "destructive",
+      });
     }
   };
 
@@ -1612,15 +1664,14 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
           <motion.div
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="relative mx-auto flex h-[min(78dvh,620px)] min-h-[420px] w-full max-w-[430px] items-center justify-center overflow-hidden rounded-[30px] bg-black shadow-2xl"
+            className="relative mx-auto flex h-[min(78dvh,620px)] min-h-[420px] w-full max-w-[430px] items-center justify-center overflow-hidden bg-transparent"
           >
-            <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/60 pointer-events-none" />
             <video
               ref={videoPreviewRef}
               autoPlay
               muted
               playsInline
-              className="absolute left-1/2 top-1/2 z-[1] aspect-square w-[min(78vw,390px)] -translate-x-1/2 -translate-y-1/2 rounded-full object-cover ring-2 ring-white/80 shadow-[0_0_0_10px_rgba(255,255,255,0.06)]"
+              className="absolute left-1/2 top-1/2 z-[1] aspect-square w-[min(78vw,390px)] -translate-x-1/2 -translate-y-1/2 rounded-full object-cover"
             />
 
             <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/35 backdrop-blur-md text-white">

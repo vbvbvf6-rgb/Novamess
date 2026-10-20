@@ -139,6 +139,9 @@ export function blobToDataUrl(blob: Blob): Promise<string> {
  * file's data URL on any failure or unsupported browser.
  */
 export async function prepareVideoForUpload(file: File): Promise<string> {
+  // Small chat videos already fit the API's upload limit. Re-encoding them
+  // takes roughly the video's full duration, so send those as-is.
+  if (file.size <= 7 * 1024 * 1024) return await blobToDataUrl(file);
   try {
     const compressed = await compressVideo(file);
     if (compressed && compressed.blob.size > 0 && compressed.blob.size < file.size * 0.85) {

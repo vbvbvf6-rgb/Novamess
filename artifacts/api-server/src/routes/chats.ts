@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, chatsTable, chatMembersTable, usersTable, messagesTable, reactionsTable, pinnedMessagesTable } from "@workspace/db";
-import { eq, and, desc, inArray, count, gt, ne, lte, sql } from "drizzle-orm";
+import { eq, and, desc, inArray, count, gt, isNull, ne, lte, sql } from "drizzle-orm";
 import { CreateChatBody, UpdateChatBody, AddChatMemberBody } from "@workspace/api-zod";
 import { broadcastToChat, setTyping, stopTyping } from "../lib/sse";
 import { offloadDataUrl } from "../lib/objectStorage";
@@ -93,7 +93,9 @@ async function buildChat(chatId: number, currentUserId: number) {
   const [lastMessageRow] = await db
     .select()
     .from(messagesTable)
-    .where(eq(messagesTable.chatId, chatId))
+    .where(chat.type === "channel"
+      ? and(eq(messagesTable.chatId, chatId), isNull(messagesTable.replyToId))
+      : eq(messagesTable.chatId, chatId))
     .orderBy(desc(messagesTable.createdAt))
     .limit(1);
 
@@ -199,8 +201,10 @@ async function buildChatsForUser(uid: number) {
         u.username AS sender_username,
         COALESCE((SELECT json_agg(r.*) FROM reactions r WHERE r.message_id = m.id), '[]'::json) AS reactions
       FROM messages m
+      JOIN chats c ON c.id = m.chat_id
       LEFT JOIN users u ON u.id = m.sender_id
       WHERE m.chat_id IN (${idList})
+        AND (c.type <> 'channel' OR m.reply_to_id IS NULL)
       ORDER BY m.chat_id, m.created_at DESC
     `),
 
@@ -250,10 +254,12 @@ async function buildChatsForUser(uid: number) {
         MAX(CASE WHEN cm.user_id != ${uid} THEN cm.last_read_at END) AS max_read_at,
         MAX(CASE WHEN cm.user_id != ${uid} THEN cm.last_delivered_at END) AS max_delivered_at
       FROM (
-        SELECT DISTINCT ON (chat_id) chat_id, sender_id, created_at
-        FROM messages
-        WHERE chat_id IN (${idList})
-        ORDER BY chat_id, created_at DESC
+        SELECT DISTINCT ON (m.chat_id) m.chat_id, m.sender_id, m.created_at
+        FROM messages m
+        JOIN chats c ON c.id = m.chat_id
+        WHERE m.chat_id IN (${idList})
+          AND (c.type <> 'channel' OR m.reply_to_id IS NULL)
+        ORDER BY m.chat_id, m.created_at DESC
       ) lm
       JOIN chat_members cm ON cm.chat_id = lm.chat_id
       WHERE lm.sender_id = ${uid}

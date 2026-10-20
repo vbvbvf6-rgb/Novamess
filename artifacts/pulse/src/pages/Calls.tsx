@@ -23,6 +23,8 @@ export default function Calls() {
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState<Filter>("all");
   const [showNewCall, setShowNewCall] = useState(false);
+  const [showRoomDialog, setShowRoomDialog] = useState(false);
+  const [roomName, setRoomName] = useState("Открытая аудиокомната");
   const [search, setSearch] = useState("");
   const [clearing, setClearing] = useState(false);
 
@@ -107,14 +109,9 @@ export default function Calls() {
             Новый звонок
           </button>
           <button
-            onClick={async () => {
-              try {
-                const name = window.prompt("Название аудиокомнаты", "Открытая аудиокомната") || "Открытая аудиокомната";
-                await startCall(null, null, "group");
-                toast({ title: `${name} создана`, description: "Пригласите участников в окне звонка." });
-              } catch {
-                toast({ title: "Не удалось создать аудиокомнату", variant: "destructive" });
-              }
+            onClick={() => {
+              setRoomName("Открытая аудиокомната");
+              setShowRoomDialog(true);
             }}
             className="flex items-center gap-2 px-3 py-2 rounded-2xl text-sm font-bold border border-primary/30 text-primary hover:bg-primary/10 transition-all active:scale-95"
             title="Создать аудиокомнату"
@@ -338,6 +335,56 @@ export default function Calls() {
                 ))}
               </div>
             </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showRoomDialog && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[60] bg-black/45 backdrop-blur-sm"
+              onClick={() => setShowRoomDialog(false)}
+            />
+            <motion.form
+              initial={{ opacity: 0, scale: 0.96, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 16 }}
+              onSubmit={async (event) => {
+                event.preventDefault();
+                try {
+                  await startCall(null, null, "group", roomName);
+                  toast({ title: `${roomName.trim() || "Аудиокомната"} создана`, description: "Пригласите участников в окне звонка." });
+                  setShowRoomDialog(false);
+                } catch {
+                  toast({ title: "Не удалось создать аудиокомнату", variant: "destructive" });
+                }
+              }}
+              className="fixed z-[61] left-1/2 top-1/2 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-3xl border border-border bg-card p-5 shadow-2xl"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-bold text-foreground">Новая аудиокомната</h2>
+                <button type="button" onClick={() => setShowRoomDialog(false)} className="w-8 h-8 rounded-full flex items-center justify-center text-muted-foreground hover:bg-secondary">
+                  <X size={18} />
+                </button>
+              </div>
+              <label className="block text-sm font-medium text-muted-foreground mb-2" htmlFor="audio-room-name">Название</label>
+              <input
+                id="audio-room-name"
+                autoFocus={typeof window !== "undefined" && window.matchMedia("(hover: hover)").matches}
+                maxLength={80}
+                value={roomName}
+                onChange={(event) => setRoomName(event.target.value)}
+                className="w-full rounded-xl border border-border bg-secondary/60 px-3 py-2.5 text-sm text-foreground outline-none focus:border-primary"
+              />
+              <div className="mt-5 flex justify-end gap-2">
+                <button type="button" onClick={() => setShowRoomDialog(false)} className="rounded-xl px-4 py-2 text-sm font-semibold text-muted-foreground hover:bg-secondary">Отмена</button>
+                <button type="submit" className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90">Создать</button>
+              </div>
+            </motion.form>
           </>
         )}
       </AnimatePresence>
