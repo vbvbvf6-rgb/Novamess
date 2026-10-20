@@ -900,7 +900,10 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
       case "text": {
         const FORWARD_PREFIX = "⤵️ ";
         const isForwardedMsg = (message.text ?? "").startsWith(FORWARD_PREFIX);
-        const messageText = isEncryptedMessage(message.text) ? (decryptedText ?? "🔒 Расшифровываем…") : (message.text ?? "");
+        const encrypted = isEncryptedMessage(message.text);
+        // Keep the message bubble private while local decryption is pending;
+        // never expose ciphertext or an internal "decrypting" status string.
+        const messageText = encrypted ? (decryptedText ?? "🔒") : (message.text ?? "");
         const rawText = isForwardedMsg ? messageText.slice(FORWARD_PREFIX.length) : messageText;
         const emojiOnly = !isForwardedMsg && isStandaloneEmoji(rawText);
         const words = rawText.split(" ");

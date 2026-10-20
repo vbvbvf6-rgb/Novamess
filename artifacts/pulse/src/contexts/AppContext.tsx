@@ -658,7 +658,7 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
     } catch (rtcErr) {
       console.warn("startCall: WebRTC setup failed (call UI still active):", rtcErr);
     }
-  }, [getUserHeaders, createPeer, cleanupCall, getSocket, setupCallSocket, roomName]);
+  }, [getUserHeaders, createPeer, cleanupCall, getSocket, setupCallSocket]);
 
   // ── acceptCall ────────────────────────────────────────────────────────────
   const acceptCall = useCallback(async () => {
@@ -986,11 +986,21 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
             : { facingMode: { exact: targetFacing }, width: { ideal: 1280 }, height: { ideal: 720 } },
         });
       } catch (firstError) {
-        if (!targetDevice?.deviceId) throw firstError;
-        replacement = await navigator.mediaDevices.getUserMedia({
-          audio: false,
-          video: { facingMode: { exact: targetFacing }, width: { ideal: 1280 }, height: { ideal: 720 } },
-        });
+        // Some mobile browsers won't open a second camera while the current
+        // one is active. Release only the camera track, then retry; microphone
+        // audio and the active peer connections remain intact.
+        const activeCamera = cameraVideoTrackRef.current ?? currentTrack;
+        activeCamera.stop();
+        try {
+          replacement = await navigator.mediaDevices.getUserMedia({
+            audio: false,
+            video: targetDevice?.deviceId
+              ? { deviceId: { exact: targetDevice.deviceId }, width: { ideal: 1280 }, height: { ideal: 720 } }
+              : { facingMode: { ideal: targetFacing }, width: { ideal: 1280 }, height: { ideal: 720 } },
+          });
+        } catch {
+          throw firstError;
+        }
       }
 
       const newTrack = replacement.getVideoTracks()[0];

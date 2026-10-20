@@ -79,6 +79,18 @@ createRoot(document.getElementById("root")!).render(
 // A deployment can remove an old lazy-loaded chunk while a tab is still open.
 // Retry once with the newest app shell instead of leaving the user on a crash page.
 const PRELOAD_RETRY_KEY = "nova-vite-preload-retried";
+async function recoverFromStaleAppAssets() {
+  try {
+    const registration = await navigator.serviceWorker?.getRegistration();
+    registration?.waiting?.postMessage({ type: "skip-waiting" });
+    if ("caches" in window) {
+      const names = await caches.keys();
+      await Promise.all(names.filter((name) => name.startsWith("nova-")).map((name) => caches.delete(name)));
+    }
+  } catch {}
+  window.location.reload();
+}
+
 window.addEventListener("vite:preloadError", (event) => {
   event.preventDefault();
   if (sessionStorage.getItem(PRELOAD_RETRY_KEY) === "1") {
@@ -86,6 +98,6 @@ window.addEventListener("vite:preloadError", (event) => {
     return;
   }
   sessionStorage.setItem(PRELOAD_RETRY_KEY, "1");
-  window.location.reload();
+  void recoverFromStaleAppAssets();
 });
 window.setTimeout(() => sessionStorage.removeItem(PRELOAD_RETRY_KEY), 10_000);

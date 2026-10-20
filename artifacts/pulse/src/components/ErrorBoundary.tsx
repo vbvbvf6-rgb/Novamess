@@ -34,7 +34,18 @@ export class ErrorBoundary extends React.Component<Props, State> {
   };
 
   handleReset = () => {
-    this.setState({ hasError: false, errorMessage: "", errorId: "" });
+    sessionStorage.removeItem("nova-vite-preload-retried");
+    void (async () => {
+      try {
+        const registration = await navigator.serviceWorker?.getRegistration();
+        registration?.waiting?.postMessage({ type: "skip-waiting" });
+        if ("caches" in window) {
+          const names = await caches.keys();
+          await Promise.all(names.filter((name) => name.startsWith("nova-")).map((name) => caches.delete(name)));
+        }
+      } catch {}
+      window.location.reload();
+    })();
   };
 
   render() {

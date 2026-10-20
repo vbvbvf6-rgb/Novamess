@@ -1,0 +1,90 @@
+name: Deploy to H1Cloud
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: h1cloud-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Upload and restart Nova Messenger
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.H1CLOUD_SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.H1CLOUD_KNOWN_HOSTS }}
+          SSH_HOST: ${{ secrets.H1CLOUD_HOST }}
+          SSH_USER: ${{ secrets.H1CLOUD_USER }}
+          SSH_PORT: ${{ vars.H1CLOUD_SSH_PORT || '22' }}
+          APP_DIR: ${{ vars.H1CLOUD_APP_DIR }}
+        run: |
+          set -euo pipefail
+          for name in SSH_PRIVATE_KEY SSH_KNOWN_HOSTS SSH_HOST SSH_USER APP_DIR; do
+            if [[ -z "${!name:-}" ]]; then
+              echo "::error::Missing GitHub Actions value: $name"
+              exit 1
+            fi
+          done
+          if [[ "$APP_DIR" != /* ]]; then
+            echo "::error::H1CLOUD_APP_DIR must be an absolute server path"
+            exit 1
+          fi
+          mkdir -p "$HOME/.ssh"
+          chmod 700 "$HOME/.ssh"
+          printf '%s\n' "$SSH_PRIVATE_KEY" > "$HOME/.ssh/id_ed25519"
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/id_ed25519" "$HOME/.ssh/known_hosts"
+          echo "H1CLOUD_APP_DIR=$APP_DIR" >> "$GITHUB_ENV"
+          echo "H1CLOUD_SSH_PORT=$SSH_PORT" >> "$GITHUB_ENV"
+          echo "H1CLOUD_HOST=$SSH_HOST" >> "$GITHUB_ENV"
+          echo "H1CLOUD_USER=$SSH_USER" >> "$GITHUB_ENV"
+
+      - name: Upload the GitHub revision
+        run: |
+          set -euo pipefail
+          printf -v REMOTE_DIR '%q' "$H1CLOUD_APP_DIR"
+          git archive --format=tar "$GITHUB_SHA" \
+            | ssh -p "$H1CLOUD_SSH_PORT" \
+                -i "$HOME/.ssh/id_ed25519" \
+                -o BatchMode=yes \
+                -o StrictHostKeyChecking=yes \
+                "$H1CLOUD_USER@$H1CLOUD_HOST" \
+                "mkdir -p -- $REMOTE_DIR && tar -xf - -C $REMOTE_DIR"
+
+      - name: Install, build, and restart on H1Cloud
+        run: |
+          set -euo pipefail
+          printf -v REMOTE_DIR '%q' "$H1CLOUD_APP_DIR"
+          ssh -p "$H1CLOUD_SSH_PORT" \
+            -i "$HOME/.ssh/id_ed25519" \
+            -o BatchMode=yes \
+            -o StrictHostKeyChecking=yes \
+            "$H1CLOUD_USER@$H1CLOUD_HOST" \
+            "APP_DIR=$REMOTE_DIR bash -s" <<'REMOTE'
+          set -euo pipefail
+          cd "$APP_DIR"
+          command -v node >/dev/null || { echo "Node.js is not installed"; exit 1; }
+          if ! command -v pnpm >/dev/null; then npm install --global pnpm@10.26.1; fi
+          if ! command -v pm2 >/dev/null; then npm install --global pm2; fi
+          pnpm install --frozen-lockfile
+          PORT=5000 BASE_PATH=/ pnpm --filter @workspace/pulse run build
+          pnpm --filter @workspace/api-server run build
+          if pm2 describe nova-messenger >/dev/null 2>&1; then
+            pm2 restart nova-messenger --update-env
+          else
+            pm2 start scripts/start-prod.sh --name nova-messenger --interpreter bash
+          fi
+          pm2 save
+          REMOTE

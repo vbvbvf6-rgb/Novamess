@@ -23,7 +23,7 @@ interface PendingConfirm extends ConfirmOptions {
   resolve: (accepted: boolean) => void;
 }
 
-const ConfirmContext = createContext<(options: ConfirmOptions) => Promise<boolean> | null>(null);
+const ConfirmContext = createContext<((options: ConfirmOptions) => Promise<boolean>) | null>(null);
 
 export function AppConfirmProvider({ children }: { children: React.ReactNode }) {
   const [active, setActive] = useState<PendingConfirm | null>(null);
