@@ -807,10 +807,29 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
   const handleDeleteConfirm = async () => {
     setConfirmDelete(false);
     setActionLoading("delete");
+    const messagesKey = getGetMessagesQueryKey({ chatId: message.chatId });
+    const previousMessages = queryClient.getQueryData<Message[]>(messagesKey);
+    if (previousMessages) {
+      queryClient.setQueryData<Message[]>(messagesKey, current =>
+        current?.map(item => item.id === message.id
+          ? { ...item, isDeleted: true, deletedContentVisible: false } as Message
+          : item),
+      );
+    }
     try {
-      await fetch(`/api/messages/${message.id}`, { method: "DELETE", headers: getAuthHeaders() });
-      queryClient.invalidateQueries({ queryKey: getGetMessagesQueryKey({ chatId: message.chatId }) });
-    } catch {}
+      const response = await fetch(`/api/messages/${message.id}`, {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || "Не удалось удалить сообщение");
+      }
+      void queryClient.invalidateQueries({ queryKey: messagesKey });
+      void queryClient.invalidateQueries({ queryKey: getGetChatsQueryKey() });
+    } catch {
+      if (previousMessages) queryClient.setQueryData(messagesKey, previousMessages);
+    }
     setActionLoading(null);
   };
 
