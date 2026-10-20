@@ -2,10 +2,10 @@ import type { CapacitorConfig } from "@capacitor/cli";
 
 const config: CapacitorConfig = {
   appId: "com.aura.messenger",
-  appName: "Aura",
+  appName: "Nova",
   webDir: "dist",
   server: {
-    url: process.env.SERVER_URL || "https://84c88b09-2469-44f5-b393-ea592956df38-00-hvzx5pp2sa64.pike.replit.dev",
+    url: process.env.SERVER_URL || (process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : undefined),
     cleartext: false,
   },
   android: {

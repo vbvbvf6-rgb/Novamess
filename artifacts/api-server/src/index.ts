@@ -77,6 +77,14 @@ if (Number.isNaN(port) || port <= 0) {
     await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_frame TEXT`);
     await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS login_code_hash TEXT`);
     await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS login_code_expires_at TIMESTAMP WITH TIME ZONE`);
+    // The Drizzle user schema includes these flags, but the imported baseline
+    // migration predates them. Keep development databases aligned so user
+    // queries work; production receives schema changes through Publish.
+    if (process.env.NODE_ENV !== "production") {
+      await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_developer BOOLEAN NOT NULL DEFAULT FALSE`);
+      await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_youtube_creator BOOLEAN NOT NULL DEFAULT FALSE`);
+      await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_tiktok_creator BOOLEAN NOT NULL DEFAULT FALSE`);
+    }
     await db.execute(sql`ALTER TABLE chat_members ADD COLUMN IF NOT EXISTS is_archived BOOLEAN NOT NULL DEFAULT FALSE`);
 
     // Cosmetic inventory and prize-code tables must exist after migrations and
