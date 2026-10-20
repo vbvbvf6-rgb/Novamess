@@ -74,9 +74,76 @@ if (Number.isNaN(port) || port <= 0) {
     // module bootstrap can run before a fresh database has been migrated.
     // Keep essential read-path columns here so a new DB is usable immediately.
     await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS nickname_style TEXT`);
+    await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_frame TEXT`);
     await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS login_code_hash TEXT`);
     await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS login_code_expires_at TIMESTAMP WITH TIME ZONE`);
     await db.execute(sql`ALTER TABLE chat_members ADD COLUMN IF NOT EXISTS is_archived BOOLEAN NOT NULL DEFAULT FALSE`);
+
+    // Cosmetic inventory and prize-code tables must exist after migrations and
+    // before the API begins serving requests (route-module DDL can run too early
+    // on a brand-new database).
+    await db.execute(sql`CREATE TABLE IF NOT EXISTS nickname_styles (
+      id SERIAL PRIMARY KEY,
+      slug TEXT NOT NULL UNIQUE,
+      name TEXT NOT NULL,
+      description TEXT NOT NULL DEFAULT '',
+      category TEXT NOT NULL DEFAULT 'common',
+      preview_css TEXT NOT NULL,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      active BOOLEAN NOT NULL DEFAULT TRUE
+    )`);
+    await db.execute(sql`CREATE TABLE IF NOT EXISTS user_nickname_styles (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      style_id INTEGER NOT NULL REFERENCES nickname_styles(id) ON DELETE CASCADE,
+      source TEXT NOT NULL DEFAULT 'admin',
+      granted_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      granted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      UNIQUE (user_id, style_id)
+    )`);
+    await db.execute(sql`INSERT INTO nickname_styles
+      (slug, name, description, category, preview_css, sort_order)
+      VALUES ('halloween', 'Хэллоуин', 'Тыквенно-фиолетовый стиль для хэллоуинского события', 'event',
+        'linear-gradient(90deg,#fb923c,#f97316,#c084fc,#7c3aed,#fb923c)', 13)
+      ON CONFLICT (slug) DO UPDATE SET
+        name = EXCLUDED.name, description = EXCLUDED.description,
+        category = EXCLUDED.category, preview_css = EXCLUDED.preview_css, active = TRUE
+    `);
+    await db.execute(sql`CREATE TABLE IF NOT EXISTS user_avatar_frames (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      frame_slug TEXT NOT NULL,
+      source TEXT NOT NULL DEFAULT 'admin',
+      granted_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      granted_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+      UNIQUE (user_id, frame_slug)
+    )`);
+    await db.execute(sql`CREATE TABLE IF NOT EXISTS user_halloween_quest_claims (
+      user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+      claimed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    )`);
+    await db.execute(sql`CREATE TABLE IF NOT EXISTS prize_codes (
+      id SERIAL PRIMARY KEY,
+      code TEXT NOT NULL UNIQUE,
+      prize_amount INTEGER NOT NULL DEFAULT 1,
+      prize_description TEXT,
+      max_uses INTEGER NOT NULL DEFAULT 1,
+      uses INTEGER NOT NULL DEFAULT 0,
+      expires_at TIMESTAMP WITH TIME ZONE,
+      created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    )`);
+    await db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS prize_type TEXT NOT NULL DEFAULT 'sparks'`);
+    await db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS prime_months INTEGER`);
+    await db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS nickname_style TEXT`);
+    await db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS avatar_frame TEXT`);
+    await db.execute(sql`CREATE TABLE IF NOT EXISTS prize_code_redemptions (
+      id SERIAL PRIMARY KEY,
+      code_id INTEGER NOT NULL REFERENCES prize_codes(id) ON DELETE CASCADE,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      redeemed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      UNIQUE (code_id, user_id)
+    )`);
   } catch (migErr) {
     logger.warn({ err: migErr }, "DB migration check warning (non-fatal) — server will continue");
   }

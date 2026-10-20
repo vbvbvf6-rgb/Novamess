@@ -473,7 +473,7 @@ export default function Profile() {
                   />
                 )}
                 <div
-                  className="w-32 h-32 rounded-full flex items-center justify-center text-white font-bold text-5xl relative shadow-2xl border-4 border-background"
+                  className={`w-32 h-32 rounded-full flex items-center justify-center text-white font-bold text-5xl relative shadow-2xl border-4 border-background ${(user as any)?.avatarFrame === "halloween" ? "avatar-frame-halloween" : ""}`}
                   style={{ backgroundColor: user?.avatarColor || "#333" }}
                 >
                   {user?.avatarUrl ? (

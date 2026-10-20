@@ -952,7 +952,6 @@ function App() {
       overflow: "hidden",
     }}>
     <ErrorBoundary>
-    <LandscapeBlock />
     <LanguageProvider>
       <PersistQueryClientProvider
         client={queryClient}

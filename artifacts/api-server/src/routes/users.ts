@@ -17,6 +17,7 @@ db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS encryption_public_key 
 db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS prize_type TEXT NOT NULL DEFAULT 'sparks'`).catch(() => {});
 db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS prime_months INTEGER`).catch(() => {});
 db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS nickname_style TEXT`).catch(() => {});
+db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS avatar_frame TEXT`).catch(() => {});
 db.execute(sql`CREATE TABLE IF NOT EXISTS prize_code_redemptions (
   id SERIAL PRIMARY KEY, code_id INTEGER NOT NULL REFERENCES prize_codes(id) ON DELETE CASCADE,
   user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE, redeemed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -94,11 +95,12 @@ router.post("/users/me/prize-codes/redeem", async (req, res) => {
     await db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS prize_type TEXT NOT NULL DEFAULT 'sparks'`);
     await db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS prime_months INTEGER`);
     await db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS nickname_style TEXT`);
+    await db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS avatar_frame TEXT`);
     const code = String(req.body?.code || "").trim().toUpperCase();
     if (!/^[A-Z0-9-]{4,40}$/.test(code)) return res.status(400).json({ error: "Введите корректный код" });
     const result = await db.transaction(async (tx) => {
       const codeRows = await tx.execute(sql`
-        SELECT id, prize_amount, prize_description, prize_type, prime_months, nickname_style, max_uses, uses, expires_at
+        SELECT id, prize_amount, prize_description, prize_type, prime_months, nickname_style, avatar_frame, max_uses, uses, expires_at
         FROM prize_codes WHERE code = ${code} FOR UPDATE
       `);
       const prize = codeRows.rows[0] as any;
@@ -121,12 +123,44 @@ router.post("/users/me/prize-codes/redeem", async (req, res) => {
             prime_expires_at = GREATEST(COALESCE(prime_expires_at, NOW()), NOW()) + make_interval(months => ${Math.min(24, Math.max(1, Number(prize.prime_months) || 1))})
           WHERE id = ${req.currentUserId}
         `);
-      } else if (prize.prize_type === "nickname") {
-        await tx.execute(sql`UPDATE users SET nickname_style = ${prize.nickname_style} WHERE id = ${req.currentUserId}`);
+      } else if (prize.prize_type === "nickname" || prize.prize_type === "halloween") {
+        const styleSlug = prize.prize_type === "halloween" ? "halloween" : String(prize.nickname_style || "");
+        const styleRows = await tx.execute(sql`SELECT id FROM nickname_styles WHERE slug = ${styleSlug} AND active = TRUE`);
+        if (!styleRows.rows.length) throw Object.assign(new Error("Стиль награды больше недоступен"), { status: 410 });
+        await tx.execute(sql`
+          INSERT INTO user_nickname_styles (user_id, style_id, source)
+          VALUES (${req.currentUserId}, ${(styleRows.rows[0] as any).id}, 'prize-code')
+          ON CONFLICT (user_id, style_id) DO NOTHING
+        `);
+        await tx.execute(sql`UPDATE users SET nickname_style = ${styleSlug} WHERE id = ${req.currentUserId}`);
+        if (prize.prize_type === "halloween") {
+          await tx.execute(sql`
+            INSERT INTO user_avatar_frames (user_id, frame_slug, source)
+            VALUES (${req.currentUserId}, 'halloween', 'prize-code')
+            ON CONFLICT (user_id, frame_slug) DO NOTHING
+          `);
+          await tx.execute(sql`UPDATE users SET avatar_frame = 'halloween' WHERE id = ${req.currentUserId}`);
+        }
+      } else if (prize.prize_type === "frame") {
+        const frameSlug = String(prize.avatar_frame || "");
+        if (frameSlug !== "halloween") throw Object.assign(new Error("Рамка награды больше недоступна"), { status: 410 });
+        await tx.execute(sql`
+          INSERT INTO user_avatar_frames (user_id, frame_slug, source)
+          VALUES (${req.currentUserId}, ${frameSlug}, 'prize-code')
+          ON CONFLICT (user_id, frame_slug) DO NOTHING
+        `);
+        await tx.execute(sql`UPDATE users SET avatar_frame = ${frameSlug} WHERE id = ${req.currentUserId}`);
       } else {
         await tx.execute(sql`UPDATE users SET balance = COALESCE(balance, 0) + ${Number(prize.prize_amount)} WHERE id = ${req.currentUserId}`);
       }
-      return { amount: prize.prize_type === "sparks" ? Number(prize.prize_amount) : 0, prizeType: prize.prize_type, primeMonths: prize.prime_months, nicknameStyle: prize.nickname_style, description: prize.prize_description };
+      return {
+        amount: prize.prize_type === "sparks" ? Number(prize.prize_amount) : 0,
+        prizeType: prize.prize_type,
+        primeMonths: prize.prime_months,
+        nicknameStyle: prize.prize_type === "halloween" ? "halloween" : prize.nickname_style,
+        avatarFrame: ["frame", "halloween"].includes(prize.prize_type) ? (prize.avatar_frame || "halloween") : null,
+        description: prize.prize_description,
+      };
     });
     res.json({ ok: true, ...result });
   } catch (err: any) {
@@ -164,6 +198,137 @@ router.post("/users/me/nickname-styles/:styleId/equip", async (req, res) => {
     await db.execute(sql`UPDATE users SET nickname_style = ${(rows.rows[0] as any).slug} WHERE id = ${req.currentUserId}`);
     res.json({ success: true, nicknameStyle: (rows.rows[0] as any).slug });
   } catch { res.status(500).json({ error: "Не удалось надеть стиль" }); }
+});
+
+router.get("/users/me/avatar-frames", async (req, res) => {
+  try {
+    const rows = await db.execute(sql`
+      SELECT uf.id, uf.frame_slug AS slug, uf.source, uf.granted_at,
+             (u.avatar_frame = uf.frame_slug) AS equipped
+      FROM user_avatar_frames uf
+      JOIN users u ON u.id = uf.user_id
+      WHERE uf.user_id = ${req.currentUserId}
+      ORDER BY uf.granted_at DESC, uf.id DESC
+    `);
+    res.json(rows.rows.map((frame: any) => ({
+      ...frame,
+      name: frame.slug === "halloween" ? "Хэллоуинская рамка" : frame.slug,
+      description: frame.slug === "halloween" ? "Тыквенная рамка профиля" : "",
+    })));
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Не удалось загрузить рамки" });
+  }
+});
+
+router.post("/users/me/avatar-frames/:frameSlug/equip", async (req, res) => {
+  try {
+    const frameSlug = String(req.params.frameSlug);
+    if (frameSlug === "none") {
+      await db.execute(sql`UPDATE users SET avatar_frame = NULL WHERE id = ${req.currentUserId}`);
+      return res.json({ success: true, avatarFrame: null });
+    }
+    if (frameSlug !== "halloween") return res.status(400).json({ error: "Неизвестная рамка" });
+    const owned = await db.execute(sql`
+      SELECT 1 FROM user_avatar_frames
+      WHERE user_id = ${req.currentUserId} AND frame_slug = ${frameSlug}
+    `);
+    if (!owned.rows.length) return res.status(403).json({ error: "Этой рамки нет в вашем инвентаре" });
+    await db.execute(sql`UPDATE users SET avatar_frame = ${frameSlug} WHERE id = ${req.currentUserId}`);
+    res.json({ success: true, avatarFrame: frameSlug });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Не удалось надеть рамку" });
+  }
+});
+
+const HALLOWEEN_QUEST_START = "2026-10-20T00:00:00.000Z";
+const HALLOWEEN_QUEST_END = "2026-11-08T00:00:00.000Z";
+const HALLOWEEN_QUEST_GOAL = 13;
+
+async function getHalloweenQuestState(userId: number) {
+  const [progressRows, claimRows] = await Promise.all([
+    db.execute(sql`
+      SELECT COUNT(*)::int AS progress
+      FROM messages
+      WHERE sender_id = ${userId}
+        AND created_at >= ${HALLOWEEN_QUEST_START}
+        AND created_at < ${HALLOWEEN_QUEST_END}
+    `),
+    db.execute(sql`SELECT 1 FROM user_halloween_quest_claims WHERE user_id = ${userId} LIMIT 1`),
+  ]);
+  const now = Date.now();
+  return {
+    progress: Number((progressRows.rows[0] as any)?.progress ?? 0),
+    goal: HALLOWEEN_QUEST_GOAL,
+    claimed: claimRows.rows.length > 0,
+    startsAt: HALLOWEEN_QUEST_START,
+    endsAt: HALLOWEEN_QUEST_END,
+    active: now >= Date.parse(HALLOWEEN_QUEST_START) && now < Date.parse(HALLOWEEN_QUEST_END),
+  };
+}
+
+router.get("/users/me/halloween-quest", async (req, res) => {
+  try {
+    res.json(await getHalloweenQuestState(req.currentUserId));
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Не удалось загрузить хэллоуинский квест" });
+  }
+});
+
+router.post("/users/me/halloween-quest/claim", async (req, res) => {
+  try {
+    if (Date.now() < Date.parse(HALLOWEEN_QUEST_START) || Date.now() >= Date.parse(HALLOWEEN_QUEST_END)) {
+      return res.status(410).json({ error: "Хэллоуинский квест сейчас не активен" });
+    }
+    const result = await db.transaction(async tx => {
+      const progressRows = await tx.execute(sql`
+        SELECT COUNT(*)::int AS progress
+        FROM messages
+        WHERE sender_id = ${req.currentUserId}
+          AND created_at >= ${HALLOWEEN_QUEST_START}
+          AND created_at < ${HALLOWEEN_QUEST_END}
+      `);
+      const progress = Number((progressRows.rows[0] as any)?.progress ?? 0);
+      if (progress < HALLOWEEN_QUEST_GOAL) {
+        throw Object.assign(new Error("Сначала отправьте 13 сообщений в чатах"), { status: 400 });
+      }
+      const claim = await tx.execute(sql`
+        INSERT INTO user_halloween_quest_claims (user_id)
+        VALUES (${req.currentUserId})
+        ON CONFLICT (user_id) DO NOTHING
+        RETURNING user_id
+      `);
+      if (!claim.rows.length) throw Object.assign(new Error("Награда за квест уже получена"), { status: 409 });
+
+      const styleRows = await tx.execute(sql`
+        SELECT id FROM nickname_styles WHERE slug = 'halloween' AND active = TRUE LIMIT 1
+      `);
+      if (!styleRows.rows.length) throw new Error("Хэллоуинский стиль пока недоступен");
+      await tx.execute(sql`
+        INSERT INTO user_nickname_styles (user_id, style_id, source)
+        VALUES (${req.currentUserId}, ${(styleRows.rows[0] as any).id}, 'halloween-quest')
+        ON CONFLICT (user_id, style_id) DO NOTHING
+      `);
+      await tx.execute(sql`
+        INSERT INTO user_avatar_frames (user_id, frame_slug, source)
+        VALUES (${req.currentUserId}, 'halloween', 'halloween-quest')
+        ON CONFLICT (user_id, frame_slug) DO NOTHING
+      `);
+      await tx.execute(sql`
+        UPDATE users SET nickname_style = 'halloween', avatar_frame = 'halloween'
+        WHERE id = ${req.currentUserId}
+      `);
+      return { success: true, nicknameStyle: "halloween", avatarFrame: "halloween" };
+    });
+    res.json(result);
+  } catch (err: any) {
+    const status = Number(err?.status) || 500;
+    if (status < 500) return res.status(status).json({ error: err.message });
+    req.log.error(err);
+    res.status(500).json({ error: "Не удалось получить награду за квест" });
+  }
 });
 
 router.get("/users/me/creator-verifications", async (req, res) => {

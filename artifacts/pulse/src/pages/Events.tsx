@@ -9,9 +9,10 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { maybeResetQuests } from "@/utils/questTracker";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useGetMe } from "@workspace/api-client-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useToast } from "@/hooks/use-toast";
 
 /* ─── Types ─────────────────────────────────────────────────────────── */
 type Tab = "quests" | "events" | "leaderboard";
@@ -43,6 +44,15 @@ interface ApiEvent {
   conditions?: string;
   participant_count?: number;
   banner_color?: string;
+}
+
+interface HalloweenQuestState {
+  progress: number;
+  goal: number;
+  claimed: boolean;
+  active: boolean;
+  startsAt: string;
+  endsAt: string;
 }
 
 function LeaderAvatar({ user, size = 44 }: { user: any; size?: number }) {
@@ -112,6 +122,8 @@ export default function Events() {
   const { lang } = useLanguage();
   const en = lang === "en";
   const [, navigate] = useLocation();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [tab, setTab] = useState<Tab>("quests");
   const [completed, setCompleted] = useState<Set<string>>(loadCompleted);
   const [progress, setProgress] = useState<Record<string, number>>(loadProgress);
@@ -124,7 +136,19 @@ export default function Events() {
   const [apiEvents, setApiEvents] = useState<ApiEvent[]>([]);
   const [eventsLoading, setEventsLoading] = useState(false);
   const [streakDays, setStreakDays] = useState<number>(1);
+  const [halloweenClaiming, setHalloweenClaiming] = useState(false);
   const { data: me } = useGetMe();
+  const { data: halloweenQuest, isLoading: halloweenQuestLoading, refetch: refetchHalloweenQuest } = useQuery< HalloweenQuestState >({
+    queryKey: ["halloween-quest"],
+    queryFn: async () => {
+      const token = sessionStorage.getItem("pulse-token");
+      const response = await fetch("/api/users/me/halloween-quest", {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!response.ok) throw new Error("Не удалось загрузить хэллоуинский квест");
+      return response.json();
+    },
+  });
   const { data: leaderboard = [], isLoading: lbLoading } = useQuery<any[]>({
     queryKey: ["events-leaderboard"],
     queryFn: async () => {
@@ -286,6 +310,34 @@ export default function Events() {
   const visibleQuests = questFilter === "all" ? QUESTS : QUESTS.filter(q => q.type === questFilter);
   const doneCount = QUESTS.filter(q => q.completed).length;
 
+  async function claimHalloweenReward() {
+    if (!halloweenQuest || halloweenQuest.claimed || halloweenQuest.progress < halloweenQuest.goal) return;
+    setHalloweenClaiming(true);
+    try {
+      const token = sessionStorage.getItem("pulse-token");
+      const response = await fetch("/api/users/me/halloween-quest/claim", {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "Не удалось получить награду");
+      await Promise.all([
+        refetchHalloweenQuest(),
+        queryClient.invalidateQueries({ queryKey: ["/api/users/me"] }),
+        queryClient.invalidateQueries({ queryKey: ["/api/chats"] }),
+      ]);
+      window.dispatchEvent(new CustomEvent("pulse:avatar-frame-changed", { detail: { frame: "halloween" } }));
+      toast({ title: "Хэллоуинский набор получен", description: "Ник и рамка добавлены в инвентарь." });
+    } catch (error) {
+      toast({
+        title: error instanceof Error ? error.message : "Не удалось получить награду",
+        variant: "destructive",
+      });
+    } finally {
+      setHalloweenClaiming(false);
+    }
+  }
+
   function claimReward(quest: Quest) {
     if (quest.completed || quest.progress < quest.total) return;
     const next = new Set(completed);
@@ -435,6 +487,67 @@ export default function Events() {
                     </div>
                   </div>
                 </div>
+
+                {/* Halloween event quest — progress and one-time cosmetic claim are verified by the API. */}
+                <section className="relative overflow-hidden rounded-2xl border border-orange-500/30 bg-gradient-to-br from-orange-500/15 via-card to-violet-500/15 p-4" aria-labelledby="halloween-quest-title">
+                  <div className="pointer-events-none absolute -right-8 -top-10 text-8xl opacity-[0.08]">🎃</div>
+                  <div className="relative flex flex-wrap items-start justify-between gap-3">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-orange-400/20 bg-orange-500/15 text-2xl">🎃</div>
+                      <div className="min-w-0">
+                        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-orange-400">
+                          {en ? "Halloween · Oct 20–Nov 7" : "Хэллоуин · 20 октября — 7 ноября"}
+                        </p>
+                        <h2 id="halloween-quest-title" className="mt-0.5 text-base font-black text-foreground">
+                          {en ? "Pumpkin message hunt" : "Квест «Тыквенная переписка»"}
+                        </h2>
+                      </div>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2 rounded-xl border border-orange-500/20 bg-background/70 px-2.5 py-1.5">
+                      <span className="nickname-style nickname-style-halloween text-xs font-black">@username</span>
+                      <span className="avatar-frame-halloween flex h-7 w-7 items-center justify-center rounded-full bg-secondary text-sm">👻</span>
+                    </div>
+                  </div>
+                  <p className="relative mt-3 text-xs leading-relaxed text-muted-foreground">
+                    {en
+                      ? "Send 13 messages during the event to unlock the Halloween nickname and avatar frame."
+                      : "Отправь 13 сообщений во время события и получи хэллоуинский ник и рамку профиля."}
+                  </p>
+                  <div className="relative mt-3">
+                    <div className="mb-1.5 flex items-center justify-between gap-3 text-[11px]">
+                      <span className="font-bold text-foreground">
+                        {halloweenQuestLoading ? (en ? "Loading progress…" : "Загружаем прогресс…") : `${Math.min(halloweenQuest?.progress ?? 0, halloweenQuest?.goal ?? 13)}/${halloweenQuest?.goal ?? 13}`}
+                      </span>
+                      <span className="text-muted-foreground">
+                        {halloweenQuest?.claimed
+                          ? (en ? "Reward claimed" : "Награда получена")
+                          : halloweenQuest?.active === false
+                            ? (en ? "Event ended" : "Событие завершено")
+                            : (en ? "Halloween set" : "Хэллоуинский комплект")}
+                      </span>
+                    </div>
+                    <div className="h-2 overflow-hidden rounded-full bg-secondary">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-orange-500 to-violet-500 transition-[width] duration-500"
+                        style={{ width: `${Math.min(100, ((halloweenQuest?.progress ?? 0) / (halloweenQuest?.goal || 13)) * 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                  <button
+                    data-testid="button-claim-halloween-quest"
+                    onClick={claimHalloweenReward}
+                    disabled={halloweenQuestLoading || halloweenClaiming || !halloweenQuest?.active || halloweenQuest?.claimed || (halloweenQuest?.progress ?? 0) < (halloweenQuest?.goal ?? 13)}
+                    className="relative mt-3 w-full rounded-xl bg-gradient-to-r from-orange-500 to-violet-600 px-4 py-2.5 text-sm font-black text-white shadow-md shadow-orange-500/15 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-45"
+                  >
+                    {halloweenClaiming
+                      ? (en ? "Claiming…" : "Получаем награду…")
+                      : halloweenQuest?.claimed
+                        ? (en ? "Halloween set added to inventory" : "Комплект уже в инвентаре")
+                        : !halloweenQuest?.active
+                          ? (en ? "Event is over" : "Событие завершено")
+                          : (en ? "Claim Halloween set" : "Забрать хэллоуинский комплект")}
+                  </button>
+                </section>
 
                 {/* Quest filter pills */}
                 <div className="flex gap-2 overflow-x-auto scrollbar-none -mx-4 px-4 pb-0.5">

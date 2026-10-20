@@ -27,6 +27,33 @@
 .nickname-style-mint { background-image: linear-gradient(90deg, #0f766e, #2dd4bf, #a7f3d0, #0d9488); }
 .nickname-style-starlight { background-image: linear-gradient(90deg, #f8fafc, #93c5fd, #c4b5fd, #fef08a); }
 .nickname-style-cyber { background-image: linear-gradient(90deg, #22d3ee, #a3e635, #f0abfc, #38bdf8); }
+.nickname-style-halloween { background-image: linear-gradient(90deg, #fb923c, #f97316, #c084fc, #7c3aed, #fb923c); }
+.avatar-frame-halloween {
+  position: relative;
+  isolation: isolate;
+  border: 3px solid #f97316 !important;
+  box-shadow: 0 0 0 2px rgba(15, 23, 42, .9), 0 0 18px rgba(249, 115, 22, .55);
+}
+.avatar-frame-halloween::before {
+  content: "";
+  position: absolute;
+  inset: 2px;
+  z-index: 2;
+  border: 1px solid rgba(253, 186, 116, .8);
+  border-radius: inherit;
+  pointer-events: none;
+}
+.avatar-frame-halloween::after {
+  content: "🎃";
+  position: absolute;
+  z-index: 3;
+  right: -1px;
+  bottom: -1px;
+  font-size: clamp(10px, 18%, 20px);
+  line-height: 1;
+  pointer-events: none;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .75));
+}
 @keyframes nickname-shimmer {
   0%, 100% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
@@ -286,6 +313,8 @@
   #root {
     height: 100%;
     width: 100%;
+    min-width: 0;
+    min-height: 0;
     background-color: hsl(var(--background));
     overflow: hidden;
   }

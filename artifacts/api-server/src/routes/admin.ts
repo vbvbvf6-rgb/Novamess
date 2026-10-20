@@ -60,7 +60,8 @@ db.execute(sql`
   ('ruby', 'Рубин', 'Глубокий алый градиент', 'premium', 'linear-gradient(90deg,#be123c,#f43f5e,#fb7185,#881337)', 9),
   ('mint', 'Мятный', 'Мягкий мятный неон', 'common', 'linear-gradient(90deg,#0f766e,#2dd4bf,#a7f3d0,#0d9488)', 10),
   ('starlight', 'Звёздный свет', 'Светящийся небесный градиент', 'premium', 'linear-gradient(90deg,#f8fafc,#93c5fd,#c4b5fd,#fef08a)', 11),
-  ('cyber', 'Кибер', 'Яркий неоновый перелив', 'premium', 'linear-gradient(90deg,#22d3ee,#a3e635,#f0abfc,#38bdf8)', 12)
+  ('cyber', 'Кибер', 'Яркий неоновый перелив', 'premium', 'linear-gradient(90deg,#22d3ee,#a3e635,#f0abfc,#38bdf8)', 12),
+  ('halloween', 'Хэллоуин', 'Тыквенно-фиолетовый стиль для хэллоуинского события', 'event', 'linear-gradient(90deg,#fb923c,#f97316,#c084fc,#7c3aed,#fb923c)', 13)
   ON CONFLICT (slug) DO NOTHING
 `).catch(() => {});
 db.execute(sql`CREATE TABLE IF NOT EXISTS creator_verifications (
@@ -184,7 +185,7 @@ router.get("/admin/check", async (req, res) => {
 router.get("/admin/users", requireAdmin, async (req, res) => {
   try {
     const rows = await db.execute(
-      sql`SELECT id, username, display_name, avatar_color, avatar_url, nickname_style, status, balance, created_at, is_verified, is_developer, is_admin, is_bot, has_prime, is_banned, moderation_type, ban_reason, ban_expires_at FROM users ORDER BY id`
+      sql`SELECT id, username, display_name, avatar_color, avatar_url, nickname_style, avatar_frame, status, balance, created_at, is_verified, is_developer, is_admin, is_bot, has_prime, is_banned, moderation_type, ban_reason, ban_expires_at FROM users ORDER BY id`
     );
     res.json(rows.rows);
   } catch (err) {
@@ -253,6 +254,66 @@ router.delete("/admin/users/:userId/nickname-styles/:styleId", requireAdmin, asy
     res.json({ success: true });
   } catch {
     res.status(500).json({ error: "Не удалось удалить стиль" });
+  }
+});
+
+router.get("/admin/users/:userId/avatar-frames", requireAdmin, async (req, res) => {
+  try {
+    const rows = await db.execute(sql`
+      SELECT id, frame_slug AS slug, source, granted_at
+      FROM user_avatar_frames
+      WHERE user_id = ${Number(req.params.userId)}
+      ORDER BY granted_at DESC, id DESC
+    `);
+    res.json(rows.rows);
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Не удалось загрузить рамки пользователя" });
+  }
+});
+
+router.post("/admin/users/:userId/avatar-frames", requireAdmin, async (req, res) => {
+  try {
+    const userId = Number(req.params.userId);
+    const frameSlug = String(req.body?.frameSlug || "").trim();
+    if (!Number.isInteger(userId) || frameSlug !== "halloween") {
+      return res.status(400).json({ error: "Укажите пользователя и доступную рамку" });
+    }
+    const target = await db.execute(sql`SELECT id FROM users WHERE id = ${userId}`);
+    if (!target.rows.length) return res.status(404).json({ error: "Пользователь не найден" });
+    await db.execute(sql`
+      INSERT INTO user_avatar_frames (user_id, frame_slug, source, granted_by)
+      VALUES (${userId}, ${frameSlug}, 'admin', ${req.currentUserId})
+      ON CONFLICT (user_id, frame_slug) DO NOTHING
+    `);
+    await db.execute(sql`UPDATE users SET avatar_frame = ${frameSlug} WHERE id = ${userId}`);
+    res.json({ success: true, frameSlug });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Не удалось выдать рамку" });
+  }
+});
+
+router.delete("/admin/users/:userId/avatar-frames/:frameSlug", requireAdmin, async (req, res) => {
+  try {
+    const userId = Number(req.params.userId);
+    const frameSlug = String(req.params.frameSlug);
+    await db.execute(sql`
+      DELETE FROM user_avatar_frames WHERE user_id = ${userId} AND frame_slug = ${frameSlug}
+    `);
+    const remaining = await db.execute(sql`
+      SELECT frame_slug FROM user_avatar_frames
+      WHERE user_id = ${userId}
+      ORDER BY granted_at DESC, id DESC LIMIT 1
+    `);
+    await db.execute(sql`
+      UPDATE users SET avatar_frame = ${(remaining.rows[0] as any)?.frame_slug ?? null}
+      WHERE id = ${userId}
+    `);
+    res.json({ success: true });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Не удалось забрать рамку" });
   }
 });
 
@@ -1606,8 +1667,9 @@ router.get("/admin/prize-codes", requireAdmin, async (_req, res) => {
     await db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS prize_type TEXT NOT NULL DEFAULT 'sparks'`);
     await db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS prime_months INTEGER`);
     await db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS nickname_style TEXT`);
+    await db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS avatar_frame TEXT`);
     const rows = await db.execute(sql`
-      SELECT id, code, prize_amount, prize_description, prize_type, prime_months, nickname_style, max_uses, uses, expires_at, created_at
+      SELECT id, code, prize_amount, prize_description, prize_type, prime_months, nickname_style, avatar_frame, max_uses, uses, expires_at, created_at
       FROM prize_codes ORDER BY created_at DESC LIMIT 500
     `);
     res.json(rows.rows);
@@ -1621,16 +1683,24 @@ router.post("/admin/prize-codes", requireAdmin, async (req, res) => {
     await db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS prize_type TEXT NOT NULL DEFAULT 'sparks'`);
     await db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS prime_months INTEGER`);
     await db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS nickname_style TEXT`);
-    const prizeType = ["sparks", "prime", "nickname"].includes(String(req.body?.prizeType)) ? String(req.body.prizeType) : "sparks";
+    await db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS avatar_frame TEXT`);
+    const allowedTypes = ["sparks", "prime", "nickname", "frame", "halloween"];
+    const prizeType = allowedTypes.includes(String(req.body?.prizeType)) ? String(req.body.prizeType) : "sparks";
     const amount = Math.floor(Number(req.body?.prizeAmount || (prizeType === "sparks" ? 0 : 1)));
     const primeMonths = Math.min(24, Math.max(1, Math.floor(Number(req.body?.primeMonths) || 1)));
     const nicknameStyle = String(req.body?.nicknameStyle || "").trim().slice(0, 64) || null;
+    const avatarFrame = String(req.body?.avatarFrame || "").trim().slice(0, 64) || null;
     const count = Math.min(100, Math.max(1, Math.floor(Number(req.body?.count) || 1)));
     const maxUses = Math.min(1000, Math.max(1, Math.floor(Number(req.body?.maxUses) || 1)));
     const description = String(req.body?.prizeDescription || "").trim().slice(0, 200) || null;
     const expiresAt = req.body?.expiresAt ? new Date(req.body.expiresAt) : null;
     if (prizeType === "sparks" && (!Number.isFinite(amount) || amount <= 0)) return res.status(400).json({ error: "Приз должен быть больше нуля" });
     if (prizeType === "nickname" && !nicknameStyle) return res.status(400).json({ error: "Укажите стиль цветного ника" });
+    if (prizeType === "nickname") {
+      const style = await db.execute(sql`SELECT 1 FROM nickname_styles WHERE slug = ${nicknameStyle} AND active = TRUE`);
+      if (!style.rows.length) return res.status(400).json({ error: "Указанный стиль ника недоступен" });
+    }
+    if (prizeType === "frame" && avatarFrame !== "halloween") return res.status(400).json({ error: "Укажите доступную рамку" });
     if (expiresAt && Number.isNaN(expiresAt.getTime())) return res.status(400).json({ error: "Некорректная дата окончания" });
 
     const codes: string[] = [];
@@ -1640,8 +1710,8 @@ router.post("/admin/prize-codes", requireAdmin, async (req, res) => {
         for (let attempt = 0; attempt < 5; attempt++) {
           const candidate = `NOVA-${randomBytes(5).toString("hex").toUpperCase()}`;
           const inserted = await tx.execute(sql`
-            INSERT INTO prize_codes (code, prize_amount, prize_description, prize_type, prime_months, nickname_style, max_uses, expires_at, created_by)
-            VALUES (${candidate}, ${Math.max(1, amount || 1)}, ${description}, ${prizeType}, ${prizeType === "prime" ? primeMonths : null}, ${prizeType === "nickname" ? nicknameStyle : null}, ${maxUses}, ${expiresAt}, ${req.currentUserId})
+            INSERT INTO prize_codes (code, prize_amount, prize_description, prize_type, prime_months, nickname_style, avatar_frame, max_uses, expires_at, created_by)
+            VALUES (${candidate}, ${Math.max(1, amount || 1)}, ${description}, ${prizeType}, ${prizeType === "prime" ? primeMonths : null}, ${prizeType === "nickname" ? nicknameStyle : prizeType === "halloween" ? "halloween" : null}, ${prizeType === "frame" ? avatarFrame : prizeType === "halloween" ? "halloween" : null}, ${maxUses}, ${expiresAt}, ${req.currentUserId})
             ON CONFLICT (code) DO NOTHING RETURNING code
           `);
           if (inserted.rows.length) { code = candidate; break; }

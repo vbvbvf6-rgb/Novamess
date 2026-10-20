@@ -26,6 +26,7 @@ interface AdminUser {
   is_bot: boolean;
   has_prime: boolean;
   nickname_style: string | null;
+  avatar_frame?: string | null;
   is_banned: boolean;
   ban_reason: string | null;
   ban_expires_at: string | null;
@@ -128,10 +129,14 @@ export default function Admin() {
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState<"balance" | "password" | "actions" | "nickname" | "stats">("balance");
   interface NicknameStyle { id: number; slug: string; name: string; description: string; category: string; preview_css: string; inventory_id?: number; source?: string; }
+  interface AvatarFrame { id: number; slug: string; source: string; granted_at?: string; }
   const [nicknameStyles, setNicknameStyles] = useState<NicknameStyle[]>([]);
   const [userNicknameStyles, setUserNicknameStyles] = useState<NicknameStyle[]>([]);
   const [nicknameStyleId, setNicknameStyleId] = useState("");
   const [nicknameLoading, setNicknameLoading] = useState(false);
+  const [userAvatarFrames, setUserAvatarFrames] = useState<AvatarFrame[]>([]);
+  const [avatarFrameSlug, setAvatarFrameSlug] = useState("halloween");
+  const [avatarFrameLoading, setAvatarFrameLoading] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [pwLoading, setPwLoading] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<AdminUser | null>(null);
@@ -405,14 +410,15 @@ export default function Admin() {
   const [eventConditions, setEventConditions] = useState("");
   const [eventPrizeAmount, setEventPrizeAmount] = useState(0);
   const [eventPrizeDescription, setEventPrizeDescription] = useState("");
-  interface PrizeCode { id: number; code: string; prize_amount: number; prize_description: string | null; prize_type?: string; prime_months?: number | null; nickname_style?: string | null; max_uses: number; uses: number; expires_at: string | null; created_at: string; }
+  interface PrizeCode { id: number; code: string; prize_amount: number; prize_description: string | null; prize_type?: string; prime_months?: number | null; nickname_style?: string | null; avatar_frame?: string | null; max_uses: number; uses: number; expires_at: string | null; created_at: string; }
   const [showPrizeCodes, setShowPrizeCodes] = useState(false);
   const [prizeCodes, setPrizeCodes] = useState<PrizeCode[]>([]);
   const [prizeCodesLoading, setPrizeCodesLoading] = useState(false);
   const [prizeCodeAmount, setPrizeCodeAmount] = useState(100);
-  const [prizeCodeType, setPrizeCodeType] = useState<"sparks" | "prime" | "nickname">("sparks");
+  const [prizeCodeType, setPrizeCodeType] = useState<"sparks" | "prime" | "nickname" | "frame" | "halloween">("sparks");
   const [prizeCodePrimeMonths, setPrizeCodePrimeMonths] = useState(1);
   const [prizeCodeNicknameStyle, setPrizeCodeNicknameStyle] = useState("rainbow");
+  const [prizeCodeAvatarFrame, setPrizeCodeAvatarFrame] = useState("halloween");
   const [prizeCodeDescription, setPrizeCodeDescription] = useState("");
   const [prizeCodeCount, setPrizeCodeCount] = useState(1);
   const [prizeCodeMaxUses, setPrizeCodeMaxUses] = useState(1);
@@ -529,6 +535,7 @@ export default function Admin() {
           prizeType: prizeCodeType,
           primeMonths: prizeCodePrimeMonths,
           nicknameStyle: prizeCodeNicknameStyle,
+          avatarFrame: prizeCodeAvatarFrame,
           prizeDescription: prizeCodeDescription,
           count: prizeCodeCount,
           maxUses: prizeCodeMaxUses,
@@ -1135,12 +1142,14 @@ export default function Admin() {
 
   const fetchNicknameData = async (uid: number) => {
     try {
-      const [stylesRes, inventoryRes] = await Promise.all([
+      const [stylesRes, inventoryRes, framesRes] = await Promise.all([
         fetch("/api/admin/nickname-styles", { headers: getHeader() }),
         fetch(`/api/admin/users/${uid}/nickname-styles`, { headers: getHeader() }),
+        fetch(`/api/admin/users/${uid}/avatar-frames`, { headers: getHeader() }),
       ]);
       if (stylesRes.ok) setNicknameStyles(await stylesRes.json());
       if (inventoryRes.ok) setUserNicknameStyles(await inventoryRes.json());
+      if (framesRes.ok) setUserAvatarFrames(await framesRes.json());
     } catch {}
   };
 
@@ -1171,6 +1180,40 @@ export default function Admin() {
       if (!res.ok) { showToast("Не удалось убрать стиль", "err"); return; }
       await fetchNicknameData(selectedUser.id);
       showToast("Стиль убран из инвентаря", "ok");
+    } catch { showToast("Ошибка соединения", "err"); }
+  };
+
+  const grantAvatarFrame = async () => {
+    if (!selectedUser || !avatarFrameSlug) return;
+    setAvatarFrameLoading(true);
+    try {
+      const res = await fetch(`/api/admin/users/${selectedUser.id}/avatar-frames`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...getHeader() },
+        body: JSON.stringify({ frameSlug: avatarFrameSlug }),
+      });
+      const data = await res.json();
+      if (!res.ok) { showToast(data.error || "Не удалось выдать рамку", "err"); return; }
+      setUsers(prev => prev.map(user => user.id === selectedUser.id ? { ...user, avatar_frame: avatarFrameSlug } : user));
+      setSelectedUser(prev => prev ? { ...prev, avatar_frame: avatarFrameSlug } : null);
+      await fetchNicknameData(selectedUser.id);
+      showToast("🎃 Хэллоуинская рамка выдана", "ok");
+    } catch { showToast("Ошибка соединения", "err"); }
+    finally { setAvatarFrameLoading(false); }
+  };
+
+  const removeAvatarFrame = async (frame: AvatarFrame) => {
+    if (!selectedUser) return;
+    try {
+      const res = await fetch(`/api/admin/users/${selectedUser.id}/avatar-frames/${encodeURIComponent(frame.slug)}`, {
+        method: "DELETE",
+        headers: getHeader(),
+      });
+      if (!res.ok) { showToast("Не удалось забрать рамку", "err"); return; }
+      setUsers(prev => prev.map(user => user.id === selectedUser.id ? { ...user, avatar_frame: null } : user));
+      setSelectedUser(prev => prev ? { ...prev, avatar_frame: null } : null);
+      await fetchNicknameData(selectedUser.id);
+      showToast("Рамка убрана из инвентаря", "ok");
     } catch { showToast("Ошибка соединения", "err"); }
   };
 
@@ -3338,7 +3381,17 @@ export default function Admin() {
         {/* Prize codes */}
         <div className="bg-card border border-border rounded-2xl overflow-hidden">
           <button
-            onClick={() => { setShowPrizeCodes(v => !v); if (!showPrizeCodes && prizeCodes.length === 0) fetchPrizeCodes(); }}
+            onClick={() => {
+              const opening = !showPrizeCodes;
+              setShowPrizeCodes(opening);
+              if (opening && prizeCodes.length === 0) fetchPrizeCodes();
+              if (opening && nicknameStyles.length === 0) {
+                fetch("/api/admin/nickname-styles", { headers: getHeader() })
+                  .then(response => response.ok ? response.json() : [])
+                  .then(styles => setNicknameStyles(Array.isArray(styles) ? styles : []))
+                  .catch(() => {});
+              }
+            }}
             className="w-full p-4 flex items-center justify-between hover:bg-secondary/50 transition-colors"
           >
             <div className="flex items-center gap-3">
@@ -3352,12 +3405,14 @@ export default function Admin() {
           </button>
           {showPrizeCodes && (
             <div className="border-t border-border p-4 space-y-4">
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+              <div className="grid grid-cols-1 min-[360px]:grid-cols-2 sm:grid-cols-5 gap-2">
                 <label className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Тип приза
-                  <select value={prizeCodeType} onChange={e => setPrizeCodeType(e.target.value as "sparks" | "prime" | "nickname")} className="mt-1 w-full bg-background border border-border rounded-xl px-3 py-2 text-sm">
+                  <select value={prizeCodeType} onChange={e => setPrizeCodeType(e.target.value as typeof prizeCodeType)} className="mt-1 w-full min-w-0 bg-background border border-border rounded-xl px-3 py-2 text-sm">
                     <option value="sparks">Искры</option>
                     <option value="prime">Prime</option>
                     <option value="nickname">Цветной ник</option>
+                    <option value="frame">Рамка профиля</option>
+                    <option value="halloween">Хэллоуинский комплект</option>
                   </select>
                 </label>
                 {prizeCodeType === "sparks" && <label className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Приз (искры)
@@ -3367,10 +3422,20 @@ export default function Admin() {
                   <input type="number" min={1} max={24} value={prizeCodePrimeMonths} onChange={e => setPrizeCodePrimeMonths(Math.min(24, Math.max(1, Number(e.target.value) || 1)))} className="mt-1 w-full bg-background border border-border rounded-xl px-3 py-2 text-sm" />
                 </label>}
                 {prizeCodeType === "nickname" && <label className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Стиль ника
-                  <select value={prizeCodeNicknameStyle} onChange={e => setPrizeCodeNicknameStyle(e.target.value)} className="mt-1 w-full bg-background border border-border rounded-xl px-3 py-2 text-sm">
-                    <option value="rainbow">Радуга</option><option value="fire">Огонь</option><option value="ocean">Океан</option><option value="violet">Фиолетовый</option>
+                  <select value={prizeCodeNicknameStyle} onChange={e => setPrizeCodeNicknameStyle(e.target.value)} className="mt-1 w-full min-w-0 bg-background border border-border rounded-xl px-3 py-2 text-sm">
+                    {nicknameStyles.map(style => <option key={style.id} value={style.slug}>{style.name}</option>)}
                   </select>
                 </label>}
+                {prizeCodeType === "frame" && <label className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Рамка
+                  <select value={prizeCodeAvatarFrame} onChange={e => setPrizeCodeAvatarFrame(e.target.value)} className="mt-1 w-full min-w-0 bg-background border border-border rounded-xl px-3 py-2 text-sm">
+                    <option value="halloween">Хэллоуинская</option>
+                  </select>
+                </label>}
+                {prizeCodeType === "halloween" && (
+                  <div className="col-span-full rounded-xl border border-orange-500/20 bg-orange-500/5 px-3 py-2 text-xs text-orange-200">
+                    Один код выдаёт хэллоуинский ник и рамку профиля.
+                  </div>
+                )}
                 <label className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Количество
                   <input type="number" min={1} max={100} value={prizeCodeCount} onChange={e => setPrizeCodeCount(Math.min(100, Math.max(1, Number(e.target.value) || 1)))} className="mt-1 w-full bg-background border border-border rounded-xl px-3 py-2 text-sm" />
                 </label>
@@ -3396,7 +3461,7 @@ export default function Admin() {
                   {prizeCodes.map(code => (
                     <div key={code.id} className="flex items-center gap-3 rounded-xl border border-border bg-background p-3">
                       <code className="font-mono font-bold text-sm text-amber-400">{code.code}</code>
-                      <span className="text-xs text-muted-foreground flex-1">{code.prize_description || (code.prize_type === "prime" ? `Prime · ${code.prime_months || 1} мес.` : code.prize_type === "nickname" ? `Цветной ник · ${code.nickname_style || ""}` : `${code.prize_amount} искр`)} · {code.uses}/{code.max_uses}</span>
+                      <span className="text-xs text-muted-foreground flex-1">{code.prize_description || (code.prize_type === "prime" ? `Prime · ${code.prime_months || 1} мес.` : code.prize_type === "nickname" ? `Цветной ник · ${code.nickname_style || ""}` : code.prize_type === "frame" ? `Рамка · ${code.avatar_frame || "halloween"}` : code.prize_type === "halloween" ? "Хэллоуинский ник + рамка" : `${code.prize_amount} искр`)} · {code.uses}/{code.max_uses}</span>
                       <button onClick={() => deletePrizeCode(code.id)} className="p-1.5 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/10"><Trash2 size={13} /></button>
                     </div>
                   ))}
@@ -4448,6 +4513,32 @@ export default function Admin() {
                             <span className={`font-bold text-sm nickname-style nickname-style-${style.slug}`}>{selectedUser.display_name}</span>
                             <span className="text-xs text-muted-foreground flex-1">{style.name}</span>
                             <button onClick={() => removeNicknameStyle(style)} className="p-1.5 text-muted-foreground hover:text-red-400" title="Забрать"><Trash2 size={14} /></button>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="space-y-3 rounded-2xl border border-orange-500/20 bg-orange-500/5 p-3">
+                        <div>
+                          <p className="font-bold text-foreground">Рамка профиля</p>
+                          <p className="text-xs text-muted-foreground mt-1">Выдайте хэллоуинскую рамку напрямую или отправьте игроку призовой код.</p>
+                        </div>
+                        <div className="flex min-w-0 gap-2">
+                          <select value={avatarFrameSlug} onChange={e => setAvatarFrameSlug(e.target.value)} className="flex-1 min-w-0 bg-background border border-border rounded-xl px-3 py-2.5 text-sm text-foreground">
+                            <option value="halloween">🎃 Хэллоуинская рамка</option>
+                          </select>
+                          <button data-testid="button-grant-avatar-frame" onClick={grantAvatarFrame} disabled={avatarFrameLoading || !avatarFrameSlug} className="shrink-0 px-3 rounded-xl bg-orange-500 text-white text-sm font-bold disabled:opacity-50">
+                            {avatarFrameLoading ? "..." : "Выдать"}
+                          </button>
+                        </div>
+                        {userAvatarFrames.length === 0 ? (
+                          <p className="text-sm text-muted-foreground text-center py-3">Рамок пока нет</p>
+                        ) : userAvatarFrames.map(frame => (
+                          <div key={frame.id} className="flex items-center gap-3 rounded-xl border border-border bg-background/70 p-3">
+                            <div className={`w-9 h-9 rounded-full bg-secondary flex items-center justify-center text-lg avatar-frame-${frame.slug}`}>🎃</div>
+                            <span className="text-sm font-semibold flex-1 min-w-0 truncate">Хэллоуинская рамка</span>
+                            <button data-testid={`button-remove-avatar-frame-${frame.slug}`} onClick={() => removeAvatarFrame(frame)} className="shrink-0 p-1.5 text-muted-foreground hover:text-red-400" title="Забрать рамку">
+                              <Trash2 size={14} />
+                            </button>
                           </div>
                         ))}
                       </div>
