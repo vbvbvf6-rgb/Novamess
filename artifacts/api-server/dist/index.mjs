@@ -145709,7 +145709,7 @@ async function buildChat(chatId, currentUserId2) {
   }
   const memberRows = await db.select({ member: chatMembersTable, user: usersTable }).from(chatMembersTable).innerJoin(usersTable, eq(chatMembersTable.userId, usersTable.id)).where(eq(chatMembersTable.chatId, chatId));
   const myMember = memberRows.find((m3) => m3.member.userId === currentUserId2);
-  const [lastMessageRow] = await db.select().from(messagesTable).where(eq(messagesTable.chatId, chatId)).orderBy(desc(messagesTable.createdAt)).limit(1);
+  const [lastMessageRow] = await db.select().from(messagesTable).where(chat.type === "channel" ? and(eq(messagesTable.chatId, chatId), isNull(messagesTable.replyToId)) : eq(messagesTable.chatId, chatId)).orderBy(desc(messagesTable.createdAt)).limit(1);
   let lastMessage = null;
   if (lastMessageRow) {
     const sender = lastMessageRow.senderId ? await db.query.usersTable.findFirst({ where: eq(usersTable.id, lastMessageRow.senderId) }) : null;
@@ -145790,8 +145790,10 @@ async function buildChatsForUser(uid) {
         u.username AS sender_username,
         COALESCE((SELECT json_agg(r.*) FROM reactions r WHERE r.message_id = m.id), '[]'::json) AS reactions
       FROM messages m
+      JOIN chats c ON c.id = m.chat_id
       LEFT JOIN users u ON u.id = m.sender_id
       WHERE m.chat_id IN (${idList})
+        AND (c.type <> 'channel' OR m.reply_to_id IS NULL)
       ORDER BY m.chat_id, m.created_at DESC
     `),
     // 4. Unread counts per chat
@@ -145837,10 +145839,12 @@ async function buildChatsForUser(uid) {
         MAX(CASE WHEN cm.user_id != ${uid} THEN cm.last_read_at END) AS max_read_at,
         MAX(CASE WHEN cm.user_id != ${uid} THEN cm.last_delivered_at END) AS max_delivered_at
       FROM (
-        SELECT DISTINCT ON (chat_id) chat_id, sender_id, created_at
-        FROM messages
-        WHERE chat_id IN (${idList})
-        ORDER BY chat_id, created_at DESC
+        SELECT DISTINCT ON (m.chat_id) m.chat_id, m.sender_id, m.created_at
+        FROM messages m
+        JOIN chats c ON c.id = m.chat_id
+        WHERE m.chat_id IN (${idList})
+          AND (c.type <> 'channel' OR m.reply_to_id IS NULL)
+        ORDER BY m.chat_id, m.created_at DESC
       ) lm
       JOIN chat_members cm ON cm.chat_id = lm.chat_id
       WHERE lm.sender_id = ${uid}
@@ -155140,6 +155144,11 @@ function initSocketIO(server) {
       socket.leave(`call:${callId}`);
       if (socket.data.callId === callId) socket.data.callId = void 0;
       socket.to(`call:${callId}`).emit("peer-left", { userId, callId });
+    });
+    socket.on("end-call", ({ callId }) => {
+      const roomName = `call:${callId}`;
+      if (!Number.isSafeInteger(callId) || socket.data.callId !== callId || !socket.rooms.has(roomName)) return;
+      socket.to(roomName).emit("call-ended", { callId, userId });
     });
     socket.on("disconnect", () => {
       const callId = socket.data.callId;
