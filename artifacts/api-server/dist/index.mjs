@@ -59723,6 +59723,7 @@ var init_users = __esm({
       bio: text("bio"),
       avatarUrl: text("avatar_url"),
       avatarColor: text("avatar_color").notNull().default("#3B82F6"),
+      avatarFrame: text("avatar_frame"),
       nicknameStyle: text("nickname_style"),
       status: text("status").notNull().default("offline"),
       statusText: text("status_text"),
@@ -155255,6 +155256,7 @@ var _schemaMigrations = (async () => {
   `);
   await run(sql`ALTER TABLE stories ADD COLUMN IF NOT EXISTS music_url TEXT`);
   await run(sql`ALTER TABLE stories ADD COLUMN IF NOT EXISTS music_name TEXT`);
+  await run(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_frame TEXT`);
   await run(sql`
     CREATE TABLE IF NOT EXISTS audio_rooms (
       id SERIAL PRIMARY KEY,
