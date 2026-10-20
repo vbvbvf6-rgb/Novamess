@@ -1011,7 +1011,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        alert(err.error || "Ошибка планирования");
+        toast({ title: err.error || "Ошибка планирования", variant: "destructive" });
         return;
       }
       const newMsg = await res.json();
@@ -1022,7 +1022,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
       if (textareaRef.current) textareaRef.current.style.height = "44px";
       localStorage.removeItem(draftKey);
     } catch {
-      alert("Ошибка соединения");
+      toast({ title: "Ошибка соединения", variant: "destructive" });
     }
   };
 

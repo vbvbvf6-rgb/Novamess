@@ -3,6 +3,7 @@ import { setBaseUrl } from "@workspace/api-client-react";
 import App from "./App";
 import { setupNativeNotifications } from "./lib/nativeNotifications";
 import { queryClient, QUERY_KEYS } from "./lib/queryClient";
+import { AppConfirmProvider } from "./contexts/AppConfirmContext";
 import "./index.css";
 
 setupNativeNotifications();
@@ -69,4 +70,22 @@ if (_pf) {
   });
 }
 
-createRoot(document.getElementById("root")!).render(<App />);
+createRoot(document.getElementById("root")!).render(
+  <AppConfirmProvider>
+    <App />
+  </AppConfirmProvider>,
+);
+
+// A deployment can remove an old lazy-loaded chunk while a tab is still open.
+// Retry once with the newest app shell instead of leaving the user on a crash page.
+const PRELOAD_RETRY_KEY = "nova-vite-preload-retried";
+window.addEventListener("vite:preloadError", (event) => {
+  event.preventDefault();
+  if (sessionStorage.getItem(PRELOAD_RETRY_KEY) === "1") {
+    sessionStorage.removeItem(PRELOAD_RETRY_KEY);
+    return;
+  }
+  sessionStorage.setItem(PRELOAD_RETRY_KEY, "1");
+  window.location.reload();
+});
+window.setTimeout(() => sessionStorage.removeItem(PRELOAD_RETRY_KEY), 10_000);

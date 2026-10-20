@@ -7,6 +7,7 @@ import { ru } from "date-fns/locale";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAppContext } from "@/contexts/AppContext";
 import { useToast } from "@/hooks/use-toast";
+import { useAppConfirm } from "@/contexts/AppConfirmContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { useGetContacts } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -18,6 +19,7 @@ export default function Calls() {
   const { data: contacts } = useGetContacts();
   const { currentUserId, startCall } = useAppContext();
   const { toast } = useToast();
+  const requestConfirm = useAppConfirm();
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState<Filter>("all");
   const [showNewCall, setShowNewCall] = useState(false);
@@ -25,7 +27,12 @@ export default function Calls() {
   const [clearing, setClearing] = useState(false);
 
   const handleClearHistory = async () => {
-    if (!window.confirm("Очистить всю историю звонков?")) return;
+    if (!(await requestConfirm({
+      title: "Очистить историю звонков?",
+      description: "История будет очищена только в вашем аккаунте.",
+      confirmLabel: "Очистить",
+      destructive: true,
+    }))) return;
     setClearing(true);
     try {
       const token = sessionStorage.getItem("pulse-token");

@@ -228,6 +228,7 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
       socketRef.current.off("peer-joined");
       socketRef.current.off("peers-present");
       socketRef.current.off("peer-left");
+      socketRef.current.off("call-ended");
     }
     groupRoomIdRef.current = null;
 
@@ -482,6 +483,7 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
     sock.off("peer-joined");
     sock.off("peers-present");
     sock.off("peer-left");
+    sock.off("call-ended");
 
     sock.on("webrtc-signal", async ({ signal, fromUserId }: { signal: { type: string; sdp?: string; candidate?: RTCIceCandidateInit }; fromUserId: number }) => {
       await applySignal(fromUserId, signal, roomId);
@@ -543,7 +545,13 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
         return next;
       });
     });
-  }, [applySignal, createPeer]);
+
+    sock.on("call-ended", () => {
+      if (!activeCallRef.current) return;
+      toast({ title: "Звонок завершён", description: "Собеседник завершил звонок" });
+      cleanupCall();
+    });
+  }, [applySignal, createPeer, cleanupCall, toast]);
 
   // ── startCall ─────────────────────────────────────────────────────────────
   const startCall = useCallback(async (calleeId: number | null, chatId: number | null, type: "audio" | "video" | "group") => {
@@ -821,6 +829,10 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
   const hangUp = useCallback(async () => {
     const call = activeCallRef.current;
     if (!call) return;
+    const roomId = groupRoomIdRef.current ?? call.id;
+    // Socket.IO fans out to every participant in group calls; the status API
+    // still updates the caller/callee history record below.
+    if (roomId) socketRef.current?.emit("end-call", { callId: roomId });
     try {
       await fetch(`/api/calls/${call.id}`, {
         method: "PUT",
@@ -1068,6 +1080,7 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
         cleanupCall();
       });
       es.addEventListener("call-ended", () => {
+        if (!activeCallRef.current) return;
         toast({ title: "Звонок завершён", description: "Собеседник завершил звонок" });
         cleanupCall();
       });

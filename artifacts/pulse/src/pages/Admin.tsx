@@ -10,6 +10,7 @@ import {
   Code2, Bot, Play, Wifi
 } from "lucide-react";
 import { getSavedAccounts } from "@/lib/accounts";
+import { useAppConfirm } from "@/contexts/AppConfirmContext";
 
 interface AdminUser {
   id: number;
@@ -100,6 +101,7 @@ function StatCard({ icon, label, value, color }: { icon: React.ReactNode; label:
 }
 
 export default function Admin() {
+  const requestConfirm = useAppConfirm();
   const userId = Number(sessionStorage.getItem("pulse-user-id") || "0");
   const [accessChecked, setAccessChecked] = useState(false);
   const [hasAccess, setHasAccess] = useState(false);
@@ -552,7 +554,12 @@ export default function Admin() {
   };
 
   const deletePrizeCode = async (id: number) => {
-    if (!confirm("Удалить этот код? Неиспользованные активации будут невозможны.")) return;
+    if (!(await requestConfirm({
+      title: "Удалить код?",
+      description: "Неиспользованные активации по этому коду станут невозможны.",
+      confirmLabel: "Удалить",
+      destructive: true,
+    }))) return;
     try {
       const res = await fetch(`/api/admin/prize-codes/${id}`, { method: "DELETE", headers: getHeader() });
       if (res.ok) setPrizeCodes(prev => prev.filter(code => code.id !== id));
@@ -639,7 +646,7 @@ export default function Admin() {
   };
 
   const handleDeleteEvent = async (id: number) => {
-    if (!confirm("Удалить событие?")) return;
+    if (!(await requestConfirm({ title: "Удалить событие?", confirmLabel: "Удалить", destructive: true }))) return;
     try {
       await fetch(`/api/admin/platform-events/${id}`, { method: "DELETE", headers: getHeader() });
       showToast("🗑️ Событие удалено", "ok");
@@ -907,7 +914,12 @@ export default function Admin() {
   }, []);
 
   const handleDeleteAdminBot = async (botId: number, username: string) => {
-    if (!window.confirm(`Удалить бота @${username}? Это нельзя отменить.`)) return;
+    if (!(await requestConfirm({
+      title: `Удалить бота @${username}?`,
+      description: "Это действие нельзя отменить.",
+      confirmLabel: "Удалить",
+      destructive: true,
+    }))) return;
     setDeletingBotId(botId);
     try {
       const res = await fetch(`/api/admin/bots/${botId}`, { method: "DELETE", headers: getHeader() });
@@ -986,7 +998,12 @@ export default function Admin() {
       push_subscriptions: "push-подписок",
       reports: "обработанных жалоб",
     };
-    if (!window.confirm(`Удалить записи из «${targets[dbCleanTarget] || dbCleanTarget}»? Это нельзя отменить.`)) return;
+    if (!(await requestConfirm({
+      title: `Удалить записи из «${targets[dbCleanTarget] || dbCleanTarget}»?`,
+      description: "Это действие нельзя отменить.",
+      confirmLabel: "Удалить",
+      destructive: true,
+    }))) return;
     setDbCleaning(true);
     try {
       const res = await fetch("/api/admin/db-cleanup", {
@@ -2962,7 +2979,11 @@ export default function Admin() {
                           )}
                           <button
                             onClick={async () => {
-                              if (!confirm("Удалить репорт?")) return;
+                              if (!(await requestConfirm({
+                                title: "Удалить репорт?",
+                                confirmLabel: "Удалить",
+                                destructive: true,
+                              }))) return;
                               const res = await fetch(`/api/admin/support/bugs/${bug.id}`, { method: "DELETE", headers: getHeader() });
                               if (res.ok) setBugs(prev => prev.filter(b => b.id !== bug.id));
                             }}

@@ -15,6 +15,7 @@ import { ChannelThread } from "./ChannelThread";
 import { useLocation } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { useAppConfirm } from "@/contexts/AppConfirmContext";
 import { useScreenLock } from "@/hooks/useScreenLock";
 import { authenticateBiometric, isBiometricEnabled } from "@/lib/biometric";
 import { BOT_AVATAR_URL } from "@/lib/botAvatar";
@@ -309,6 +310,7 @@ function formatAutoDeleteLabel(seconds: number | null | undefined): string {
 }
 
 export function ChatWindow({ chatId }: ChatWindowProps) {
+  const requestConfirm = useAppConfirm();
   const { setSelectedChatId, setActiveCall, setTypingForChat, startCall, inviteToCall, currentUserId } = useAppContext();
   const { permission, requestPermission, notify } = useNotifications();
   const { t } = useLanguage();
@@ -1009,7 +1011,11 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
 
   const deleteSelectedMessages = async () => {
     if (!selectedMessageIds.size || bulkDeletingMessages) return;
-    if (!window.confirm(`Удалить выбранные сообщения (${selectedMessageIds.size})?`)) return;
+    if (!(await requestConfirm({
+      title: `Удалить выбранные сообщения (${selectedMessageIds.size})?`,
+      confirmLabel: "Удалить",
+      destructive: true,
+    }))) return;
     setBulkDeletingMessages(true);
     try {
       const res = await fetch("/api/messages/bulk", {

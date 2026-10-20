@@ -7,6 +7,7 @@ import {
   BookOpen, Play, Download, Hash, List, Keyboard, Clock, ArrowRight, CheckCircle2
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAppConfirm } from "@/contexts/AppConfirmContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useLocation } from "wouter";
 import { useAppContext } from "@/contexts/AppContext";
@@ -667,6 +668,7 @@ export default function Bots() {
   const { lang } = useLanguage();
   const en = lang === "en";
   const { toast } = useToast();
+  const requestConfirm = useAppConfirm();
   const [, setLocation] = useLocation();
   const { setSelectedChatId } = useAppContext() as any;
   const [bots, setBots] = useState<BotRecord[]>([]);
@@ -735,7 +737,13 @@ export default function Bots() {
   };
 
   const handleDelete = async (bot: BotRecord) => {
-    if (!window.confirm(en ? `Delete @${bot.username}? This cannot be undone.` : `Удалить бота @${bot.username}? Это действие нельзя отменить.`)) return;
+    if (!(await requestConfirm({
+      title: en ? `Delete @${bot.username}?` : `Удалить бота @${bot.username}?`,
+      description: en ? "This action cannot be undone." : "Это действие нельзя отменить.",
+      confirmLabel: en ? "Delete" : "Удалить",
+      cancelLabel: en ? "Cancel" : "Отмена",
+      destructive: true,
+    }))) return;
     setDeletingId(bot.bot_user_id);
     try {
       const res = await fetch(`/api/bots/${bot.bot_user_id}`, { method: "DELETE", headers: getUserIdHeader() });
@@ -754,7 +762,12 @@ export default function Bots() {
   };
 
   const handleRegenerate = async (bot: BotRecord) => {
-    if (!window.confirm(en ? "Generate a new token? The old token will stop working." : "Сгенерировать новый токен? Старый токен перестанет работать.")) return;
+    if (!(await requestConfirm({
+      title: en ? "Generate a new token?" : "Сгенерировать новый токен?",
+      description: en ? "The old token will stop working." : "Старый токен перестанет работать.",
+      confirmLabel: en ? "Generate" : "Сгенерировать",
+      cancelLabel: en ? "Cancel" : "Отмена",
+    }))) return;
     setRegenerating(bot.bot_user_id);
     try {
       const res = await fetch(`/api/bots/${bot.bot_user_id}/token`, { method: "POST", headers: getUserIdHeader() });

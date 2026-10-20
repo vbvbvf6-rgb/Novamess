@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { useGetMe } from "@workspace/api-client-react";
 import { useSearch } from "wouter";
+import { useAppConfirm } from "@/contexts/AppConfirmContext";
 
 const getCurrentUserId = () => Number(sessionStorage.getItem("pulse-user-id") || "0");
 function getHeader(): Record<string, string> {
@@ -214,6 +215,7 @@ function BugReportForm({ onSuccess }: { onSuccess: () => void }) {
 // ── Bug Reports List ───────────────────────────────────────────────────────────
 
 function BugReportsList() {
+  const requestConfirm = useAppConfirm();
   const [reports, setReports] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -231,7 +233,12 @@ function BugReportsList() {
   useEffect(() => { fetchReports(); }, []);
 
   const handleDelete = async (id: number) => {
-    if (!confirm("Удалить этот репорт?")) return;
+    if (!(await requestConfirm({
+      title: "Удалить репорт?",
+      description: "Репорт будет удалён из списка.",
+      confirmLabel: "Удалить",
+      destructive: true,
+    }))) return;
     setDeletingId(id);
     try {
       const res = await fetch(`/api/support/bugs/${id}`, { method: "DELETE", headers: getHeader() });

@@ -2,6 +2,56 @@
 
 ---
 
+## H1Cloud.net: первый запуск и автодеплой из GitHub
+
+H1Cloud.net предоставляет облачный сервер (VPS) с консолью, переменными
+окружения и автозапуском. На сайте не удалось подтвердить встроенную GitHub
+интеграцию, поэтому в проект добавлен GitHub Actions-деплой по SSH: он
+передаёт файлы выбранной ветки на сервер, собирает фронтенд и API и
+перезапускает уже созданный процесс. ZIP вручную скачивать не потребуется.
+
+### Один раз на сервере H1Cloud
+
+1. Создайте Linux-сервер H1Cloud с Node.js 20+ и достаточной памятью. Для
+   мессенджера также нужна доступная PostgreSQL-база: `DATABASE_URL`.
+2. Установите `pnpm` 10 и `pm2`, создайте папку проекта (например,
+   `/opt/nova-messenger`) и добавьте SSH-ключ GitHub Actions в `authorized_keys`
+   пользователя сервера.
+3. В настройках H1Cloud добавьте серверные переменные из `.env.example`.
+   Обязательны `DATABASE_URL` и `JWT_SECRET` (либо `SESSION_SECRET`).
+   Не публикуйте их и не сохраняйте в GitHub-репозитории.
+4. Создайте папку проекта и запустите первое развёртывание через GitHub
+   Actions (`Deploy to H1Cloud` → `Run workflow`). После сборки один раз
+   запустите приложение из консоли H1Cloud:
+
+   ```bash
+   cd /opt/nova-messenger
+   pm2 start scripts/start-prod.sh --name nova-messenger --interpreter bash
+   pm2 save
+   ```
+
+   В панели H1Cloud настройте автозапуск `pm2 resurrect` после перезагрузки
+   сервера и проксирование публичного HTTP-порта на порт приложения (`8080`,
+   если H1Cloud не задаёт `PORT`).
+
+### Настройка GitHub Actions
+
+В GitHub → **Settings → Secrets and variables → Actions** добавьте:
+
+- Secrets: `H1CLOUD_HOST`, `H1CLOUD_USER`, `H1CLOUD_SSH_PRIVATE_KEY`,
+  `H1CLOUD_KNOWN_HOSTS`.
+- Variables: `H1CLOUD_APP_DIR` (например, `/opt/nova-messenger`) и
+  `H1CLOUD_SSH_PORT` (необязательно, по умолчанию `22`).
+
+`H1CLOUD_KNOWN_HOSTS` — проверенный публичный ключ SSH-сервера H1Cloud, а
+`H1CLOUD_SSH_PRIVATE_KEY` — закрытый ключ пользователя, которому разрешён
+доступ на сервер. Добавьте только открытый ключ в `authorized_keys`.
+Не вставляйте закрытый ключ в чат или файлы проекта.
+
+После этого каждый push в `main` автоматически обновит сервер. Для другой
+ветки измените `branches` в `.github/workflows/deploy-h1cloud.yml`.
+`VITE_API_URL` оставьте пустым: фронтенд и API обслуживаются одним сервером.
+
 ## ⭐ Бэкенд — Fly.io (бесплатно навсегда)
 
 **Fly.io** — лучший бесплатный вариант для Socket.IO: 3 VM в подарок, не спит, нет cold starts.

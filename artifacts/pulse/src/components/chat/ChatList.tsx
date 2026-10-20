@@ -15,6 +15,7 @@ import { useAppContext } from "@/contexts/AppContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { StoriesBar } from "@/components/stories/StoriesBar";
 import { useToast } from "@/hooks/use-toast";
+import { useAppConfirm } from "@/contexts/AppConfirmContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { GlobalSearch } from "./GlobalSearch";
 import { useQueryClient } from "@tanstack/react-query";
@@ -250,6 +251,7 @@ function SavedMessagesEntry({ onOpen }: { onOpen: (id: number) => void }) {
 }
 
 export function ChatList() {
+  const requestConfirm = useAppConfirm();
   const { selectedChatId, setSelectedChatId, typingByChat, typingTypeByChat, currentUserId } = useAppContext();
   const { t, lang } = useLanguage();
   const [, navigate] = useLocation();
@@ -468,7 +470,11 @@ export function ChatList() {
       toast({ title: "Этот системный чат нельзя удалить", variant: "destructive" });
       return;
     }
-    if (!window.confirm("Удалить этот чат из списка?")) return;
+    if (!(await requestConfirm({
+      title: "Удалить этот чат из списка?",
+      confirmLabel: "Удалить",
+      destructive: true,
+    }))) return;
     try {
       const res = await fetch(`/api/chats/${contextMenuChat.id}/leave`, { method: "POST", headers: getAuthHeaders() });
       if (!res.ok) throw new Error();

@@ -164,6 +164,13 @@ export function initSocketIO(server: HttpServer): SocketIOServer {
       socket.to(`call:${callId}`).emit("peer-left", { userId, callId });
     });
 
+    socket.on("end-call", ({ callId }: { callId: number }) => {
+      const roomName = `call:${callId}`;
+      // Only an authenticated socket that joined this call can end it for peers.
+      if (!Number.isSafeInteger(callId) || socket.data.callId !== callId || !socket.rooms.has(roomName)) return;
+      socket.to(roomName).emit("call-ended", { callId, userId });
+    });
+
     socket.on("disconnect", () => {
       const callId = socket.data.callId as number | undefined;
       if (callId) {

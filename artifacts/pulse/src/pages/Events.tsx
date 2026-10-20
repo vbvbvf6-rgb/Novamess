@@ -387,7 +387,10 @@ export default function Events() {
         }
         if (r.status === 402) {
           const data = await r.json().catch(() => ({}));
-          alert(data.error || (en ? "Not enough Nova" : "Недостаточно Nova"));
+          toast({
+            title: data.error || (en ? "Not enough Nova" : "Недостаточно Nova"),
+            variant: "destructive",
+          });
         }
       }
     } catch {
