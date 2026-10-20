@@ -83,6 +83,8 @@
     "@capacitor/push-notifications": "^8.1.1",
     "@tanstack/query-sync-storage-persister": "^5.101.2",
     "@tanstack/react-query-persist-client": "^5.101.2",
+    "@zxing/browser": "^0.2.1",
+    "@zxing/library": "^0.23.0",
     "socket.io-client": "^4.8.3"
   },
   "optionalDependencies": {

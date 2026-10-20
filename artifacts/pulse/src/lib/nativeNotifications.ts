@@ -13,10 +13,38 @@
 
 import { Capacitor } from "@capacitor/core";
 
-let _tokenSent = false; // avoid re-sending the same token on hot reloads
+let activeAuthToken: string | undefined;
+let latestFcmToken: string | null = null;
+let listenersInstalled = false;
+
+async function saveFcmToken(token: string): Promise<void> {
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const bearer = activeAuthToken ?? sessionStorage.getItem("pulse-token") ?? undefined;
+    if (!bearer) {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      continue;
+    }
+
+    try {
+      const response = await fetch("/api/push/fcm-token", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${bearer}`,
+        },
+        body: JSON.stringify({ token }),
+      });
+      if (response.ok) return;
+    } catch {
+      // Retry transient network failures.
+    }
+    await new Promise((resolve) => setTimeout(resolve, 2000 * (attempt + 1)));
+  }
+}
 
 export async function setupNativeNotifications(authToken?: string): Promise<void> {
   if (!Capacitor.isNativePlatform()) return;
+  activeAuthToken = authToken ?? sessionStorage.getItem("pulse-token") ?? undefined;
 
   try {
     const { LocalNotifications } = await import("@capacitor/local-notifications");
@@ -51,60 +79,34 @@ export async function setupNativeNotifications(authToken?: string): Promise<void
   try {
     const { PushNotifications } = await import("@capacitor/push-notifications");
 
-    // ── 2. Request permission ─────────────────────────────────────────────
+    // Install listeners before registering. Capacitor can deliver the
+    // registration event immediately, so adding it afterwards can lose the
+    // device token and leave the server unable to reach this phone.
+    if (!listenersInstalled) {
+      await PushNotifications.addListener("registration", ({ value }) => {
+        latestFcmToken = value;
+        void saveFcmToken(value);
+      });
+
+      await PushNotifications.addListener("registrationError", (err) => {
+        console.warn("[fcm] registration error", err);
+      });
+
+      await PushNotifications.addListener("pushNotificationActionPerformed", (action) => {
+        const data = action.notification.data as Record<string, string> | undefined;
+        const url = data?.url;
+        if (url) setTimeout(() => { window.location.href = url; }, 200);
+      });
+      listenersInstalled = true;
+    }
+
+    // ── 2. Request permission and register with FCM ────────────────────────
     const permResult = await PushNotifications.requestPermissions();
     if (permResult.receive !== "granted") return;
-
-    // ── 3. Register with FCM and forward token to backend ─────────────────
     await PushNotifications.register();
 
-    PushNotifications.addListener("registration", async (token) => {
-      if (_tokenSent) return;
-      _tokenSent = true;
-
-      // The auth token may arrive slightly after setupNativeNotifications is called.
-      // Retry a few times in case the user just logged in.
-      const getToken = () =>
-        authToken ??
-        sessionStorage.getItem("pulse-token") ??
-        undefined;
-
-      for (let attempt = 0; attempt < 5; attempt++) {
-        const bearer = getToken();
-        if (!bearer) {
-          await new Promise((r) => setTimeout(r, 1000));
-          continue;
-        }
-        try {
-          const res = await fetch("/api/push/fcm-token", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${bearer}`,
-            },
-            body: JSON.stringify({ token: token.value }),
-          });
-          if (res.ok) break;
-        } catch {
-          // network error — retry
-        }
-        await new Promise((r) => setTimeout(r, 2000 * (attempt + 1)));
-      }
-    });
-
-    PushNotifications.addListener("registrationError", (err) => {
-      console.warn("[fcm] registration error", err);
-    });
-
-    // ── 4. Handle notification tap (app in background / killed) ───────────
-    PushNotifications.addListener("pushNotificationActionPerformed", (action) => {
-      const data = action.notification.data as Record<string, string> | undefined;
-      const url = data?.url;
-      if (url) {
-        // Give React a tick to mount before navigating
-        setTimeout(() => { window.location.href = url; }, 200);
-      }
-    });
+    // Re-associate an already-issued device token after account switches.
+    if (latestFcmToken) await saveFcmToken(latestFcmToken);
 
   } catch (err) {
     console.warn("[fcm] PushNotifications plugin error", err);
@@ -114,9 +116,21 @@ export async function setupNativeNotifications(authToken?: string): Promise<void
 /** Call this when the user logs out to clear the stored FCM token. */
 export async function unregisterNativePush(): Promise<void> {
   if (!Capacitor.isNativePlatform()) return;
-  _tokenSent = false;
   try {
     const { PushNotifications } = await import("@capacitor/push-notifications");
+    const bearer = activeAuthToken ?? sessionStorage.getItem("pulse-token") ?? undefined;
+    if (bearer) {
+      await fetch("/api/push/fcm-token", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${bearer}`,
+        },
+        body: JSON.stringify(latestFcmToken ? { token: latestFcmToken } : {}),
+      }).catch(() => {});
+    }
     await PushNotifications.unregister();
+    latestFcmToken = null;
+    activeAuthToken = undefined;
   } catch {}
 }

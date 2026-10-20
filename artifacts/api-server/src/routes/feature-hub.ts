@@ -480,7 +480,12 @@ router.post("/playlists/:playlistId/tracks", async (req, res) => {
   const playlistId = Number(req.params.playlistId);
   const title = String(req.body?.title || "").trim().slice(0, 160);
   const mediaUrl = String(req.body?.mediaUrl || "").trim();
-  if (!title || !mediaUrl) return res.status(400).json({ error: "Нужны название и аудиофайл" });
+  if (!title || !mediaUrl.startsWith("data:audio/")) {
+    return res.status(400).json({ error: "Выберите аудиофайл с устройства" });
+  }
+  if (!/^data:audio\/[a-z0-9.+-]+;base64,[a-z0-9+/=]+$/i.test(mediaUrl)) {
+    return res.status(400).json({ error: "Файл аудио имеет неверный формат" });
+  }
   if (mediaUrl.startsWith("data:audio/") && mediaUrl.length > 16 * 1024 * 1024) {
     return res.status(413).json({ error: "Аудиофайл слишком большой. Максимум — 12 МБ." });
   }

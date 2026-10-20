@@ -49,6 +49,7 @@ const Login = lazy(() => import("@/pages/Login"));
 const Register = lazy(() => import("@/pages/Register"));
 const ForgotPassword = lazy(() => import("@/pages/ForgotPassword"));
 const QrConfirm = lazy(() => import("@/pages/QrConfirm"));
+const QrScanner = lazy(() => import("@/pages/QrScanner"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 const Privacy = lazy(() => import("@/pages/Privacy"));
 const Terms = lazy(() => import("@/pages/Terms"));
@@ -546,6 +547,7 @@ function MainAppInner({ onLogout, onSwitchAccount, onRemoveAccount, onOpenAddAcc
                 <Route path="/plugins/:pluginId" component={PluginRoute} />
                 <Route path="/user/:userId" component={UserProfile} />
                 <Route path="/qr/:tokenId" component={QrConfirm} />
+                <Route path="/qr-scan" component={QrScanner} />
                 <Route path="/privacy" component={Privacy} />
                 <Route path="/terms" component={Terms} />
                 <Route path="/invite/:token" component={JoinInvite} />

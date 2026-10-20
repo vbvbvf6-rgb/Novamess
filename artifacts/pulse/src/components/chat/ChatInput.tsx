@@ -161,7 +161,16 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
   const STICKERS_TAB = EMOJI_CATEGORIES.length;
   const [showEmoji, setShowEmoji] = useState(false);
   const [emojiCategory, setEmojiCategory] = useState(0);
-  const [recentEmojis, setRecentEmojis] = useState(RECENT_EMOJIS);
+  const [recentEmojis, setRecentEmojis] = useState<string[]>(() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem("pulse-recent-emojis") || "null");
+      return Array.isArray(stored) && stored.every((emoji) => typeof emoji === "string")
+        ? stored.slice(0, 32)
+        : RECENT_EMOJIS;
+    } catch {
+      return RECENT_EMOJIS;
+    }
+  });
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [docPreviews, setDocPreviews] = useState<DocPreview[]>([]);
   const [isSending, setIsSending] = useState(false);
@@ -170,6 +179,14 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
   const [scheduledMessages, setScheduledMessages] = useState<any[]>([]);
   const [showScheduledList, setShowScheduledList] = useState(false);
   const [loadingScheduled, setLoadingScheduled] = useState(false);
+
+  const rememberEmoji = (emoji: string) => {
+    setRecentEmojis((previous) => {
+      const next = [emoji, ...previous.filter((item) => item !== emoji)].slice(0, 32);
+      localStorage.setItem("pulse-recent-emojis", JSON.stringify(next));
+      return next;
+    });
+  };
 
   const [isRecording, setIsRecording] = useState(false);
   const [recordSeconds, setRecordSeconds] = useState(0);
@@ -1235,7 +1252,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
               initial={{ opacity: 0, y: 10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 10, scale: 0.95 }}
-              className="absolute bottom-full mb-3 left-0 w-[340px] z-50 bg-card border border-border rounded-[24px] shadow-2xl overflow-hidden origin-bottom-left"
+              className="absolute bottom-full left-0 z-50 mb-3 w-[min(352px,calc(100vw-24px))] origin-bottom-left overflow-hidden rounded-[24px] border border-border bg-card shadow-2xl sm:w-[352px]"
             >
               {/* Category/Sticker tab bar */}
               <div className="flex items-center gap-0.5 px-2 py-2 bg-secondary/50 border-b border-border overflow-x-auto scrollbar-none">
@@ -1244,7 +1261,8 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
                     key={i}
                     onClick={() => setEmojiCategory(i)}
                     title={cat.label}
-                    className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-all ${emojiCategory === i ? "bg-background shadow-sm border border-border scale-110" : "hover:bg-background/50"}`}
+                    aria-label={cat.label}
+                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border transition-all ${emojiCategory === i ? "scale-105 border-primary/30 bg-primary/10 shadow-sm" : "border-transparent hover:bg-background/70"}`}
                   >
                     <EmojiGlyph emoji={cat.icon} alt={cat.label} size={21} />
                   </button>
@@ -1292,9 +1310,9 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
                   {(emojiCategory === 0 ? recentEmojis : EMOJI_CATEGORIES[emojiCategory].emojis).map((emoji, i) => (
                     <button
                       key={`${emoji}-${i}`}
-                      onClick={() => insertEmoji(emoji)}
+                      onClick={() => { rememberEmoji(emoji); insertEmoji(emoji); }}
                       aria-label={`Добавить ${emoji}`}
-                      className="emoji-picker-cell hover:bg-secondary rounded-xl p-1.5 transition-colors flex items-center justify-center hover:scale-110 active:scale-95"
+                      className="emoji-picker-cell flex items-center justify-center rounded-xl border border-transparent p-1.5 transition-all hover:scale-110 hover:border-primary/20 hover:bg-primary/10 active:scale-95"
                       style={{ animationDelay: `${Math.min(i, 32) * 12}ms` }}
                     >
                       <EmojiGlyph emoji={emoji} size={24} className="emoji-picker-glyph-animated" />

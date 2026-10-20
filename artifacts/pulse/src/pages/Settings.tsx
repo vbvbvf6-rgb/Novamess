@@ -2625,6 +2625,27 @@ export default function Settings() {
           {/* ─── PRIVACY & SECURITY ────────────────────────── */}
           {displaySection === "privacy" && (
             <div className="max-w-2xl mx-auto space-y-6">
+              <Section title={lang === "ru" ? "Вход по QR-коду" : "QR sign-in"} icon={<QrCode size={13} />}>
+                <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center">
+                  <div className="flex min-w-0 flex-1 items-start gap-3">
+                    <div className="rounded-xl bg-primary/10 p-2 text-primary"><QrCode size={18} /></div>
+                    <div>
+                      <p className="text-sm font-semibold">{lang === "ru" ? "Сканируйте код в мессенджере" : "Scan a code in Messenger"}</p>
+                      <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                        {lang === "ru" ? "Разрешите доступ к камере и подтвердите вход на этом устройстве." : "Allow camera access and confirm sign-in on this device."}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setLocation("/qr-scan")}
+                    className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground transition hover:brightness-110"
+                  >
+                    <QrCode size={16} />
+                    {lang === "ru" ? "Открыть сканер" : "Open scanner"}
+                  </button>
+                </div>
+              </Section>
               <Section title={t("settings.privacy")} icon={<Shield size={13}/>}>
                 <div className="p-4">
                   <div className="flex items-center gap-3 mb-3">
