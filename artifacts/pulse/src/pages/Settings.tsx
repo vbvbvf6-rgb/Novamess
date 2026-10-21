@@ -37,6 +37,7 @@ import {
 import type { Lang } from "@/i18n/translations";
 import { APP_THEMES, applyAppTheme } from "@/lib/appThemes";
 import { disableBiometric, isBiometricSupported, registerBiometric } from "@/lib/biometric";
+import { isAndroidNativeApp, NetworkProxy, type NetworkProxyType } from "@/lib/nativeNetworkProxy";
 import { localStoragePersister } from "@/lib/queryClient";
 import Plugins from "@/pages/Plugins";
 
@@ -1836,6 +1837,117 @@ export default function Settings() {
   // Advanced
   const [dataSaver, setDataSaver] = useState(() => lsb("pulse-data-saver", false));
   const [autoDownload, setAutoDownload] = useState(() => lsb("pulse-auto-download", true));
+  const [nativeProxySupported, setNativeProxySupported] = useState<boolean | null>(null);
+  const [nativeProxyEnabled, setNativeProxyEnabled] = useState(false);
+  const [nativeProxyType, setNativeProxyType] = useState<NetworkProxyType>("socks5");
+  const [nativeProxyHost, setNativeProxyHost] = useState("");
+  const [nativeProxyPort, setNativeProxyPort] = useState("");
+  const [nativeProxySaving, setNativeProxySaving] = useState(false);
+  const isAndroidApp = isAndroidNativeApp();
+
+  useEffect(() => {
+    if (!isAndroidApp) return;
+    let active = true;
+    NetworkProxy.getSettings()
+      .then(settings => {
+        if (!active) return;
+        setNativeProxySupported(settings.supported);
+        setNativeProxyEnabled(settings.enabled);
+        setNativeProxyType(settings.type === "http" ? "http" : "socks5");
+        setNativeProxyHost(settings.host);
+        setNativeProxyPort(settings.port ? String(settings.port) : "");
+      })
+      .catch(() => {
+        if (active) setNativeProxySupported(false);
+      });
+    return () => { active = false; };
+  }, [isAndroidApp]);
+
+  const handleSaveNativeProxy = async () => {
+    const host = nativeProxyHost.trim();
+    const port = Number(nativeProxyPort);
+    if (!host || !Number.isInteger(port) || port < 1 || port > 65535) {
+      toast({
+        title: lang === "ru" ? "Проверьте сервер и порт прокси" : "Check the proxy server and port",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setNativeProxySaving(true);
+    let timeoutId: number | undefined;
+    let previous: Awaited<ReturnType<typeof NetworkProxy.getSettings>> | null = null;
+    try {
+      previous = await NetworkProxy.getSettings();
+      await NetworkProxy.setProxy({ type: nativeProxyType, host, port });
+
+      const controller = new AbortController();
+      timeoutId = window.setTimeout(() => controller.abort(), 10_000);
+      const response = await fetch("/api/health", {
+        cache: "no-store",
+        signal: controller.signal,
+      });
+      const contentType = response.headers.get("content-type") || "";
+      if (!contentType.includes("application/json") || response.status === 502 || response.status === 504) {
+        throw new Error(lang === "ru"
+          ? "Nova не отвечает через этот прокси. Проверьте адрес и порт."
+          : "Nova did not respond through this proxy. Check the server and port.");
+      }
+
+      setNativeProxyEnabled(true);
+      toast({
+        title: lang === "ru" ? "Прокси подключён" : "Proxy connected",
+        description: lang === "ru" ? "Переподключаю Nova через прокси…" : "Reconnecting Nova through the proxy…",
+      });
+      window.setTimeout(() => window.location.reload(), 500);
+    } catch (error) {
+      try {
+        if (previous?.enabled && previous.host && previous.port) {
+          await NetworkProxy.setProxy({
+            type: previous.type,
+            host: previous.host,
+            port: previous.port,
+          });
+        } else {
+          await NetworkProxy.clearProxy();
+        }
+      } catch {}
+      setNativeProxyEnabled(previous?.enabled ?? false);
+      toast({
+        title: lang === "ru" ? "Не удалось подключить прокси" : "Could not connect the proxy",
+        description: error instanceof Error ? error.message : undefined,
+        variant: "destructive",
+      });
+    } finally {
+      if (timeoutId !== undefined) window.clearTimeout(timeoutId);
+      setNativeProxySaving(false);
+    }
+  };
+
+  const handleClearNativeProxy = async () => {
+    const confirmed = window.confirm(lang === "ru"
+      ? "Отключить прокси? Nova будет подключаться напрямую, и в этой сети может не открыться."
+      : "Disable the proxy? Nova will connect directly and may not open on this network.");
+    if (!confirmed) return;
+
+    setNativeProxySaving(true);
+    try {
+      await NetworkProxy.clearProxy();
+      setNativeProxyEnabled(false);
+      setNativeProxyHost("");
+      setNativeProxyPort("");
+      toast({ title: lang === "ru" ? "Прокси отключён" : "Proxy disabled" });
+      window.setTimeout(() => window.location.reload(), 300);
+    } catch (error) {
+      toast({
+        title: lang === "ru" ? "Не удалось отключить прокси" : "Could not disable the proxy",
+        description: error instanceof Error ? error.message : undefined,
+        variant: "destructive",
+      });
+    } finally {
+      setNativeProxySaving(false);
+    }
+  };
 
   // Battery
   const [powerSaving, setPowerSaving] = useState(() => lsb("pulse-power-saving", false));
@@ -2959,6 +3071,133 @@ export default function Settings() {
           {/* ─── ADVANCED ──────────────────────────────────── */}
           {displaySection === "advanced" && (
             <div className="max-w-2xl mx-auto space-y-6">
+              <Section title={lang === "ru" ? "Прокси-соединение" : "Proxy connection"} icon={<Globe size={13}/>}>
+                {!isAndroidApp ? (
+                  <div className="p-4 text-sm text-muted-foreground">
+                    {lang === "ru"
+                      ? "Настройка прокси доступна в установленном Android-приложении. В браузере прокси настраивается средствами устройства или браузера."
+                      : "Proxy settings are available in the installed Android app. In a browser, configure the proxy in your device or browser settings."}
+                  </div>
+                ) : nativeProxySupported === null ? (
+                  <div className="p-4 text-sm text-muted-foreground">
+                    {lang === "ru" ? "Проверяю поддержку прокси…" : "Checking proxy support…"}
+                  </div>
+                ) : !nativeProxySupported ? (
+                  <div className="p-4 text-sm text-muted-foreground">
+                    {lang === "ru"
+                      ? "Прокси не поддерживается этой версией Android System WebView. Обновите Android System WebView."
+                      : "This Android System WebView version does not support proxies. Update Android System WebView."}
+                    {nativeProxyEnabled && (
+                      <button
+                        onClick={handleClearNativeProxy}
+                        disabled={nativeProxySaving}
+                        className="mt-3 block rounded-xl border border-border px-3 py-2 text-foreground disabled:opacity-50"
+                      >
+                        {lang === "ru" ? "Очистить сохранённый прокси" : "Clear saved proxy"}
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-4 p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold">
+                          {lang === "ru" ? "Прокси только для Nova на этом устройстве" : "Proxy for Nova on this device"}
+                        </p>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {lang === "ru"
+                            ? "Укажите сервер SOCKS5 или HTTP от вашего провайдера. Настройка будет применяться при запуске Android-приложения."
+                            : "Enter a SOCKS5 or HTTP server from your provider. The setting will be applied when the Android app starts."}
+                        </p>
+                      </div>
+                      <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ${nativeProxyEnabled ? "bg-green-500/10 text-green-500" : "bg-secondary text-muted-foreground"}`}>
+                        {nativeProxyEnabled
+                          ? (lang === "ru" ? "Включён" : "On")
+                          : (lang === "ru" ? "Выключен" : "Off")}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2" role="group" aria-label={lang === "ru" ? "Тип прокси" : "Proxy type"}>
+                      {(["socks5", "http"] as const).map(type => (
+                        <button
+                          key={type}
+                          type="button"
+                          aria-pressed={nativeProxyType === type}
+                          disabled={nativeProxySaving}
+                          onClick={() => setNativeProxyType(type)}
+                          className={`rounded-xl border px-3 py-2.5 text-sm font-semibold transition-colors disabled:opacity-50 ${nativeProxyType === type ? "border-primary bg-primary/10 text-primary" : "border-border bg-background hover:bg-secondary"}`}
+                        >
+                          {type === "socks5" ? "SOCKS5" : "HTTP"}
+                        </button>
+                      ))}
+                    </div>
+
+                    <label className="block space-y-1.5">
+                      <span className="text-xs font-medium text-muted-foreground">
+                        {lang === "ru" ? "Сервер" : "Server"}
+                      </span>
+                      <Input
+                        value={nativeProxyHost}
+                        onChange={event => setNativeProxyHost(event.target.value)}
+                        placeholder="proxy.example.com"
+                        autoComplete="off"
+                        autoCapitalize="none"
+                        spellCheck={false}
+                        disabled={nativeProxySaving}
+                        className="bg-background"
+                      />
+                    </label>
+
+                    <label className="block space-y-1.5">
+                      <span className="text-xs font-medium text-muted-foreground">
+                        {lang === "ru" ? "Порт" : "Port"}
+                      </span>
+                      <Input
+                        type="number"
+                        inputMode="numeric"
+                        min={1}
+                        max={65535}
+                        value={nativeProxyPort}
+                        onChange={event => setNativeProxyPort(event.target.value)}
+                        placeholder="1080"
+                        autoComplete="off"
+                        disabled={nativeProxySaving}
+                        className="bg-background"
+                      />
+                    </label>
+
+                    <p className="text-xs leading-relaxed text-muted-foreground">
+                      {lang === "ru"
+                        ? "MTProto-прокси Telegram не подходит. Поддерживаются SOCKS5 и HTTP без логина и пароля. Если прокси перестанет отвечать, подключитесь через VPN и отключите его здесь."
+                        : "Telegram MTProto proxies are not compatible. SOCKS5 and HTTP without a username or password are supported. If the proxy stops responding, reconnect with a VPN and disable it here."}
+                    </p>
+
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={handleSaveNativeProxy}
+                        disabled={nativeProxySaving || !nativeProxyHost.trim() || !nativeProxyPort}
+                        className="flex-1 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {nativeProxySaving
+                          ? (lang === "ru" ? "Проверяю…" : "Checking…")
+                          : (lang === "ru" ? "Проверить и подключить" : "Test and connect")}
+                      </button>
+                      {nativeProxyEnabled && (
+                        <button
+                          type="button"
+                          onClick={handleClearNativeProxy}
+                          disabled={nativeProxySaving}
+                          className="rounded-xl border border-border px-4 py-2.5 text-sm font-semibold hover:bg-secondary disabled:opacity-50"
+                        >
+                          {lang === "ru" ? "Отключить" : "Disable"}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </Section>
+
               <Section title={lang==="ru"?"Загрузка и данные":"Data & Downloads"} icon={<Download size={13}/>}>
                 <Row icon={<Download size={18}/>} color="bg-blue-500/10 text-blue-500"
                   label={lang==="ru"?"Экономия трафика":"Data Saver"}
