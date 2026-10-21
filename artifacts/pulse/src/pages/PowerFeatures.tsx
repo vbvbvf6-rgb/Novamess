@@ -4,9 +4,10 @@ import { useGetContacts } from "@workspace/api-client-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import AccessibilityPanel from "@/components/feature-panels/AccessibilityPanel";
 import { cn } from "@/lib/utils";
+import { PlaylistAudioPlayer } from "@/components/audio/PlaylistAudioPlayer";
 import {
-  Accessibility, Shield, Users, ListMusic, Save, Plus, Trash2, Play,
-  Pause, FileAudio, UserCog, ScrollText, ShieldAlert, CheckCircle2,
+  Accessibility, Shield, Users, ListMusic, Save, Plus, Trash2,
+  FileAudio, UserCog, ScrollText, ShieldAlert, CheckCircle2,
 } from "lucide-react";
 
 const tokenHeaders = () => {
@@ -117,7 +118,7 @@ type Playlist = { id: number; name: string; description?: string; track_count?: 
 type Track = { id: number; title: string; artist?: string; media_url: string };
 
 export function PlaylistWidget({ compact = false }: { compact?: boolean }) {
-  const [playlists, setPlaylists] = useState<Playlist[]>([]); const [selected, setSelected] = useState<any>(null); const [name, setName] = useState(""); const [title, setTitle] = useState(""); const [artist, setArtist] = useState(""); const [url, setUrl] = useState(""); const [playing, setPlaying] = useState<number | null>(null); const [error, setError] = useState(""); const [isAdding, setIsAdding] = useState(false); const [isPublic, setIsPublic] = useState(true); const trackInputRef = React.useRef<HTMLInputElement>(null);
+  const [playlists, setPlaylists] = useState<Playlist[]>([]); const [selected, setSelected] = useState<any>(null); const [name, setName] = useState(""); const [title, setTitle] = useState(""); const [artist, setArtist] = useState(""); const [url, setUrl] = useState(""); const [error, setError] = useState(""); const [isAdding, setIsAdding] = useState(false); const [isPublic, setIsPublic] = useState(true); const trackInputRef = React.useRef<HTMLInputElement>(null);
   const load = async () => { try { setPlaylists(await api<Playlist[]>("/api/playlists")); } catch (e) { setError((e as Error).message); } };
   useEffect(() => { load(); }, []);
   const create = async () => {
@@ -161,7 +162,7 @@ export function PlaylistWidget({ compact = false }: { compact?: boolean }) {
     <div className="flex gap-2"><input value={name} onChange={e => setName(e.target.value)} placeholder="Новый плейлист" className="flex-1 rounded-xl border border-border bg-background px-3 py-2 text-sm" /><button onClick={create} className="rounded-xl bg-primary px-3 text-primary-foreground"><Plus size={16} /></button></div>
     <label className="flex items-center gap-2 text-xs text-muted-foreground"><input type="checkbox" checked={isPublic} onChange={e => setIsPublic(e.target.checked)} className="accent-primary" /> Показывать плейлист в моём профиле</label>
     <div className="flex gap-2 overflow-x-auto pb-1">{playlists.map(p => <button key={p.id} onClick={() => open(p.id)} className={cn("shrink-0 rounded-xl border px-3 py-2 text-left", selected?.id === p.id ? "border-primary bg-primary/10" : "border-border")}><span className="block font-semibold">{p.name}</span><span className="text-[11px] text-muted-foreground">{p.track_count || 0} треков</span></button>)}</div>
-    {selected && <div className="rounded-2xl border border-border bg-background/50 p-3 space-y-2"><p className="font-bold">{selected.name}</p>{(selected.tracks as Track[]).map(track => <div key={track.id} className="flex items-center gap-2 rounded-xl bg-secondary/50 p-2"><button onClick={() => setPlaying(playing === track.id ? null : track.id)} aria-label={playing === track.id ? "Пауза" : "Воспроизвести"} className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center">{playing === track.id ? <Pause size={14} /> : <Play size={14} />}</button><div className="min-w-0 flex-1"><p className="text-sm font-semibold truncate">{track.title}</p><p className="text-xs text-muted-foreground truncate">{track.artist || "Nova"}</p></div><button onClick={() => removeTrack(track.id)} aria-label="Удалить трек" className="text-muted-foreground hover:text-destructive"><Trash2 size={14} /></button>{playing === track.id && <audio src={track.media_url} controls autoPlay className="w-full max-w-[240px]" onEnded={() => setPlaying(null)} />}</div>)}
+    {selected && <div className="rounded-2xl border border-border bg-background/50 p-3 space-y-2"><p className="font-bold">{selected.name}</p>{(selected.tracks as Track[]).map(track => <div key={track.id} className="rounded-xl bg-secondary/50 p-2.5 space-y-2"><div className="flex items-center gap-2"><div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary"><FileAudio size={14} /></div><div className="min-w-0 flex-1"><p className="text-sm font-semibold truncate">{track.title}</p><p className="text-xs text-muted-foreground truncate">{track.artist || "Nova"}</p></div><button onClick={() => removeTrack(track.id)} aria-label="Удалить трек" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-background/60 hover:text-destructive"><Trash2 size={14} /></button></div><PlaylistAudioPlayer src={track.media_url} /></div>)}
        <div className="grid sm:grid-cols-2 gap-2 pt-2"><input value={title} onChange={e => setTitle(e.target.value)} placeholder="Название трека" className="rounded-xl border border-border bg-background px-3 py-2 text-sm" /><input value={artist} onChange={e => setArtist(e.target.value)} placeholder="Исполнитель" className="rounded-xl border border-border bg-background px-3 py-2 text-sm" /></div><input ref={trackInputRef} type="file" accept="audio/*" onChange={handleTrackFile} className="hidden" /><div className="flex flex-wrap items-center gap-2"><button type="button" onClick={() => trackInputRef.current?.click()} className="inline-flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/10 px-3 py-2 text-xs font-semibold text-primary"><FileAudio size={14} /> Выбрать аудиофайл</button><span className="text-xs text-muted-foreground">Только файлы с устройства, до 12 МБ</span><button onClick={addTrack} disabled={isAdding || !title.trim() || !url.startsWith("data:audio/")} className="inline-flex items-center gap-2 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground disabled:opacity-50"><Plus size={14} /> {isAdding ? "Добавляю…" : "Добавить трек"}</button></div>
     </div>}{error && <p className="text-xs text-destructive">{error}</p>}</div>;
 }
@@ -201,15 +202,17 @@ export function PublicPlaylistWidget({ userId }: { userId: number }) {
             </div>
             <div className="space-y-2">
               {playlist.tracks.map((track) => (
-                <div key={track.id} className="flex items-center gap-3 rounded-xl bg-secondary/50 p-2">
-                  <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                    <Play size={13} />
+                <div key={track.id} className="rounded-xl bg-secondary/50 p-2.5 space-y-2">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                      <FileAudio size={13} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold truncate">{track.title}</p>
+                      <p className="text-xs text-muted-foreground truncate">{track.artist || "Nova"}</p>
+                    </div>
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold truncate">{track.title}</p>
-                    <p className="text-xs text-muted-foreground truncate">{track.artist || "Nova"}</p>
-                  </div>
-                  <audio src={track.media_url} controls preload="none" className="w-[150px] max-w-[42%] h-8" />
+                  <PlaylistAudioPlayer src={track.media_url} />
                 </div>
               ))}
             </div>
