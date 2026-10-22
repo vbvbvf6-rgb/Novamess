@@ -132,17 +132,27 @@ function ChatAvatar({ chat, displayName }: { chat: Chat; displayName: string }) 
   return (
     <div className="relative shrink-0">
       {hasPrime && (
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: isPlus ? 3 : 4, repeat: Infinity, ease: "linear" }}
-          className="absolute -inset-[2px] rounded-[20px]"
-          style={{
-            background: isPlus
-              ? "conic-gradient(from 0deg, #a855f7, #38bdf8, #e2e8f0, #c084fc, #06b6d4, #a855f7)"
-              : "conic-gradient(from 0deg, #eab308, #f59e0b, #d97706, #eab308)",
-            borderRadius: "20px",
-          }}
-        />
+        isPlus ? (
+          <div
+            aria-hidden="true"
+            className="absolute -inset-[3px] rounded-[21px]"
+            style={{
+              background: "linear-gradient(135deg, #c4b5fd 0%, #a78bfa 32%, #67e8f9 68%, #c4b5fd 100%)",
+              boxShadow: "0 0 12px rgba(139, 92, 246, 0.22)",
+            }}
+          />
+        ) : (
+          <motion.div
+            aria-hidden="true"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+            className="absolute -inset-[2px] rounded-[20px]"
+            style={{
+              background: "conic-gradient(from 0deg, #eab308, #f59e0b, #d97706, #eab308)",
+              borderRadius: "20px",
+            }}
+          />
+        )
       )}
       <div
         className="w-14 h-14 rounded-[18px] flex items-center justify-center text-white font-black text-xl overflow-hidden shadow-sm relative z-10"

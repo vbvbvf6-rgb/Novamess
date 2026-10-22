@@ -118,7 +118,20 @@ type Playlist = { id: number; name: string; description?: string; track_count?: 
 type Track = { id: number; title: string; artist?: string; media_url: string };
 
 export function PlaylistWidget({ compact = false }: { compact?: boolean }) {
-  const [playlists, setPlaylists] = useState<Playlist[]>([]); const [selected, setSelected] = useState<any>(null); const [name, setName] = useState(""); const [title, setTitle] = useState(""); const [artist, setArtist] = useState(""); const [url, setUrl] = useState(""); const [error, setError] = useState(""); const [isAdding, setIsAdding] = useState(false); const [isPublic, setIsPublic] = useState(true); const trackInputRef = React.useRef<HTMLInputElement>(null);
+  const [playlists, setPlaylists] = useState<Playlist[]>([]);
+  const [selected, setSelected] = useState<any>(null);
+  const [name, setName] = useState("");
+  const [title, setTitle] = useState("");
+  const [artist, setArtist] = useState("");
+  const [url, setUrl] = useState("");
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [isAdding, setIsAdding] = useState(false);
+  const [isImportingFolder, setIsImportingFolder] = useState(false);
+  const [folderFiles, setFolderFiles] = useState<File[]>([]);
+  const [isPublic, setIsPublic] = useState(true);
+  const trackInputRef = React.useRef<HTMLInputElement>(null);
+  const folderInputRef = React.useRef<HTMLInputElement>(null);
   const load = async () => { try { setPlaylists(await api<Playlist[]>("/api/playlists")); } catch (e) { setError((e as Error).message); } };
   useEffect(() => { load(); }, []);
   const create = async () => {
@@ -157,14 +170,168 @@ export function PlaylistWidget({ compact = false }: { compact?: boolean }) {
     reader.onerror = () => setError("Не удалось прочитать аудиофайл.");
     reader.readAsDataURL(file);
   };
+  const handleFolderFiles = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.currentTarget.files || []);
+    event.currentTarget.value = "";
+    setNotice("");
+    const audioExtensions = /\.(mp3|m4a|aac|ogg|oga|opus|wav|flac|aiff|wma)$/i;
+    const audioFiles = files.filter(file => file.type.startsWith("audio/") || audioExtensions.test(file.name));
+    const validFiles = audioFiles.filter(file => file.size <= 12 * 1024 * 1024);
+    const skipped = files.length - validFiles.length;
+    if (validFiles.length === 0) {
+      setError(files.length === 0
+        ? ""
+        : "В выбранной папке не найдено аудиофайлов до 12 МБ.");
+      return;
+    }
+
+    setFolderFiles(previous => {
+      const existing = new Set(previous.map(file => `${file.name}:${file.size}:${file.lastModified}`));
+      return [...previous, ...validFiles.filter(file => !existing.has(`${file.name}:${file.size}:${file.lastModified}`))];
+    });
+    setError(skipped > 0 ? `Пропущено файлов: ${skipped}. Поддерживаются аудиофайлы до 12 МБ каждый.` : "");
+  };
+  const chooseMusicFolder = () => {
+    const input = folderInputRef.current;
+    if (!input) return;
+    input.setAttribute("webkitdirectory", "");
+    input.setAttribute("directory", "");
+    input.click();
+  };
+  const importFolderTracks = async () => {
+    if (!selected || folderFiles.length === 0 || isImportingFolder) return;
+    setIsImportingFolder(true);
+    setError("");
+    let added = 0;
+    const queuedFiles = [...folderFiles];
+    try {
+      for (const file of queuedFiles) {
+        const extension = file.name.split(".").pop()?.toLowerCase() || "";
+        const mime = file.type.startsWith("audio/")
+          ? file.type
+          : ({ mp3: "audio/mpeg", m4a: "audio/mp4", aac: "audio/aac", ogg: "audio/ogg", oga: "audio/ogg", opus: "audio/ogg", wav: "audio/wav", flac: "audio/flac", aiff: "audio/aiff", wma: "audio/x-ms-wma" } as Record<string, string>)[extension] || "audio/mpeg";
+        const mediaUrl = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(String(reader.result || "").replace(/^data:[^;]+;/, `data:${mime};`));
+          reader.onerror = () => reject(new Error(`Не удалось прочитать файл «${file.name}».`));
+          reader.readAsDataURL(file);
+        });
+        await api(`/api/playlists/${selected.id}/tracks`, {
+          method: "POST",
+          body: JSON.stringify({
+            title: file.name.replace(/\.[^.]+$/, ""),
+            artist: "",
+            mediaUrl,
+          }),
+        });
+        added += 1;
+      }
+      setFolderFiles([]);
+      await Promise.all([open(selected.id), load()]);
+      setNotice(`Добавлено треков: ${added}.`);
+    } catch (e) {
+      setFolderFiles(queuedFiles.slice(added));
+      setError(added > 0
+        ? `Добавлено ${added}; остальные файлы остались в списке. ${(e as Error).message}`
+        : (e as Error).message);
+    } finally {
+      setIsImportingFolder(false);
+    }
+  };
   const removeTrack = async (id: number) => { await api(`/api/playlists/${selected.id}/tracks/${id}`, { method: "DELETE" }); open(selected.id); load(); };
-  return <div className={cn("space-y-3", compact && "text-sm")}><div className="flex items-center gap-2"><ListMusic size={18} className="text-primary" /><h3 className="font-bold">Плейлисты</h3></div>
-    <div className="flex gap-2"><input value={name} onChange={e => setName(e.target.value)} placeholder="Новый плейлист" className="flex-1 rounded-xl border border-border bg-background px-3 py-2 text-sm" /><button onClick={create} className="rounded-xl bg-primary px-3 text-primary-foreground"><Plus size={16} /></button></div>
-    <label className="flex items-center gap-2 text-xs text-muted-foreground"><input type="checkbox" checked={isPublic} onChange={e => setIsPublic(e.target.checked)} className="accent-primary" /> Показывать плейлист в моём профиле</label>
-    <div className="flex gap-2 overflow-x-auto pb-1">{playlists.map(p => <button key={p.id} onClick={() => open(p.id)} className={cn("shrink-0 rounded-xl border px-3 py-2 text-left", selected?.id === p.id ? "border-primary bg-primary/10" : "border-border")}><span className="block font-semibold">{p.name}</span><span className="text-[11px] text-muted-foreground">{p.track_count || 0} треков</span></button>)}</div>
-    {selected && <div className="rounded-2xl border border-border bg-background/50 p-3 space-y-2"><p className="font-bold">{selected.name}</p>{(selected.tracks as Track[]).map(track => <div key={track.id} className="rounded-xl bg-secondary/50 p-2.5 space-y-2"><div className="flex items-center gap-2"><div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary"><FileAudio size={14} /></div><div className="min-w-0 flex-1"><p className="text-sm font-semibold truncate">{track.title}</p><p className="text-xs text-muted-foreground truncate">{track.artist || "Nova"}</p></div><button onClick={() => removeTrack(track.id)} aria-label="Удалить трек" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-background/60 hover:text-destructive"><Trash2 size={14} /></button></div><PlaylistAudioPlayer src={track.media_url} /></div>)}
-       <div className="grid sm:grid-cols-2 gap-2 pt-2"><input value={title} onChange={e => setTitle(e.target.value)} placeholder="Название трека" className="rounded-xl border border-border bg-background px-3 py-2 text-sm" /><input value={artist} onChange={e => setArtist(e.target.value)} placeholder="Исполнитель" className="rounded-xl border border-border bg-background px-3 py-2 text-sm" /></div><input ref={trackInputRef} type="file" accept="audio/*" onChange={handleTrackFile} className="hidden" /><div className="flex flex-wrap items-center gap-2"><button type="button" onClick={() => trackInputRef.current?.click()} className="inline-flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/10 px-3 py-2 text-xs font-semibold text-primary"><FileAudio size={14} /> Выбрать аудиофайл</button><span className="text-xs text-muted-foreground">Только файлы с устройства, до 12 МБ</span><button onClick={addTrack} disabled={isAdding || !title.trim() || !url.startsWith("data:audio/")} className="inline-flex items-center gap-2 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground disabled:opacity-50"><Plus size={14} /> {isAdding ? "Добавляю…" : "Добавить трек"}</button></div>
-    </div>}{error && <p className="text-xs text-destructive">{error}</p>}</div>;
+  return (
+    <div className={cn("space-y-3", compact && "text-sm")}>
+      <div className="flex items-center gap-2">
+        <ListMusic size={18} className="text-primary" />
+        <h3 className="font-bold">Плейлисты</h3>
+      </div>
+      <div className="flex gap-2">
+        <input value={name} onChange={e => setName(e.target.value)} placeholder="Новый плейлист" className="flex-1 rounded-xl border border-border bg-background px-3 py-2 text-sm" />
+        <button onClick={create} className="rounded-xl bg-primary px-3 text-primary-foreground" aria-label="Создать плейлист"><Plus size={16} /></button>
+      </div>
+      <label className="flex items-center gap-2 text-xs text-muted-foreground">
+        <input type="checkbox" checked={isPublic} onChange={e => setIsPublic(e.target.checked)} className="accent-primary" />
+        Показывать плейлист в моём профиле
+      </label>
+      <div className="flex gap-2 overflow-x-auto pb-1">
+        {playlists.map(p => (
+          <button key={p.id} onClick={() => open(p.id)} className={cn("shrink-0 rounded-xl border px-3 py-2 text-left", selected?.id === p.id ? "border-primary bg-primary/10" : "border-border")}>
+            <span className="block font-semibold">{p.name}</span>
+            <span className="text-[11px] text-muted-foreground">{p.track_count || 0} треков</span>
+          </button>
+        ))}
+      </div>
+      {selected && (
+        <div className="space-y-3 rounded-2xl border border-border bg-background/50 p-3">
+          <p className="font-bold">{selected.name}</p>
+          {(selected.tracks as Track[]).map(track => (
+            <div key={track.id} className="space-y-2 rounded-xl bg-secondary/50 p-2.5">
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary"><FileAudio size={14} /></div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold">{track.title}</p>
+                  <p className="truncate text-xs text-muted-foreground">{track.artist || "Nova"}</p>
+                </div>
+                <button onClick={() => removeTrack(track.id)} aria-label="Удалить трек" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-background/60 hover:text-destructive">
+                  <Trash2 size={14} />
+                </button>
+              </div>
+              <PlaylistAudioPlayer src={track.media_url} />
+            </div>
+          ))}
+          <div className="grid gap-2 pt-1 sm:grid-cols-2">
+            <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Название трека" className="rounded-xl border border-border bg-background px-3 py-2 text-sm" />
+            <input value={artist} onChange={e => setArtist(e.target.value)} placeholder="Исполнитель" className="rounded-xl border border-border bg-background px-3 py-2 text-sm" />
+          </div>
+          <input ref={trackInputRef} type="file" accept="audio/*" onChange={handleTrackFile} className="sr-only" />
+          <input
+            ref={folderInputRef}
+            type="file"
+            accept="audio/*"
+            multiple
+            onChange={handleFolderFiles}
+            className="sr-only"
+          />
+          <div className="flex flex-wrap items-center gap-2">
+            <button type="button" onClick={() => trackInputRef.current?.click()} className="inline-flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/10 px-3 py-2 text-xs font-semibold text-primary">
+              <FileAudio size={14} /> Выбрать файл
+            </button>
+            <button type="button" onClick={chooseMusicFolder} className="inline-flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/10 px-3 py-2 text-xs font-semibold text-primary">
+              <ListMusic size={14} /> Выбрать папку
+            </button>
+            <span className="text-xs text-muted-foreground">Аудио до 12 МБ на файл</span>
+            <button onClick={addTrack} disabled={isAdding || isImportingFolder || !title.trim() || !url.startsWith("data:audio/")} className="inline-flex items-center gap-2 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground disabled:opacity-50">
+              <Plus size={14} /> {isAdding ? "Добавляю…" : "Добавить трек"}
+            </button>
+          </div>
+          {folderFiles.length > 0 && (
+            <div className="space-y-2 rounded-xl border border-primary/20 bg-primary/5 p-3">
+              <div className="flex items-center gap-2">
+                <p className="flex-1 text-sm font-semibold">Выбрано файлов: {folderFiles.length}</p>
+                <button type="button" onClick={() => setFolderFiles([])} className="rounded-lg px-2 py-1 text-xs text-muted-foreground hover:bg-secondary">Очистить</button>
+              </div>
+              <ul className="space-y-1 text-xs text-muted-foreground">
+                {folderFiles.slice(0, 3).map((file, index) => (
+                  <li key={`${file.name}:${file.size}:${file.lastModified}:${index}`} className="truncate">{file.name}</li>
+                ))}
+                {folderFiles.length > 3 && <li>И ещё {folderFiles.length - 3}</li>}
+              </ul>
+              <button
+                type="button"
+                onClick={importFolderTracks}
+                disabled={isImportingFolder || isAdding}
+                className="inline-flex items-center gap-2 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground disabled:opacity-50"
+              >
+                <Plus size={14} /> {isImportingFolder ? "Добавляю файлы…" : `Добавить ${folderFiles.length} треков`}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+      {notice && <p role="status" className="text-xs text-emerald-600 dark:text-emerald-400">{notice}</p>}
+      {error && <p role="alert" className="text-xs text-destructive">{error}</p>}
+    </div>
+  );
 }
 
 export function PublicPlaylistWidget({ userId }: { userId: number }) {

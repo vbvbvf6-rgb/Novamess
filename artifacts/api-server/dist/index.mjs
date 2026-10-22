@@ -147789,6 +147789,7 @@ router8.post("/messages", async (req, res) => {
         );
         const chatInfo2 = chatRow.rows[0];
         const chatType = chatInfo2?.type || "direct";
+        if (chatType === "channel" && body.replyToId) return;
         const chatAvatar = chatInfo2?.avatar_url || null;
         const effectLabel = allowedEffect === "confetti" ? " \u{1F38A}" : allowedEffect === "snow" ? " \u2744\uFE0F" : allowedEffect === "fire" ? " \u{1F525}" : "";
         const msgBody = body.type === "image" ? "\u{1F4F7} \u0424\u043E\u0442\u043E" : body.type === "album" ? "\u{1F4F7} \u0424\u043E\u0442\u043E" : body.type === "audio" ? "\u{1F3A4} \u0413\u043E\u043B\u043E\u0441\u043E\u0432\u043E\u0435" : body.type === "document" ? "\u{1F4CE} \u0424\u0430\u0439\u043B" : body.type === "sticker" ? "\u{1F3A8} \u0421\u0442\u0438\u043A\u0435\u0440" : body.type === "video" ? "\u{1F3A5} \u0412\u0438\u0434\u0435\u043E" : (body.text || "") + effectLabel;

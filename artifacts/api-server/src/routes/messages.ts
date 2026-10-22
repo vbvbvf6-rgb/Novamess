@@ -625,6 +625,10 @@ router.post("/messages", async (req, res) => {
         );
         const chatInfo = chatRow.rows[0] as any;
         const chatType = chatInfo?.type || "direct";
+        // Replies in a channel belong to the post's comment thread. Keep them
+        // in the open channel timeline, but don't surface them as floating or
+        // OS push notifications.
+        if (chatType === "channel" && body.replyToId) return;
         const chatAvatar = chatInfo?.avatar_url || null;
 
         const effectLabel = allowedEffect === "confetti" ? " 🎊" : allowedEffect === "snow" ? " ❄️" : allowedEffect === "fire" ? " 🔥" : "";

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link, useLocation } from "wouter";
+import { Link, useLocation, useSearch } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import {
   MessageCircle,
@@ -24,11 +24,12 @@ import {
   Moon,
   Search,
   Newspaper,
+  PhoneCall,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAppContext } from "@/contexts/AppContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useGetMe, useGetChats } from "@workspace/api-client-react";
+import { useGetMe, useGetChats, useGetCallHistory, getGetCallHistoryQueryKey } from "@workspace/api-client-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -183,10 +184,19 @@ interface SidebarProps {
 
 export function Sidebar({ mobileSidebarOpen, onMobileClose, onMobileOpen, onOpenPalette }: SidebarProps) {
   const [location, navigate] = useLocation();
+  const search = useSearch();
+  const currentPath = location.split("?")[0];
+  const requestedCallFilter = new URLSearchParams(search).get("filter");
+  const activeCallFilter = ["missed", "incoming", "outgoing"].includes(requestedCallFilter || "")
+    ? requestedCallFilter!
+    : "all";
   const { logout, currentUserId, savedAccounts, switchAccount, removeAccount, openAddAccount, canAddAccount, isDark, toggleTheme } = useAppContext();
   const { t } = useLanguage();
   const { data: me } = useGetMe();
   const { data: chats } = useGetChats();
+  const { data: callHistory } = useGetCallHistory({
+    query: { queryKey: getGetCallHistoryQueryKey(), refetchInterval: 30_000 },
+  });
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
@@ -206,6 +216,9 @@ export function Sidebar({ mobileSidebarOpen, onMobileClose, onMobileOpen, onOpen
   }, [me, currentUserId]);
 
   const totalUnread = chats?.reduce((sum: number, c: any) => sum + (c.isArchived ? 0 : (c.unreadCount || 0)), 0) ?? 0;
+  const missedCallCount = callHistory?.filter((call: any) => call.status === "missed" && call.calleeId === currentUserId).length ?? 0;
+  const incomingCallCount = callHistory?.filter((call: any) => call.calleeId === currentUserId && call.status !== "missed").length ?? 0;
+  const outgoingCallCount = callHistory?.filter((call: any) => call.callerId === currentUserId).length ?? 0;
   const initial = me?.displayName?.[0]?.toUpperCase() || "U";
   const isPremium = (me as any)?.hasPrime ?? false;
 
@@ -235,6 +248,7 @@ export function Sidebar({ mobileSidebarOpen, onMobileClose, onMobileOpen, onOpen
 
   const NAV_ITEMS: Array<{ href: string; icon: any; label: string; soon?: boolean }> = [
     { href: "/",             icon: MessageCircle,  label: t("nav.chats") },
+    { href: "/calls",        icon: PhoneCall,      label: t("nav.calls") },
     { href: "/feed",         icon: Rss,            label: t("nav.feed") },
     { href: "/contacts",     icon: Users,          label: t("nav.contacts") },
     { href: "/stories",      icon: History,        label: t("nav.stories") },
@@ -315,12 +329,14 @@ export function Sidebar({ mobileSidebarOpen, onMobileClose, onMobileOpen, onOpen
 
       <nav className="flex-1 flex flex-col gap-1 w-full px-4 overflow-y-auto scrollbar-none py-2">
         {NAV_ITEMS.map((item) => {
-          const isActive = location === item.href || (item.href !== "/" && location.startsWith(item.href));
-          const showBadge = (item.href === "/" && totalUnread > 0) || (item.href === "/contacts" && pendingRequests > 0);
-          const badgeCount = item.href === "/" ? totalUnread : pendingRequests;
+          const isActive = currentPath === item.href || (item.href !== "/" && currentPath.startsWith(item.href));
+          const showBadge = (item.href === "/" && totalUnread > 0) ||
+            (item.href === "/contacts" && pendingRequests > 0) ||
+            (item.href === "/calls" && missedCallCount > 0);
+          const badgeCount = item.href === "/" ? totalUnread : item.href === "/contacts" ? pendingRequests : missedCallCount;
           return (
-            <Link
-              key={item.href}
+            <React.Fragment key={item.href}>
+              <Link
               href={item.href}
               className={cn(
                 "flex items-center gap-3.5 px-3.5 py-3 rounded-[16px] transition-all duration-200 group relative",
@@ -341,7 +357,9 @@ export function Sidebar({ mobileSidebarOpen, onMobileClose, onMobileOpen, onOpen
                 {showBadge && (
                   <div className={cn(
                     "absolute -top-2 -right-2 text-[10px] font-black px-1.5 py-0.5 rounded-full min-w-[20px] text-center shadow-sm border-2",
-                    isActive ? "bg-white text-primary border-primary" : "bg-primary text-white border-card"
+                    item.href === "/calls"
+                      ? "bg-destructive text-white border-card"
+                      : isActive ? "bg-white text-primary border-primary" : "bg-primary text-white border-card"
                   )}>
                     {badgeCount > 99 ? "99+" : badgeCount}
                   </div>
@@ -353,7 +371,39 @@ export function Sidebar({ mobileSidebarOpen, onMobileClose, onMobileOpen, onOpen
               {item.soon && (
                 <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-500 shrink-0">Soon</span>
               )}
-            </Link>
+              </Link>
+              {item.href === "/calls" && currentPath === "/calls" && (
+                <div className="ml-10 mb-1 flex flex-col gap-0.5 border-l border-border/60 pl-3">
+                  {[
+                    { id: "all", label: "Все звонки", count: callHistory?.length ?? 0 },
+                    { id: "missed", label: "Пропущенные", count: missedCallCount },
+                    { id: "incoming", label: "Входящие", count: incomingCallCount },
+                    { id: "outgoing", label: "Исходящие", count: outgoingCallCount },
+                  ].map((filter) => (
+                    <Link
+                      key={filter.id}
+                      href={filter.id === "all" ? "/calls" : `/calls?filter=${filter.id}`}
+                      className={cn(
+                        "flex min-h-9 items-center gap-2 rounded-lg px-2.5 text-xs transition-colors",
+                        activeCallFilter === filter.id
+                          ? "bg-primary/10 font-semibold text-primary"
+                          : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                      )}
+                    >
+                      <span className="flex-1">{filter.label}</span>
+                      <span className={cn(
+                        "min-w-5 rounded-full px-1.5 py-0.5 text-center text-[10px] font-bold",
+                        filter.id === "missed" && filter.count > 0
+                          ? "bg-destructive/10 text-destructive"
+                          : "bg-secondary text-muted-foreground"
+                      )}>
+                        {filter.count > 99 ? "99+" : filter.count}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </React.Fragment>
           );
         })}
 
@@ -557,30 +607,63 @@ export function Sidebar({ mobileSidebarOpen, onMobileClose, onMobileOpen, onOpen
 
         <nav className="flex-1 flex flex-col gap-1 px-4 overflow-y-auto scrollbar-none pb-4">
           {NAV_ITEMS.map((item) => {
-            const isActive = location === item.href || (item.href !== "/" && location.startsWith(item.href));
-            const showBadge = item.href === "/" && totalUnread > 0;
+            const isActive = currentPath === item.href || (item.href !== "/" && currentPath.startsWith(item.href));
+            const showBadge = (item.href === "/" && totalUnread > 0) || (item.href === "/calls" && missedCallCount > 0);
+            const badgeCount = item.href === "/" ? totalUnread : missedCallCount;
             return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={onMobileClose}
-                className={cn(
-                  "flex items-center gap-3.5 px-3.5 py-3 rounded-[16px] transition-all duration-200 group relative",
-                  isActive
-                    ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
-                    : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-                )}
-              >
-                <div className="relative shrink-0">
-                  <item.icon size={20} strokeWidth={isActive ? 2.5 : 2} className={cn("transition-transform duration-300", isActive ? "scale-100 text-white" : "group-hover:scale-110")} />
-                  {showBadge && (
-                    <div className={cn("absolute -top-2 -right-2 text-[10px] font-black px-1.5 py-0.5 rounded-full min-w-[20px] text-center shadow-sm border-2", isActive ? "bg-white text-primary border-primary" : "bg-primary text-white border-card")}>
-                      {totalUnread > 99 ? "99+" : totalUnread}
-                    </div>
+              <React.Fragment key={item.href}>
+                <Link
+                  href={item.href}
+                  onClick={onMobileClose}
+                  className={cn(
+                    "flex items-center gap-3.5 px-3.5 py-3 rounded-[16px] transition-all duration-200 group relative",
+                    isActive
+                      ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
+                      : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                   )}
-                </div>
-                <span className={cn("text-[14px] truncate flex-1", isActive ? "font-bold" : "font-semibold")}>{item.label}</span>
-              </Link>
+                >
+                  <div className="relative shrink-0">
+                    <item.icon size={20} strokeWidth={isActive ? 2.5 : 2} className={cn("transition-transform duration-300", isActive ? "scale-100 text-white" : "group-hover:scale-110")} />
+                    {showBadge && (
+                      <div className={cn(
+                        "absolute -top-2 -right-2 text-[10px] font-black px-1.5 py-0.5 rounded-full min-w-[20px] text-center shadow-sm border-2",
+                        item.href === "/calls" ? "bg-destructive text-white border-card" : isActive ? "bg-white text-primary border-primary" : "bg-primary text-white border-card"
+                      )}>
+                        {badgeCount > 99 ? "99+" : badgeCount}
+                      </div>
+                    )}
+                  </div>
+                  <span className={cn("text-[14px] truncate flex-1", isActive ? "font-bold" : "font-semibold")}>{item.label}</span>
+                </Link>
+                {item.href === "/calls" && currentPath === "/calls" && (
+                  <div className="ml-10 mb-1 flex flex-col gap-0.5 border-l border-border/60 pl-3">
+                    {[
+                      { id: "all", label: "Все звонки", count: callHistory?.length ?? 0 },
+                      { id: "missed", label: "Пропущенные", count: missedCallCount },
+                      { id: "incoming", label: "Входящие", count: incomingCallCount },
+                      { id: "outgoing", label: "Исходящие", count: outgoingCallCount },
+                    ].map((filter) => (
+                      <Link
+                        key={filter.id}
+                        href={filter.id === "all" ? "/calls" : `/calls?filter=${filter.id}`}
+                        onClick={onMobileClose}
+                        className={cn(
+                          "flex min-h-9 items-center gap-2 rounded-lg px-2.5 text-xs transition-colors",
+                          activeCallFilter === filter.id ? "bg-primary/10 font-semibold text-primary" : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                        )}
+                      >
+                        <span className="flex-1">{filter.label}</span>
+                        <span className={cn(
+                          "min-w-5 rounded-full px-1.5 py-0.5 text-center text-[10px] font-bold",
+                          filter.id === "missed" && filter.count > 0 ? "bg-destructive/10 text-destructive" : "bg-secondary text-muted-foreground"
+                        )}>
+                          {filter.count > 99 ? "99+" : filter.count}
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </React.Fragment>
             );
           })}
 

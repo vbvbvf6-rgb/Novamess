@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useLocation, useSearch } from "wouter";
 import { useGetCallHistory, getGetCallHistoryQueryKey } from "@workspace/api-client-react";
 import type { Call } from "@workspace/api-client-react";
 import { Phone, Video, PhoneMissed, PhoneForwarded, PhoneIncoming, PhoneCall, Search, X, Trash2, Headphones } from "lucide-react";
@@ -11,22 +12,38 @@ import { useAppConfirm } from "@/contexts/AppConfirmContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { useGetContacts } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { cn } from "@/lib/utils";
 
 type Filter = "all" | "missed" | "incoming" | "outgoing";
 
 export default function Calls() {
   const { data: calls, isLoading } = useGetCallHistory();
   const { data: contacts } = useGetContacts();
+  const searchString = useSearch();
+  const [, navigate] = useLocation();
   const { currentUserId, startCall } = useAppContext();
   const { toast } = useToast();
   const requestConfirm = useAppConfirm();
   const queryClient = useQueryClient();
-  const [filter, setFilter] = useState<Filter>("all");
+  const requestedFilter = new URLSearchParams(searchString).get("filter");
+  const initialFilter: Filter = ["missed", "incoming", "outgoing"].includes(requestedFilter || "")
+    ? requestedFilter as Filter
+    : "all";
+  const [filter, setFilter] = useState<Filter>(initialFilter);
   const [showNewCall, setShowNewCall] = useState(false);
   const [showRoomDialog, setShowRoomDialog] = useState(false);
   const [roomName, setRoomName] = useState("Открытая аудиокомната");
   const [search, setSearch] = useState("");
   const [clearing, setClearing] = useState(false);
+
+  useEffect(() => {
+    setFilter(initialFilter);
+  }, [searchString]);
+
+  const selectFilter = (next: Filter) => {
+    setFilter(next);
+    navigate(next === "all" ? "/calls" : `/calls?filter=${next}`);
+  };
 
   const handleClearHistory = async () => {
     if (!(await requestConfirm({
@@ -57,21 +74,22 @@ export default function Calls() {
 
   const filtered = calls?.filter((call: Call) => {
     const isOutgoing = call.callerId === currentUserId;
-    const isMissed = call.status === "missed";
-    if (filter === "missed") return isMissed;
-    if (filter === "incoming") return !isOutgoing && !isMissed;
+    const isMissedForMe = call.status === "missed" && call.calleeId === currentUserId;
+    if (filter === "missed") return isMissedForMe;
+    if (filter === "incoming") return call.calleeId === currentUserId && !isMissedForMe;
     if (filter === "outgoing") return isOutgoing;
     return true;
   });
 
-  const tabs: { id: Filter; label: string }[] = [
-    { id: "all", label: "Все" },
-    { id: "missed", label: "Пропущенные" },
-    { id: "incoming", label: "Входящие" },
-    { id: "outgoing", label: "Исходящие" },
+  const missedCount = calls?.filter((call: Call) => call.status === "missed" && call.calleeId === currentUserId).length ?? 0;
+  const incomingCount = calls?.filter((call: Call) => call.calleeId === currentUserId && call.status !== "missed").length ?? 0;
+  const outgoingCount = calls?.filter((call: Call) => call.callerId === currentUserId).length ?? 0;
+  const tabs: { id: Filter; label: string; count: number }[] = [
+    { id: "all", label: "Все", count: calls?.length ?? 0 },
+    { id: "missed", label: "Пропущенные", count: missedCount },
+    { id: "incoming", label: "Входящие", count: incomingCount },
+    { id: "outgoing", label: "Исходящие", count: outgoingCount },
   ];
-
-  const missedCount = calls?.filter((c: Call) => c.status === "missed").length ?? 0;
 
   const filteredContacts = contacts?.filter((c: { displayName?: string; username?: string }) =>
     c.displayName?.toLowerCase().includes(search.toLowerCase()) ||
@@ -127,17 +145,20 @@ export default function Calls() {
         {tabs.map((tab) => (
           <button
             key={tab.id}
-            onClick={() => setFilter(tab.id)}
+            onClick={() => selectFilter(tab.id)}
             className={`relative px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
               filter === tab.id
-                ? "bg-primary text-white shadow-[0_0_12px_rgba(255,80,0,0.3)]"
+                ? "bg-primary text-white shadow-[0_0_12px_rgba(59,130,246,0.26)]"
                 : "text-muted-foreground hover:text-foreground hover:bg-secondary"
             }`}
           >
             {tab.label}
-            {tab.id === "missed" && missedCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-destructive text-white text-[10px] flex items-center justify-center font-bold">
-                {missedCount}
+            {tab.count > 0 && (
+              <span className={cn(
+                "ml-1.5 inline-flex min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-bold",
+                tab.id === "missed" ? "bg-destructive/15 text-destructive" : filter === tab.id ? "bg-white/20 text-white" : "bg-secondary text-muted-foreground"
+              )}>
+                {tab.count > 99 ? "99+" : tab.count}
               </span>
             )}
           </button>
@@ -179,7 +200,7 @@ export default function Calls() {
               {filtered?.map((call: Call, i: number) => {
                 const isOutgoing = call.callerId === currentUserId;
                 const otherUser = isOutgoing ? call.callee : call.caller;
-                const isMissed = call.status === "missed";
+                const isMissed = call.status === "missed" && call.calleeId === currentUserId;
                 const isVideo = call.type === "video";
                 const dur = call.durationSeconds
                   ? `${Math.floor(call.durationSeconds / 60)}:${String(call.durationSeconds % 60).padStart(2, "0")}`
@@ -217,6 +238,9 @@ export default function Calls() {
                           <PhoneIncoming size={13} className="text-green-500 shrink-0" />
                         )}
                         {isVideo && <Video size={12} className="text-muted-foreground shrink-0" />}
+                        <span className={cn("text-xs font-semibold", isMissed ? "text-destructive" : "text-muted-foreground")}>
+                          {isMissed ? "Пропущен" : isOutgoing && call.status === "missed" ? "Нет ответа" : isOutgoing ? "Исходящий" : "Входящий"}
+                        </span>
                         <span className="text-xs text-muted-foreground truncate">
                           {call.startedAt
                             ? formatDistanceToNow(new Date(call.startedAt), { addSuffix: true, locale: ru })
