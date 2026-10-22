@@ -147013,9 +147013,11 @@ var VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY ?? "";
 var VAPID_EMAIL = process.env.VAPID_EMAIL ?? "mailto:admin@pulse.app";
 if (VAPID_PUBLIC && VAPID_PRIVATE) {
   import_web_push.default.setVapidDetails(VAPID_EMAIL, VAPID_PUBLIC, VAPID_PRIVATE);
+} else {
+  console.warn("[push] Web Push is disabled; configure both VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY in the API server environment.");
 }
 if (!process.env.FIREBASE_SERVICE_ACCOUNT) {
-  console.warn("[push] FCM is disabled; configure FIREBASE_SERVICE_ACCOUNT in Replit Secrets for native Android push notifications.");
+  console.warn("[push] FCM is disabled; configure FIREBASE_SERVICE_ACCOUNT in the API server environment for native Android push notifications.");
 }
 var _fcmAccessToken = null;
 var _fcmTokenExpiry = 0;
