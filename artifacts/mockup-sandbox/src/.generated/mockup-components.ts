@@ -3,9 +3,9 @@ type ModuleMap = Record<string, () => Promise<Record<string, unknown>>>;
 export const modules: ModuleMap = {
   "./components/mockups/nova-playlist-player/Current.tsx": () => import("../components/mockups/nova-playlist-player/Current.tsx"),
   "./components/mockups/nova-playlist-player/Messenger.tsx": () => import("../components/mockups/nova-playlist-player/Messenger.tsx"),
-  "./components/mockups/pulse-aurora/Aurora.tsx": () => import("../components/mockups/pulse-aurora/Aurora.tsx"),
   "./components/mockups/prime-plus-ring/Current.tsx": () => import("../components/mockups/prime-plus-ring/Current.tsx"),
   "./components/mockups/prime-plus-ring/Refined.tsx": () => import("../components/mockups/prime-plus-ring/Refined.tsx"),
+  "./components/mockups/pulse-aurora/Aurora.tsx": () => import("../components/mockups/pulse-aurora/Aurora.tsx"),
   "./components/mockups/pulse-cyberpunk/Cyberpunk.tsx": () => import("../components/mockups/pulse-cyberpunk/Cyberpunk.tsx"),
   "./components/mockups/pulse-neon/NeonPulse.tsx": () => import("../components/mockups/pulse-neon/NeonPulse.tsx"),
   "./components/mockups/pulse-obsidian/Obsidian.tsx": () => import("../components/mockups/pulse-obsidian/Obsidian.tsx"),
