@@ -3,13 +3,40 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
+  "main": "desktop/main.cjs",
   "scripts": {
     "dev": "vite --config vite.config.ts --host 0.0.0.0",
     "build": "vite build --config vite.config.ts",
     "serve": "vite preview --config vite.config.ts --host 0.0.0.0",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "cap:build": "vite build --config vite.config.ts && npx cap sync android",
-    "cap:open": "npx cap open android"
+    "cap:open": "npx cap open android",
+    "android:apk": "node scripts/build-android-apk.cjs",
+    "windows:exe": "node scripts/build-windows-exe.cjs"
+  },
+  "build": {
+    "appId": "com.nova.messenger",
+    "productName": "Nova Messenger",
+    "electronVersion": "45.0.0",
+    "directories": {
+      "output": "../../generated-artifacts/windows"
+    },
+    "files": [
+      "desktop/**/*",
+      "dist/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "Nova-Messenger-${version}-${arch}.${ext}"
+    }
   },
   "devDependencies": {
     "@capacitor/cli": "^8.5.3",
@@ -56,6 +83,8 @@
     "clsx": "catalog:",
     "cmdk": "^1.1.1",
     "date-fns": "^3.6.0",
+    "electron": "^45.0.0",
+    "electron-builder": "^26.15.3",
     "embla-carousel-react": "^8.6.0",
     "framer-motion": "catalog:",
     "input-otp": "^1.4.2",
