@@ -28,6 +28,7 @@ import {
   ShieldCheck,
   Image,
   Trash2,
+  Gift,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -41,6 +42,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { PublicPlaylistWidget } from "@/pages/PowerFeatures";
+import { GiftPicker } from "@/components/gifts/GiftPicker";
 
 const getToken = () => sessionStorage.getItem("pulse-token");
 
@@ -253,6 +255,7 @@ export default function UserProfile() {
   const { setSelectedChatId } = useAppContext();
   const queryClient = useQueryClient();
   const [isStartingChat, setIsStartingChat] = useState(false);
+  const [showGiftPicker, setShowGiftPicker] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
   const [blockLoading, setBlockLoading] = useState(false);
 
@@ -513,6 +516,18 @@ export default function UserProfile() {
                     >
                       <MessageSquare size={18} />
                     </motion.button>
+                    {!isBot && (
+                      <motion.button
+                        whileHover={{ scale: 1.08 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => setShowGiftPicker(true)}
+                        className="w-11 h-11 rounded-full bg-pink-500/10 flex items-center justify-center text-pink-400 hover:bg-pink-500/20 transition-colors"
+                        title="Подарить"
+                        data-testid="button-gift-user"
+                      >
+                        <Gift size={18} />
+                      </motion.button>
+                    )}
                     {!isBot && isContact ? (
                       <motion.button
                         whileHover={{ scale: 1.08 }}
@@ -671,7 +686,16 @@ export default function UserProfile() {
 
         </div>
       </div>
-
+      {showGiftPicker && user && !isMe && !isBot && (
+        <GiftPicker
+          recipientId={Number(user.id)}
+          onClose={() => setShowGiftPicker(false)}
+          onSent={(chatId) => {
+            setSelectedChatId(chatId);
+            setLocation("/");
+          }}
+        />
+      )}
     </div>
   );
 }

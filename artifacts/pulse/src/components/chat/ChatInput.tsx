@@ -3,8 +3,9 @@ import { emojiToTwemojiUrl } from "@/lib/twemoji";
 import { useSendMessage, useGetMe, getGetMessagesQueryKey, getGetChatsQueryKey, Message } from "@workspace/api-client-react";
 import type { P2PChannel } from "@/hooks/useP2PChannel";
 import { useQueryClient } from "@tanstack/react-query";
-import { Paperclip, Mic, SendHorizontal, X, Square, Trash2, Images, Reply, Pencil, Clock, BarChart2, Plus, Minus, CalendarClock, Hourglass, Smile, Package, FileText, FileCode, FileArchive, File as FileIcon, Video, Camera, RefreshCw, Zap, Play, Pause, MapPin } from "lucide-react";
+import { Paperclip, Mic, SendHorizontal, X, Square, Trash2, Images, Reply, Pencil, Clock, BarChart2, Plus, Minus, CalendarClock, Hourglass, Smile, Package, FileText, FileCode, FileArchive, File as FileIcon, Video, Camera, RefreshCw, Zap, Play, Pause, MapPin, Gift } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { GiftPicker } from "@/components/gifts/GiftPicker";
 
 interface DocPreview { name: string; size: number; mime: string; data: string; }
 
@@ -202,6 +203,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
   const [pollSending, setPollSending] = useState(false);
   const [pollError, setPollError] = useState("");
   const [showMobileActions, setShowMobileActions] = useState(false);
+  const [showGiftPicker, setShowGiftPicker] = useState(false);
   const [locationSending, setLocationSending] = useState(false);
 
   const isPrimePlus = !!(me as any)?.hasPrime && (me as any)?.primeTier === "prime_plus";
@@ -1585,7 +1587,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
               transition={{ type: "spring", damping: 28, stiffness: 340 }}
               className="md:hidden mb-2 bg-card border border-border rounded-[22px] shadow-2xl overflow-hidden"
             >
-               <div className="grid grid-cols-5 gap-0 divide-x divide-border">
+               <div className={cn("grid gap-0 divide-x divide-border", recipientUserId && !isBot && !isChannel ? "grid-cols-6" : "grid-cols-5")}>
                 <button
                   type="button"
                   onClick={() => { fileInputRef.current?.click(); setShowMobileActions(false); }}
@@ -1607,6 +1609,19 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
                   </div>
                   <span className="text-[10px] font-bold leading-none">{locationSending ? "Ищем" : "Место"}</span>
                 </button>
+                {recipientUserId && !isBot && !isChannel && (
+                  <button
+                    type="button"
+                    onClick={() => { setShowGiftPicker(true); setShowMobileActions(false); }}
+                    className="flex flex-col items-center gap-1.5 py-4 px-2 hover:bg-secondary/60 transition-colors text-muted-foreground hover:text-foreground active:bg-secondary"
+                    data-testid="button-open-gifts-mobile"
+                  >
+                    <div className="w-10 h-10 rounded-2xl bg-pink-500/15 flex items-center justify-center">
+                      <Gift size={19} className="text-pink-400" />
+                    </div>
+                    <span className="text-[10px] font-bold leading-none">Подарок</span>
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => { setShowPollCreator(v => !v); setPollError(""); setShowMobileActions(false); }}
@@ -1831,6 +1846,17 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
                       title="Отправить геопозицию">
                       <MapPin size={20} />
                     </button>
+                    {recipientUserId && !isBot && !isChannel && (
+                      <button
+                        type="button"
+                        onClick={() => setShowGiftPicker(true)}
+                        className="hidden md:flex w-12 h-12 items-center justify-center rounded-full text-pink-400 hover:bg-pink-500/10 transition-colors shrink-0 mb-[2px]"
+                        title="Отправить подарок"
+                        data-testid="button-open-gifts"
+                      >
+                        <Gift size={20} />
+                      </button>
+                    )}
                     <button type="button" onClick={() => startRecording("video")}
                       className="hidden md:flex w-12 h-12 items-center justify-center rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors shrink-0 mb-[2px]"
                       title="Записать видеокружок">
@@ -1898,6 +1924,14 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
         </div>
         )}
       </div>
+      {showGiftPicker && recipientUserId && (
+        <GiftPicker
+          recipientId={recipientUserId}
+          chatId={chatId}
+          onClose={() => setShowGiftPicker(false)}
+          onSent={() => onMessageSent?.()}
+        />
+      )}
     </div>
   );
 }

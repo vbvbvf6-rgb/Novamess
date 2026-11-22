@@ -86,6 +86,29 @@ if (Number.isNaN(port) || port <= 0) {
       await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_tiktok_creator BOOLEAN NOT NULL DEFAULT FALSE`);
     }
     await db.execute(sql`ALTER TABLE chat_members ADD COLUMN IF NOT EXISTS is_archived BOOLEAN NOT NULL DEFAULT FALSE`);
+    await db.execute(sql`CREATE TABLE IF NOT EXISTS app_settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL,
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    )`);
+    await db.execute(sql`ALTER TABLE gift_items ADD COLUMN IF NOT EXISTS image_url TEXT`);
+    await db.execute(sql`
+      INSERT INTO gift_items
+        (name, emoji, animation_type, rarity, stars, price, description, prime_only, image_url)
+      VALUES
+        ('Роза', '🌹', 'roses', 'common', 1, 10, 'Яркая роза с анимированным сиянием', FALSE, '/gifts/rose.svg'),
+        ('Подарок', '🎁', 'confetti', 'rare', 2, 10, 'Подарочная коробка с лентой', FALSE, '/gifts/gift-box.svg'),
+        ('Медвежонок', '🧸', 'hearts', 'epic', 3, 10, 'Мягкий медвежонок', FALSE, '/gifts/bear.svg'),
+        ('Сердце', '💖', 'hearts', 'legendary', 4, 10, 'Сияющее сердце с бантом', FALSE, '/gifts/heart.svg')
+      ON CONFLICT (name) DO UPDATE SET
+        emoji = EXCLUDED.emoji,
+        animation_type = EXCLUDED.animation_type,
+        rarity = EXCLUDED.rarity,
+        stars = EXCLUDED.stars,
+        description = EXCLUDED.description,
+        prime_only = EXCLUDED.prime_only,
+        image_url = EXCLUDED.image_url
+    `);
 
     // Cosmetic inventory and prize-code tables must exist after migrations and
     // before the API begins serving requests (route-module DDL can run too early

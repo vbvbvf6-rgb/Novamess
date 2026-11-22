@@ -5,6 +5,7 @@ import { UpdateMeBody } from "@workspace/api-zod";
 import { offloadDataUrl } from "../lib/objectStorage";
 import { sendVerificationEmail, isMailerConfigured } from "../lib/mailer";
 import { getActiveUserModeration } from "../lib/userModeration";
+import { isHalloweenEventEnabled } from "../lib/halloweenEvent";
 
 const router = Router();
 
@@ -98,6 +99,7 @@ router.post("/users/me/prize-codes/redeem", async (req, res) => {
     await db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS avatar_frame TEXT`);
     const code = String(req.body?.code || "").trim().toUpperCase();
     if (!/^[A-Z0-9-]{4,40}$/.test(code)) return res.status(400).json({ error: "Введите корректный код" });
+    const halloweenEnabled = await isHalloweenEventEnabled();
     const result = await db.transaction(async (tx) => {
       const codeRows = await tx.execute(sql`
         SELECT id, prize_amount, prize_description, prize_type, prime_months, nickname_style, avatar_frame, max_uses, uses, expires_at
@@ -110,6 +112,12 @@ router.post("/users/me/prize-codes/redeem", async (req, res) => {
       }
       if (Number(prize.uses) >= Number(prize.max_uses)) {
         throw Object.assign(new Error("Лимит использований этого кода исчерпан"), { status: 409 });
+      }
+      const grantsHalloween = prize.prize_type === "halloween"
+        || prize.avatar_frame === "halloween"
+        || (prize.prize_type === "nickname" && prize.nickname_style === "halloween");
+      if (grantsHalloween && !halloweenEnabled) {
+        throw Object.assign(new Error("Хэллоуинское событие отключено"), { status: 410 });
       }
       const redemption = await tx.execute(sql`
         INSERT INTO prize_code_redemptions (code_id, user_id) VALUES (${prize.id}, ${req.currentUserId})
@@ -173,6 +181,7 @@ router.post("/users/me/prize-codes/redeem", async (req, res) => {
 
 router.get("/users/me/nickname-styles", async (req, res) => {
   try {
+    const halloweenEnabled = await isHalloweenEventEnabled();
     const rows = await db.execute(sql`
       SELECT ns.*, uns.id AS inventory_id, uns.source, uns.granted_at,
              (u.nickname_style = ns.slug) AS equipped
@@ -180,6 +189,7 @@ router.get("/users/me/nickname-styles", async (req, res) => {
       JOIN nickname_styles ns ON ns.id = uns.style_id
       JOIN users u ON u.id = uns.user_id
       WHERE uns.user_id = ${req.currentUserId}
+        AND (${halloweenEnabled} OR ns.slug <> 'halloween')
       ORDER BY ns.sort_order, ns.id
     `);
     res.json(rows.rows);
@@ -195,6 +205,9 @@ router.post("/users/me/nickname-styles/:styleId/equip", async (req, res) => {
       WHERE uns.user_id = ${req.currentUserId} AND ns.id = ${styleId}
     `);
     if (!rows.rows.length) return res.status(403).json({ error: "Этого стиля нет в вашем инвентаре" });
+    if ((rows.rows[0] as any).slug === "halloween" && !(await isHalloweenEventEnabled())) {
+      return res.status(410).json({ error: "Хэллоуинское событие отключено" });
+    }
     await db.execute(sql`UPDATE users SET nickname_style = ${(rows.rows[0] as any).slug} WHERE id = ${req.currentUserId}`);
     res.json({ success: true, nicknameStyle: (rows.rows[0] as any).slug });
   } catch { res.status(500).json({ error: "Не удалось надеть стиль" }); }
@@ -202,12 +215,14 @@ router.post("/users/me/nickname-styles/:styleId/equip", async (req, res) => {
 
 router.get("/users/me/avatar-frames", async (req, res) => {
   try {
+    const halloweenEnabled = await isHalloweenEventEnabled();
     const rows = await db.execute(sql`
       SELECT uf.id, uf.frame_slug AS slug, uf.source, uf.granted_at,
              (u.avatar_frame = uf.frame_slug) AS equipped
       FROM user_avatar_frames uf
       JOIN users u ON u.id = uf.user_id
       WHERE uf.user_id = ${req.currentUserId}
+        AND (${halloweenEnabled} OR uf.frame_slug <> 'halloween')
       ORDER BY uf.granted_at DESC, uf.id DESC
     `);
     res.json(rows.rows.map((frame: any) => ({
@@ -229,6 +244,9 @@ router.post("/users/me/avatar-frames/:frameSlug/equip", async (req, res) => {
       return res.json({ success: true, avatarFrame: null });
     }
     if (frameSlug !== "halloween") return res.status(400).json({ error: "Неизвестная рамка" });
+    if (!(await isHalloweenEventEnabled())) {
+      return res.status(410).json({ error: "Хэллоуинское событие отключено" });
+    }
     const owned = await db.execute(sql`
       SELECT 1 FROM user_avatar_frames
       WHERE user_id = ${req.currentUserId} AND frame_slug = ${frameSlug}
@@ -247,7 +265,7 @@ const HALLOWEEN_QUEST_END = "2026-11-08T00:00:00.000Z";
 const HALLOWEEN_QUEST_GOAL = 13;
 
 async function getHalloweenQuestState(userId: number) {
-  const [progressRows, claimRows] = await Promise.all([
+  const [progressRows, claimRows, eventEnabled] = await Promise.all([
     db.execute(sql`
       SELECT COUNT(*)::int AS progress
       FROM messages
@@ -256,6 +274,7 @@ async function getHalloweenQuestState(userId: number) {
         AND created_at < ${HALLOWEEN_QUEST_END}
     `),
     db.execute(sql`SELECT 1 FROM user_halloween_quest_claims WHERE user_id = ${userId} LIMIT 1`),
+    isHalloweenEventEnabled(),
   ]);
   const now = Date.now();
   return {
@@ -264,7 +283,7 @@ async function getHalloweenQuestState(userId: number) {
     claimed: claimRows.rows.length > 0,
     startsAt: HALLOWEEN_QUEST_START,
     endsAt: HALLOWEEN_QUEST_END,
-    active: now >= Date.parse(HALLOWEEN_QUEST_START) && now < Date.parse(HALLOWEEN_QUEST_END),
+    active: eventEnabled && now >= Date.parse(HALLOWEEN_QUEST_START) && now < Date.parse(HALLOWEEN_QUEST_END),
   };
 }
 
@@ -279,6 +298,9 @@ router.get("/users/me/halloween-quest", async (req, res) => {
 
 router.post("/users/me/halloween-quest/claim", async (req, res) => {
   try {
+    if (!(await isHalloweenEventEnabled())) {
+      return res.status(410).json({ error: "Хэллоуинское событие отключено" });
+    }
     if (Date.now() < Date.parse(HALLOWEEN_QUEST_START) || Date.now() >= Date.parse(HALLOWEEN_QUEST_END)) {
       return res.status(410).json({ error: "Хэллоуинский квест сейчас не активен" });
     }

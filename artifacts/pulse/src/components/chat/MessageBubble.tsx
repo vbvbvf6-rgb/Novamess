@@ -914,6 +914,46 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
 
   const renderContent = () => {
     switch (message.type as string) {
+      case "gift": {
+        const giftData = (message as any).giftData;
+        const giftItem = giftData?.giftItem;
+        const imageUrl = giftItem?.imageUrl as string | undefined;
+        const giftName = giftItem?.name || "Подарок";
+        const note = message.text || giftData?.message;
+        return (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.78, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ type: "spring", stiffness: 260, damping: 18 }}
+            className="gift-message-card relative min-w-[190px] overflow-hidden rounded-2xl border border-pink-400/25 bg-gradient-to-br from-pink-500/15 via-background/70 to-violet-500/15 p-3 text-center"
+            data-testid={`card-chat-gift-${message.id}`}
+          >
+            <div className="gift-message-shimmer pointer-events-none absolute inset-0" aria-hidden="true" />
+            <motion.div
+              animate={{ y: [0, -5, 0], rotate: [0, 2, -2, 0] }}
+              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+              className="relative mx-auto flex h-28 w-28 items-center justify-center"
+            >
+              <div className="absolute inset-3 rounded-full bg-pink-400/20 blur-xl" />
+              {imageUrl ? (
+                <img
+                  src={imageUrl}
+                  alt={giftName}
+                  className="gift-art relative z-10 h-24 w-24 object-contain drop-shadow-xl"
+                />
+              ) : (
+                <span className="gift-art relative z-10 text-6xl" role="img" aria-label={giftName}>
+                  {giftItem?.emoji || "🎁"}
+                </span>
+              )}
+            </motion.div>
+            <p className="relative text-[10px] font-black uppercase tracking-[0.18em] text-pink-400">Подарок</p>
+            <h3 className="relative mt-0.5 text-sm font-black text-foreground">{giftName}</h3>
+            {giftItem?.description && <p className="relative mt-1 text-[10px] leading-relaxed text-muted-foreground">{giftItem.description}</p>}
+            {note && <p className="relative mt-2 border-t border-border/70 pt-2 text-xs font-medium text-foreground/90">{note}</p>}
+          </motion.div>
+        );
+      }
       case "poll":
         return <PollDisplay pollData={pollData} messageId={message.id} chatId={message.chatId} currentUserId={currentUserId} isMine={isMine} />;
       case "text": {

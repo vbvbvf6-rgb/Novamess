@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import type { Lang } from "@/i18n/translations";
 import { APP_THEMES, applyAppTheme } from "@/lib/appThemes";
+import { useHalloweenEvent } from "@/hooks/useHalloweenEvent";
 import { disableBiometric, isBiometricSupported, registerBiometric } from "@/lib/biometric";
 import { isAndroidNativeApp, NetworkProxy, type NetworkProxyType } from "@/lib/nativeNetworkProxy";
 import { localStoragePersister } from "@/lib/queryClient";
@@ -1367,6 +1368,7 @@ export default function Settings() {
   const { isDark, toggleTheme, logout } = useAppContext();
   const { t, lang, setLang } = useLanguage();
   const { data: user } = useGetMe();
+  const halloweenEnabled = useHalloweenEvent();
   const updateMe = useUpdateMe();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -1497,6 +1499,10 @@ export default function Settings() {
   }, [(user as any)?.hasPrime, primeTheme]);
 
   const handleAppThemeSelect = (themeId: string) => {
+    if (themeId === "halloween" && !halloweenEnabled) {
+      toast({ title: lang === "ru" ? "Хэллоуинское событие отключено" : "Halloween event is disabled" });
+      return;
+    }
     if (themeId === "halloween" && appTheme !== "halloween") {
       localStorage.setItem("pulse-pre-halloween-theme", appTheme);
     }
@@ -2456,19 +2462,21 @@ export default function Settings() {
               </Section>
 
               <Section title={lang === "ru" ? "Тема интерфейса" : "Interface theme"} icon={<Palette size={13}/>}>
-                <Row
-                  icon={<Flame size={18}/>}
-                  color="bg-orange-500/10 text-orange-500"
-                  label={lang === "ru" ? "Хэллоуинское обновление" : "Halloween update"}
-                  desc={lang === "ru" ? "Тыквенно-оранжевый, ведьмински-зелёный и призраки, летучие мыши, паутина. Можно отключить в любой момент." : "Pumpkin orange, witch-green glow, ghosts, bats, and webs. Turn it off anytime."}
-                  right={<Switch checked={appTheme === "halloween"} onCheckedChange={toggleHalloweenTheme} />}
-                />
+                {halloweenEnabled && (
+                  <Row
+                    icon={<Flame size={18}/>}
+                    color="bg-orange-500/10 text-orange-500"
+                    label={lang === "ru" ? "Хэллоуинское обновление" : "Halloween update"}
+                    desc={lang === "ru" ? "Тыквенно-оранжевый, ведьмински-зелёный и призраки, летучие мыши, паутина. Можно отключить в любой момент." : "Pumpkin orange, witch-green glow, ghosts, bats, and webs. Turn it off anytime."}
+                    right={<Switch checked={appTheme === "halloween"} onCheckedChange={toggleHalloweenTheme} />}
+                  />
+                )}
                 <div className="p-4">
                   <p className="text-xs text-muted-foreground mb-3">
                     {lang === "ru" ? "Выберите цветовую палитру Nova для этого устройства." : "Choose a Nova color palette for this device."}
                   </p>
                   <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-                    {APP_THEMES.map(theme => (
+                    {APP_THEMES.filter(theme => halloweenEnabled || theme.id !== "halloween").map(theme => (
                       <button
                         key={theme.id}
                         onClick={() => handleAppThemeSelect(theme.id)}

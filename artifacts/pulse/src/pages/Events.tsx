@@ -13,6 +13,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useGetMe } from "@workspace/api-client-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
+import { useHalloweenEvent } from "@/hooks/useHalloweenEvent";
 
 /* ─── Types ─────────────────────────────────────────────────────────── */
 type Tab = "quests" | "events" | "leaderboard";
@@ -123,6 +124,7 @@ export default function Events() {
   const en = lang === "en";
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const halloweenEnabled = useHalloweenEvent();
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<Tab>("quests");
   const [completed, setCompleted] = useState<Set<string>>(loadCompleted);
@@ -492,7 +494,7 @@ export default function Events() {
                 </div>
 
                 {/* Halloween event quest — progress and one-time cosmetic claim are verified by the API. */}
-                <section className="relative overflow-hidden rounded-2xl border border-orange-500/30 bg-gradient-to-br from-orange-500/15 via-card to-violet-500/15 p-4" aria-labelledby="halloween-quest-title">
+                {halloweenEnabled && <section className="relative overflow-hidden rounded-2xl border border-orange-500/30 bg-gradient-to-br from-orange-500/15 via-card to-violet-500/15 p-4" aria-labelledby="halloween-quest-title">
                   <div className="pointer-events-none absolute -right-8 -top-10 text-8xl opacity-[0.08]">🎃</div>
                   <div className="relative flex flex-wrap items-start justify-between gap-3">
                     <div className="flex min-w-0 items-center gap-3">
@@ -550,7 +552,7 @@ export default function Events() {
                           ? (en ? "Event is over" : "Событие завершено")
                           : (en ? "Claim Halloween set" : "Забрать хэллоуинский комплект")}
                   </button>
-                </section>
+                </section>}
 
                 {/* Quest filter pills */}
                 <div className="flex gap-2 overflow-x-auto scrollbar-none -mx-4 px-4 pb-0.5">

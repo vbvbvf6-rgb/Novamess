@@ -13,6 +13,7 @@ import adminRouter from "./admin";
 // import aiRouter from "./ai"; // AI feature disabled
 import eventsRouter from "./events";
 import walletRouter from "./wallet";
+import giftsRouter from "./gifts";
 import botsRouter from "./bots";
 import supportRouter from "./support";
 import primeRouter from "./prime";
@@ -46,6 +47,7 @@ router.use(adminRouter);
 // router.use(aiRouter); // AI feature disabled
 router.use(eventsRouter);
 router.use(walletRouter);
+router.use(giftsRouter);
 if (!process.env.DISABLE_BOTS) router.use(botsRouter);
 router.use(supportRouter);
 router.use(primeRouter);

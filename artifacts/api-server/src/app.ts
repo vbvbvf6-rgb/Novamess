@@ -251,6 +251,7 @@ const PUBLIC_API_PATHS = [
   "/auth/reset-password-final",
   // Public maintenance status check (no auth — shown before login)
   "/maintenance",
+  "/halloween-event",
   // Public app changelog — visible to everyone (no auth required)
   "/updates",
   "/public/users",
@@ -439,7 +440,7 @@ app.use("/api", (req: Request, res: Response, next: NextFunction) => {
 // Blocks non-admin API traffic while maintenance is active, so users already
 // logged in are actually locked out in real time (not just shown a banner
 // that they can ignore because their existing session keeps working).
-const MAINTENANCE_ALLOWED_PATHS = ["/maintenance", "/auth/login", "/auth/logout", "/events"];
+const MAINTENANCE_ALLOWED_PATHS = ["/maintenance", "/halloween-event", "/auth/login", "/auth/logout", "/events"];
 app.use("/api", async (req: Request, res: Response, next: NextFunction) => {
   if (MAINTENANCE_ALLOWED_PATHS.some(p => req.path === p || req.path.startsWith(p + "/"))) return next();
   try {

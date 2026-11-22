@@ -891,22 +891,6 @@ router.get("/admin/database-usage", requireAdmin, async (req, res) => {
   }
 });
 
-// Cleanup: purge expired stories & old sent scheduled messages to reclaim space
-router.post("/admin/database-cleanup", requireAdmin, async (req, res) => {
-  try {
-    const expiredStories = await db.execute(sql`DELETE FROM stories WHERE expires_at IS NOT NULL AND expires_at < NOW() RETURNING id`);
-    const oldScheduled = await db.execute(sql`DELETE FROM scheduled_messages WHERE sent_at IS NOT NULL AND sent_at < NOW() - INTERVAL '7 days' RETURNING id`).catch(() => ({ rows: [] }));
-    res.json({
-      success: true,
-      deletedStories: (expiredStories.rows as any[]).length,
-      deletedScheduled: (oldScheduled.rows as any[]).length,
-    });
-  } catch (err) {
-    req.log.error(err);
-    res.status(500).json({ error: "Ошибка сервера" });
-  }
-});
-
 // ── Moderation Appeals ────────────────────────────────────────────────────────
 
 router.get("/admin/moderation/appeals", requireAdmin, async (req, res) => {
@@ -1766,6 +1750,51 @@ router.get("/maintenance", async (_req, res) => {
   } catch { return res.json({ active: false }); }
 });
 
+router.get("/halloween-event", async (req, res) => {
+  try {
+    const rows = await db.execute(sql`SELECT value FROM app_settings WHERE key = 'halloween_event' LIMIT 1`);
+    const row = rows.rows[0] as { value?: string } | undefined;
+    const settings = row?.value ? JSON.parse(row.value) : { enabled: true };
+    res.setHeader("Cache-Control", "no-store");
+    res.json({ enabled: settings.enabled !== false });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Не удалось загрузить состояние события" });
+  }
+});
+
+router.get("/admin/halloween-event", requireAdmin, async (req, res) => {
+  try {
+    const rows = await db.execute(sql`SELECT value FROM app_settings WHERE key = 'halloween_event' LIMIT 1`);
+    const row = rows.rows[0] as { value?: string } | undefined;
+    const settings = row?.value ? JSON.parse(row.value) : { enabled: true };
+    res.json({ enabled: settings.enabled !== false });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Не удалось загрузить состояние события" });
+  }
+});
+
+router.post("/admin/halloween-event", requireAdmin, async (req, res) => {
+  try {
+    if (typeof req.body?.enabled !== "boolean") {
+      return res.status(400).json({ error: "Укажите состояние события" });
+    }
+    const settings = { enabled: req.body.enabled };
+    const value = JSON.stringify(settings);
+    await db.execute(sql`
+      INSERT INTO app_settings (key, value, updated_at)
+      VALUES ('halloween_event', ${value}, NOW())
+      ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()
+    `);
+    broadcastToAll("halloween-event", settings);
+    res.json(settings);
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Не удалось сохранить состояние события" });
+  }
+});
+
 router.get("/admin/maintenance", requireAdmin, async (req, res) => {
   try {
     const rows = await db.execute(sql`SELECT value FROM app_settings WHERE key = 'maintenance' LIMIT 1`);
@@ -1967,58 +1996,6 @@ router.patch("/admin/bots/:botId/code", requireAdmin, async (req, res) => {
     const newLang = lang === "javascript" ? "javascript" : "python";
     await db.execute(sql`UPDATE bot_tokens SET inline_code = ${newCode}, code_lang = ${newLang} WHERE bot_user_id = ${botId}`);
     res.json({ ok: true, hasCode: newCode !== null, lang: newLang });
-  } catch (err) { req.log.error(err); res.status(500).json({ error: "Ошибка сервера" }); }
-});
-
-// ── Database cleanup ───────────────────────────────────────────────────────
-
-router.post("/admin/db-cleanup", requireAdmin, async (req, res) => {
-  try {
-    const { target, days } = req.body;
-    const d = Math.max(1, Number(days) || 30);
-    let deleted = 0;
-    if (target === "old_messages") {
-      const r = await db.execute(sql`
-        DELETE FROM messages WHERE created_at < NOW() - (${d} || ' days')::INTERVAL
-        AND chat_id IN (SELECT id FROM chats WHERE type != 'direct')
-      `);
-      deleted = (r as any).rowCount ?? 0;
-    } else if (target === "bot_updates") {
-      const r = await db.execute(sql`
-        DELETE FROM bot_updates WHERE created_at < NOW() - (${d} || ' days')::INTERVAL
-      `);
-      deleted = (r as any).rowCount ?? 0;
-    } else if (target === "old_sessions") {
-      const r = await db.execute(sql`
-        DELETE FROM user_sessions WHERE last_active_at < NOW() - (${d} || ' days')::INTERVAL
-      `);
-      deleted = (r as any).rowCount ?? 0;
-    } else if (target === "push_subscriptions") {
-      const r = await db.execute(sql`DELETE FROM push_subscriptions`);
-      deleted = (r as any).rowCount ?? 0;
-    } else if (target === "reports") {
-      const r = await db.execute(sql`DELETE FROM user_reports WHERE status != 'pending'`);
-      const r2 = await db.execute(sql`DELETE FROM post_reports WHERE created_at < NOW() - INTERVAL '90 days'`);
-      deleted = ((r as any).rowCount ?? 0) + ((r2 as any).rowCount ?? 0);
-    } else {
-      return res.status(400).json({ error: "Неизвестная цель очистки" });
-    }
-    res.json({ ok: true, deleted, target });
-  } catch (err) { req.log.error(err); res.status(500).json({ error: "Ошибка сервера" }); }
-});
-
-// Admin: get DB size stats
-router.get("/admin/db-stats", requireAdmin, async (req, res) => {
-  try {
-    const tables = ["messages", "bot_updates", "user_sessions", "push_subscriptions", "user_reports", "post_reports"];
-    const result: Record<string, number> = {};
-    for (const t of tables) {
-      try {
-        const r = await db.execute(sql.raw(`SELECT COUNT(*) as c FROM ${t}`));
-        result[t] = Number((r.rows[0] as any)?.c ?? 0);
-      } catch { result[t] = 0; }
-    }
-    res.json(result);
   } catch (err) { req.log.error(err); res.status(500).json({ error: "Ошибка сервера" }); }
 });
 

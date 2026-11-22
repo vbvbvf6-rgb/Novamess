@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="512" height="512">
+
+<defs>
+
+
+<linearGradient id="gl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".95"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+<linearGradient id="sh" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".8"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+
+<linearGradient id="tp" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff09a"/><stop offset="1" stop-color="#ffc42e"/></linearGradient>
+<linearGradient id="lf" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ffc02a"/><stop offset="1" stop-color="#f59d08"/></linearGradient>
+<linearGradient id="rt" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ee9300"/><stop offset="1" stop-color="#c96c00"/></linearGradient>
+<linearGradient id="rd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff4b4b"/><stop offset=".6" stop-color="#e01620"/><stop offset="1" stop-color="#a30012"/></linearGradient>
+<clipPath id="dm"><polygon points="128,74 208,104 128,134 48,104"/></clipPath>
+</defs>
+<ellipse cx="128" cy="240" rx="70" ry="8" fill="#000" opacity=".3"/>
+
+<g>
+<polygon points="56,124 128,152 128,224 56,196" fill="url(#lf)"/><polygon points="128,152 200,124 200,196 128,224" fill="url(#rt)"/>
+<polygon points="84,134.9 100,141.1 100,213.1 84,206.9" fill="url(#rd)"/><polygon points="156,141.1 172,134.9 172,206.9 156,213.1" fill="url(#rd)"/>
+<polygon points="56,124 128,152 128,160 56,132" fill="#000" opacity=".12"/><polygon points="128,152 200,124 200,132 128,160" fill="#000" opacity=".18"/>
+<polyline points="56,124 56,196 128,224" fill="none" stroke="#fff3a0" stroke-width="2" opacity=".6"/>
+<path d="M62 140L62 188" stroke="#fff" stroke-width="3" opacity=".25" stroke-linecap="round"/>
+</g>
+<g>
+<polygon points="48,104 128,134 128,160 48,130" fill="url(#lf)"/><polygon points="128,134 208,104 208,130 128,160" fill="url(#rt)"/>
+<polygon points="84,117.5 100,123.5 100,149.5 84,143.5" fill="url(#rd)"/><polygon points="156,123.5 172,117.5 172,143.5 156,149.5" fill="url(#rd)"/>
+<polygon points="128,74 208,104 128,134 48,104" fill="url(#tp)"/>
+<g clip-path="url(#dm)"><polygon points="80,116 96,122 176,92 160,86" fill="url(#rd)"/><polygon points="80,92 96,86 176,116 160,122" fill="url(#rd)"/></g>
+<polyline points="48,104 128,134 208,104" fill="none" stroke="#fff6b8" stroke-width="2.5" stroke-linejoin="round"/>
+<g><g transform="translate(128 98)" stroke="#7c000e" stroke-width="2" stroke-linejoin="round">
+<path d="M-2-2C-10-52-42-72-52-50C-58-34-26-12-6 4Z" fill="url(#rd)"/><path d="M2-2C10-52 42-72 52-50C58-34 26-12 6 4Z" fill="url(#rd)"/>
+<path d="M-4 6L-48 36L-32 40L-38 58L0 16Z" fill="url(#rd)"/><path d="M4 6L48 36L32 40L38 58L0 16Z" fill="url(#rd)"/>
+<path d="M-4 2C-20-34-78-48-80-12C-82 16-36 22-6 10Z" fill="url(#rd)"/><path d="M4 2C20-34 78-48 80-12C82 16 36 22 6 10Z" fill="url(#rd)"/>
+<g stroke="none"><path d="M-14 0C-30-22-62-28-66-12C-68 2-38 10-14 6Z" fill="#8d000f" opacity=".5"/><path d="M14 0C30-22 62-28 66-12C68 2 38 10 14 6Z" fill="#8d000f" opacity=".5"/>
+<ellipse cx="-44" cy="-24" rx="16" ry="4" transform="rotate(-22 -44 -24)" fill="#fff" opacity=".55"/><ellipse cx="44" cy="-24" rx="16" ry="4" transform="rotate(22 44 -24)" fill="#fff" opacity=".55"/></g>
+<ellipse cx="0" cy="2" rx="15" ry="13" fill="url(#rd)"/><ellipse cx="-4" cy="-3" rx="6" ry="3" fill="#fff" opacity=".6" stroke="none"/></g></g>
+</g>
+<g/><g/><g/><g/><g/>
+
+</svg>

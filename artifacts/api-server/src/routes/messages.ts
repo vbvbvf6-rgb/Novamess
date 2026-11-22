@@ -38,6 +38,47 @@ async function isChatMember(chatId: number, userId: number): Promise<boolean> {
   return !!member;
 }
 
+function getGiftIdFromMediaUrl(mediaUrl: string | null | undefined): number | null {
+  const match = typeof mediaUrl === "string" ? mediaUrl.match(/^gift:(\d+)$/) : null;
+  return match ? Number(match[1]) : null;
+}
+
+async function getGiftData(giftId: number) {
+  const rows = await db.execute(sql`
+    SELECT g.id, g.gift_item_id, g.sender_id, g.receiver_id, g.message, g.is_anonymous, g.chat_id, g.created_at,
+           gi.name AS item_name, gi.emoji AS item_emoji, gi.animation_type AS item_animation_type,
+           gi.rarity AS item_rarity, gi.stars AS item_stars, gi.price AS item_price,
+           gi.description AS item_description, gi.image_url AS item_image_url
+    FROM gifts g
+    JOIN gift_items gi ON gi.id = g.gift_item_id
+    WHERE g.id = ${giftId}
+    LIMIT 1
+  `);
+  const row = rows.rows[0] as any;
+  if (!row) return null;
+  return {
+    id: Number(row.id),
+    giftItemId: Number(row.gift_item_id),
+    senderId: Number(row.sender_id),
+    receiverId: Number(row.receiver_id),
+    message: row.message,
+    isAnonymous: Boolean(row.is_anonymous),
+    chatId: row.chat_id === null ? null : Number(row.chat_id),
+    createdAt: row.created_at,
+    giftItem: {
+      id: Number(row.gift_item_id),
+      name: row.item_name,
+      emoji: row.item_emoji,
+      animationType: row.item_animation_type,
+      rarity: row.item_rarity,
+      stars: Number(row.item_stars),
+      price: Number(row.item_price),
+      description: row.item_description,
+      imageUrl: row.item_image_url,
+    },
+  };
+}
+
 async function isNovaSecurityChat(chatId: number): Promise<boolean> {
   const row = await db.execute(sql`
     SELECT 1
@@ -156,7 +197,9 @@ async function buildMessage(msg: typeof messagesTable.$inferSelect, viewerIsPrim
     sender: senderWithPrime,
     reactions: reactions.map(r => ({ ...r.reaction, user: r.user })),
     replyTo,
-    giftData: null,
+    giftData: msg.type === "gift" && getGiftIdFromMediaUrl(msg.mediaUrl)
+      ? await getGiftData(getGiftIdFromMediaUrl(msg.mediaUrl)!)
+      : null,
     pollData,
   };
 }
@@ -221,6 +264,48 @@ async function buildMessagesBatch(msgs: (typeof messagesTable.$inferSelect)[], v
     votesMap.get(v.poll_id)!.push(v);
   }
 
+  const giftMessageIds = [...new Set(
+    msgs
+      .filter((msg) => msg.type === "gift")
+      .map((msg) => getGiftIdFromMediaUrl(msg.mediaUrl))
+      .filter((id): id is number => id !== null),
+  )];
+  const giftRows = giftMessageIds.length
+    ? await db.execute(sql`
+      SELECT g.id, g.gift_item_id, g.sender_id, g.receiver_id, g.message, g.is_anonymous, g.chat_id, g.created_at,
+             gi.name AS item_name, gi.emoji AS item_emoji, gi.animation_type AS item_animation_type,
+             gi.rarity AS item_rarity, gi.stars AS item_stars, gi.price AS item_price,
+             gi.description AS item_description, gi.image_url AS item_image_url
+      FROM gifts g
+      JOIN gift_items gi ON gi.id = g.gift_item_id
+      WHERE g.id = ANY(ARRAY[${sql.join(giftMessageIds.map((id) => sql`${id}`), sql`, `)}]::int[])
+    `)
+    : { rows: [] };
+  const giftMap = new Map<number, any>();
+  for (const row of giftRows.rows as any[]) {
+    giftMap.set(Number(row.id), {
+      id: Number(row.id),
+      giftItemId: Number(row.gift_item_id),
+      senderId: Number(row.sender_id),
+      receiverId: Number(row.receiver_id),
+      message: row.message,
+      isAnonymous: Boolean(row.is_anonymous),
+      chatId: row.chat_id === null ? null : Number(row.chat_id),
+      createdAt: row.created_at,
+      giftItem: {
+        id: Number(row.gift_item_id),
+        name: row.item_name,
+        emoji: row.item_emoji,
+        animationType: row.item_animation_type,
+        rarity: row.item_rarity,
+        stars: Number(row.item_stars),
+        price: Number(row.item_price),
+        description: row.item_description,
+        imageUrl: row.item_image_url,
+      },
+    });
+  }
+
   return msgs.map(msg => {
     const sender = senderMap.get(msg.senderId);
     // Prime info + admin flag
@@ -275,7 +360,9 @@ async function buildMessagesBatch(msgs: (typeof messagesTable.$inferSelect)[], v
       sender: senderWithPrime,
       reactions: (reactionsMap.get(msg.id) ?? []).map(r => ({ ...r.reaction, user: r.user })),
       replyTo,
-      giftData: null,
+      giftData: msg.type === "gift" && getGiftIdFromMediaUrl(msg.mediaUrl)
+        ? giftMap.get(getGiftIdFromMediaUrl(msg.mediaUrl)!) ?? null
+        : null,
       pollData,
     };
   });

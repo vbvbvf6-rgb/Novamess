@@ -19,6 +19,8 @@ import { useNotifications } from "@/hooks/useNotifications";
 import { setupNativeNotifications, unregisterNativePush } from "@/lib/nativeNotifications";
 import { playNotificationSound } from "@/lib/ringtones";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
+import { useHalloweenEvent } from "@/hooks/useHalloweenEvent";
+import { APP_THEMES, applyAppTheme } from "@/lib/appThemes";
 import { PwaInstallPrompt } from "@/components/PwaInstallPrompt";
 import { useServiceWorkerUpdate } from "@/hooks/useServiceWorkerUpdate";
 import { useToast } from "@/hooks/use-toast";
@@ -506,6 +508,27 @@ function MainAppEffects() {
   return null;
 }
 
+function HalloweenEventController() {
+  const halloweenEnabled = useHalloweenEvent();
+
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.toggle("halloween-event-disabled", !halloweenEnabled);
+    if (halloweenEnabled || localStorage.getItem("pulse-app-theme") !== "halloween") return;
+
+    const previous = localStorage.getItem("pulse-pre-halloween-theme");
+    const restore = previous && previous !== "halloween" && APP_THEMES.some(theme => theme.id === previous)
+      ? previous
+      : "light";
+    localStorage.removeItem("pulse-pre-halloween-theme");
+    localStorage.setItem("pulse-app-theme", restore);
+    applyAppTheme(restore);
+    window.dispatchEvent(new CustomEvent("pulse:app-theme", { detail: restore }));
+  }, [halloweenEnabled]);
+
+  return null;
+}
+
 function MainAppInner({ onLogout, onSwitchAccount, onRemoveAccount, onOpenAddAccount }: MainAppProps) {
   useDocumentTitle();
 
@@ -519,6 +542,7 @@ function MainAppInner({ onLogout, onSwitchAccount, onRemoveAccount, onOpenAddAcc
       <PluginProvider>
       <TooltipProvider>
         <MainAppEffects />
+        <HalloweenEventController />
         <HalloweenEffects />
         <GlobalNotificationListener />
         <InAppMessageBanner />
@@ -748,6 +772,16 @@ function App() {
 
     es.addEventListener("maintenance", handleMaintenance);
     es.addEventListener("banned", handleBanned);
+    const handleHalloweenEvent = (event: MessageEvent) => {
+      try {
+        const settings = JSON.parse(event.data) as { enabled?: boolean };
+        if (typeof settings.enabled === "boolean") {
+          localStorage.setItem("pulse-halloween-event-enabled", String(settings.enabled));
+          window.dispatchEvent(new Event("pulse:halloween-event-updated"));
+        }
+      } catch {}
+    };
+    es.addEventListener("halloween-event", handleHalloweenEvent);
     const handleSessionsRevoked = (e: MessageEvent) => {
       // The current device is deliberately kept by the server. All other
       // open tabs/devices receive this event and clear themselves immediately.
@@ -794,6 +828,7 @@ function App() {
     return () => {
       es.removeEventListener("maintenance", handleMaintenance);
       es.removeEventListener("banned", handleBanned);
+      es.removeEventListener("halloween-event", handleHalloweenEvent);
       es.removeEventListener("sessions-revoked", handleSessionsRevoked);
       channel?.removeEventListener("message", handleLocalSessionsRevoked);
       channel?.close();
