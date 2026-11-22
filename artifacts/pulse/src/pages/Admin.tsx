@@ -6,7 +6,7 @@ import {
   PhoneCall, Crown, Megaphone, BarChart3, Activity, Star,
   Edit3, Save, ChevronDown, ChevronRight, ChevronLeft, Minus, Ban, FileText, Trophy, Image,
   ShieldAlert, Clock, CheckCircle2, Bug, Inbox, Send as SendIcon, Download,
-  Wrench, Mail, ToggleLeft, ToggleRight, Timer, Database, Swords, Lock, Sparkles, Rocket, Calendar,
+  Wrench, Mail, ToggleLeft, ToggleRight, Timer, Database, Gift, Swords, Lock, Sparkles, Rocket, Calendar,
   Code2, Bot, Play, Wifi
 } from "lucide-react";
 import { getSavedAccounts } from "@/lib/accounts";
@@ -312,7 +312,6 @@ export default function Admin() {
   const [dbUsage, setDbUsage] = useState<DbUsage | null>(null);
   const [dbUsageLoading, setDbUsageLoading] = useState(false);
   const [showDbUsage, setShowDbUsage] = useState(false);
-  const [dbCleanupLoading, setDbCleanupLoading] = useState(false);
 
   const fetchDbUsage = async () => {
     setDbUsageLoading(true);
@@ -321,18 +320,6 @@ export default function Admin() {
       if (res.ok) setDbUsage(await res.json());
     } catch {}
     setDbUsageLoading(false);
-  };
-
-  const handleDbCleanup = async () => {
-    setDbCleanupLoading(true);
-    try {
-      const res = await fetch("/api/admin/database-cleanup", { method: "POST", headers: getHeader() });
-      const data = await res.json();
-      if (!res.ok) { showToast(data.error || "Ошибка", "err"); return; }
-      showToast(`🧹 Удалено: ${data.deletedStories} историй, ${data.deletedScheduled} сообщений`, "ok");
-      fetchDbUsage();
-    } catch { showToast("Ошибка соединения", "err"); }
-    setDbCleanupLoading(false);
   };
 
   const fetchAdminChats = async () => {
@@ -488,13 +475,20 @@ export default function Admin() {
   const [creatorLoading, setCreatorLoading] = useState(false);
   const [creatorActionId, setCreatorActionId] = useState<number | null>(null);
 
-  // DB Cleanup
-  const [showDbCleanPanel, setShowDbCleanPanel] = useState(false);
-  const [dbStats, setDbStats] = useState<Record<string, number> | null>(null);
-  const [dbStatsLoading, setDbStatsLoading] = useState(false);
-  const [dbCleanTarget, setDbCleanTarget] = useState("bot_updates");
-  const [dbCleanDays, setDbCleanDays] = useState("30");
-  const [dbCleaning, setDbCleaning] = useState(false);
+  interface AdminGiftCatalogItem {
+    id: number;
+    name: string;
+    emoji: string;
+    price: number;
+    description: string;
+    imageUrl?: string | null;
+  }
+  const [halloweenEventEnabled, setHalloweenEventEnabled] = useState(true);
+  const [halloweenEventLoading, setHalloweenEventLoading] = useState(true);
+  const [adminGiftCatalog, setAdminGiftCatalog] = useState<AdminGiftCatalogItem[]>([]);
+  const [giftPriceDrafts, setGiftPriceDrafts] = useState<Record<number, string>>({});
+  const [giftCatalogLoading, setGiftCatalogLoading] = useState(true);
+  const [savingGiftPriceId, setSavingGiftPriceId] = useState<number | null>(null);
   const EVENT_TYPES = [
     { emoji: "🎉", label: "Праздник", color: "#f59e0b" },
     { emoji: "🏆", label: "Турнир", color: "#eab308" },
@@ -980,46 +974,6 @@ export default function Admin() {
     }
   };
 
-  // ── DB cleanup handlers ───────────────────────────────────────────────────
-  const fetchDbStats = useCallback(async () => {
-    setDbStatsLoading(true);
-    try {
-      const res = await fetch("/api/admin/db-stats", { headers: getHeader() });
-      if (res.ok) setDbStats(await res.json());
-    } catch {}
-    setDbStatsLoading(false);
-  }, []);
-
-  const handleAdvancedCleanup = async () => {
-    const targets: Record<string, string> = {
-      bot_updates: "очереди обновлений ботов",
-      old_messages: "старых сообщений в группах",
-      old_sessions: "старых сессий",
-      push_subscriptions: "push-подписок",
-      reports: "обработанных жалоб",
-    };
-    if (!(await requestConfirm({
-      title: `Удалить записи из «${targets[dbCleanTarget] || dbCleanTarget}»?`,
-      description: "Это действие нельзя отменить.",
-      confirmLabel: "Удалить",
-      destructive: true,
-    }))) return;
-    setDbCleaning(true);
-    try {
-      const res = await fetch("/api/admin/db-cleanup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", ...getHeader() },
-        body: JSON.stringify({ target: dbCleanTarget, days: Number(dbCleanDays) }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        showToast(`✅ Удалено ${data.deleted} записей`, "ok");
-        fetchDbStats();
-      } else { showToast(data.error || "Ошибка", "err"); }
-    } catch { showToast("Ошибка соединения", "err"); }
-    setDbCleaning(false);
-  };
-
   const handleMailTest = async () => {
     setMailTestLoading(true);
     setMailTestResult(null);
@@ -1138,6 +1092,88 @@ export default function Admin() {
   }, []);
 
   useEffect(() => { fetchData(); fetchMaintenance(); fetchFeatureMaintenance(); }, [fetchData]);
+
+  const fetchHalloweenEventState = async () => {
+    setHalloweenEventLoading(true);
+    try {
+      const response = await fetch("/api/admin/halloween-event", { headers: getHeader(), cache: "no-store" });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Не удалось загрузить состояние события");
+      setHalloweenEventEnabled(data.enabled !== false);
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Не удалось загрузить состояние события", "err");
+    } finally {
+      setHalloweenEventLoading(false);
+    }
+  };
+
+  const fetchAdminGiftCatalog = async () => {
+    setGiftCatalogLoading(true);
+    try {
+      const response = await fetch("/api/admin/gifts", { headers: getHeader(), cache: "no-store" });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Не удалось загрузить каталог подарков");
+      const items: AdminGiftCatalogItem[] = Array.isArray(data) ? data : [];
+      setAdminGiftCatalog(items);
+      setGiftPriceDrafts(Object.fromEntries(items.map(item => [item.id, String(item.price)])));
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Не удалось загрузить каталог подарков", "err");
+    } finally {
+      setGiftCatalogLoading(false);
+    }
+  };
+
+  const toggleHalloweenEvent = async () => {
+    if (halloweenEventLoading) return;
+    const enabled = !halloweenEventEnabled;
+    setHalloweenEventLoading(true);
+    try {
+      const response = await fetch("/api/admin/halloween-event", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...getHeader() },
+        body: JSON.stringify({ enabled }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Не удалось изменить событие");
+      setHalloweenEventEnabled(data.enabled === true);
+      showToast(enabled ? "🎃 Хэллоуинский ивент включён" : "Хэллоуинский ивент полностью отключён", "ok");
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Не удалось изменить событие", "err");
+    } finally {
+      setHalloweenEventLoading(false);
+    }
+  };
+
+  const saveGiftPrice = async (gift: AdminGiftCatalogItem) => {
+    const price = Number(giftPriceDrafts[gift.id]);
+    if (!Number.isInteger(price) || price < 0 || price > 1_000_000) {
+      showToast("Цена должна быть целым числом от 0 до 1 000 000", "err");
+      return;
+    }
+    setSavingGiftPriceId(gift.id);
+    try {
+      const response = await fetch(`/api/admin/gifts/${gift.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", ...getHeader() },
+        body: JSON.stringify({ price }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Не удалось сохранить цену");
+      setAdminGiftCatalog(items => items.map(item => item.id === gift.id ? { ...item, price: Number(data.price) } : item));
+      setGiftPriceDrafts(drafts => ({ ...drafts, [gift.id]: String(data.price) }));
+      showToast(`Цена подарка «${gift.name}» сохранена`, "ok");
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Не удалось сохранить цену", "err");
+    } finally {
+      setSavingGiftPriceId(null);
+    }
+  };
+
+  useEffect(() => {
+    if (!hasAccess) return;
+    void fetchHalloweenEventState();
+    void fetchAdminGiftCatalog();
+  }, [hasAccess]);
 
   const fetchUserStats = async (uid: number) => {
     setUserStatsLoading(true);
@@ -2346,7 +2382,6 @@ export default function Admin() {
           )}
         </div>
 
-        {/* Database Cleanup */}
         {/* Creator verification review */}
         <div className="bg-card border border-border rounded-2xl overflow-hidden">
           <button
@@ -2451,93 +2486,106 @@ export default function Admin() {
           )}
         </div>
 
-        {/* Database Cleanup */}
         <div className="bg-card border border-border rounded-2xl overflow-hidden">
-          <button
-            onClick={() => { setShowDbCleanPanel(v => !v); if (!showDbCleanPanel && !dbStats) fetchDbStats(); }}
-            className="w-full p-4 flex items-center justify-between hover:bg-secondary/50 transition-colors"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-red-500/10 flex items-center justify-center">
-                <Database size={18} className="text-red-400" />
-              </div>
-              <div className="text-left">
-                <p className="font-semibold text-sm">Очистка базы данных</p>
-                <p className="text-xs text-muted-foreground">Удаление устаревших записей для освобождения места</p>
-              </div>
+          <div className="p-4 flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-orange-500/10 flex items-center justify-center text-lg">🎃</div>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-sm">Хэллоуинский ивент</p>
+              <p className="text-xs text-muted-foreground">
+                Управляет темой, эффектами, рамкой, ником, наградами и квестом для всех пользователей
+              </p>
             </div>
-            {showDbCleanPanel ? <ChevronDown size={16} className="text-muted-foreground" /> : <ChevronRight size={16} className="text-muted-foreground" />}
-          </button>
-          {showDbCleanPanel && (
-            <div className="border-t border-border p-4 space-y-4">
-              {/* Stats */}
-              {dbStatsLoading ? (
-                <div className="flex justify-center py-2"><RefreshCw size={16} className="animate-spin text-muted-foreground" /></div>
-              ) : dbStats && (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {[
-                    { key: "messages", label: "Сообщения", color: "text-blue-400" },
-                    { key: "bot_updates", label: "Очередь ботов", color: "text-emerald-400" },
-                    { key: "user_sessions", label: "Сессии", color: "text-violet-400" },
-                    { key: "push_subscriptions", label: "Push-подписки", color: "text-orange-400" },
-                    { key: "user_reports", label: "Жалобы", color: "text-red-400" },
-                    { key: "post_reports", label: "Жалобы на посты", color: "text-pink-400" },
-                  ].map(({ key, label, color }) => (
-                    <div key={key} className="bg-background border border-border rounded-xl p-3 text-center">
-                      <p className={`text-xl font-black ${color}`}>{(dbStats[key] ?? 0).toLocaleString()}</p>
-                      <p className="text-[11px] text-muted-foreground">{label}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <div className="flex gap-2 items-center justify-end">
-                <button onClick={fetchDbStats} disabled={dbStatsLoading} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
-                  <RefreshCw size={11} className={dbStatsLoading ? "animate-spin" : ""} /> Обновить
-                </button>
-              </div>
+            <button
+              type="button"
+              onClick={toggleHalloweenEvent}
+              disabled={halloweenEventLoading}
+              className={`shrink-0 rounded-xl border px-3 py-2 text-xs font-bold transition-colors disabled:opacity-50 ${
+                halloweenEventEnabled
+                  ? "border-orange-500/30 bg-orange-500/10 text-orange-400 hover:bg-orange-500/20"
+                  : "border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20"
+              }`}
+              data-testid="button-toggle-halloween-event"
+            >
+              {halloweenEventLoading
+                ? <RefreshCw size={14} className="animate-spin" />
+                : halloweenEventEnabled ? "Отключить всё" : "Включить"}
+            </button>
+          </div>
+          <div className="border-t border-border px-4 py-3">
+            <p className={`text-xs font-semibold ${halloweenEventEnabled ? "text-orange-400" : "text-muted-foreground"}`} data-testid="status-halloween-event">
+              {halloweenEventEnabled ? "Ивент включён для всех пользователей" : "Ивент полностью отключён"}
+            </p>
+          </div>
+        </div>
 
-              {/* Cleanup form */}
-              <div className="bg-muted/30 border border-border rounded-xl p-4 space-y-3">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Выполнить очистку</p>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Что удалить</label>
-                    <select
-                      value={dbCleanTarget}
-                      onChange={e => setDbCleanTarget(e.target.value)}
-                      className="w-full mt-0.5 bg-background border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-red-500/60 transition-colors"
-                    >
-                      <option value="bot_updates">Очередь обновлений ботов</option>
-                      <option value="old_messages">Старые сообщения (группы)</option>
-                      <option value="old_sessions">Старые сессии</option>
-                      <option value="push_subscriptions">Push-подписки (все)</option>
-                      <option value="reports">Закрытые жалобы</option>
-                    </select>
-                  </div>
-                  {["bot_updates", "old_messages", "old_sessions"].includes(dbCleanTarget) && (
-                    <div>
-                      <label className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Старше (дней)</label>
+        <div className="bg-card border border-border rounded-2xl overflow-hidden">
+          <div className="p-4 border-b border-border/60 flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-pink-500/10 flex items-center justify-center">
+              <Gift size={18} className="text-pink-400" />
+            </div>
+            <div className="min-w-0">
+              <p className="font-semibold text-sm">Цены на подарки</p>
+              <p className="text-xs text-muted-foreground">Задайте стоимость в искрах для каталога</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => void fetchAdminGiftCatalog()}
+              disabled={giftCatalogLoading}
+              className="ml-auto rounded-lg border border-border p-2 text-muted-foreground hover:bg-secondary hover:text-foreground disabled:opacity-50"
+              aria-label="Обновить каталог подарков"
+              data-testid="button-refresh-gift-catalog"
+            >
+              <RefreshCw size={14} className={giftCatalogLoading ? "animate-spin" : ""} />
+            </button>
+          </div>
+          <div className="p-4">
+            {giftCatalogLoading ? (
+              <div className="flex justify-center py-5"><RefreshCw size={18} className="animate-spin text-muted-foreground" /></div>
+            ) : adminGiftCatalog.length === 0 ? (
+              <p className="py-5 text-center text-sm text-muted-foreground">Каталог подарков пуст</p>
+            ) : (
+              <div className="grid gap-2 sm:grid-cols-2">
+                {adminGiftCatalog.map(gift => (
+                  <div key={gift.id} className="flex items-center gap-3 rounded-xl border border-border bg-background p-3" data-testid={`card-admin-gift-${gift.id}`}>
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-pink-500/5">
+                      {gift.imageUrl
+                        ? <img src={gift.imageUrl} alt={gift.name} className="h-10 w-10 object-contain" />
+                        : <span className="text-2xl" role="img" aria-label={gift.name}>{gift.emoji}</span>}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-bold">{gift.name}</p>
+                      <p className="truncate text-[11px] text-muted-foreground">{gift.description}</p>
+                    </div>
+                    <label className="flex shrink-0 items-center gap-1.5 text-[10px] font-semibold text-muted-foreground">
                       <input
                         type="number"
-                        value={dbCleanDays}
-                        onChange={e => setDbCleanDays(e.target.value)}
-                        min={1}
-                        className="w-full mt-0.5 bg-background border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-red-500/60 transition-colors"
+                        min={0}
+                        max={1_000_000}
+                        step={1}
+                        inputMode="numeric"
+                        value={giftPriceDrafts[gift.id] ?? String(gift.price)}
+                        onChange={event => setGiftPriceDrafts(drafts => ({ ...drafts, [gift.id]: event.target.value }))}
+                        className="w-20 rounded-lg border border-border bg-card px-2 py-2 text-right text-sm font-bold text-foreground outline-none focus:border-primary"
+                        aria-label={`Цена подарка ${gift.name} в искрах`}
+                        data-testid={`input-gift-price-${gift.id}`}
                       />
-                    </div>
-                  )}
-                </div>
-                <button
-                  onClick={handleAdvancedCleanup}
-                  disabled={dbCleaning}
-                  className="w-full py-2.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 font-bold text-sm hover:bg-red-500/20 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  {dbCleaning ? <RefreshCw size={14} className="animate-spin" /> : <Trash2 size={14} />}
-                  Очистить
-                </button>
+                      искр
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => void saveGiftPrice(gift)}
+                      disabled={savingGiftPriceId === gift.id || giftPriceDrafts[gift.id] === String(gift.price)}
+                      className="rounded-lg bg-primary/10 p-2 text-primary hover:bg-primary/20 disabled:cursor-not-allowed disabled:opacity-40"
+                      aria-label={`Сохранить цену подарка ${gift.name}`}
+                      data-testid={`button-save-gift-price-${gift.id}`}
+                    >
+                      {savingGiftPriceId === gift.id ? <RefreshCw size={14} className="animate-spin" /> : <Save size={14} />}
+                    </button>
+                  </div>
+                ))}
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         {/* Tools row: Mass SPARK + Posts + Leaderboard */}
@@ -3132,16 +3180,9 @@ export default function Admin() {
                       ))}
                     </div>
                   </div>
-                  <div className="flex gap-2">
-                    <button onClick={fetchDbUsage} className="flex-1 text-xs text-muted-foreground hover:text-foreground flex items-center justify-center gap-1 px-2 py-2 rounded-lg hover:bg-secondary transition-colors border border-border">
+                  <div className="flex">
+                    <button onClick={fetchDbUsage} className="w-full text-xs text-muted-foreground hover:text-foreground flex items-center justify-center gap-1 px-2 py-2 rounded-lg hover:bg-secondary transition-colors border border-border">
                       <RefreshCw size={12} className={dbUsageLoading ? "animate-spin" : ""} /> Обновить
-                    </button>
-                    <button
-                      onClick={handleDbCleanup}
-                      disabled={dbCleanupLoading}
-                      className="flex-1 text-xs font-bold text-cyan-400 hover:bg-cyan-500/10 flex items-center justify-center gap-1 px-2 py-2 rounded-lg transition-colors border border-cyan-500/30 disabled:opacity-50"
-                    >
-                      {dbCleanupLoading ? "Очищаем..." : "🧹 Очистить старые данные"}
                     </button>
                   </div>
                 </div>
