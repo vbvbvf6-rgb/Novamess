@@ -17,6 +17,10 @@ export const giftItemsTable = pgTable("gift_items", {
   description: text("description").notNull().default(""),
   primeOnly: boolean("prime_only").notNull().default(false),
   imageUrl: text("image_url"),
+  isCollectible: boolean("is_collectible").notNull().default(false),
+  maxSupply: integer("max_supply"),
+  exchangeValue: integer("exchange_value").notNull().default(0),
+  upgradePrice: integer("upgrade_price").notNull().default(0),
 });
 
 export const insertGiftItemSchema = createInsertSchema(giftItemsTable).omit({ id: true });
@@ -33,6 +37,9 @@ export const giftsTable = pgTable("gifts", {
   isAnonymous: boolean("is_anonymous").notNull().default(false),
   chatId: integer("chat_id"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  inventoryStatus: text("inventory_status").notNull().default("received"),
+  isUpgraded: boolean("is_upgraded").notNull().default(false),
+  serialNumber: integer("serial_number"),
 });
 
 export const insertGiftSchema = createInsertSchema(giftsTable).omit({ id: true, createdAt: true });

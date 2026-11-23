@@ -92,6 +92,13 @@ if (Number.isNaN(port) || port <= 0) {
       updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
     )`);
     await db.execute(sql`ALTER TABLE gift_items ADD COLUMN IF NOT EXISTS image_url TEXT`);
+    await db.execute(sql`ALTER TABLE gift_items ADD COLUMN IF NOT EXISTS is_collectible BOOLEAN NOT NULL DEFAULT FALSE`);
+    await db.execute(sql`ALTER TABLE gift_items ADD COLUMN IF NOT EXISTS max_supply INTEGER`);
+    await db.execute(sql`ALTER TABLE gift_items ADD COLUMN IF NOT EXISTS exchange_value INTEGER NOT NULL DEFAULT 0`);
+    await db.execute(sql`ALTER TABLE gift_items ADD COLUMN IF NOT EXISTS upgrade_price INTEGER NOT NULL DEFAULT 0`);
+    await db.execute(sql`ALTER TABLE gifts ADD COLUMN IF NOT EXISTS inventory_status TEXT NOT NULL DEFAULT 'received'`);
+    await db.execute(sql`ALTER TABLE gifts ADD COLUMN IF NOT EXISTS is_upgraded BOOLEAN NOT NULL DEFAULT FALSE`);
+    await db.execute(sql`ALTER TABLE gifts ADD COLUMN IF NOT EXISTS serial_number INTEGER`);
     await db.execute(sql`
       INSERT INTO gift_items
         (name, emoji, animation_type, rarity, stars, price, description, prime_only, image_url)
