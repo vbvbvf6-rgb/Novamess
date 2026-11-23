@@ -89,7 +89,7 @@ export function VideoPlayer({
         src={src}
         autoPlay={autoPlay}
         playsInline
-        preload="metadata"
+        preload="auto"
         muted={muted}
         className={cn("block h-full w-full bg-black", fit === "cover" ? "object-cover" : "object-contain", videoClassName)}
         onPlay={() => { setPlaying(true); onPlay?.(); }}

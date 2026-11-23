@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { MessageCircle, Users, Rss, Menu } from "lucide-react";
+import { Gift, MessageCircle, Users, Rss, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useGetChats } from "@workspace/api-client-react";
 import { useAppContext } from "@/contexts/AppContext";
@@ -106,6 +106,7 @@ export function BottomNav({ onOpenPalette, onOpenSidebar }: BottomNavProps) {
 
   const NAV_ITEMS = [
     { href: "/",         icon: MessageCircle, label: "Чаты",     badge: totalUnread },
+    { href: "/gifts",    icon: Gift,          label: "Подарки",  badge: 0 },
     { href: "/contacts", icon: Users,         label: "Контакты", badge: pendingRequests },
     { href: "/feed",     icon: Rss,           label: "Лента",    badge: 0 },
   ];

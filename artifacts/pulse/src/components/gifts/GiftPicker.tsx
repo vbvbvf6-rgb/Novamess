@@ -8,9 +8,8 @@ import {
   getGetChatsQueryKey,
   getGetGiftCatalogQueryKey,
   useGetGiftCatalog,
-  type GiftItem,
 } from "@workspace/api-client-react";
-import { emojiToTwemojiUrl, GIFT_LOCAL_PNG } from "@/lib/twemoji";
+import { GiftArtwork } from "./GiftArtwork";
 
 interface GiftPickerProps {
   recipientId: number;
@@ -26,10 +25,6 @@ const rarityLabel: Record<string, string> = {
   legendary: "Легендарный",
   cosmic: "Космический",
 };
-
-function giftArt(item: GiftItem) {
-  return item.imageUrl || GIFT_LOCAL_PNG[item.name] || emojiToTwemojiUrl(item.emoji);
-}
 
 function authHeaders(json = false): Record<string, string> {
   const token = sessionStorage.getItem("pulse-token");
@@ -170,12 +165,7 @@ export function GiftPicker({ recipientId, chatId, onClose, onSent }: GiftPickerP
                     </span>
                     <div className="gift-picker-art relative mx-auto mb-2 flex h-24 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-b from-white/[0.04] to-transparent">
                       <div className="absolute inset-4 rounded-full bg-amber-400/10 blur-xl" />
-                      <img
-                        src={giftArt(item)}
-                        alt={item.name}
-                        className="gift-art relative z-10 h-[76px] w-[76px] object-contain drop-shadow-lg"
-                        onError={event => { event.currentTarget.src = emojiToTwemojiUrl(item.emoji); }}
-                      />
+                      <GiftArtwork item={item} className="relative z-10 h-[76px] w-[76px] drop-shadow-lg" />
                     </div>
                     <p className="truncate text-xs font-black text-foreground" data-testid={`text-gift-name-${item.id}`}>{item.name}</p>
                     {item.isCollectible && (

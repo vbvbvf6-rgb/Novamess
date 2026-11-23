@@ -509,6 +509,121 @@ var require_browser = __commonJS({
   }
 });
 
+// ../../node_modules/has-flag/index.js
+var require_has_flag = __commonJS({
+  "../../node_modules/has-flag/index.js"(exports, module) {
+    "use strict";
+    module.exports = (flag, argv = process.argv) => {
+      const prefix = flag.startsWith("-") ? "" : flag.length === 1 ? "-" : "--";
+      const position = argv.indexOf(prefix + flag);
+      const terminatorPosition = argv.indexOf("--");
+      return position !== -1 && (terminatorPosition === -1 || position < terminatorPosition);
+    };
+  }
+});
+
+// ../../node_modules/supports-color/index.js
+var require_supports_color = __commonJS({
+  "../../node_modules/supports-color/index.js"(exports, module) {
+    "use strict";
+    var os = __require("os");
+    var tty = __require("tty");
+    var hasFlag = require_has_flag();
+    var { env: env2 } = process;
+    var forceColor;
+    if (hasFlag("no-color") || hasFlag("no-colors") || hasFlag("color=false") || hasFlag("color=never")) {
+      forceColor = 0;
+    } else if (hasFlag("color") || hasFlag("colors") || hasFlag("color=true") || hasFlag("color=always")) {
+      forceColor = 1;
+    }
+    if ("FORCE_COLOR" in env2) {
+      if (env2.FORCE_COLOR === "true") {
+        forceColor = 1;
+      } else if (env2.FORCE_COLOR === "false") {
+        forceColor = 0;
+      } else {
+        forceColor = env2.FORCE_COLOR.length === 0 ? 1 : Math.min(parseInt(env2.FORCE_COLOR, 10), 3);
+      }
+    }
+    function translateLevel(level) {
+      if (level === 0) {
+        return false;
+      }
+      return {
+        level,
+        hasBasic: true,
+        has256: level >= 2,
+        has16m: level >= 3
+      };
+    }
+    function supportsColor(haveStream, streamIsTTY) {
+      if (forceColor === 0) {
+        return 0;
+      }
+      if (hasFlag("color=16m") || hasFlag("color=full") || hasFlag("color=truecolor")) {
+        return 3;
+      }
+      if (hasFlag("color=256")) {
+        return 2;
+      }
+      if (haveStream && !streamIsTTY && forceColor === void 0) {
+        return 0;
+      }
+      const min2 = forceColor || 0;
+      if (env2.TERM === "dumb") {
+        return min2;
+      }
+      if (process.platform === "win32") {
+        const osRelease = os.release().split(".");
+        if (Number(osRelease[0]) >= 10 && Number(osRelease[2]) >= 10586) {
+          return Number(osRelease[2]) >= 14931 ? 3 : 2;
+        }
+        return 1;
+      }
+      if ("CI" in env2) {
+        if (["TRAVIS", "CIRCLECI", "APPVEYOR", "GITLAB_CI", "GITHUB_ACTIONS", "BUILDKITE"].some((sign3) => sign3 in env2) || env2.CI_NAME === "codeship") {
+          return 1;
+        }
+        return min2;
+      }
+      if ("TEAMCITY_VERSION" in env2) {
+        return /^(9\.(0*[1-9]\d*)\.|\d{2,}\.)/.test(env2.TEAMCITY_VERSION) ? 1 : 0;
+      }
+      if (env2.COLORTERM === "truecolor") {
+        return 3;
+      }
+      if ("TERM_PROGRAM" in env2) {
+        const version3 = parseInt((env2.TERM_PROGRAM_VERSION || "").split(".")[0], 10);
+        switch (env2.TERM_PROGRAM) {
+          case "iTerm.app":
+            return version3 >= 3 ? 3 : 2;
+          case "Apple_Terminal":
+            return 2;
+        }
+      }
+      if (/-256(color)?$/i.test(env2.TERM)) {
+        return 2;
+      }
+      if (/^screen|^xterm|^vt100|^vt220|^rxvt|color|ansi|cygwin|linux/i.test(env2.TERM)) {
+        return 1;
+      }
+      if ("COLORTERM" in env2) {
+        return 1;
+      }
+      return min2;
+    }
+    function getSupportLevel(stream) {
+      const level = supportsColor(stream, stream && stream.isTTY);
+      return translateLevel(level);
+    }
+    module.exports = {
+      supportsColor: getSupportLevel,
+      stdout: translateLevel(supportsColor(true, tty.isatty(1))),
+      stderr: translateLevel(supportsColor(true, tty.isatty(2)))
+    };
+  }
+});
+
 // ../../node_modules/debug/src/node.js
 var require_node = __commonJS({
   "../../node_modules/debug/src/node.js"(exports, module) {
@@ -527,7 +642,7 @@ var require_node = __commonJS({
     );
     exports.colors = [6, 2, 3, 4, 5, 1];
     try {
-      const supportsColor = __require("supports-color");
+      const supportsColor = require_supports_color();
       if (supportsColor && (supportsColor.stderr || supportsColor).level >= 2) {
         exports.colors = [
           20,
@@ -15806,9 +15921,9 @@ var require_object_inspect = __commonJS({
       }
       var sepRegex = /[0-9](?=(?:[0-9]{3})+(?![0-9]))/g;
       if (typeof num === "number") {
-        var int2 = num < 0 ? -$floor(-num) : $floor(num);
-        if (int2 !== num) {
-          var intStr = String(int2);
+        var int3 = num < 0 ? -$floor(-num) : $floor(num);
+        if (int3 !== num) {
+          var intStr = String(int3);
           var dec = $slice.call(str, intStr.length + 1);
           return $replace.call(intStr, sepRegex, "$&_") + "." + $replace.call($replace.call(dec, /([0-9]{3})/g, "$&_"), /_$/, "");
         }
@@ -16839,9 +16954,9 @@ var require_get_proto = __commonJS({
   }
 });
 
-// ../../node_modules/hasown/index.js
+// ../../node_modules/get-intrinsic/node_modules/hasown/index.js
 var require_hasown = __commonJS({
-  "../../node_modules/hasown/index.js"(exports, module) {
+  "../../node_modules/get-intrinsic/node_modules/hasown/index.js"(exports, module) {
     "use strict";
     var call = Function.prototype.call;
     var $hasOwn = Object.prototype.hasOwnProperty;
@@ -20505,27 +20620,27 @@ var require_router = __commonJS({
     var slice = Array.prototype.slice;
     var flatten = Array.prototype.flat;
     var methods = METHODS.map((method) => method.toLowerCase());
-    module.exports = Router32;
+    module.exports = Router33;
     module.exports.Route = Route;
-    function Router32(options) {
-      if (!(this instanceof Router32)) {
-        return new Router32(options);
+    function Router33(options) {
+      if (!(this instanceof Router33)) {
+        return new Router33(options);
       }
       const opts = options || {};
-      function router31(req, res, next) {
-        router31.handle(req, res, next);
+      function router32(req, res, next) {
+        router32.handle(req, res, next);
       }
-      Object.setPrototypeOf(router31, this);
-      router31.caseSensitive = opts.caseSensitive;
-      router31.mergeParams = opts.mergeParams;
-      router31.params = {};
-      router31.strict = opts.strict;
-      router31.stack = [];
-      return router31;
+      Object.setPrototypeOf(router32, this);
+      router32.caseSensitive = opts.caseSensitive;
+      router32.mergeParams = opts.mergeParams;
+      router32.params = {};
+      router32.strict = opts.strict;
+      router32.stack = [];
+      return router32;
     }
-    Router32.prototype = function() {
+    Router33.prototype = function() {
     };
-    Router32.prototype.param = function param2(name2, fn) {
+    Router33.prototype.param = function param2(name2, fn) {
       if (!name2) {
         throw new TypeError("argument name is required");
       }
@@ -20545,7 +20660,7 @@ var require_router = __commonJS({
       params.push(fn);
       return this;
     };
-    Router32.prototype.handle = function handle(req, res, callback) {
+    Router33.prototype.handle = function handle(req, res, callback) {
       if (!callback) {
         throw new TypeError("argument callback is required");
       }
@@ -20672,7 +20787,7 @@ var require_router = __commonJS({
         }
       }
     };
-    Router32.prototype.use = function use(handler) {
+    Router33.prototype.use = function use(handler) {
       let offset = 0;
       let path3 = "/";
       if (typeof handler !== "function") {
@@ -20705,7 +20820,7 @@ var require_router = __commonJS({
       }
       return this;
     };
-    Router32.prototype.route = function route(path3) {
+    Router33.prototype.route = function route(path3) {
       const route2 = new Route(path3);
       const layer = new Layer(path3, {
         sensitive: this.caseSensitive,
@@ -20720,7 +20835,7 @@ var require_router = __commonJS({
       return route2;
     };
     methods.concat("all").forEach(function(method) {
-      Router32.prototype[method] = function(path3) {
+      Router33.prototype[method] = function(path3) {
         const route = this.route(path3);
         route[method].apply(route, slice.call(arguments, 1));
         return this;
@@ -20903,13 +21018,13 @@ var require_application = __commonJS({
     var compileTrust = require_utils3().compileTrust;
     var resolve = __require("node:path").resolve;
     var once = require_once();
-    var Router32 = require_router();
+    var Router33 = require_router();
     var slice = Array.prototype.slice;
     var flatten = Array.prototype.flat;
     var app2 = exports = module.exports = {};
     var trustProxyDefaultSymbol = "@@symbol:trust_proxy_default";
     app2.init = function init2() {
-      var router31 = null;
+      var router32 = null;
       this.cache = /* @__PURE__ */ Object.create(null);
       this.engines = /* @__PURE__ */ Object.create(null);
       this.settings = /* @__PURE__ */ Object.create(null);
@@ -20918,13 +21033,13 @@ var require_application = __commonJS({
         configurable: true,
         enumerable: true,
         get: function getrouter() {
-          if (router31 === null) {
-            router31 = new Router32({
+          if (router32 === null) {
+            router32 = new Router33({
               caseSensitive: this.enabled("case sensitive routing"),
               strict: this.enabled("strict routing")
             });
           }
-          return router31;
+          return router32;
         }
       });
     };
@@ -20995,15 +21110,15 @@ var require_application = __commonJS({
       if (fns.length === 0) {
         throw new TypeError("app.use() requires a middleware function");
       }
-      var router31 = this.router;
+      var router32 = this.router;
       fns.forEach(function(fn2) {
         if (!fn2 || !fn2.handle || !fn2.set) {
-          return router31.use(path3, fn2);
+          return router32.use(path3, fn2);
         }
         debug(".use app under %s", path3);
         fn2.mountpath = path3;
         fn2.parent = this;
-        router31.use(path3, function mounted_app(req, res, next) {
+        router32.use(path3, function mounted_app(req, res, next) {
           var orig = req.app;
           fn2.handle(req, res, function(err2) {
             Object.setPrototypeOf(req, orig.request);
@@ -23530,7 +23645,7 @@ var require_express = __commonJS({
     var EventEmitter = __require("node:events").EventEmitter;
     var mixin = require_merge_descriptors();
     var proto = require_application();
-    var Router32 = require_router();
+    var Router33 = require_router();
     var req = require_request();
     var res = require_response();
     exports = module.exports = createApplication;
@@ -23552,8 +23667,8 @@ var require_express = __commonJS({
     exports.application = proto;
     exports.request = req;
     exports.response = res;
-    exports.Route = Router32.Route;
-    exports.Router = Router32;
+    exports.Route = Router33.Route;
+    exports.Router = Router33;
     exports.json = bodyParser.json;
     exports.raw = bodyParser.raw;
     exports.static = require_serve_static();
@@ -58132,7 +58247,7 @@ function stringFormat(format2, fnOrRegex, _params = {}) {
 function number2(params) {
   return _number(ZodNumber2, params);
 }
-function int(params) {
+function int2(params) {
   return _int(ZodNumberFormat, params);
 }
 function float32(params) {
@@ -58683,8 +58798,8 @@ var init_schemas2 = __esm({
       inst.lt = (value, params) => inst.check(_lt(value, params));
       inst.lte = (value, params) => inst.check(_lte(value, params));
       inst.max = (value, params) => inst.check(_lte(value, params));
-      inst.int = (params) => inst.check(int(params));
-      inst.safe = (params) => inst.check(int(params));
+      inst.int = (params) => inst.check(int2(params));
+      inst.safe = (params) => inst.check(int2(params));
       inst.positive = (params) => inst.check(_gt(0, params));
       inst.nonnegative = (params) => inst.check(_gte(0, params));
       inst.negative = (params) => inst.check(_lt(0, params));
@@ -59180,7 +59295,7 @@ __export(external_exports, {
   guid: () => guid2,
   includes: () => _includes,
   instanceof: () => _instanceof,
-  int: () => int,
+  int: () => int2,
   int32: () => int32,
   int64: () => int64,
   intersection: () => intersection,
@@ -60278,7 +60393,12 @@ var init_gifts = __esm({
       price: integer("price").notNull().default(10),
       description: text("description").notNull().default(""),
       primeOnly: boolean("prime_only").notNull().default(false),
-      imageUrl: text("image_url")
+      imageUrl: text("image_url"),
+      isCollectible: boolean("is_collectible").notNull().default(false),
+      isActive: boolean("is_active").notNull().default(true),
+      maxSupply: integer("max_supply"),
+      exchangeValue: integer("exchange_value").notNull().default(0),
+      upgradePrice: integer("upgrade_price").notNull().default(0)
     });
     insertGiftItemSchema = createInsertSchema(giftItemsTable).omit({ id: true });
     giftsTable = pgTable("gifts", {
@@ -60289,7 +60409,10 @@ var init_gifts = __esm({
       message: text("message"),
       isAnonymous: boolean("is_anonymous").notNull().default(false),
       chatId: integer("chat_id"),
-      createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
+      createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+      inventoryStatus: text("inventory_status").notNull().default("received"),
+      isUpgraded: boolean("is_upgraded").notNull().default(false),
+      serialNumber: integer("serial_number")
     });
     insertGiftSchema = createInsertSchema(giftsTable).omit({ id: true, createdAt: true });
   }
@@ -135754,7 +135877,7 @@ import path2 from "node:path";
 import fs2 from "node:fs";
 
 // src/app.ts
-var import_express32 = __toESM(require_express2(), 1);
+var import_express33 = __toESM(require_express2(), 1);
 var import_cors = __toESM(require_lib3(), 1);
 
 // ../../node_modules/helmet/index.mjs
@@ -137261,7 +137384,7 @@ var rate_limit_default = rateLimit;
 var import_jsonwebtoken4 = __toESM(require_jsonwebtoken(), 1);
 
 // src/routes/index.ts
-var import_express30 = __toESM(require_express2(), 1);
+var import_express31 = __toESM(require_express2(), 1);
 
 // src/routes/health.ts
 var import_express = __toESM(require_express2(), 1);
@@ -141154,1830 +141277,2328 @@ var coerce = {
 
 // ../../lib/api-zod/src/generated/api.ts
 var HealthCheckResponse = objectType({
-  status: stringType()
+  "status": stringType()
 });
 var GetMeResponse = objectType({
-  id: numberType(),
-  username: stringType(),
-  displayName: stringType(),
-  bio: stringType().nullish(),
-  avatarUrl: stringType().nullish(),
-  avatarColor: stringType(),
-  status: enumType(["online", "offline", "away"]),
-  statusText: stringType().nullish(),
-  lastSeen: stringType().nullish(),
-  phoneNumber: stringType().nullish(),
-  isBot: booleanType(),
-  isVerified: booleanType(),
-  isAdmin: booleanType(),
-  showOnlineStatus: booleanType().optional(),
-  readReceiptsEnabled: booleanType().optional(),
-  totpEnabled: booleanType().optional(),
-  createdAt: stringType()
+  "id": (void 0)(),
+  "username": stringType(),
+  "displayName": stringType(),
+  "bio": stringType().nullish(),
+  "avatarUrl": stringType().nullish(),
+  "avatarColor": stringType(),
+  "status": enumType(["online", "offline", "away"]),
+  "statusText": stringType().nullish(),
+  "lastSeen": stringType().nullish(),
+  "phoneNumber": stringType().nullish(),
+  "isBot": booleanType(),
+  "isVerified": booleanType(),
+  "isAdmin": booleanType(),
+  "showOnlineStatus": booleanType().optional(),
+  "readReceiptsEnabled": booleanType().optional(),
+  "totpEnabled": booleanType().optional(),
+  "createdAt": stringType()
 });
 var UpdateMeBody = objectType({
-  displayName: stringType().optional(),
-  bio: stringType().optional(),
-  avatarUrl: stringType().optional(),
-  avatarColor: stringType().optional(),
-  statusText: stringType().optional(),
-  status: enumType(["online", "offline", "away"]).optional(),
-  showOnlineStatus: booleanType().optional(),
-  readReceiptsEnabled: booleanType().optional(),
-  statusAnimation: stringType().optional()
+  "displayName": stringType().optional(),
+  "bio": stringType().optional(),
+  "avatarUrl": stringType().optional(),
+  "avatarColor": stringType().optional(),
+  "statusText": stringType().optional(),
+  "status": enumType(["online", "offline", "away"]).optional(),
+  "showOnlineStatus": booleanType().optional(),
+  "readReceiptsEnabled": booleanType().optional(),
+  "statusAnimation": stringType().optional()
 });
 var UpdateMeResponse = objectType({
-  id: numberType(),
-  username: stringType(),
-  displayName: stringType(),
-  bio: stringType().nullish(),
-  avatarUrl: stringType().nullish(),
-  avatarColor: stringType(),
-  status: enumType(["online", "offline", "away"]),
-  statusText: stringType().nullish(),
-  lastSeen: stringType().nullish(),
-  phoneNumber: stringType().nullish(),
-  isBot: booleanType(),
-  isVerified: booleanType(),
-  isAdmin: booleanType(),
-  showOnlineStatus: booleanType().optional(),
-  readReceiptsEnabled: booleanType().optional(),
-  totpEnabled: booleanType().optional(),
-  createdAt: stringType()
+  "id": (void 0)(),
+  "username": stringType(),
+  "displayName": stringType(),
+  "bio": stringType().nullish(),
+  "avatarUrl": stringType().nullish(),
+  "avatarColor": stringType(),
+  "status": enumType(["online", "offline", "away"]),
+  "statusText": stringType().nullish(),
+  "lastSeen": stringType().nullish(),
+  "phoneNumber": stringType().nullish(),
+  "isBot": booleanType(),
+  "isVerified": booleanType(),
+  "isAdmin": booleanType(),
+  "showOnlineStatus": booleanType().optional(),
+  "readReceiptsEnabled": booleanType().optional(),
+  "totpEnabled": booleanType().optional(),
+  "createdAt": stringType()
 });
 var SearchUsersQueryParams = objectType({
-  q: coerce.string()
+  "q": coerce.string()
 });
 var SearchUsersResponseItem = objectType({
-  id: numberType(),
-  username: stringType(),
-  displayName: stringType(),
-  bio: stringType().nullish(),
-  avatarUrl: stringType().nullish(),
-  avatarColor: stringType(),
-  status: enumType(["online", "offline", "away"]),
-  statusText: stringType().nullish(),
-  lastSeen: stringType().nullish(),
-  phoneNumber: stringType().nullish(),
-  isBot: booleanType(),
-  isVerified: booleanType(),
-  isAdmin: booleanType(),
-  showOnlineStatus: booleanType().optional(),
-  readReceiptsEnabled: booleanType().optional(),
-  totpEnabled: booleanType().optional(),
-  createdAt: stringType()
+  "id": (void 0)(),
+  "username": stringType(),
+  "displayName": stringType(),
+  "bio": stringType().nullish(),
+  "avatarUrl": stringType().nullish(),
+  "avatarColor": stringType(),
+  "status": enumType(["online", "offline", "away"]),
+  "statusText": stringType().nullish(),
+  "lastSeen": stringType().nullish(),
+  "phoneNumber": stringType().nullish(),
+  "isBot": booleanType(),
+  "isVerified": booleanType(),
+  "isAdmin": booleanType(),
+  "showOnlineStatus": booleanType().optional(),
+  "readReceiptsEnabled": booleanType().optional(),
+  "totpEnabled": booleanType().optional(),
+  "createdAt": stringType()
 });
 var SearchUsersResponse = arrayType(SearchUsersResponseItem);
 var GetUserByIdParams = objectType({
-  userId: coerce.number()
+  "userId": coerce.number().int()
 });
 var GetUserByIdResponse = objectType({
-  id: numberType(),
-  username: stringType(),
-  displayName: stringType(),
-  bio: stringType().nullish(),
-  avatarUrl: stringType().nullish(),
-  avatarColor: stringType(),
-  status: enumType(["online", "offline", "away"]),
-  statusText: stringType().nullish(),
-  lastSeen: stringType().nullish(),
-  phoneNumber: stringType().nullish(),
-  isBot: booleanType(),
-  isVerified: booleanType(),
-  isAdmin: booleanType(),
-  showOnlineStatus: booleanType().optional(),
-  readReceiptsEnabled: booleanType().optional(),
-  totpEnabled: booleanType().optional(),
-  createdAt: stringType()
+  "id": (void 0)(),
+  "username": stringType(),
+  "displayName": stringType(),
+  "bio": stringType().nullish(),
+  "avatarUrl": stringType().nullish(),
+  "avatarColor": stringType(),
+  "status": enumType(["online", "offline", "away"]),
+  "statusText": stringType().nullish(),
+  "lastSeen": stringType().nullish(),
+  "phoneNumber": stringType().nullish(),
+  "isBot": booleanType(),
+  "isVerified": booleanType(),
+  "isAdmin": booleanType(),
+  "showOnlineStatus": booleanType().optional(),
+  "readReceiptsEnabled": booleanType().optional(),
+  "totpEnabled": booleanType().optional(),
+  "createdAt": stringType()
 });
 var GetContactsResponseItem = objectType({
-  id: numberType(),
-  username: stringType(),
-  displayName: stringType(),
-  bio: stringType().nullish(),
-  avatarUrl: stringType().nullish(),
-  avatarColor: stringType(),
-  status: enumType(["online", "offline", "away"]),
-  statusText: stringType().nullish(),
-  lastSeen: stringType().nullish(),
-  phoneNumber: stringType().nullish(),
-  isBot: booleanType(),
-  isVerified: booleanType(),
-  isAdmin: booleanType(),
-  showOnlineStatus: booleanType().optional(),
-  readReceiptsEnabled: booleanType().optional(),
-  totpEnabled: booleanType().optional(),
-  createdAt: stringType()
+  "id": (void 0)(),
+  "username": stringType(),
+  "displayName": stringType(),
+  "bio": stringType().nullish(),
+  "avatarUrl": stringType().nullish(),
+  "avatarColor": stringType(),
+  "status": enumType(["online", "offline", "away"]),
+  "statusText": stringType().nullish(),
+  "lastSeen": stringType().nullish(),
+  "phoneNumber": stringType().nullish(),
+  "isBot": booleanType(),
+  "isVerified": booleanType(),
+  "isAdmin": booleanType(),
+  "showOnlineStatus": booleanType().optional(),
+  "readReceiptsEnabled": booleanType().optional(),
+  "totpEnabled": booleanType().optional(),
+  "createdAt": stringType()
 });
 var GetContactsResponse = arrayType(GetContactsResponseItem);
 var AddContactBody = objectType({
-  userId: numberType()
+  "userId": (void 0)()
+});
+var AddContactResponse = objectType({
+  "id": (void 0)(),
+  "username": stringType(),
+  "displayName": stringType(),
+  "bio": stringType().nullish(),
+  "avatarUrl": stringType().nullish(),
+  "avatarColor": stringType(),
+  "status": enumType(["online", "offline", "away"]),
+  "statusText": stringType().nullish(),
+  "lastSeen": stringType().nullish(),
+  "phoneNumber": stringType().nullish(),
+  "isBot": booleanType(),
+  "isVerified": booleanType(),
+  "isAdmin": booleanType(),
+  "showOnlineStatus": booleanType().optional(),
+  "readReceiptsEnabled": booleanType().optional(),
+  "totpEnabled": booleanType().optional(),
+  "createdAt": stringType()
 });
 var RemoveContactParams = objectType({
-  contactId: coerce.number()
+  "contactId": coerce.number().int()
 });
+var RemoveContactResponse = voidType();
 var GetChatsResponseItem = objectType({
-  id: numberType(),
-  type: enumType(["direct", "group", "channel"]),
-  name: stringType().nullish(),
-  description: stringType().nullish(),
-  avatarUrl: stringType().nullish(),
-  avatarColor: stringType(),
-  isPinned: booleanType(),
-  isMuted: booleanType(),
-  unreadCount: numberType(),
-  lastMessage: objectType({
-    id: numberType(),
-    chatId: numberType(),
-    senderId: numberType(),
-    text: stringType().nullish(),
-    type: enumType([
-      "text",
-      "image",
-      "video",
-      "audio",
-      "file",
-      "gift",
-      "call",
-      "sticker",
-      "system"
-    ]),
-    mediaUrl: stringType().nullish(),
-    replyToId: numberType().nullish(),
-    isEdited: booleanType(),
-    isRead: booleanType(),
-    reactions: arrayType(
-      objectType({
-        id: numberType(),
-        messageId: numberType(),
-        userId: numberType(),
-        emoji: stringType(),
-        user: objectType({
-          id: numberType(),
-          username: stringType(),
-          displayName: stringType(),
-          bio: stringType().nullish(),
-          avatarUrl: stringType().nullish(),
-          avatarColor: stringType(),
-          status: enumType(["online", "offline", "away"]),
-          statusText: stringType().nullish(),
-          lastSeen: stringType().nullish(),
-          phoneNumber: stringType().nullish(),
-          isBot: booleanType(),
-          isVerified: booleanType(),
-          isAdmin: booleanType(),
-          showOnlineStatus: booleanType().optional(),
-          readReceiptsEnabled: booleanType().optional(),
-          totpEnabled: booleanType().optional(),
-          createdAt: stringType()
-        }).nullish(),
-        createdAt: stringType()
+  "id": (void 0)(),
+  "type": enumType(["direct", "group", "channel"]),
+  "name": stringType().nullish(),
+  "description": stringType().nullish(),
+  "avatarUrl": stringType().nullish(),
+  "avatarColor": stringType(),
+  "isPinned": booleanType(),
+  "isMuted": booleanType(),
+  "unreadCount": (void 0)(),
+  "lastMessage": unionType([objectType({
+    "id": (void 0)(),
+    "chatId": (void 0)(),
+    "senderId": (void 0)(),
+    "text": stringType().nullish(),
+    "type": enumType(["text", "image", "video", "audio", "file", "gift", "call", "sticker", "system"]),
+    "mediaUrl": stringType().nullish(),
+    "replyToId": (void 0)().nullish(),
+    "isEdited": booleanType(),
+    "isRead": booleanType(),
+    "reactions": arrayType(objectType({
+      "id": (void 0)(),
+      "messageId": (void 0)(),
+      "userId": (void 0)(),
+      "emoji": stringType(),
+      "user": unionType([objectType({
+        "id": (void 0)(),
+        "username": stringType(),
+        "displayName": stringType(),
+        "bio": stringType().nullish(),
+        "avatarUrl": stringType().nullish(),
+        "avatarColor": stringType(),
+        "status": enumType(["online", "offline", "away"]),
+        "statusText": stringType().nullish(),
+        "lastSeen": stringType().nullish(),
+        "phoneNumber": stringType().nullish(),
+        "isBot": booleanType(),
+        "isVerified": booleanType(),
+        "isAdmin": booleanType(),
+        "showOnlineStatus": booleanType().optional(),
+        "readReceiptsEnabled": booleanType().optional(),
+        "totpEnabled": booleanType().optional(),
+        "createdAt": stringType()
+      }), nullType()]).optional(),
+      "createdAt": stringType()
+    })),
+    "sender": unionType([objectType({
+      "id": (void 0)(),
+      "username": stringType(),
+      "displayName": stringType(),
+      "bio": stringType().nullish(),
+      "avatarUrl": stringType().nullish(),
+      "avatarColor": stringType(),
+      "status": enumType(["online", "offline", "away"]),
+      "statusText": stringType().nullish(),
+      "lastSeen": stringType().nullish(),
+      "phoneNumber": stringType().nullish(),
+      "isBot": booleanType(),
+      "isVerified": booleanType(),
+      "isAdmin": booleanType(),
+      "showOnlineStatus": booleanType().optional(),
+      "readReceiptsEnabled": booleanType().optional(),
+      "totpEnabled": booleanType().optional(),
+      "createdAt": stringType()
+    }), nullType()]).optional(),
+    "replyTo": unionType([unknownType(), nullType()]).optional(),
+    "giftData": unionType([objectType({
+      "id": (void 0)(),
+      "giftItemId": (void 0)(),
+      "senderId": (void 0)().nullable(),
+      "senderName": stringType(),
+      "receiverId": (void 0)(),
+      "receiverName": stringType(),
+      "message": stringType().nullish(),
+      "isAnonymous": booleanType(),
+      "chatId": (void 0)().nullable(),
+      "createdAt": stringType(),
+      "inventoryStatus": enumType(["received", "collected", "exchanged"]),
+      "isUpgraded": booleanType(),
+      "serialNumber": (void 0)().nullable(),
+      "giftItem": objectType({
+        "id": (void 0)(),
+        "name": stringType(),
+        "emoji": stringType(),
+        "animationType": enumType(["bounce", "confetti", "sparkle", "hearts", "fireworks", "stars", "balloons", "roses", "orbit", "bloom", "diamonds", "flame", "galaxy", "lightning", "magic", "supernova", "vortex"]),
+        "rarity": enumType(["common", "rare", "epic", "legendary", "cosmic"]),
+        "stars": (void 0)(),
+        "price": (void 0)(),
+        "description": stringType(),
+        "primeOnly": booleanType(),
+        "imageUrl": stringType().nullish(),
+        "isCollectible": booleanType(),
+        "isActive": booleanType(),
+        "maxSupply": (void 0)().nullable(),
+        "exchangeValue": (void 0)(),
+        "upgradePrice": (void 0)(),
+        "soldCount": (void 0)(),
+        "availableCount": (void 0)().nullable()
       })
-    ),
-    sender: objectType({
-      id: numberType(),
-      username: stringType(),
-      displayName: stringType(),
-      bio: stringType().nullish(),
-      avatarUrl: stringType().nullish(),
-      avatarColor: stringType(),
-      status: enumType(["online", "offline", "away"]),
-      statusText: stringType().nullish(),
-      lastSeen: stringType().nullish(),
-      phoneNumber: stringType().nullish(),
-      isBot: booleanType(),
-      isVerified: booleanType(),
-      isAdmin: booleanType(),
-      showOnlineStatus: booleanType().optional(),
-      readReceiptsEnabled: booleanType().optional(),
-      totpEnabled: booleanType().optional(),
-      createdAt: stringType()
-    }).nullish(),
-    replyTo: unknownType().optional(),
-    giftData: objectType({
-      id: numberType(),
-      giftItemId: numberType(),
-      senderId: numberType(),
-      receiverId: numberType(),
-      message: stringType().nullish(),
-      isAnonymous: booleanType(),
-      giftItem: objectType({
-        id: numberType(),
-        name: stringType(),
-        emoji: stringType(),
-        animationType: enumType([
-          "confetti",
-          "sparkle",
-          "hearts",
-          "fireworks",
-          "stars",
-          "balloons",
-          "roses",
-          "diamonds"
-        ]),
-        rarity: enumType(["common", "rare", "epic", "legendary"]),
-        stars: numberType(),
-        description: stringType()
-      }).nullish(),
-      sender: objectType({
-        id: numberType(),
-        username: stringType(),
-        displayName: stringType(),
-        bio: stringType().nullish(),
-        avatarUrl: stringType().nullish(),
-        avatarColor: stringType(),
-        status: enumType(["online", "offline", "away"]),
-        statusText: stringType().nullish(),
-        lastSeen: stringType().nullish(),
-        phoneNumber: stringType().nullish(),
-        isBot: booleanType(),
-        isVerified: booleanType(),
-        isAdmin: booleanType(),
-        showOnlineStatus: booleanType().optional(),
-        readReceiptsEnabled: booleanType().optional(),
-        totpEnabled: booleanType().optional(),
-        createdAt: stringType()
-      }).nullish(),
-      receiver: objectType({
-        id: numberType(),
-        username: stringType(),
-        displayName: stringType(),
-        bio: stringType().nullish(),
-        avatarUrl: stringType().nullish(),
-        avatarColor: stringType(),
-        status: enumType(["online", "offline", "away"]),
-        statusText: stringType().nullish(),
-        lastSeen: stringType().nullish(),
-        phoneNumber: stringType().nullish(),
-        isBot: booleanType(),
-        isVerified: booleanType(),
-        isAdmin: booleanType(),
-        showOnlineStatus: booleanType().optional(),
-        readReceiptsEnabled: booleanType().optional(),
-        totpEnabled: booleanType().optional(),
-        createdAt: stringType()
-      }).nullish(),
-      createdAt: stringType()
-    }).nullish(),
-    createdAt: stringType(),
-    updatedAt: stringType()
-  }).nullish(),
-  members: arrayType(
-    objectType({
-      id: numberType(),
-      chatId: numberType(),
-      userId: numberType(),
-      role: enumType(["owner", "admin", "member"]),
-      joinedAt: stringType(),
-      user: objectType({
-        id: numberType(),
-        username: stringType(),
-        displayName: stringType(),
-        bio: stringType().nullish(),
-        avatarUrl: stringType().nullish(),
-        avatarColor: stringType(),
-        status: enumType(["online", "offline", "away"]),
-        statusText: stringType().nullish(),
-        lastSeen: stringType().nullish(),
-        phoneNumber: stringType().nullish(),
-        isBot: booleanType(),
-        isVerified: booleanType(),
-        isAdmin: booleanType(),
-        showOnlineStatus: booleanType().optional(),
-        readReceiptsEnabled: booleanType().optional(),
-        totpEnabled: booleanType().optional(),
-        createdAt: stringType()
-      }).optional()
-    })
-  ).optional(),
-  otherUser: objectType({
-    id: numberType(),
-    username: stringType(),
-    displayName: stringType(),
-    bio: stringType().nullish(),
-    avatarUrl: stringType().nullish(),
-    avatarColor: stringType(),
-    status: enumType(["online", "offline", "away"]),
-    statusText: stringType().nullish(),
-    lastSeen: stringType().nullish(),
-    phoneNumber: stringType().nullish(),
-    isBot: booleanType(),
-    isVerified: booleanType(),
-    isAdmin: booleanType(),
-    showOnlineStatus: booleanType().optional(),
-    readReceiptsEnabled: booleanType().optional(),
-    totpEnabled: booleanType().optional(),
-    createdAt: stringType()
-  }).nullish(),
-  createdAt: stringType(),
-  updatedAt: stringType()
+    }), nullType()]).optional(),
+    "createdAt": stringType(),
+    "updatedAt": stringType()
+  }), nullType()]).optional(),
+  "members": arrayType(objectType({
+    "id": (void 0)(),
+    "chatId": (void 0)(),
+    "userId": (void 0)(),
+    "role": enumType(["owner", "admin", "member"]),
+    "joinedAt": stringType(),
+    "user": objectType({
+      "id": (void 0)(),
+      "username": stringType(),
+      "displayName": stringType(),
+      "bio": stringType().nullish(),
+      "avatarUrl": stringType().nullish(),
+      "avatarColor": stringType(),
+      "status": enumType(["online", "offline", "away"]),
+      "statusText": stringType().nullish(),
+      "lastSeen": stringType().nullish(),
+      "phoneNumber": stringType().nullish(),
+      "isBot": booleanType(),
+      "isVerified": booleanType(),
+      "isAdmin": booleanType(),
+      "showOnlineStatus": booleanType().optional(),
+      "readReceiptsEnabled": booleanType().optional(),
+      "totpEnabled": booleanType().optional(),
+      "createdAt": stringType()
+    }).optional()
+  })).optional(),
+  "otherUser": unionType([objectType({
+    "id": (void 0)(),
+    "username": stringType(),
+    "displayName": stringType(),
+    "bio": stringType().nullish(),
+    "avatarUrl": stringType().nullish(),
+    "avatarColor": stringType(),
+    "status": enumType(["online", "offline", "away"]),
+    "statusText": stringType().nullish(),
+    "lastSeen": stringType().nullish(),
+    "phoneNumber": stringType().nullish(),
+    "isBot": booleanType(),
+    "isVerified": booleanType(),
+    "isAdmin": booleanType(),
+    "showOnlineStatus": booleanType().optional(),
+    "readReceiptsEnabled": booleanType().optional(),
+    "totpEnabled": booleanType().optional(),
+    "createdAt": stringType()
+  }), nullType()]).optional(),
+  "createdAt": stringType(),
+  "updatedAt": stringType()
 });
 var GetChatsResponse = arrayType(GetChatsResponseItem);
 var CreateChatBody = objectType({
-  type: enumType(["direct", "group", "channel"]),
-  name: stringType().optional(),
-  description: stringType().optional(),
-  memberIds: arrayType(numberType()).optional()
+  "type": enumType(["direct", "group", "channel"]),
+  "name": stringType().optional(),
+  "description": stringType().optional(),
+  "memberIds": arrayType((void 0)()).optional()
+});
+var CreateChatResponse = objectType({
+  "id": (void 0)(),
+  "type": enumType(["direct", "group", "channel"]),
+  "name": stringType().nullish(),
+  "description": stringType().nullish(),
+  "avatarUrl": stringType().nullish(),
+  "avatarColor": stringType(),
+  "isPinned": booleanType(),
+  "isMuted": booleanType(),
+  "unreadCount": (void 0)(),
+  "lastMessage": unionType([objectType({
+    "id": (void 0)(),
+    "chatId": (void 0)(),
+    "senderId": (void 0)(),
+    "text": stringType().nullish(),
+    "type": enumType(["text", "image", "video", "audio", "file", "gift", "call", "sticker", "system"]),
+    "mediaUrl": stringType().nullish(),
+    "replyToId": (void 0)().nullish(),
+    "isEdited": booleanType(),
+    "isRead": booleanType(),
+    "reactions": arrayType(objectType({
+      "id": (void 0)(),
+      "messageId": (void 0)(),
+      "userId": (void 0)(),
+      "emoji": stringType(),
+      "user": unionType([objectType({
+        "id": (void 0)(),
+        "username": stringType(),
+        "displayName": stringType(),
+        "bio": stringType().nullish(),
+        "avatarUrl": stringType().nullish(),
+        "avatarColor": stringType(),
+        "status": enumType(["online", "offline", "away"]),
+        "statusText": stringType().nullish(),
+        "lastSeen": stringType().nullish(),
+        "phoneNumber": stringType().nullish(),
+        "isBot": booleanType(),
+        "isVerified": booleanType(),
+        "isAdmin": booleanType(),
+        "showOnlineStatus": booleanType().optional(),
+        "readReceiptsEnabled": booleanType().optional(),
+        "totpEnabled": booleanType().optional(),
+        "createdAt": stringType()
+      }), nullType()]).optional(),
+      "createdAt": stringType()
+    })),
+    "sender": unionType([objectType({
+      "id": (void 0)(),
+      "username": stringType(),
+      "displayName": stringType(),
+      "bio": stringType().nullish(),
+      "avatarUrl": stringType().nullish(),
+      "avatarColor": stringType(),
+      "status": enumType(["online", "offline", "away"]),
+      "statusText": stringType().nullish(),
+      "lastSeen": stringType().nullish(),
+      "phoneNumber": stringType().nullish(),
+      "isBot": booleanType(),
+      "isVerified": booleanType(),
+      "isAdmin": booleanType(),
+      "showOnlineStatus": booleanType().optional(),
+      "readReceiptsEnabled": booleanType().optional(),
+      "totpEnabled": booleanType().optional(),
+      "createdAt": stringType()
+    }), nullType()]).optional(),
+    "replyTo": unionType([unknownType(), nullType()]).optional(),
+    "giftData": unionType([objectType({
+      "id": (void 0)(),
+      "giftItemId": (void 0)(),
+      "senderId": (void 0)().nullable(),
+      "senderName": stringType(),
+      "receiverId": (void 0)(),
+      "receiverName": stringType(),
+      "message": stringType().nullish(),
+      "isAnonymous": booleanType(),
+      "chatId": (void 0)().nullable(),
+      "createdAt": stringType(),
+      "inventoryStatus": enumType(["received", "collected", "exchanged"]),
+      "isUpgraded": booleanType(),
+      "serialNumber": (void 0)().nullable(),
+      "giftItem": objectType({
+        "id": (void 0)(),
+        "name": stringType(),
+        "emoji": stringType(),
+        "animationType": enumType(["bounce", "confetti", "sparkle", "hearts", "fireworks", "stars", "balloons", "roses", "orbit", "bloom", "diamonds", "flame", "galaxy", "lightning", "magic", "supernova", "vortex"]),
+        "rarity": enumType(["common", "rare", "epic", "legendary", "cosmic"]),
+        "stars": (void 0)(),
+        "price": (void 0)(),
+        "description": stringType(),
+        "primeOnly": booleanType(),
+        "imageUrl": stringType().nullish(),
+        "isCollectible": booleanType(),
+        "isActive": booleanType(),
+        "maxSupply": (void 0)().nullable(),
+        "exchangeValue": (void 0)(),
+        "upgradePrice": (void 0)(),
+        "soldCount": (void 0)(),
+        "availableCount": (void 0)().nullable()
+      })
+    }), nullType()]).optional(),
+    "createdAt": stringType(),
+    "updatedAt": stringType()
+  }), nullType()]).optional(),
+  "members": arrayType(objectType({
+    "id": (void 0)(),
+    "chatId": (void 0)(),
+    "userId": (void 0)(),
+    "role": enumType(["owner", "admin", "member"]),
+    "joinedAt": stringType(),
+    "user": objectType({
+      "id": (void 0)(),
+      "username": stringType(),
+      "displayName": stringType(),
+      "bio": stringType().nullish(),
+      "avatarUrl": stringType().nullish(),
+      "avatarColor": stringType(),
+      "status": enumType(["online", "offline", "away"]),
+      "statusText": stringType().nullish(),
+      "lastSeen": stringType().nullish(),
+      "phoneNumber": stringType().nullish(),
+      "isBot": booleanType(),
+      "isVerified": booleanType(),
+      "isAdmin": booleanType(),
+      "showOnlineStatus": booleanType().optional(),
+      "readReceiptsEnabled": booleanType().optional(),
+      "totpEnabled": booleanType().optional(),
+      "createdAt": stringType()
+    }).optional()
+  })).optional(),
+  "otherUser": unionType([objectType({
+    "id": (void 0)(),
+    "username": stringType(),
+    "displayName": stringType(),
+    "bio": stringType().nullish(),
+    "avatarUrl": stringType().nullish(),
+    "avatarColor": stringType(),
+    "status": enumType(["online", "offline", "away"]),
+    "statusText": stringType().nullish(),
+    "lastSeen": stringType().nullish(),
+    "phoneNumber": stringType().nullish(),
+    "isBot": booleanType(),
+    "isVerified": booleanType(),
+    "isAdmin": booleanType(),
+    "showOnlineStatus": booleanType().optional(),
+    "readReceiptsEnabled": booleanType().optional(),
+    "totpEnabled": booleanType().optional(),
+    "createdAt": stringType()
+  }), nullType()]).optional(),
+  "createdAt": stringType(),
+  "updatedAt": stringType()
 });
 var GetChatByIdParams = objectType({
-  chatId: coerce.number()
+  "chatId": coerce.number().int()
 });
 var GetChatByIdResponse = objectType({
-  id: numberType(),
-  type: enumType(["direct", "group", "channel"]),
-  name: stringType().nullish(),
-  description: stringType().nullish(),
-  avatarUrl: stringType().nullish(),
-  avatarColor: stringType(),
-  isPinned: booleanType(),
-  isMuted: booleanType(),
-  unreadCount: numberType(),
-  lastMessage: objectType({
-    id: numberType(),
-    chatId: numberType(),
-    senderId: numberType(),
-    text: stringType().nullish(),
-    type: enumType([
-      "text",
-      "image",
-      "video",
-      "audio",
-      "file",
-      "gift",
-      "call",
-      "sticker",
-      "system"
-    ]),
-    mediaUrl: stringType().nullish(),
-    replyToId: numberType().nullish(),
-    isEdited: booleanType(),
-    isRead: booleanType(),
-    reactions: arrayType(
-      objectType({
-        id: numberType(),
-        messageId: numberType(),
-        userId: numberType(),
-        emoji: stringType(),
-        user: objectType({
-          id: numberType(),
-          username: stringType(),
-          displayName: stringType(),
-          bio: stringType().nullish(),
-          avatarUrl: stringType().nullish(),
-          avatarColor: stringType(),
-          status: enumType(["online", "offline", "away"]),
-          statusText: stringType().nullish(),
-          lastSeen: stringType().nullish(),
-          phoneNumber: stringType().nullish(),
-          isBot: booleanType(),
-          isVerified: booleanType(),
-          isAdmin: booleanType(),
-          showOnlineStatus: booleanType().optional(),
-          readReceiptsEnabled: booleanType().optional(),
-          totpEnabled: booleanType().optional(),
-          createdAt: stringType()
-        }).nullish(),
-        createdAt: stringType()
+  "id": (void 0)(),
+  "type": enumType(["direct", "group", "channel"]),
+  "name": stringType().nullish(),
+  "description": stringType().nullish(),
+  "avatarUrl": stringType().nullish(),
+  "avatarColor": stringType(),
+  "isPinned": booleanType(),
+  "isMuted": booleanType(),
+  "unreadCount": (void 0)(),
+  "lastMessage": unionType([objectType({
+    "id": (void 0)(),
+    "chatId": (void 0)(),
+    "senderId": (void 0)(),
+    "text": stringType().nullish(),
+    "type": enumType(["text", "image", "video", "audio", "file", "gift", "call", "sticker", "system"]),
+    "mediaUrl": stringType().nullish(),
+    "replyToId": (void 0)().nullish(),
+    "isEdited": booleanType(),
+    "isRead": booleanType(),
+    "reactions": arrayType(objectType({
+      "id": (void 0)(),
+      "messageId": (void 0)(),
+      "userId": (void 0)(),
+      "emoji": stringType(),
+      "user": unionType([objectType({
+        "id": (void 0)(),
+        "username": stringType(),
+        "displayName": stringType(),
+        "bio": stringType().nullish(),
+        "avatarUrl": stringType().nullish(),
+        "avatarColor": stringType(),
+        "status": enumType(["online", "offline", "away"]),
+        "statusText": stringType().nullish(),
+        "lastSeen": stringType().nullish(),
+        "phoneNumber": stringType().nullish(),
+        "isBot": booleanType(),
+        "isVerified": booleanType(),
+        "isAdmin": booleanType(),
+        "showOnlineStatus": booleanType().optional(),
+        "readReceiptsEnabled": booleanType().optional(),
+        "totpEnabled": booleanType().optional(),
+        "createdAt": stringType()
+      }), nullType()]).optional(),
+      "createdAt": stringType()
+    })),
+    "sender": unionType([objectType({
+      "id": (void 0)(),
+      "username": stringType(),
+      "displayName": stringType(),
+      "bio": stringType().nullish(),
+      "avatarUrl": stringType().nullish(),
+      "avatarColor": stringType(),
+      "status": enumType(["online", "offline", "away"]),
+      "statusText": stringType().nullish(),
+      "lastSeen": stringType().nullish(),
+      "phoneNumber": stringType().nullish(),
+      "isBot": booleanType(),
+      "isVerified": booleanType(),
+      "isAdmin": booleanType(),
+      "showOnlineStatus": booleanType().optional(),
+      "readReceiptsEnabled": booleanType().optional(),
+      "totpEnabled": booleanType().optional(),
+      "createdAt": stringType()
+    }), nullType()]).optional(),
+    "replyTo": unionType([unknownType(), nullType()]).optional(),
+    "giftData": unionType([objectType({
+      "id": (void 0)(),
+      "giftItemId": (void 0)(),
+      "senderId": (void 0)().nullable(),
+      "senderName": stringType(),
+      "receiverId": (void 0)(),
+      "receiverName": stringType(),
+      "message": stringType().nullish(),
+      "isAnonymous": booleanType(),
+      "chatId": (void 0)().nullable(),
+      "createdAt": stringType(),
+      "inventoryStatus": enumType(["received", "collected", "exchanged"]),
+      "isUpgraded": booleanType(),
+      "serialNumber": (void 0)().nullable(),
+      "giftItem": objectType({
+        "id": (void 0)(),
+        "name": stringType(),
+        "emoji": stringType(),
+        "animationType": enumType(["bounce", "confetti", "sparkle", "hearts", "fireworks", "stars", "balloons", "roses", "orbit", "bloom", "diamonds", "flame", "galaxy", "lightning", "magic", "supernova", "vortex"]),
+        "rarity": enumType(["common", "rare", "epic", "legendary", "cosmic"]),
+        "stars": (void 0)(),
+        "price": (void 0)(),
+        "description": stringType(),
+        "primeOnly": booleanType(),
+        "imageUrl": stringType().nullish(),
+        "isCollectible": booleanType(),
+        "isActive": booleanType(),
+        "maxSupply": (void 0)().nullable(),
+        "exchangeValue": (void 0)(),
+        "upgradePrice": (void 0)(),
+        "soldCount": (void 0)(),
+        "availableCount": (void 0)().nullable()
       })
-    ),
-    sender: objectType({
-      id: numberType(),
-      username: stringType(),
-      displayName: stringType(),
-      bio: stringType().nullish(),
-      avatarUrl: stringType().nullish(),
-      avatarColor: stringType(),
-      status: enumType(["online", "offline", "away"]),
-      statusText: stringType().nullish(),
-      lastSeen: stringType().nullish(),
-      phoneNumber: stringType().nullish(),
-      isBot: booleanType(),
-      isVerified: booleanType(),
-      isAdmin: booleanType(),
-      showOnlineStatus: booleanType().optional(),
-      readReceiptsEnabled: booleanType().optional(),
-      totpEnabled: booleanType().optional(),
-      createdAt: stringType()
-    }).nullish(),
-    replyTo: unknownType().optional(),
-    giftData: objectType({
-      id: numberType(),
-      giftItemId: numberType(),
-      senderId: numberType(),
-      receiverId: numberType(),
-      message: stringType().nullish(),
-      isAnonymous: booleanType(),
-      giftItem: objectType({
-        id: numberType(),
-        name: stringType(),
-        emoji: stringType(),
-        animationType: enumType([
-          "confetti",
-          "sparkle",
-          "hearts",
-          "fireworks",
-          "stars",
-          "balloons",
-          "roses",
-          "diamonds"
-        ]),
-        rarity: enumType(["common", "rare", "epic", "legendary"]),
-        stars: numberType(),
-        description: stringType()
-      }).nullish(),
-      sender: objectType({
-        id: numberType(),
-        username: stringType(),
-        displayName: stringType(),
-        bio: stringType().nullish(),
-        avatarUrl: stringType().nullish(),
-        avatarColor: stringType(),
-        status: enumType(["online", "offline", "away"]),
-        statusText: stringType().nullish(),
-        lastSeen: stringType().nullish(),
-        phoneNumber: stringType().nullish(),
-        isBot: booleanType(),
-        isVerified: booleanType(),
-        isAdmin: booleanType(),
-        showOnlineStatus: booleanType().optional(),
-        readReceiptsEnabled: booleanType().optional(),
-        totpEnabled: booleanType().optional(),
-        createdAt: stringType()
-      }).nullish(),
-      receiver: objectType({
-        id: numberType(),
-        username: stringType(),
-        displayName: stringType(),
-        bio: stringType().nullish(),
-        avatarUrl: stringType().nullish(),
-        avatarColor: stringType(),
-        status: enumType(["online", "offline", "away"]),
-        statusText: stringType().nullish(),
-        lastSeen: stringType().nullish(),
-        phoneNumber: stringType().nullish(),
-        isBot: booleanType(),
-        isVerified: booleanType(),
-        isAdmin: booleanType(),
-        showOnlineStatus: booleanType().optional(),
-        readReceiptsEnabled: booleanType().optional(),
-        totpEnabled: booleanType().optional(),
-        createdAt: stringType()
-      }).nullish(),
-      createdAt: stringType()
-    }).nullish(),
-    createdAt: stringType(),
-    updatedAt: stringType()
-  }).nullish(),
-  members: arrayType(
-    objectType({
-      id: numberType(),
-      chatId: numberType(),
-      userId: numberType(),
-      role: enumType(["owner", "admin", "member"]),
-      joinedAt: stringType(),
-      user: objectType({
-        id: numberType(),
-        username: stringType(),
-        displayName: stringType(),
-        bio: stringType().nullish(),
-        avatarUrl: stringType().nullish(),
-        avatarColor: stringType(),
-        status: enumType(["online", "offline", "away"]),
-        statusText: stringType().nullish(),
-        lastSeen: stringType().nullish(),
-        phoneNumber: stringType().nullish(),
-        isBot: booleanType(),
-        isVerified: booleanType(),
-        isAdmin: booleanType(),
-        showOnlineStatus: booleanType().optional(),
-        readReceiptsEnabled: booleanType().optional(),
-        totpEnabled: booleanType().optional(),
-        createdAt: stringType()
-      }).optional()
-    })
-  ).optional(),
-  otherUser: objectType({
-    id: numberType(),
-    username: stringType(),
-    displayName: stringType(),
-    bio: stringType().nullish(),
-    avatarUrl: stringType().nullish(),
-    avatarColor: stringType(),
-    status: enumType(["online", "offline", "away"]),
-    statusText: stringType().nullish(),
-    lastSeen: stringType().nullish(),
-    phoneNumber: stringType().nullish(),
-    isBot: booleanType(),
-    isVerified: booleanType(),
-    isAdmin: booleanType(),
-    showOnlineStatus: booleanType().optional(),
-    readReceiptsEnabled: booleanType().optional(),
-    totpEnabled: booleanType().optional(),
-    createdAt: stringType()
-  }).nullish(),
-  createdAt: stringType(),
-  updatedAt: stringType()
+    }), nullType()]).optional(),
+    "createdAt": stringType(),
+    "updatedAt": stringType()
+  }), nullType()]).optional(),
+  "members": arrayType(objectType({
+    "id": (void 0)(),
+    "chatId": (void 0)(),
+    "userId": (void 0)(),
+    "role": enumType(["owner", "admin", "member"]),
+    "joinedAt": stringType(),
+    "user": objectType({
+      "id": (void 0)(),
+      "username": stringType(),
+      "displayName": stringType(),
+      "bio": stringType().nullish(),
+      "avatarUrl": stringType().nullish(),
+      "avatarColor": stringType(),
+      "status": enumType(["online", "offline", "away"]),
+      "statusText": stringType().nullish(),
+      "lastSeen": stringType().nullish(),
+      "phoneNumber": stringType().nullish(),
+      "isBot": booleanType(),
+      "isVerified": booleanType(),
+      "isAdmin": booleanType(),
+      "showOnlineStatus": booleanType().optional(),
+      "readReceiptsEnabled": booleanType().optional(),
+      "totpEnabled": booleanType().optional(),
+      "createdAt": stringType()
+    }).optional()
+  })).optional(),
+  "otherUser": unionType([objectType({
+    "id": (void 0)(),
+    "username": stringType(),
+    "displayName": stringType(),
+    "bio": stringType().nullish(),
+    "avatarUrl": stringType().nullish(),
+    "avatarColor": stringType(),
+    "status": enumType(["online", "offline", "away"]),
+    "statusText": stringType().nullish(),
+    "lastSeen": stringType().nullish(),
+    "phoneNumber": stringType().nullish(),
+    "isBot": booleanType(),
+    "isVerified": booleanType(),
+    "isAdmin": booleanType(),
+    "showOnlineStatus": booleanType().optional(),
+    "readReceiptsEnabled": booleanType().optional(),
+    "totpEnabled": booleanType().optional(),
+    "createdAt": stringType()
+  }), nullType()]).optional(),
+  "createdAt": stringType(),
+  "updatedAt": stringType()
 });
 var UpdateChatParams = objectType({
-  chatId: coerce.number()
+  "chatId": coerce.number().int()
 });
 var UpdateChatBody = objectType({
-  name: stringType().optional(),
-  description: stringType().optional(),
-  avatarUrl: stringType().optional(),
-  isMuted: booleanType().optional()
+  "name": stringType().optional(),
+  "description": stringType().optional(),
+  "avatarUrl": stringType().optional(),
+  "isMuted": booleanType().optional()
 });
 var UpdateChatResponse = objectType({
-  id: numberType(),
-  type: enumType(["direct", "group", "channel"]),
-  name: stringType().nullish(),
-  description: stringType().nullish(),
-  avatarUrl: stringType().nullish(),
-  avatarColor: stringType(),
-  isPinned: booleanType(),
-  isMuted: booleanType(),
-  unreadCount: numberType(),
-  lastMessage: objectType({
-    id: numberType(),
-    chatId: numberType(),
-    senderId: numberType(),
-    text: stringType().nullish(),
-    type: enumType([
-      "text",
-      "image",
-      "video",
-      "audio",
-      "file",
-      "gift",
-      "call",
-      "sticker",
-      "system"
-    ]),
-    mediaUrl: stringType().nullish(),
-    replyToId: numberType().nullish(),
-    isEdited: booleanType(),
-    isRead: booleanType(),
-    reactions: arrayType(
-      objectType({
-        id: numberType(),
-        messageId: numberType(),
-        userId: numberType(),
-        emoji: stringType(),
-        user: objectType({
-          id: numberType(),
-          username: stringType(),
-          displayName: stringType(),
-          bio: stringType().nullish(),
-          avatarUrl: stringType().nullish(),
-          avatarColor: stringType(),
-          status: enumType(["online", "offline", "away"]),
-          statusText: stringType().nullish(),
-          lastSeen: stringType().nullish(),
-          phoneNumber: stringType().nullish(),
-          isBot: booleanType(),
-          isVerified: booleanType(),
-          isAdmin: booleanType(),
-          showOnlineStatus: booleanType().optional(),
-          readReceiptsEnabled: booleanType().optional(),
-          totpEnabled: booleanType().optional(),
-          createdAt: stringType()
-        }).nullish(),
-        createdAt: stringType()
+  "id": (void 0)(),
+  "type": enumType(["direct", "group", "channel"]),
+  "name": stringType().nullish(),
+  "description": stringType().nullish(),
+  "avatarUrl": stringType().nullish(),
+  "avatarColor": stringType(),
+  "isPinned": booleanType(),
+  "isMuted": booleanType(),
+  "unreadCount": (void 0)(),
+  "lastMessage": unionType([objectType({
+    "id": (void 0)(),
+    "chatId": (void 0)(),
+    "senderId": (void 0)(),
+    "text": stringType().nullish(),
+    "type": enumType(["text", "image", "video", "audio", "file", "gift", "call", "sticker", "system"]),
+    "mediaUrl": stringType().nullish(),
+    "replyToId": (void 0)().nullish(),
+    "isEdited": booleanType(),
+    "isRead": booleanType(),
+    "reactions": arrayType(objectType({
+      "id": (void 0)(),
+      "messageId": (void 0)(),
+      "userId": (void 0)(),
+      "emoji": stringType(),
+      "user": unionType([objectType({
+        "id": (void 0)(),
+        "username": stringType(),
+        "displayName": stringType(),
+        "bio": stringType().nullish(),
+        "avatarUrl": stringType().nullish(),
+        "avatarColor": stringType(),
+        "status": enumType(["online", "offline", "away"]),
+        "statusText": stringType().nullish(),
+        "lastSeen": stringType().nullish(),
+        "phoneNumber": stringType().nullish(),
+        "isBot": booleanType(),
+        "isVerified": booleanType(),
+        "isAdmin": booleanType(),
+        "showOnlineStatus": booleanType().optional(),
+        "readReceiptsEnabled": booleanType().optional(),
+        "totpEnabled": booleanType().optional(),
+        "createdAt": stringType()
+      }), nullType()]).optional(),
+      "createdAt": stringType()
+    })),
+    "sender": unionType([objectType({
+      "id": (void 0)(),
+      "username": stringType(),
+      "displayName": stringType(),
+      "bio": stringType().nullish(),
+      "avatarUrl": stringType().nullish(),
+      "avatarColor": stringType(),
+      "status": enumType(["online", "offline", "away"]),
+      "statusText": stringType().nullish(),
+      "lastSeen": stringType().nullish(),
+      "phoneNumber": stringType().nullish(),
+      "isBot": booleanType(),
+      "isVerified": booleanType(),
+      "isAdmin": booleanType(),
+      "showOnlineStatus": booleanType().optional(),
+      "readReceiptsEnabled": booleanType().optional(),
+      "totpEnabled": booleanType().optional(),
+      "createdAt": stringType()
+    }), nullType()]).optional(),
+    "replyTo": unionType([unknownType(), nullType()]).optional(),
+    "giftData": unionType([objectType({
+      "id": (void 0)(),
+      "giftItemId": (void 0)(),
+      "senderId": (void 0)().nullable(),
+      "senderName": stringType(),
+      "receiverId": (void 0)(),
+      "receiverName": stringType(),
+      "message": stringType().nullish(),
+      "isAnonymous": booleanType(),
+      "chatId": (void 0)().nullable(),
+      "createdAt": stringType(),
+      "inventoryStatus": enumType(["received", "collected", "exchanged"]),
+      "isUpgraded": booleanType(),
+      "serialNumber": (void 0)().nullable(),
+      "giftItem": objectType({
+        "id": (void 0)(),
+        "name": stringType(),
+        "emoji": stringType(),
+        "animationType": enumType(["bounce", "confetti", "sparkle", "hearts", "fireworks", "stars", "balloons", "roses", "orbit", "bloom", "diamonds", "flame", "galaxy", "lightning", "magic", "supernova", "vortex"]),
+        "rarity": enumType(["common", "rare", "epic", "legendary", "cosmic"]),
+        "stars": (void 0)(),
+        "price": (void 0)(),
+        "description": stringType(),
+        "primeOnly": booleanType(),
+        "imageUrl": stringType().nullish(),
+        "isCollectible": booleanType(),
+        "isActive": booleanType(),
+        "maxSupply": (void 0)().nullable(),
+        "exchangeValue": (void 0)(),
+        "upgradePrice": (void 0)(),
+        "soldCount": (void 0)(),
+        "availableCount": (void 0)().nullable()
       })
-    ),
-    sender: objectType({
-      id: numberType(),
-      username: stringType(),
-      displayName: stringType(),
-      bio: stringType().nullish(),
-      avatarUrl: stringType().nullish(),
-      avatarColor: stringType(),
-      status: enumType(["online", "offline", "away"]),
-      statusText: stringType().nullish(),
-      lastSeen: stringType().nullish(),
-      phoneNumber: stringType().nullish(),
-      isBot: booleanType(),
-      isVerified: booleanType(),
-      isAdmin: booleanType(),
-      showOnlineStatus: booleanType().optional(),
-      readReceiptsEnabled: booleanType().optional(),
-      totpEnabled: booleanType().optional(),
-      createdAt: stringType()
-    }).nullish(),
-    replyTo: unknownType().optional(),
-    giftData: objectType({
-      id: numberType(),
-      giftItemId: numberType(),
-      senderId: numberType(),
-      receiverId: numberType(),
-      message: stringType().nullish(),
-      isAnonymous: booleanType(),
-      giftItem: objectType({
-        id: numberType(),
-        name: stringType(),
-        emoji: stringType(),
-        animationType: enumType([
-          "confetti",
-          "sparkle",
-          "hearts",
-          "fireworks",
-          "stars",
-          "balloons",
-          "roses",
-          "diamonds"
-        ]),
-        rarity: enumType(["common", "rare", "epic", "legendary"]),
-        stars: numberType(),
-        description: stringType()
-      }).nullish(),
-      sender: objectType({
-        id: numberType(),
-        username: stringType(),
-        displayName: stringType(),
-        bio: stringType().nullish(),
-        avatarUrl: stringType().nullish(),
-        avatarColor: stringType(),
-        status: enumType(["online", "offline", "away"]),
-        statusText: stringType().nullish(),
-        lastSeen: stringType().nullish(),
-        phoneNumber: stringType().nullish(),
-        isBot: booleanType(),
-        isVerified: booleanType(),
-        isAdmin: booleanType(),
-        showOnlineStatus: booleanType().optional(),
-        readReceiptsEnabled: booleanType().optional(),
-        totpEnabled: booleanType().optional(),
-        createdAt: stringType()
-      }).nullish(),
-      receiver: objectType({
-        id: numberType(),
-        username: stringType(),
-        displayName: stringType(),
-        bio: stringType().nullish(),
-        avatarUrl: stringType().nullish(),
-        avatarColor: stringType(),
-        status: enumType(["online", "offline", "away"]),
-        statusText: stringType().nullish(),
-        lastSeen: stringType().nullish(),
-        phoneNumber: stringType().nullish(),
-        isBot: booleanType(),
-        isVerified: booleanType(),
-        isAdmin: booleanType(),
-        showOnlineStatus: booleanType().optional(),
-        readReceiptsEnabled: booleanType().optional(),
-        totpEnabled: booleanType().optional(),
-        createdAt: stringType()
-      }).nullish(),
-      createdAt: stringType()
-    }).nullish(),
-    createdAt: stringType(),
-    updatedAt: stringType()
-  }).nullish(),
-  members: arrayType(
-    objectType({
-      id: numberType(),
-      chatId: numberType(),
-      userId: numberType(),
-      role: enumType(["owner", "admin", "member"]),
-      joinedAt: stringType(),
-      user: objectType({
-        id: numberType(),
-        username: stringType(),
-        displayName: stringType(),
-        bio: stringType().nullish(),
-        avatarUrl: stringType().nullish(),
-        avatarColor: stringType(),
-        status: enumType(["online", "offline", "away"]),
-        statusText: stringType().nullish(),
-        lastSeen: stringType().nullish(),
-        phoneNumber: stringType().nullish(),
-        isBot: booleanType(),
-        isVerified: booleanType(),
-        isAdmin: booleanType(),
-        showOnlineStatus: booleanType().optional(),
-        readReceiptsEnabled: booleanType().optional(),
-        totpEnabled: booleanType().optional(),
-        createdAt: stringType()
-      }).optional()
-    })
-  ).optional(),
-  otherUser: objectType({
-    id: numberType(),
-    username: stringType(),
-    displayName: stringType(),
-    bio: stringType().nullish(),
-    avatarUrl: stringType().nullish(),
-    avatarColor: stringType(),
-    status: enumType(["online", "offline", "away"]),
-    statusText: stringType().nullish(),
-    lastSeen: stringType().nullish(),
-    phoneNumber: stringType().nullish(),
-    isBot: booleanType(),
-    isVerified: booleanType(),
-    isAdmin: booleanType(),
-    showOnlineStatus: booleanType().optional(),
-    readReceiptsEnabled: booleanType().optional(),
-    totpEnabled: booleanType().optional(),
-    createdAt: stringType()
-  }).nullish(),
-  createdAt: stringType(),
-  updatedAt: stringType()
+    }), nullType()]).optional(),
+    "createdAt": stringType(),
+    "updatedAt": stringType()
+  }), nullType()]).optional(),
+  "members": arrayType(objectType({
+    "id": (void 0)(),
+    "chatId": (void 0)(),
+    "userId": (void 0)(),
+    "role": enumType(["owner", "admin", "member"]),
+    "joinedAt": stringType(),
+    "user": objectType({
+      "id": (void 0)(),
+      "username": stringType(),
+      "displayName": stringType(),
+      "bio": stringType().nullish(),
+      "avatarUrl": stringType().nullish(),
+      "avatarColor": stringType(),
+      "status": enumType(["online", "offline", "away"]),
+      "statusText": stringType().nullish(),
+      "lastSeen": stringType().nullish(),
+      "phoneNumber": stringType().nullish(),
+      "isBot": booleanType(),
+      "isVerified": booleanType(),
+      "isAdmin": booleanType(),
+      "showOnlineStatus": booleanType().optional(),
+      "readReceiptsEnabled": booleanType().optional(),
+      "totpEnabled": booleanType().optional(),
+      "createdAt": stringType()
+    }).optional()
+  })).optional(),
+  "otherUser": unionType([objectType({
+    "id": (void 0)(),
+    "username": stringType(),
+    "displayName": stringType(),
+    "bio": stringType().nullish(),
+    "avatarUrl": stringType().nullish(),
+    "avatarColor": stringType(),
+    "status": enumType(["online", "offline", "away"]),
+    "statusText": stringType().nullish(),
+    "lastSeen": stringType().nullish(),
+    "phoneNumber": stringType().nullish(),
+    "isBot": booleanType(),
+    "isVerified": booleanType(),
+    "isAdmin": booleanType(),
+    "showOnlineStatus": booleanType().optional(),
+    "readReceiptsEnabled": booleanType().optional(),
+    "totpEnabled": booleanType().optional(),
+    "createdAt": stringType()
+  }), nullType()]).optional(),
+  "createdAt": stringType(),
+  "updatedAt": stringType()
 });
 var DeleteChatParams = objectType({
-  chatId: coerce.number()
+  "chatId": coerce.number().int()
 });
+var DeleteChatResponse = voidType();
 var GetChatMembersParams = objectType({
-  chatId: coerce.number()
+  "chatId": coerce.number().int()
 });
 var GetChatMembersResponseItem = objectType({
-  id: numberType(),
-  chatId: numberType(),
-  userId: numberType(),
-  role: enumType(["owner", "admin", "member"]),
-  joinedAt: stringType(),
-  user: objectType({
-    id: numberType(),
-    username: stringType(),
-    displayName: stringType(),
-    bio: stringType().nullish(),
-    avatarUrl: stringType().nullish(),
-    avatarColor: stringType(),
-    status: enumType(["online", "offline", "away"]),
-    statusText: stringType().nullish(),
-    lastSeen: stringType().nullish(),
-    phoneNumber: stringType().nullish(),
-    isBot: booleanType(),
-    isVerified: booleanType(),
-    isAdmin: booleanType(),
-    showOnlineStatus: booleanType().optional(),
-    readReceiptsEnabled: booleanType().optional(),
-    totpEnabled: booleanType().optional(),
-    createdAt: stringType()
+  "id": (void 0)(),
+  "chatId": (void 0)(),
+  "userId": (void 0)(),
+  "role": enumType(["owner", "admin", "member"]),
+  "joinedAt": stringType(),
+  "user": objectType({
+    "id": (void 0)(),
+    "username": stringType(),
+    "displayName": stringType(),
+    "bio": stringType().nullish(),
+    "avatarUrl": stringType().nullish(),
+    "avatarColor": stringType(),
+    "status": enumType(["online", "offline", "away"]),
+    "statusText": stringType().nullish(),
+    "lastSeen": stringType().nullish(),
+    "phoneNumber": stringType().nullish(),
+    "isBot": booleanType(),
+    "isVerified": booleanType(),
+    "isAdmin": booleanType(),
+    "showOnlineStatus": booleanType().optional(),
+    "readReceiptsEnabled": booleanType().optional(),
+    "totpEnabled": booleanType().optional(),
+    "createdAt": stringType()
   }).optional()
 });
 var GetChatMembersResponse = arrayType(GetChatMembersResponseItem);
 var AddChatMemberParams = objectType({
-  chatId: coerce.number()
+  "chatId": coerce.number().int()
 });
 var addChatMemberBodyRoleDefault = `member`;
 var AddChatMemberBody = objectType({
-  userId: numberType(),
-  role: enumType(["admin", "member"]).default(addChatMemberBodyRoleDefault)
+  "userId": (void 0)(),
+  "role": enumType(["admin", "member"]).default(addChatMemberBodyRoleDefault)
+});
+var AddChatMemberResponse = objectType({
+  "id": (void 0)(),
+  "chatId": (void 0)(),
+  "userId": (void 0)(),
+  "role": enumType(["owner", "admin", "member"]),
+  "joinedAt": stringType(),
+  "user": objectType({
+    "id": (void 0)(),
+    "username": stringType(),
+    "displayName": stringType(),
+    "bio": stringType().nullish(),
+    "avatarUrl": stringType().nullish(),
+    "avatarColor": stringType(),
+    "status": enumType(["online", "offline", "away"]),
+    "statusText": stringType().nullish(),
+    "lastSeen": stringType().nullish(),
+    "phoneNumber": stringType().nullish(),
+    "isBot": booleanType(),
+    "isVerified": booleanType(),
+    "isAdmin": booleanType(),
+    "showOnlineStatus": booleanType().optional(),
+    "readReceiptsEnabled": booleanType().optional(),
+    "totpEnabled": booleanType().optional(),
+    "createdAt": stringType()
+  }).optional()
 });
 var RemoveChatMemberParams = objectType({
-  chatId: coerce.number(),
-  memberId: coerce.number()
+  "chatId": coerce.number().int(),
+  "memberId": coerce.number().int()
 });
+var RemoveChatMemberResponse = voidType();
 var PinChatParams = objectType({
-  chatId: coerce.number()
+  "chatId": coerce.number().int()
 });
 var PinChatResponse = objectType({
-  id: numberType(),
-  type: enumType(["direct", "group", "channel"]),
-  name: stringType().nullish(),
-  description: stringType().nullish(),
-  avatarUrl: stringType().nullish(),
-  avatarColor: stringType(),
-  isPinned: booleanType(),
-  isMuted: booleanType(),
-  unreadCount: numberType(),
-  lastMessage: objectType({
-    id: numberType(),
-    chatId: numberType(),
-    senderId: numberType(),
-    text: stringType().nullish(),
-    type: enumType([
-      "text",
-      "image",
-      "video",
-      "audio",
-      "file",
-      "gift",
-      "call",
-      "sticker",
-      "system"
-    ]),
-    mediaUrl: stringType().nullish(),
-    replyToId: numberType().nullish(),
-    isEdited: booleanType(),
-    isRead: booleanType(),
-    reactions: arrayType(
-      objectType({
-        id: numberType(),
-        messageId: numberType(),
-        userId: numberType(),
-        emoji: stringType(),
-        user: objectType({
-          id: numberType(),
-          username: stringType(),
-          displayName: stringType(),
-          bio: stringType().nullish(),
-          avatarUrl: stringType().nullish(),
-          avatarColor: stringType(),
-          status: enumType(["online", "offline", "away"]),
-          statusText: stringType().nullish(),
-          lastSeen: stringType().nullish(),
-          phoneNumber: stringType().nullish(),
-          isBot: booleanType(),
-          isVerified: booleanType(),
-          isAdmin: booleanType(),
-          showOnlineStatus: booleanType().optional(),
-          readReceiptsEnabled: booleanType().optional(),
-          totpEnabled: booleanType().optional(),
-          createdAt: stringType()
-        }).nullish(),
-        createdAt: stringType()
+  "id": (void 0)(),
+  "type": enumType(["direct", "group", "channel"]),
+  "name": stringType().nullish(),
+  "description": stringType().nullish(),
+  "avatarUrl": stringType().nullish(),
+  "avatarColor": stringType(),
+  "isPinned": booleanType(),
+  "isMuted": booleanType(),
+  "unreadCount": (void 0)(),
+  "lastMessage": unionType([objectType({
+    "id": (void 0)(),
+    "chatId": (void 0)(),
+    "senderId": (void 0)(),
+    "text": stringType().nullish(),
+    "type": enumType(["text", "image", "video", "audio", "file", "gift", "call", "sticker", "system"]),
+    "mediaUrl": stringType().nullish(),
+    "replyToId": (void 0)().nullish(),
+    "isEdited": booleanType(),
+    "isRead": booleanType(),
+    "reactions": arrayType(objectType({
+      "id": (void 0)(),
+      "messageId": (void 0)(),
+      "userId": (void 0)(),
+      "emoji": stringType(),
+      "user": unionType([objectType({
+        "id": (void 0)(),
+        "username": stringType(),
+        "displayName": stringType(),
+        "bio": stringType().nullish(),
+        "avatarUrl": stringType().nullish(),
+        "avatarColor": stringType(),
+        "status": enumType(["online", "offline", "away"]),
+        "statusText": stringType().nullish(),
+        "lastSeen": stringType().nullish(),
+        "phoneNumber": stringType().nullish(),
+        "isBot": booleanType(),
+        "isVerified": booleanType(),
+        "isAdmin": booleanType(),
+        "showOnlineStatus": booleanType().optional(),
+        "readReceiptsEnabled": booleanType().optional(),
+        "totpEnabled": booleanType().optional(),
+        "createdAt": stringType()
+      }), nullType()]).optional(),
+      "createdAt": stringType()
+    })),
+    "sender": unionType([objectType({
+      "id": (void 0)(),
+      "username": stringType(),
+      "displayName": stringType(),
+      "bio": stringType().nullish(),
+      "avatarUrl": stringType().nullish(),
+      "avatarColor": stringType(),
+      "status": enumType(["online", "offline", "away"]),
+      "statusText": stringType().nullish(),
+      "lastSeen": stringType().nullish(),
+      "phoneNumber": stringType().nullish(),
+      "isBot": booleanType(),
+      "isVerified": booleanType(),
+      "isAdmin": booleanType(),
+      "showOnlineStatus": booleanType().optional(),
+      "readReceiptsEnabled": booleanType().optional(),
+      "totpEnabled": booleanType().optional(),
+      "createdAt": stringType()
+    }), nullType()]).optional(),
+    "replyTo": unionType([unknownType(), nullType()]).optional(),
+    "giftData": unionType([objectType({
+      "id": (void 0)(),
+      "giftItemId": (void 0)(),
+      "senderId": (void 0)().nullable(),
+      "senderName": stringType(),
+      "receiverId": (void 0)(),
+      "receiverName": stringType(),
+      "message": stringType().nullish(),
+      "isAnonymous": booleanType(),
+      "chatId": (void 0)().nullable(),
+      "createdAt": stringType(),
+      "inventoryStatus": enumType(["received", "collected", "exchanged"]),
+      "isUpgraded": booleanType(),
+      "serialNumber": (void 0)().nullable(),
+      "giftItem": objectType({
+        "id": (void 0)(),
+        "name": stringType(),
+        "emoji": stringType(),
+        "animationType": enumType(["bounce", "confetti", "sparkle", "hearts", "fireworks", "stars", "balloons", "roses", "orbit", "bloom", "diamonds", "flame", "galaxy", "lightning", "magic", "supernova", "vortex"]),
+        "rarity": enumType(["common", "rare", "epic", "legendary", "cosmic"]),
+        "stars": (void 0)(),
+        "price": (void 0)(),
+        "description": stringType(),
+        "primeOnly": booleanType(),
+        "imageUrl": stringType().nullish(),
+        "isCollectible": booleanType(),
+        "isActive": booleanType(),
+        "maxSupply": (void 0)().nullable(),
+        "exchangeValue": (void 0)(),
+        "upgradePrice": (void 0)(),
+        "soldCount": (void 0)(),
+        "availableCount": (void 0)().nullable()
       })
-    ),
-    sender: objectType({
-      id: numberType(),
-      username: stringType(),
-      displayName: stringType(),
-      bio: stringType().nullish(),
-      avatarUrl: stringType().nullish(),
-      avatarColor: stringType(),
-      status: enumType(["online", "offline", "away"]),
-      statusText: stringType().nullish(),
-      lastSeen: stringType().nullish(),
-      phoneNumber: stringType().nullish(),
-      isBot: booleanType(),
-      isVerified: booleanType(),
-      isAdmin: booleanType(),
-      showOnlineStatus: booleanType().optional(),
-      readReceiptsEnabled: booleanType().optional(),
-      totpEnabled: booleanType().optional(),
-      createdAt: stringType()
-    }).nullish(),
-    replyTo: unknownType().optional(),
-    giftData: objectType({
-      id: numberType(),
-      giftItemId: numberType(),
-      senderId: numberType(),
-      receiverId: numberType(),
-      message: stringType().nullish(),
-      isAnonymous: booleanType(),
-      giftItem: objectType({
-        id: numberType(),
-        name: stringType(),
-        emoji: stringType(),
-        animationType: enumType([
-          "confetti",
-          "sparkle",
-          "hearts",
-          "fireworks",
-          "stars",
-          "balloons",
-          "roses",
-          "diamonds"
-        ]),
-        rarity: enumType(["common", "rare", "epic", "legendary"]),
-        stars: numberType(),
-        description: stringType()
-      }).nullish(),
-      sender: objectType({
-        id: numberType(),
-        username: stringType(),
-        displayName: stringType(),
-        bio: stringType().nullish(),
-        avatarUrl: stringType().nullish(),
-        avatarColor: stringType(),
-        status: enumType(["online", "offline", "away"]),
-        statusText: stringType().nullish(),
-        lastSeen: stringType().nullish(),
-        phoneNumber: stringType().nullish(),
-        isBot: booleanType(),
-        isVerified: booleanType(),
-        isAdmin: booleanType(),
-        showOnlineStatus: booleanType().optional(),
-        readReceiptsEnabled: booleanType().optional(),
-        totpEnabled: booleanType().optional(),
-        createdAt: stringType()
-      }).nullish(),
-      receiver: objectType({
-        id: numberType(),
-        username: stringType(),
-        displayName: stringType(),
-        bio: stringType().nullish(),
-        avatarUrl: stringType().nullish(),
-        avatarColor: stringType(),
-        status: enumType(["online", "offline", "away"]),
-        statusText: stringType().nullish(),
-        lastSeen: stringType().nullish(),
-        phoneNumber: stringType().nullish(),
-        isBot: booleanType(),
-        isVerified: booleanType(),
-        isAdmin: booleanType(),
-        showOnlineStatus: booleanType().optional(),
-        readReceiptsEnabled: booleanType().optional(),
-        totpEnabled: booleanType().optional(),
-        createdAt: stringType()
-      }).nullish(),
-      createdAt: stringType()
-    }).nullish(),
-    createdAt: stringType(),
-    updatedAt: stringType()
-  }).nullish(),
-  members: arrayType(
-    objectType({
-      id: numberType(),
-      chatId: numberType(),
-      userId: numberType(),
-      role: enumType(["owner", "admin", "member"]),
-      joinedAt: stringType(),
-      user: objectType({
-        id: numberType(),
-        username: stringType(),
-        displayName: stringType(),
-        bio: stringType().nullish(),
-        avatarUrl: stringType().nullish(),
-        avatarColor: stringType(),
-        status: enumType(["online", "offline", "away"]),
-        statusText: stringType().nullish(),
-        lastSeen: stringType().nullish(),
-        phoneNumber: stringType().nullish(),
-        isBot: booleanType(),
-        isVerified: booleanType(),
-        isAdmin: booleanType(),
-        showOnlineStatus: booleanType().optional(),
-        readReceiptsEnabled: booleanType().optional(),
-        totpEnabled: booleanType().optional(),
-        createdAt: stringType()
-      }).optional()
-    })
-  ).optional(),
-  otherUser: objectType({
-    id: numberType(),
-    username: stringType(),
-    displayName: stringType(),
-    bio: stringType().nullish(),
-    avatarUrl: stringType().nullish(),
-    avatarColor: stringType(),
-    status: enumType(["online", "offline", "away"]),
-    statusText: stringType().nullish(),
-    lastSeen: stringType().nullish(),
-    phoneNumber: stringType().nullish(),
-    isBot: booleanType(),
-    isVerified: booleanType(),
-    isAdmin: booleanType(),
-    showOnlineStatus: booleanType().optional(),
-    readReceiptsEnabled: booleanType().optional(),
-    totpEnabled: booleanType().optional(),
-    createdAt: stringType()
-  }).nullish(),
-  createdAt: stringType(),
-  updatedAt: stringType()
+    }), nullType()]).optional(),
+    "createdAt": stringType(),
+    "updatedAt": stringType()
+  }), nullType()]).optional(),
+  "members": arrayType(objectType({
+    "id": (void 0)(),
+    "chatId": (void 0)(),
+    "userId": (void 0)(),
+    "role": enumType(["owner", "admin", "member"]),
+    "joinedAt": stringType(),
+    "user": objectType({
+      "id": (void 0)(),
+      "username": stringType(),
+      "displayName": stringType(),
+      "bio": stringType().nullish(),
+      "avatarUrl": stringType().nullish(),
+      "avatarColor": stringType(),
+      "status": enumType(["online", "offline", "away"]),
+      "statusText": stringType().nullish(),
+      "lastSeen": stringType().nullish(),
+      "phoneNumber": stringType().nullish(),
+      "isBot": booleanType(),
+      "isVerified": booleanType(),
+      "isAdmin": booleanType(),
+      "showOnlineStatus": booleanType().optional(),
+      "readReceiptsEnabled": booleanType().optional(),
+      "totpEnabled": booleanType().optional(),
+      "createdAt": stringType()
+    }).optional()
+  })).optional(),
+  "otherUser": unionType([objectType({
+    "id": (void 0)(),
+    "username": stringType(),
+    "displayName": stringType(),
+    "bio": stringType().nullish(),
+    "avatarUrl": stringType().nullish(),
+    "avatarColor": stringType(),
+    "status": enumType(["online", "offline", "away"]),
+    "statusText": stringType().nullish(),
+    "lastSeen": stringType().nullish(),
+    "phoneNumber": stringType().nullish(),
+    "isBot": booleanType(),
+    "isVerified": booleanType(),
+    "isAdmin": booleanType(),
+    "showOnlineStatus": booleanType().optional(),
+    "readReceiptsEnabled": booleanType().optional(),
+    "totpEnabled": booleanType().optional(),
+    "createdAt": stringType()
+  }), nullType()]).optional(),
+  "createdAt": stringType(),
+  "updatedAt": stringType()
 });
 var getMessagesQueryLimitDefault = 50;
 var GetMessagesQueryParams = objectType({
-  chatId: coerce.number(),
-  limit: coerce.number().default(getMessagesQueryLimitDefault),
-  before: coerce.number().optional()
+  "chatId": coerce.number().int(),
+  "limit": coerce.number().int().default(getMessagesQueryLimitDefault),
+  "before": coerce.number().int().optional()
 });
 var GetMessagesResponseItem = objectType({
-  id: numberType(),
-  chatId: numberType(),
-  senderId: numberType(),
-  text: stringType().nullish(),
-  type: enumType([
-    "text",
-    "image",
-    "video",
-    "audio",
-    "file",
-    "gift",
-    "call",
-    "sticker",
-    "system"
-  ]),
-  mediaUrl: stringType().nullish(),
-  replyToId: numberType().nullish(),
-  isEdited: booleanType(),
-  isRead: booleanType(),
-  reactions: arrayType(
-    objectType({
-      id: numberType(),
-      messageId: numberType(),
-      userId: numberType(),
-      emoji: stringType(),
-      user: objectType({
-        id: numberType(),
-        username: stringType(),
-        displayName: stringType(),
-        bio: stringType().nullish(),
-        avatarUrl: stringType().nullish(),
-        avatarColor: stringType(),
-        status: enumType(["online", "offline", "away"]),
-        statusText: stringType().nullish(),
-        lastSeen: stringType().nullish(),
-        phoneNumber: stringType().nullish(),
-        isBot: booleanType(),
-        isVerified: booleanType(),
-        isAdmin: booleanType(),
-        showOnlineStatus: booleanType().optional(),
-        readReceiptsEnabled: booleanType().optional(),
-        totpEnabled: booleanType().optional(),
-        createdAt: stringType()
-      }).nullish(),
-      createdAt: stringType()
+  "id": (void 0)(),
+  "chatId": (void 0)(),
+  "senderId": (void 0)(),
+  "text": stringType().nullish(),
+  "type": enumType(["text", "image", "video", "audio", "file", "gift", "call", "sticker", "system"]),
+  "mediaUrl": stringType().nullish(),
+  "replyToId": (void 0)().nullish(),
+  "isEdited": booleanType(),
+  "isRead": booleanType(),
+  "reactions": arrayType(objectType({
+    "id": (void 0)(),
+    "messageId": (void 0)(),
+    "userId": (void 0)(),
+    "emoji": stringType(),
+    "user": unionType([objectType({
+      "id": (void 0)(),
+      "username": stringType(),
+      "displayName": stringType(),
+      "bio": stringType().nullish(),
+      "avatarUrl": stringType().nullish(),
+      "avatarColor": stringType(),
+      "status": enumType(["online", "offline", "away"]),
+      "statusText": stringType().nullish(),
+      "lastSeen": stringType().nullish(),
+      "phoneNumber": stringType().nullish(),
+      "isBot": booleanType(),
+      "isVerified": booleanType(),
+      "isAdmin": booleanType(),
+      "showOnlineStatus": booleanType().optional(),
+      "readReceiptsEnabled": booleanType().optional(),
+      "totpEnabled": booleanType().optional(),
+      "createdAt": stringType()
+    }), nullType()]).optional(),
+    "createdAt": stringType()
+  })),
+  "sender": unionType([objectType({
+    "id": (void 0)(),
+    "username": stringType(),
+    "displayName": stringType(),
+    "bio": stringType().nullish(),
+    "avatarUrl": stringType().nullish(),
+    "avatarColor": stringType(),
+    "status": enumType(["online", "offline", "away"]),
+    "statusText": stringType().nullish(),
+    "lastSeen": stringType().nullish(),
+    "phoneNumber": stringType().nullish(),
+    "isBot": booleanType(),
+    "isVerified": booleanType(),
+    "isAdmin": booleanType(),
+    "showOnlineStatus": booleanType().optional(),
+    "readReceiptsEnabled": booleanType().optional(),
+    "totpEnabled": booleanType().optional(),
+    "createdAt": stringType()
+  }), nullType()]).optional(),
+  "replyTo": unionType([unknownType(), nullType()]).optional(),
+  "giftData": unionType([objectType({
+    "id": (void 0)(),
+    "giftItemId": (void 0)(),
+    "senderId": (void 0)().nullable(),
+    "senderName": stringType(),
+    "receiverId": (void 0)(),
+    "receiverName": stringType(),
+    "message": stringType().nullish(),
+    "isAnonymous": booleanType(),
+    "chatId": (void 0)().nullable(),
+    "createdAt": stringType(),
+    "inventoryStatus": enumType(["received", "collected", "exchanged"]),
+    "isUpgraded": booleanType(),
+    "serialNumber": (void 0)().nullable(),
+    "giftItem": objectType({
+      "id": (void 0)(),
+      "name": stringType(),
+      "emoji": stringType(),
+      "animationType": enumType(["bounce", "confetti", "sparkle", "hearts", "fireworks", "stars", "balloons", "roses", "orbit", "bloom", "diamonds", "flame", "galaxy", "lightning", "magic", "supernova", "vortex"]),
+      "rarity": enumType(["common", "rare", "epic", "legendary", "cosmic"]),
+      "stars": (void 0)(),
+      "price": (void 0)(),
+      "description": stringType(),
+      "primeOnly": booleanType(),
+      "imageUrl": stringType().nullish(),
+      "isCollectible": booleanType(),
+      "isActive": booleanType(),
+      "maxSupply": (void 0)().nullable(),
+      "exchangeValue": (void 0)(),
+      "upgradePrice": (void 0)(),
+      "soldCount": (void 0)(),
+      "availableCount": (void 0)().nullable()
     })
-  ),
-  sender: objectType({
-    id: numberType(),
-    username: stringType(),
-    displayName: stringType(),
-    bio: stringType().nullish(),
-    avatarUrl: stringType().nullish(),
-    avatarColor: stringType(),
-    status: enumType(["online", "offline", "away"]),
-    statusText: stringType().nullish(),
-    lastSeen: stringType().nullish(),
-    phoneNumber: stringType().nullish(),
-    isBot: booleanType(),
-    isVerified: booleanType(),
-    isAdmin: booleanType(),
-    showOnlineStatus: booleanType().optional(),
-    readReceiptsEnabled: booleanType().optional(),
-    totpEnabled: booleanType().optional(),
-    createdAt: stringType()
-  }).nullish(),
-  replyTo: unknownType().optional(),
-  giftData: objectType({
-    id: numberType(),
-    giftItemId: numberType(),
-    senderId: numberType(),
-    receiverId: numberType(),
-    message: stringType().nullish(),
-    isAnonymous: booleanType(),
-    giftItem: objectType({
-      id: numberType(),
-      name: stringType(),
-      emoji: stringType(),
-      animationType: enumType([
-        "confetti",
-        "sparkle",
-        "hearts",
-        "fireworks",
-        "stars",
-        "balloons",
-        "roses",
-        "diamonds"
-      ]),
-      rarity: enumType(["common", "rare", "epic", "legendary"]),
-      stars: numberType(),
-      description: stringType()
-    }).nullish(),
-    sender: objectType({
-      id: numberType(),
-      username: stringType(),
-      displayName: stringType(),
-      bio: stringType().nullish(),
-      avatarUrl: stringType().nullish(),
-      avatarColor: stringType(),
-      status: enumType(["online", "offline", "away"]),
-      statusText: stringType().nullish(),
-      lastSeen: stringType().nullish(),
-      phoneNumber: stringType().nullish(),
-      isBot: booleanType(),
-      isVerified: booleanType(),
-      isAdmin: booleanType(),
-      showOnlineStatus: booleanType().optional(),
-      readReceiptsEnabled: booleanType().optional(),
-      totpEnabled: booleanType().optional(),
-      createdAt: stringType()
-    }).nullish(),
-    receiver: objectType({
-      id: numberType(),
-      username: stringType(),
-      displayName: stringType(),
-      bio: stringType().nullish(),
-      avatarUrl: stringType().nullish(),
-      avatarColor: stringType(),
-      status: enumType(["online", "offline", "away"]),
-      statusText: stringType().nullish(),
-      lastSeen: stringType().nullish(),
-      phoneNumber: stringType().nullish(),
-      isBot: booleanType(),
-      isVerified: booleanType(),
-      isAdmin: booleanType(),
-      showOnlineStatus: booleanType().optional(),
-      readReceiptsEnabled: booleanType().optional(),
-      totpEnabled: booleanType().optional(),
-      createdAt: stringType()
-    }).nullish(),
-    createdAt: stringType()
-  }).nullish(),
-  createdAt: stringType(),
-  updatedAt: stringType()
+  }), nullType()]).optional(),
+  "createdAt": stringType(),
+  "updatedAt": stringType()
 });
 var GetMessagesResponse = arrayType(GetMessagesResponseItem);
 var sendMessageBodyTypeDefault = `text`;
 var SendMessageBody = objectType({
-  chatId: numberType(),
-  text: stringType().optional(),
-  type: enumType([
-    "text",
-    "image",
-    "video",
-    "audio",
-    "file",
-    "sticker",
-    "album",
-    "document",
-    "location"
-  ]).default(sendMessageBodyTypeDefault),
-  mediaUrl: stringType().optional(),
-  replyToId: numberType().optional()
+  "chatId": (void 0)(),
+  "text": stringType().optional(),
+  "type": enumType(["text", "image", "video", "audio", "file", "sticker", "album", "document"]).default(sendMessageBodyTypeDefault),
+  "mediaUrl": stringType().optional(),
+  "replyToId": (void 0)().optional()
+});
+var SendMessageResponse = objectType({
+  "id": (void 0)(),
+  "chatId": (void 0)(),
+  "senderId": (void 0)(),
+  "text": stringType().nullish(),
+  "type": enumType(["text", "image", "video", "audio", "file", "gift", "call", "sticker", "system"]),
+  "mediaUrl": stringType().nullish(),
+  "replyToId": (void 0)().nullish(),
+  "isEdited": booleanType(),
+  "isRead": booleanType(),
+  "reactions": arrayType(objectType({
+    "id": (void 0)(),
+    "messageId": (void 0)(),
+    "userId": (void 0)(),
+    "emoji": stringType(),
+    "user": unionType([objectType({
+      "id": (void 0)(),
+      "username": stringType(),
+      "displayName": stringType(),
+      "bio": stringType().nullish(),
+      "avatarUrl": stringType().nullish(),
+      "avatarColor": stringType(),
+      "status": enumType(["online", "offline", "away"]),
+      "statusText": stringType().nullish(),
+      "lastSeen": stringType().nullish(),
+      "phoneNumber": stringType().nullish(),
+      "isBot": booleanType(),
+      "isVerified": booleanType(),
+      "isAdmin": booleanType(),
+      "showOnlineStatus": booleanType().optional(),
+      "readReceiptsEnabled": booleanType().optional(),
+      "totpEnabled": booleanType().optional(),
+      "createdAt": stringType()
+    }), nullType()]).optional(),
+    "createdAt": stringType()
+  })),
+  "sender": unionType([objectType({
+    "id": (void 0)(),
+    "username": stringType(),
+    "displayName": stringType(),
+    "bio": stringType().nullish(),
+    "avatarUrl": stringType().nullish(),
+    "avatarColor": stringType(),
+    "status": enumType(["online", "offline", "away"]),
+    "statusText": stringType().nullish(),
+    "lastSeen": stringType().nullish(),
+    "phoneNumber": stringType().nullish(),
+    "isBot": booleanType(),
+    "isVerified": booleanType(),
+    "isAdmin": booleanType(),
+    "showOnlineStatus": booleanType().optional(),
+    "readReceiptsEnabled": booleanType().optional(),
+    "totpEnabled": booleanType().optional(),
+    "createdAt": stringType()
+  }), nullType()]).optional(),
+  "replyTo": unionType([unknownType(), nullType()]).optional(),
+  "giftData": unionType([objectType({
+    "id": (void 0)(),
+    "giftItemId": (void 0)(),
+    "senderId": (void 0)().nullable(),
+    "senderName": stringType(),
+    "receiverId": (void 0)(),
+    "receiverName": stringType(),
+    "message": stringType().nullish(),
+    "isAnonymous": booleanType(),
+    "chatId": (void 0)().nullable(),
+    "createdAt": stringType(),
+    "inventoryStatus": enumType(["received", "collected", "exchanged"]),
+    "isUpgraded": booleanType(),
+    "serialNumber": (void 0)().nullable(),
+    "giftItem": objectType({
+      "id": (void 0)(),
+      "name": stringType(),
+      "emoji": stringType(),
+      "animationType": enumType(["bounce", "confetti", "sparkle", "hearts", "fireworks", "stars", "balloons", "roses", "orbit", "bloom", "diamonds", "flame", "galaxy", "lightning", "magic", "supernova", "vortex"]),
+      "rarity": enumType(["common", "rare", "epic", "legendary", "cosmic"]),
+      "stars": (void 0)(),
+      "price": (void 0)(),
+      "description": stringType(),
+      "primeOnly": booleanType(),
+      "imageUrl": stringType().nullish(),
+      "isCollectible": booleanType(),
+      "isActive": booleanType(),
+      "maxSupply": (void 0)().nullable(),
+      "exchangeValue": (void 0)(),
+      "upgradePrice": (void 0)(),
+      "soldCount": (void 0)(),
+      "availableCount": (void 0)().nullable()
+    })
+  }), nullType()]).optional(),
+  "createdAt": stringType(),
+  "updatedAt": stringType()
 });
 var EditMessageParams = objectType({
-  messageId: coerce.number()
+  "messageId": coerce.number().int()
 });
 var EditMessageBody = objectType({
-  text: stringType()
+  "text": stringType()
 });
 var EditMessageResponse = objectType({
-  id: numberType(),
-  chatId: numberType(),
-  senderId: numberType(),
-  text: stringType().nullish(),
-  type: enumType([
-    "text",
-    "image",
-    "video",
-    "audio",
-    "file",
-    "gift",
-    "call",
-    "sticker",
-    "system"
-  ]),
-  mediaUrl: stringType().nullish(),
-  replyToId: numberType().nullish(),
-  isEdited: booleanType(),
-  isRead: booleanType(),
-  reactions: arrayType(
-    objectType({
-      id: numberType(),
-      messageId: numberType(),
-      userId: numberType(),
-      emoji: stringType(),
-      user: objectType({
-        id: numberType(),
-        username: stringType(),
-        displayName: stringType(),
-        bio: stringType().nullish(),
-        avatarUrl: stringType().nullish(),
-        avatarColor: stringType(),
-        status: enumType(["online", "offline", "away"]),
-        statusText: stringType().nullish(),
-        lastSeen: stringType().nullish(),
-        phoneNumber: stringType().nullish(),
-        isBot: booleanType(),
-        isVerified: booleanType(),
-        isAdmin: booleanType(),
-        showOnlineStatus: booleanType().optional(),
-        readReceiptsEnabled: booleanType().optional(),
-        totpEnabled: booleanType().optional(),
-        createdAt: stringType()
-      }).nullish(),
-      createdAt: stringType()
+  "id": (void 0)(),
+  "chatId": (void 0)(),
+  "senderId": (void 0)(),
+  "text": stringType().nullish(),
+  "type": enumType(["text", "image", "video", "audio", "file", "gift", "call", "sticker", "system"]),
+  "mediaUrl": stringType().nullish(),
+  "replyToId": (void 0)().nullish(),
+  "isEdited": booleanType(),
+  "isRead": booleanType(),
+  "reactions": arrayType(objectType({
+    "id": (void 0)(),
+    "messageId": (void 0)(),
+    "userId": (void 0)(),
+    "emoji": stringType(),
+    "user": unionType([objectType({
+      "id": (void 0)(),
+      "username": stringType(),
+      "displayName": stringType(),
+      "bio": stringType().nullish(),
+      "avatarUrl": stringType().nullish(),
+      "avatarColor": stringType(),
+      "status": enumType(["online", "offline", "away"]),
+      "statusText": stringType().nullish(),
+      "lastSeen": stringType().nullish(),
+      "phoneNumber": stringType().nullish(),
+      "isBot": booleanType(),
+      "isVerified": booleanType(),
+      "isAdmin": booleanType(),
+      "showOnlineStatus": booleanType().optional(),
+      "readReceiptsEnabled": booleanType().optional(),
+      "totpEnabled": booleanType().optional(),
+      "createdAt": stringType()
+    }), nullType()]).optional(),
+    "createdAt": stringType()
+  })),
+  "sender": unionType([objectType({
+    "id": (void 0)(),
+    "username": stringType(),
+    "displayName": stringType(),
+    "bio": stringType().nullish(),
+    "avatarUrl": stringType().nullish(),
+    "avatarColor": stringType(),
+    "status": enumType(["online", "offline", "away"]),
+    "statusText": stringType().nullish(),
+    "lastSeen": stringType().nullish(),
+    "phoneNumber": stringType().nullish(),
+    "isBot": booleanType(),
+    "isVerified": booleanType(),
+    "isAdmin": booleanType(),
+    "showOnlineStatus": booleanType().optional(),
+    "readReceiptsEnabled": booleanType().optional(),
+    "totpEnabled": booleanType().optional(),
+    "createdAt": stringType()
+  }), nullType()]).optional(),
+  "replyTo": unionType([unknownType(), nullType()]).optional(),
+  "giftData": unionType([objectType({
+    "id": (void 0)(),
+    "giftItemId": (void 0)(),
+    "senderId": (void 0)().nullable(),
+    "senderName": stringType(),
+    "receiverId": (void 0)(),
+    "receiverName": stringType(),
+    "message": stringType().nullish(),
+    "isAnonymous": booleanType(),
+    "chatId": (void 0)().nullable(),
+    "createdAt": stringType(),
+    "inventoryStatus": enumType(["received", "collected", "exchanged"]),
+    "isUpgraded": booleanType(),
+    "serialNumber": (void 0)().nullable(),
+    "giftItem": objectType({
+      "id": (void 0)(),
+      "name": stringType(),
+      "emoji": stringType(),
+      "animationType": enumType(["bounce", "confetti", "sparkle", "hearts", "fireworks", "stars", "balloons", "roses", "orbit", "bloom", "diamonds", "flame", "galaxy", "lightning", "magic", "supernova", "vortex"]),
+      "rarity": enumType(["common", "rare", "epic", "legendary", "cosmic"]),
+      "stars": (void 0)(),
+      "price": (void 0)(),
+      "description": stringType(),
+      "primeOnly": booleanType(),
+      "imageUrl": stringType().nullish(),
+      "isCollectible": booleanType(),
+      "isActive": booleanType(),
+      "maxSupply": (void 0)().nullable(),
+      "exchangeValue": (void 0)(),
+      "upgradePrice": (void 0)(),
+      "soldCount": (void 0)(),
+      "availableCount": (void 0)().nullable()
     })
-  ),
-  sender: objectType({
-    id: numberType(),
-    username: stringType(),
-    displayName: stringType(),
-    bio: stringType().nullish(),
-    avatarUrl: stringType().nullish(),
-    avatarColor: stringType(),
-    status: enumType(["online", "offline", "away"]),
-    statusText: stringType().nullish(),
-    lastSeen: stringType().nullish(),
-    phoneNumber: stringType().nullish(),
-    isBot: booleanType(),
-    isVerified: booleanType(),
-    isAdmin: booleanType(),
-    showOnlineStatus: booleanType().optional(),
-    readReceiptsEnabled: booleanType().optional(),
-    totpEnabled: booleanType().optional(),
-    createdAt: stringType()
-  }).nullish(),
-  replyTo: unknownType().optional(),
-  giftData: objectType({
-    id: numberType(),
-    giftItemId: numberType(),
-    senderId: numberType(),
-    receiverId: numberType(),
-    message: stringType().nullish(),
-    isAnonymous: booleanType(),
-    giftItem: objectType({
-      id: numberType(),
-      name: stringType(),
-      emoji: stringType(),
-      animationType: enumType([
-        "confetti",
-        "sparkle",
-        "hearts",
-        "fireworks",
-        "stars",
-        "balloons",
-        "roses",
-        "diamonds"
-      ]),
-      rarity: enumType(["common", "rare", "epic", "legendary"]),
-      stars: numberType(),
-      description: stringType()
-    }).nullish(),
-    sender: objectType({
-      id: numberType(),
-      username: stringType(),
-      displayName: stringType(),
-      bio: stringType().nullish(),
-      avatarUrl: stringType().nullish(),
-      avatarColor: stringType(),
-      status: enumType(["online", "offline", "away"]),
-      statusText: stringType().nullish(),
-      lastSeen: stringType().nullish(),
-      phoneNumber: stringType().nullish(),
-      isBot: booleanType(),
-      isVerified: booleanType(),
-      isAdmin: booleanType(),
-      showOnlineStatus: booleanType().optional(),
-      readReceiptsEnabled: booleanType().optional(),
-      totpEnabled: booleanType().optional(),
-      createdAt: stringType()
-    }).nullish(),
-    receiver: objectType({
-      id: numberType(),
-      username: stringType(),
-      displayName: stringType(),
-      bio: stringType().nullish(),
-      avatarUrl: stringType().nullish(),
-      avatarColor: stringType(),
-      status: enumType(["online", "offline", "away"]),
-      statusText: stringType().nullish(),
-      lastSeen: stringType().nullish(),
-      phoneNumber: stringType().nullish(),
-      isBot: booleanType(),
-      isVerified: booleanType(),
-      isAdmin: booleanType(),
-      showOnlineStatus: booleanType().optional(),
-      readReceiptsEnabled: booleanType().optional(),
-      totpEnabled: booleanType().optional(),
-      createdAt: stringType()
-    }).nullish(),
-    createdAt: stringType()
-  }).nullish(),
-  createdAt: stringType(),
-  updatedAt: stringType()
+  }), nullType()]).optional(),
+  "createdAt": stringType(),
+  "updatedAt": stringType()
 });
 var DeleteMessageParams = objectType({
-  messageId: coerce.number()
+  "messageId": coerce.number().int()
 });
+var DeleteMessageResponse = voidType();
 var AddReactionParams = objectType({
-  messageId: coerce.number()
+  "messageId": coerce.number().int()
 });
 var AddReactionBody = objectType({
-  emoji: stringType()
+  "emoji": stringType()
+});
+var AddReactionResponse = objectType({
+  "id": (void 0)(),
+  "messageId": (void 0)(),
+  "userId": (void 0)(),
+  "emoji": stringType(),
+  "user": unionType([objectType({
+    "id": (void 0)(),
+    "username": stringType(),
+    "displayName": stringType(),
+    "bio": stringType().nullish(),
+    "avatarUrl": stringType().nullish(),
+    "avatarColor": stringType(),
+    "status": enumType(["online", "offline", "away"]),
+    "statusText": stringType().nullish(),
+    "lastSeen": stringType().nullish(),
+    "phoneNumber": stringType().nullish(),
+    "isBot": booleanType(),
+    "isVerified": booleanType(),
+    "isAdmin": booleanType(),
+    "showOnlineStatus": booleanType().optional(),
+    "readReceiptsEnabled": booleanType().optional(),
+    "totpEnabled": booleanType().optional(),
+    "createdAt": stringType()
+  }), nullType()]).optional(),
+  "createdAt": stringType()
 });
 var RemoveReactionParams = objectType({
-  messageId: coerce.number()
+  "messageId": coerce.number().int()
 });
 var RemoveReactionBody = objectType({
-  emoji: stringType()
+  "emoji": stringType()
 });
+var RemoveReactionResponse = voidType();
 var GetCallHistoryResponseItem = objectType({
-  id: numberType(),
-  chatId: numberType().nullish(),
-  callerId: numberType(),
-  calleeId: numberType().nullish(),
-  type: enumType(["audio", "video", "group"]),
-  status: enumType(["ringing", "active", "ended", "missed", "declined"]),
-  startedAt: stringType().nullish(),
-  endedAt: stringType().nullish(),
-  durationSeconds: numberType().nullish(),
-  caller: objectType({
-    id: numberType(),
-    username: stringType(),
-    displayName: stringType(),
-    bio: stringType().nullish(),
-    avatarUrl: stringType().nullish(),
-    avatarColor: stringType(),
-    status: enumType(["online", "offline", "away"]),
-    statusText: stringType().nullish(),
-    lastSeen: stringType().nullish(),
-    phoneNumber: stringType().nullish(),
-    isBot: booleanType(),
-    isVerified: booleanType(),
-    isAdmin: booleanType(),
-    showOnlineStatus: booleanType().optional(),
-    readReceiptsEnabled: booleanType().optional(),
-    totpEnabled: booleanType().optional(),
-    createdAt: stringType()
-  }).nullish(),
-  callee: objectType({
-    id: numberType(),
-    username: stringType(),
-    displayName: stringType(),
-    bio: stringType().nullish(),
-    avatarUrl: stringType().nullish(),
-    avatarColor: stringType(),
-    status: enumType(["online", "offline", "away"]),
-    statusText: stringType().nullish(),
-    lastSeen: stringType().nullish(),
-    phoneNumber: stringType().nullish(),
-    isBot: booleanType(),
-    isVerified: booleanType(),
-    isAdmin: booleanType(),
-    showOnlineStatus: booleanType().optional(),
-    readReceiptsEnabled: booleanType().optional(),
-    totpEnabled: booleanType().optional(),
-    createdAt: stringType()
-  }).nullish(),
-  createdAt: stringType()
+  "id": (void 0)(),
+  "chatId": (void 0)().nullish(),
+  "callerId": (void 0)(),
+  "calleeId": (void 0)().nullish(),
+  "type": enumType(["audio", "video", "group"]),
+  "status": enumType(["ringing", "active", "ended", "missed", "declined"]),
+  "startedAt": stringType().nullish(),
+  "endedAt": stringType().nullish(),
+  "durationSeconds": (void 0)().nullish(),
+  "caller": unionType([objectType({
+    "id": (void 0)(),
+    "username": stringType(),
+    "displayName": stringType(),
+    "bio": stringType().nullish(),
+    "avatarUrl": stringType().nullish(),
+    "avatarColor": stringType(),
+    "status": enumType(["online", "offline", "away"]),
+    "statusText": stringType().nullish(),
+    "lastSeen": stringType().nullish(),
+    "phoneNumber": stringType().nullish(),
+    "isBot": booleanType(),
+    "isVerified": booleanType(),
+    "isAdmin": booleanType(),
+    "showOnlineStatus": booleanType().optional(),
+    "readReceiptsEnabled": booleanType().optional(),
+    "totpEnabled": booleanType().optional(),
+    "createdAt": stringType()
+  }), nullType()]).optional(),
+  "callee": unionType([objectType({
+    "id": (void 0)(),
+    "username": stringType(),
+    "displayName": stringType(),
+    "bio": stringType().nullish(),
+    "avatarUrl": stringType().nullish(),
+    "avatarColor": stringType(),
+    "status": enumType(["online", "offline", "away"]),
+    "statusText": stringType().nullish(),
+    "lastSeen": stringType().nullish(),
+    "phoneNumber": stringType().nullish(),
+    "isBot": booleanType(),
+    "isVerified": booleanType(),
+    "isAdmin": booleanType(),
+    "showOnlineStatus": booleanType().optional(),
+    "readReceiptsEnabled": booleanType().optional(),
+    "totpEnabled": booleanType().optional(),
+    "createdAt": stringType()
+  }), nullType()]).optional(),
+  "createdAt": stringType()
 });
 var GetCallHistoryResponse = arrayType(GetCallHistoryResponseItem);
 var InitiateCallBody = objectType({
-  calleeId: numberType().optional(),
-  chatId: numberType().optional(),
-  type: enumType(["audio", "video", "group"])
+  "calleeId": (void 0)().optional(),
+  "chatId": (void 0)().optional(),
+  "type": enumType(["audio", "video", "group"])
+});
+var InitiateCallResponse = objectType({
+  "id": (void 0)(),
+  "chatId": (void 0)().nullish(),
+  "callerId": (void 0)(),
+  "calleeId": (void 0)().nullish(),
+  "type": enumType(["audio", "video", "group"]),
+  "status": enumType(["ringing", "active", "ended", "missed", "declined"]),
+  "startedAt": stringType().nullish(),
+  "endedAt": stringType().nullish(),
+  "durationSeconds": (void 0)().nullish(),
+  "caller": unionType([objectType({
+    "id": (void 0)(),
+    "username": stringType(),
+    "displayName": stringType(),
+    "bio": stringType().nullish(),
+    "avatarUrl": stringType().nullish(),
+    "avatarColor": stringType(),
+    "status": enumType(["online", "offline", "away"]),
+    "statusText": stringType().nullish(),
+    "lastSeen": stringType().nullish(),
+    "phoneNumber": stringType().nullish(),
+    "isBot": booleanType(),
+    "isVerified": booleanType(),
+    "isAdmin": booleanType(),
+    "showOnlineStatus": booleanType().optional(),
+    "readReceiptsEnabled": booleanType().optional(),
+    "totpEnabled": booleanType().optional(),
+    "createdAt": stringType()
+  }), nullType()]).optional(),
+  "callee": unionType([objectType({
+    "id": (void 0)(),
+    "username": stringType(),
+    "displayName": stringType(),
+    "bio": stringType().nullish(),
+    "avatarUrl": stringType().nullish(),
+    "avatarColor": stringType(),
+    "status": enumType(["online", "offline", "away"]),
+    "statusText": stringType().nullish(),
+    "lastSeen": stringType().nullish(),
+    "phoneNumber": stringType().nullish(),
+    "isBot": booleanType(),
+    "isVerified": booleanType(),
+    "isAdmin": booleanType(),
+    "showOnlineStatus": booleanType().optional(),
+    "readReceiptsEnabled": booleanType().optional(),
+    "totpEnabled": booleanType().optional(),
+    "createdAt": stringType()
+  }), nullType()]).optional(),
+  "createdAt": stringType()
 });
 var GetCallByIdParams = objectType({
-  callId: coerce.number()
+  "callId": coerce.number().int()
 });
 var GetCallByIdResponse = objectType({
-  id: numberType(),
-  chatId: numberType().nullish(),
-  callerId: numberType(),
-  calleeId: numberType().nullish(),
-  type: enumType(["audio", "video", "group"]),
-  status: enumType(["ringing", "active", "ended", "missed", "declined"]),
-  startedAt: stringType().nullish(),
-  endedAt: stringType().nullish(),
-  durationSeconds: numberType().nullish(),
-  caller: objectType({
-    id: numberType(),
-    username: stringType(),
-    displayName: stringType(),
-    bio: stringType().nullish(),
-    avatarUrl: stringType().nullish(),
-    avatarColor: stringType(),
-    status: enumType(["online", "offline", "away"]),
-    statusText: stringType().nullish(),
-    lastSeen: stringType().nullish(),
-    phoneNumber: stringType().nullish(),
-    isBot: booleanType(),
-    isVerified: booleanType(),
-    isAdmin: booleanType(),
-    showOnlineStatus: booleanType().optional(),
-    readReceiptsEnabled: booleanType().optional(),
-    totpEnabled: booleanType().optional(),
-    createdAt: stringType()
-  }).nullish(),
-  callee: objectType({
-    id: numberType(),
-    username: stringType(),
-    displayName: stringType(),
-    bio: stringType().nullish(),
-    avatarUrl: stringType().nullish(),
-    avatarColor: stringType(),
-    status: enumType(["online", "offline", "away"]),
-    statusText: stringType().nullish(),
-    lastSeen: stringType().nullish(),
-    phoneNumber: stringType().nullish(),
-    isBot: booleanType(),
-    isVerified: booleanType(),
-    isAdmin: booleanType(),
-    showOnlineStatus: booleanType().optional(),
-    readReceiptsEnabled: booleanType().optional(),
-    totpEnabled: booleanType().optional(),
-    createdAt: stringType()
-  }).nullish(),
-  createdAt: stringType()
+  "id": (void 0)(),
+  "chatId": (void 0)().nullish(),
+  "callerId": (void 0)(),
+  "calleeId": (void 0)().nullish(),
+  "type": enumType(["audio", "video", "group"]),
+  "status": enumType(["ringing", "active", "ended", "missed", "declined"]),
+  "startedAt": stringType().nullish(),
+  "endedAt": stringType().nullish(),
+  "durationSeconds": (void 0)().nullish(),
+  "caller": unionType([objectType({
+    "id": (void 0)(),
+    "username": stringType(),
+    "displayName": stringType(),
+    "bio": stringType().nullish(),
+    "avatarUrl": stringType().nullish(),
+    "avatarColor": stringType(),
+    "status": enumType(["online", "offline", "away"]),
+    "statusText": stringType().nullish(),
+    "lastSeen": stringType().nullish(),
+    "phoneNumber": stringType().nullish(),
+    "isBot": booleanType(),
+    "isVerified": booleanType(),
+    "isAdmin": booleanType(),
+    "showOnlineStatus": booleanType().optional(),
+    "readReceiptsEnabled": booleanType().optional(),
+    "totpEnabled": booleanType().optional(),
+    "createdAt": stringType()
+  }), nullType()]).optional(),
+  "callee": unionType([objectType({
+    "id": (void 0)(),
+    "username": stringType(),
+    "displayName": stringType(),
+    "bio": stringType().nullish(),
+    "avatarUrl": stringType().nullish(),
+    "avatarColor": stringType(),
+    "status": enumType(["online", "offline", "away"]),
+    "statusText": stringType().nullish(),
+    "lastSeen": stringType().nullish(),
+    "phoneNumber": stringType().nullish(),
+    "isBot": booleanType(),
+    "isVerified": booleanType(),
+    "isAdmin": booleanType(),
+    "showOnlineStatus": booleanType().optional(),
+    "readReceiptsEnabled": booleanType().optional(),
+    "totpEnabled": booleanType().optional(),
+    "createdAt": stringType()
+  }), nullType()]).optional(),
+  "createdAt": stringType()
 });
 var UpdateCallStatusParams = objectType({
-  callId: coerce.number()
+  "callId": coerce.number().int()
 });
 var UpdateCallStatusBody = objectType({
-  status: enumType(["active", "ended", "declined", "missed"])
+  "status": enumType(["active", "ended", "declined", "missed"])
 });
 var UpdateCallStatusResponse = objectType({
-  id: numberType(),
-  chatId: numberType().nullish(),
-  callerId: numberType(),
-  calleeId: numberType().nullish(),
-  type: enumType(["audio", "video", "group"]),
-  status: enumType(["ringing", "active", "ended", "missed", "declined"]),
-  startedAt: stringType().nullish(),
-  endedAt: stringType().nullish(),
-  durationSeconds: numberType().nullish(),
-  caller: objectType({
-    id: numberType(),
-    username: stringType(),
-    displayName: stringType(),
-    bio: stringType().nullish(),
-    avatarUrl: stringType().nullish(),
-    avatarColor: stringType(),
-    status: enumType(["online", "offline", "away"]),
-    statusText: stringType().nullish(),
-    lastSeen: stringType().nullish(),
-    phoneNumber: stringType().nullish(),
-    isBot: booleanType(),
-    isVerified: booleanType(),
-    isAdmin: booleanType(),
-    showOnlineStatus: booleanType().optional(),
-    readReceiptsEnabled: booleanType().optional(),
-    totpEnabled: booleanType().optional(),
-    createdAt: stringType()
-  }).nullish(),
-  callee: objectType({
-    id: numberType(),
-    username: stringType(),
-    displayName: stringType(),
-    bio: stringType().nullish(),
-    avatarUrl: stringType().nullish(),
-    avatarColor: stringType(),
-    status: enumType(["online", "offline", "away"]),
-    statusText: stringType().nullish(),
-    lastSeen: stringType().nullish(),
-    phoneNumber: stringType().nullish(),
-    isBot: booleanType(),
-    isVerified: booleanType(),
-    isAdmin: booleanType(),
-    showOnlineStatus: booleanType().optional(),
-    readReceiptsEnabled: booleanType().optional(),
-    totpEnabled: booleanType().optional(),
-    createdAt: stringType()
-  }).nullish(),
-  createdAt: stringType()
+  "id": (void 0)(),
+  "chatId": (void 0)().nullish(),
+  "callerId": (void 0)(),
+  "calleeId": (void 0)().nullish(),
+  "type": enumType(["audio", "video", "group"]),
+  "status": enumType(["ringing", "active", "ended", "missed", "declined"]),
+  "startedAt": stringType().nullish(),
+  "endedAt": stringType().nullish(),
+  "durationSeconds": (void 0)().nullish(),
+  "caller": unionType([objectType({
+    "id": (void 0)(),
+    "username": stringType(),
+    "displayName": stringType(),
+    "bio": stringType().nullish(),
+    "avatarUrl": stringType().nullish(),
+    "avatarColor": stringType(),
+    "status": enumType(["online", "offline", "away"]),
+    "statusText": stringType().nullish(),
+    "lastSeen": stringType().nullish(),
+    "phoneNumber": stringType().nullish(),
+    "isBot": booleanType(),
+    "isVerified": booleanType(),
+    "isAdmin": booleanType(),
+    "showOnlineStatus": booleanType().optional(),
+    "readReceiptsEnabled": booleanType().optional(),
+    "totpEnabled": booleanType().optional(),
+    "createdAt": stringType()
+  }), nullType()]).optional(),
+  "callee": unionType([objectType({
+    "id": (void 0)(),
+    "username": stringType(),
+    "displayName": stringType(),
+    "bio": stringType().nullish(),
+    "avatarUrl": stringType().nullish(),
+    "avatarColor": stringType(),
+    "status": enumType(["online", "offline", "away"]),
+    "statusText": stringType().nullish(),
+    "lastSeen": stringType().nullish(),
+    "phoneNumber": stringType().nullish(),
+    "isBot": booleanType(),
+    "isVerified": booleanType(),
+    "isAdmin": booleanType(),
+    "showOnlineStatus": booleanType().optional(),
+    "readReceiptsEnabled": booleanType().optional(),
+    "totpEnabled": booleanType().optional(),
+    "createdAt": stringType()
+  }), nullType()]).optional(),
+  "createdAt": stringType()
 });
 var GetGiftCatalogResponseItem = objectType({
-  id: numberType(),
-  name: stringType(),
-  emoji: stringType(),
-  animationType: enumType([
-    "confetti",
-    "sparkle",
-    "hearts",
-    "fireworks",
-    "stars",
-    "balloons",
-    "roses",
-    "diamonds"
-  ]),
-  rarity: enumType(["common", "rare", "epic", "legendary"]),
-  stars: numberType(),
-  description: stringType()
+  "id": (void 0)(),
+  "name": stringType(),
+  "emoji": stringType(),
+  "animationType": enumType(["bounce", "confetti", "sparkle", "hearts", "fireworks", "stars", "balloons", "roses", "orbit", "bloom", "diamonds", "flame", "galaxy", "lightning", "magic", "supernova", "vortex"]),
+  "rarity": enumType(["common", "rare", "epic", "legendary", "cosmic"]),
+  "stars": (void 0)(),
+  "price": (void 0)(),
+  "description": stringType(),
+  "primeOnly": booleanType(),
+  "imageUrl": stringType().nullish(),
+  "isCollectible": booleanType(),
+  "isActive": booleanType(),
+  "maxSupply": (void 0)().nullable(),
+  "exchangeValue": (void 0)(),
+  "upgradePrice": (void 0)(),
+  "soldCount": (void 0)(),
+  "availableCount": (void 0)().nullable()
 });
 var GetGiftCatalogResponse = arrayType(GetGiftCatalogResponseItem);
+var GetMyGiftsResponse = objectType({
+  "received": arrayType(objectType({
+    "id": (void 0)(),
+    "giftItemId": (void 0)(),
+    "senderId": (void 0)().nullable(),
+    "senderName": stringType(),
+    "receiverId": (void 0)(),
+    "receiverName": stringType(),
+    "message": stringType().nullish(),
+    "isAnonymous": booleanType(),
+    "chatId": (void 0)().nullable(),
+    "createdAt": stringType(),
+    "inventoryStatus": enumType(["received", "collected", "exchanged"]),
+    "isUpgraded": booleanType(),
+    "serialNumber": (void 0)().nullable(),
+    "giftItem": objectType({
+      "id": (void 0)(),
+      "name": stringType(),
+      "emoji": stringType(),
+      "animationType": enumType(["bounce", "confetti", "sparkle", "hearts", "fireworks", "stars", "balloons", "roses", "orbit", "bloom", "diamonds", "flame", "galaxy", "lightning", "magic", "supernova", "vortex"]),
+      "rarity": enumType(["common", "rare", "epic", "legendary", "cosmic"]),
+      "stars": (void 0)(),
+      "price": (void 0)(),
+      "description": stringType(),
+      "primeOnly": booleanType(),
+      "imageUrl": stringType().nullish(),
+      "isCollectible": booleanType(),
+      "isActive": booleanType(),
+      "maxSupply": (void 0)().nullable(),
+      "exchangeValue": (void 0)(),
+      "upgradePrice": (void 0)(),
+      "soldCount": (void 0)(),
+      "availableCount": (void 0)().nullable()
+    })
+  })),
+  "sent": arrayType(objectType({
+    "id": (void 0)(),
+    "giftItemId": (void 0)(),
+    "senderId": (void 0)().nullable(),
+    "senderName": stringType(),
+    "receiverId": (void 0)(),
+    "receiverName": stringType(),
+    "message": stringType().nullish(),
+    "isAnonymous": booleanType(),
+    "chatId": (void 0)().nullable(),
+    "createdAt": stringType(),
+    "inventoryStatus": enumType(["received", "collected", "exchanged"]),
+    "isUpgraded": booleanType(),
+    "serialNumber": (void 0)().nullable(),
+    "giftItem": objectType({
+      "id": (void 0)(),
+      "name": stringType(),
+      "emoji": stringType(),
+      "animationType": enumType(["bounce", "confetti", "sparkle", "hearts", "fireworks", "stars", "balloons", "roses", "orbit", "bloom", "diamonds", "flame", "galaxy", "lightning", "magic", "supernova", "vortex"]),
+      "rarity": enumType(["common", "rare", "epic", "legendary", "cosmic"]),
+      "stars": (void 0)(),
+      "price": (void 0)(),
+      "description": stringType(),
+      "primeOnly": booleanType(),
+      "imageUrl": stringType().nullish(),
+      "isCollectible": booleanType(),
+      "isActive": booleanType(),
+      "maxSupply": (void 0)().nullable(),
+      "exchangeValue": (void 0)(),
+      "upgradePrice": (void 0)(),
+      "soldCount": (void 0)(),
+      "availableCount": (void 0)().nullable()
+    })
+  }))
+});
 var GetSentGiftsResponseItem = objectType({
-  id: numberType(),
-  giftItemId: numberType(),
-  senderId: numberType(),
-  receiverId: numberType(),
-  message: stringType().nullish(),
-  isAnonymous: booleanType(),
-  giftItem: objectType({
-    id: numberType(),
-    name: stringType(),
-    emoji: stringType(),
-    animationType: enumType([
-      "confetti",
-      "sparkle",
-      "hearts",
-      "fireworks",
-      "stars",
-      "balloons",
-      "roses",
-      "diamonds"
-    ]),
-    rarity: enumType(["common", "rare", "epic", "legendary"]),
-    stars: numberType(),
-    description: stringType()
-  }).nullish(),
-  sender: objectType({
-    id: numberType(),
-    username: stringType(),
-    displayName: stringType(),
-    bio: stringType().nullish(),
-    avatarUrl: stringType().nullish(),
-    avatarColor: stringType(),
-    status: enumType(["online", "offline", "away"]),
-    statusText: stringType().nullish(),
-    lastSeen: stringType().nullish(),
-    phoneNumber: stringType().nullish(),
-    isBot: booleanType(),
-    isVerified: booleanType(),
-    isAdmin: booleanType(),
-    showOnlineStatus: booleanType().optional(),
-    readReceiptsEnabled: booleanType().optional(),
-    totpEnabled: booleanType().optional(),
-    createdAt: stringType()
-  }).nullish(),
-  receiver: objectType({
-    id: numberType(),
-    username: stringType(),
-    displayName: stringType(),
-    bio: stringType().nullish(),
-    avatarUrl: stringType().nullish(),
-    avatarColor: stringType(),
-    status: enumType(["online", "offline", "away"]),
-    statusText: stringType().nullish(),
-    lastSeen: stringType().nullish(),
-    phoneNumber: stringType().nullish(),
-    isBot: booleanType(),
-    isVerified: booleanType(),
-    isAdmin: booleanType(),
-    showOnlineStatus: booleanType().optional(),
-    readReceiptsEnabled: booleanType().optional(),
-    totpEnabled: booleanType().optional(),
-    createdAt: stringType()
-  }).nullish(),
-  createdAt: stringType()
+  "id": (void 0)(),
+  "giftItemId": (void 0)(),
+  "senderId": (void 0)().nullable(),
+  "senderName": stringType(),
+  "receiverId": (void 0)(),
+  "receiverName": stringType(),
+  "message": stringType().nullish(),
+  "isAnonymous": booleanType(),
+  "chatId": (void 0)().nullable(),
+  "createdAt": stringType(),
+  "inventoryStatus": enumType(["received", "collected", "exchanged"]),
+  "isUpgraded": booleanType(),
+  "serialNumber": (void 0)().nullable(),
+  "giftItem": objectType({
+    "id": (void 0)(),
+    "name": stringType(),
+    "emoji": stringType(),
+    "animationType": enumType(["bounce", "confetti", "sparkle", "hearts", "fireworks", "stars", "balloons", "roses", "orbit", "bloom", "diamonds", "flame", "galaxy", "lightning", "magic", "supernova", "vortex"]),
+    "rarity": enumType(["common", "rare", "epic", "legendary", "cosmic"]),
+    "stars": (void 0)(),
+    "price": (void 0)(),
+    "description": stringType(),
+    "primeOnly": booleanType(),
+    "imageUrl": stringType().nullish(),
+    "isCollectible": booleanType(),
+    "isActive": booleanType(),
+    "maxSupply": (void 0)().nullable(),
+    "exchangeValue": (void 0)(),
+    "upgradePrice": (void 0)(),
+    "soldCount": (void 0)(),
+    "availableCount": (void 0)().nullable()
+  })
 });
 var GetSentGiftsResponse = arrayType(GetSentGiftsResponseItem);
 var GetReceivedGiftsResponseItem = objectType({
-  id: numberType(),
-  giftItemId: numberType(),
-  senderId: numberType(),
-  receiverId: numberType(),
-  message: stringType().nullish(),
-  isAnonymous: booleanType(),
-  giftItem: objectType({
-    id: numberType(),
-    name: stringType(),
-    emoji: stringType(),
-    animationType: enumType([
-      "confetti",
-      "sparkle",
-      "hearts",
-      "fireworks",
-      "stars",
-      "balloons",
-      "roses",
-      "diamonds"
-    ]),
-    rarity: enumType(["common", "rare", "epic", "legendary"]),
-    stars: numberType(),
-    description: stringType()
-  }).nullish(),
-  sender: objectType({
-    id: numberType(),
-    username: stringType(),
-    displayName: stringType(),
-    bio: stringType().nullish(),
-    avatarUrl: stringType().nullish(),
-    avatarColor: stringType(),
-    status: enumType(["online", "offline", "away"]),
-    statusText: stringType().nullish(),
-    lastSeen: stringType().nullish(),
-    phoneNumber: stringType().nullish(),
-    isBot: booleanType(),
-    isVerified: booleanType(),
-    isAdmin: booleanType(),
-    showOnlineStatus: booleanType().optional(),
-    readReceiptsEnabled: booleanType().optional(),
-    totpEnabled: booleanType().optional(),
-    createdAt: stringType()
-  }).nullish(),
-  receiver: objectType({
-    id: numberType(),
-    username: stringType(),
-    displayName: stringType(),
-    bio: stringType().nullish(),
-    avatarUrl: stringType().nullish(),
-    avatarColor: stringType(),
-    status: enumType(["online", "offline", "away"]),
-    statusText: stringType().nullish(),
-    lastSeen: stringType().nullish(),
-    phoneNumber: stringType().nullish(),
-    isBot: booleanType(),
-    isVerified: booleanType(),
-    isAdmin: booleanType(),
-    showOnlineStatus: booleanType().optional(),
-    readReceiptsEnabled: booleanType().optional(),
-    totpEnabled: booleanType().optional(),
-    createdAt: stringType()
-  }).nullish(),
-  createdAt: stringType()
+  "id": (void 0)(),
+  "giftItemId": (void 0)(),
+  "senderId": (void 0)().nullable(),
+  "senderName": stringType(),
+  "receiverId": (void 0)(),
+  "receiverName": stringType(),
+  "message": stringType().nullish(),
+  "isAnonymous": booleanType(),
+  "chatId": (void 0)().nullable(),
+  "createdAt": stringType(),
+  "inventoryStatus": enumType(["received", "collected", "exchanged"]),
+  "isUpgraded": booleanType(),
+  "serialNumber": (void 0)().nullable(),
+  "giftItem": objectType({
+    "id": (void 0)(),
+    "name": stringType(),
+    "emoji": stringType(),
+    "animationType": enumType(["bounce", "confetti", "sparkle", "hearts", "fireworks", "stars", "balloons", "roses", "orbit", "bloom", "diamonds", "flame", "galaxy", "lightning", "magic", "supernova", "vortex"]),
+    "rarity": enumType(["common", "rare", "epic", "legendary", "cosmic"]),
+    "stars": (void 0)(),
+    "price": (void 0)(),
+    "description": stringType(),
+    "primeOnly": booleanType(),
+    "imageUrl": stringType().nullish(),
+    "isCollectible": booleanType(),
+    "isActive": booleanType(),
+    "maxSupply": (void 0)().nullable(),
+    "exchangeValue": (void 0)(),
+    "upgradePrice": (void 0)(),
+    "soldCount": (void 0)(),
+    "availableCount": (void 0)().nullable()
+  })
 });
 var GetReceivedGiftsResponse = arrayType(GetReceivedGiftsResponseItem);
 var sendGiftBodyIsAnonymousDefault = false;
 var SendGiftBody = objectType({
-  receiverId: numberType(),
-  giftItemId: numberType(),
-  message: stringType().optional(),
-  isAnonymous: booleanType().default(sendGiftBodyIsAnonymousDefault),
-  chatId: numberType().optional()
+  "receiverId": (void 0)(),
+  "giftItemId": (void 0)(),
+  "message": stringType().optional(),
+  "isAnonymous": booleanType().default(sendGiftBodyIsAnonymousDefault),
+  "chatId": (void 0)().optional()
+});
+var SendGiftResponse = objectType({
+  "message": objectType({
+    "id": (void 0)(),
+    "chatId": (void 0)(),
+    "senderId": (void 0)(),
+    "text": stringType().nullish(),
+    "type": enumType(["text", "image", "video", "audio", "file", "gift", "call", "sticker", "system"]),
+    "mediaUrl": stringType().nullish(),
+    "replyToId": (void 0)().nullish(),
+    "isEdited": booleanType(),
+    "isRead": booleanType(),
+    "reactions": arrayType(objectType({
+      "id": (void 0)(),
+      "messageId": (void 0)(),
+      "userId": (void 0)(),
+      "emoji": stringType(),
+      "user": unionType([objectType({
+        "id": (void 0)(),
+        "username": stringType(),
+        "displayName": stringType(),
+        "bio": stringType().nullish(),
+        "avatarUrl": stringType().nullish(),
+        "avatarColor": stringType(),
+        "status": enumType(["online", "offline", "away"]),
+        "statusText": stringType().nullish(),
+        "lastSeen": stringType().nullish(),
+        "phoneNumber": stringType().nullish(),
+        "isBot": booleanType(),
+        "isVerified": booleanType(),
+        "isAdmin": booleanType(),
+        "showOnlineStatus": booleanType().optional(),
+        "readReceiptsEnabled": booleanType().optional(),
+        "totpEnabled": booleanType().optional(),
+        "createdAt": stringType()
+      }), nullType()]).optional(),
+      "createdAt": stringType()
+    })),
+    "sender": unionType([objectType({
+      "id": (void 0)(),
+      "username": stringType(),
+      "displayName": stringType(),
+      "bio": stringType().nullish(),
+      "avatarUrl": stringType().nullish(),
+      "avatarColor": stringType(),
+      "status": enumType(["online", "offline", "away"]),
+      "statusText": stringType().nullish(),
+      "lastSeen": stringType().nullish(),
+      "phoneNumber": stringType().nullish(),
+      "isBot": booleanType(),
+      "isVerified": booleanType(),
+      "isAdmin": booleanType(),
+      "showOnlineStatus": booleanType().optional(),
+      "readReceiptsEnabled": booleanType().optional(),
+      "totpEnabled": booleanType().optional(),
+      "createdAt": stringType()
+    }), nullType()]).optional(),
+    "replyTo": unionType([unknownType(), nullType()]).optional(),
+    "giftData": unionType([objectType({
+      "id": (void 0)(),
+      "giftItemId": (void 0)(),
+      "senderId": (void 0)().nullable(),
+      "senderName": stringType(),
+      "receiverId": (void 0)(),
+      "receiverName": stringType(),
+      "message": stringType().nullish(),
+      "isAnonymous": booleanType(),
+      "chatId": (void 0)().nullable(),
+      "createdAt": stringType(),
+      "inventoryStatus": enumType(["received", "collected", "exchanged"]),
+      "isUpgraded": booleanType(),
+      "serialNumber": (void 0)().nullable(),
+      "giftItem": objectType({
+        "id": (void 0)(),
+        "name": stringType(),
+        "emoji": stringType(),
+        "animationType": enumType(["bounce", "confetti", "sparkle", "hearts", "fireworks", "stars", "balloons", "roses", "orbit", "bloom", "diamonds", "flame", "galaxy", "lightning", "magic", "supernova", "vortex"]),
+        "rarity": enumType(["common", "rare", "epic", "legendary", "cosmic"]),
+        "stars": (void 0)(),
+        "price": (void 0)(),
+        "description": stringType(),
+        "primeOnly": booleanType(),
+        "imageUrl": stringType().nullish(),
+        "isCollectible": booleanType(),
+        "isActive": booleanType(),
+        "maxSupply": (void 0)().nullable(),
+        "exchangeValue": (void 0)(),
+        "upgradePrice": (void 0)(),
+        "soldCount": (void 0)(),
+        "availableCount": (void 0)().nullable()
+      })
+    }), nullType()]).optional(),
+    "createdAt": stringType(),
+    "updatedAt": stringType()
+  }),
+  "balance": (void 0)(),
+  "chatId": (void 0)()
+});
+var OpenGiftParams = objectType({
+  "giftId": coerce.number().int()
+});
+var OpenGiftResponse = objectType({
+  "id": (void 0)(),
+  "giftItemId": (void 0)(),
+  "senderId": (void 0)().nullable(),
+  "senderName": stringType(),
+  "receiverId": (void 0)(),
+  "receiverName": stringType(),
+  "message": stringType().nullish(),
+  "isAnonymous": booleanType(),
+  "chatId": (void 0)().nullable(),
+  "createdAt": stringType(),
+  "inventoryStatus": enumType(["received", "collected", "exchanged"]),
+  "isUpgraded": booleanType(),
+  "serialNumber": (void 0)().nullable(),
+  "giftItem": objectType({
+    "id": (void 0)(),
+    "name": stringType(),
+    "emoji": stringType(),
+    "animationType": enumType(["bounce", "confetti", "sparkle", "hearts", "fireworks", "stars", "balloons", "roses", "orbit", "bloom", "diamonds", "flame", "galaxy", "lightning", "magic", "supernova", "vortex"]),
+    "rarity": enumType(["common", "rare", "epic", "legendary", "cosmic"]),
+    "stars": (void 0)(),
+    "price": (void 0)(),
+    "description": stringType(),
+    "primeOnly": booleanType(),
+    "imageUrl": stringType().nullish(),
+    "isCollectible": booleanType(),
+    "isActive": booleanType(),
+    "maxSupply": (void 0)().nullable(),
+    "exchangeValue": (void 0)(),
+    "upgradePrice": (void 0)(),
+    "soldCount": (void 0)(),
+    "availableCount": (void 0)().nullable()
+  })
+});
+var UpgradeGiftParams = objectType({
+  "giftId": coerce.number().int()
+});
+var UpgradeGiftResponse = objectType({
+  "id": (void 0)(),
+  "giftItemId": (void 0)(),
+  "senderId": (void 0)().nullable(),
+  "senderName": stringType(),
+  "receiverId": (void 0)(),
+  "receiverName": stringType(),
+  "message": stringType().nullish(),
+  "isAnonymous": booleanType(),
+  "chatId": (void 0)().nullable(),
+  "createdAt": stringType(),
+  "inventoryStatus": enumType(["received", "collected", "exchanged"]),
+  "isUpgraded": booleanType(),
+  "serialNumber": (void 0)().nullable(),
+  "giftItem": objectType({
+    "id": (void 0)(),
+    "name": stringType(),
+    "emoji": stringType(),
+    "animationType": enumType(["bounce", "confetti", "sparkle", "hearts", "fireworks", "stars", "balloons", "roses", "orbit", "bloom", "diamonds", "flame", "galaxy", "lightning", "magic", "supernova", "vortex"]),
+    "rarity": enumType(["common", "rare", "epic", "legendary", "cosmic"]),
+    "stars": (void 0)(),
+    "price": (void 0)(),
+    "description": stringType(),
+    "primeOnly": booleanType(),
+    "imageUrl": stringType().nullish(),
+    "isCollectible": booleanType(),
+    "isActive": booleanType(),
+    "maxSupply": (void 0)().nullable(),
+    "exchangeValue": (void 0)(),
+    "upgradePrice": (void 0)(),
+    "soldCount": (void 0)(),
+    "availableCount": (void 0)().nullable()
+  })
+});
+var ExchangeGiftParams = objectType({
+  "giftId": coerce.number().int()
+});
+var ExchangeGiftResponse = objectType({
+  "gift": objectType({
+    "id": (void 0)(),
+    "giftItemId": (void 0)(),
+    "senderId": (void 0)().nullable(),
+    "senderName": stringType(),
+    "receiverId": (void 0)(),
+    "receiverName": stringType(),
+    "message": stringType().nullish(),
+    "isAnonymous": booleanType(),
+    "chatId": (void 0)().nullable(),
+    "createdAt": stringType(),
+    "inventoryStatus": enumType(["received", "collected", "exchanged"]),
+    "isUpgraded": booleanType(),
+    "serialNumber": (void 0)().nullable(),
+    "giftItem": objectType({
+      "id": (void 0)(),
+      "name": stringType(),
+      "emoji": stringType(),
+      "animationType": enumType(["bounce", "confetti", "sparkle", "hearts", "fireworks", "stars", "balloons", "roses", "orbit", "bloom", "diamonds", "flame", "galaxy", "lightning", "magic", "supernova", "vortex"]),
+      "rarity": enumType(["common", "rare", "epic", "legendary", "cosmic"]),
+      "stars": (void 0)(),
+      "price": (void 0)(),
+      "description": stringType(),
+      "primeOnly": booleanType(),
+      "imageUrl": stringType().nullish(),
+      "isCollectible": booleanType(),
+      "isActive": booleanType(),
+      "maxSupply": (void 0)().nullable(),
+      "exchangeValue": (void 0)(),
+      "upgradePrice": (void 0)(),
+      "soldCount": (void 0)(),
+      "availableCount": (void 0)().nullable()
+    })
+  }),
+  "balance": (void 0)()
+});
+var GetAdminGiftCatalogResponseItem = objectType({
+  "id": (void 0)(),
+  "name": stringType(),
+  "emoji": stringType(),
+  "animationType": enumType(["bounce", "confetti", "sparkle", "hearts", "fireworks", "stars", "balloons", "roses", "orbit", "bloom", "diamonds", "flame", "galaxy", "lightning", "magic", "supernova", "vortex"]),
+  "rarity": enumType(["common", "rare", "epic", "legendary", "cosmic"]),
+  "stars": (void 0)(),
+  "price": (void 0)(),
+  "description": stringType(),
+  "primeOnly": booleanType(),
+  "imageUrl": stringType().nullish(),
+  "isCollectible": booleanType(),
+  "isActive": booleanType(),
+  "maxSupply": (void 0)().nullable(),
+  "exchangeValue": (void 0)(),
+  "upgradePrice": (void 0)(),
+  "soldCount": (void 0)(),
+  "availableCount": (void 0)().nullable()
+});
+var GetAdminGiftCatalogResponse = arrayType(GetAdminGiftCatalogResponseItem);
+var CreateAdminGiftBody = objectType({
+  "name": stringType(),
+  "emoji": stringType(),
+  "animationType": enumType(["bounce", "confetti", "sparkle", "hearts", "fireworks", "stars", "balloons", "roses", "orbit", "bloom", "diamonds", "flame", "galaxy", "lightning", "magic", "supernova", "vortex"]),
+  "rarity": enumType(["common", "rare", "epic", "legendary", "cosmic"]),
+  "stars": (void 0)(),
+  "price": (void 0)(),
+  "description": stringType(),
+  "primeOnly": booleanType(),
+  "imageUrl": stringType().nullish(),
+  "isCollectible": booleanType(),
+  "isActive": booleanType().optional(),
+  "maxSupply": (void 0)().nullable(),
+  "exchangeValue": (void 0)(),
+  "upgradePrice": (void 0)()
+});
+var CreateAdminGiftResponse = objectType({
+  "id": (void 0)(),
+  "name": stringType(),
+  "emoji": stringType(),
+  "animationType": enumType(["bounce", "confetti", "sparkle", "hearts", "fireworks", "stars", "balloons", "roses", "orbit", "bloom", "diamonds", "flame", "galaxy", "lightning", "magic", "supernova", "vortex"]),
+  "rarity": enumType(["common", "rare", "epic", "legendary", "cosmic"]),
+  "stars": (void 0)(),
+  "price": (void 0)(),
+  "description": stringType(),
+  "primeOnly": booleanType(),
+  "imageUrl": stringType().nullish(),
+  "isCollectible": booleanType(),
+  "isActive": booleanType(),
+  "maxSupply": (void 0)().nullable(),
+  "exchangeValue": (void 0)(),
+  "upgradePrice": (void 0)(),
+  "soldCount": (void 0)(),
+  "availableCount": (void 0)().nullable()
+});
+var UpdateAdminGiftParams = objectType({
+  "giftId": coerce.number().int()
+});
+var UpdateAdminGiftBody = objectType({
+  "name": stringType(),
+  "emoji": stringType(),
+  "animationType": enumType(["bounce", "confetti", "sparkle", "hearts", "fireworks", "stars", "balloons", "roses", "orbit", "bloom", "diamonds", "flame", "galaxy", "lightning", "magic", "supernova", "vortex"]),
+  "rarity": enumType(["common", "rare", "epic", "legendary", "cosmic"]),
+  "stars": (void 0)(),
+  "price": (void 0)(),
+  "description": stringType(),
+  "primeOnly": booleanType(),
+  "imageUrl": stringType().nullish(),
+  "isCollectible": booleanType(),
+  "isActive": booleanType().optional(),
+  "maxSupply": (void 0)().nullable(),
+  "exchangeValue": (void 0)(),
+  "upgradePrice": (void 0)()
+});
+var UpdateAdminGiftResponse = objectType({
+  "id": (void 0)(),
+  "name": stringType(),
+  "emoji": stringType(),
+  "animationType": enumType(["bounce", "confetti", "sparkle", "hearts", "fireworks", "stars", "balloons", "roses", "orbit", "bloom", "diamonds", "flame", "galaxy", "lightning", "magic", "supernova", "vortex"]),
+  "rarity": enumType(["common", "rare", "epic", "legendary", "cosmic"]),
+  "stars": (void 0)(),
+  "price": (void 0)(),
+  "description": stringType(),
+  "primeOnly": booleanType(),
+  "imageUrl": stringType().nullish(),
+  "isCollectible": booleanType(),
+  "isActive": booleanType(),
+  "maxSupply": (void 0)().nullable(),
+  "exchangeValue": (void 0)(),
+  "upgradePrice": (void 0)(),
+  "soldCount": (void 0)(),
+  "availableCount": (void 0)().nullable()
+});
+var ArchiveAdminGiftParams = objectType({
+  "giftId": coerce.number().int()
+});
+var ArchiveAdminGiftResponse = objectType({
+  "success": booleanType()
 });
 var GetStoriesResponseItem = objectType({
-  user: objectType({
-    id: numberType(),
-    username: stringType(),
-    displayName: stringType(),
-    bio: stringType().nullish(),
-    avatarUrl: stringType().nullish(),
-    avatarColor: stringType(),
-    status: enumType(["online", "offline", "away"]),
-    statusText: stringType().nullish(),
-    lastSeen: stringType().nullish(),
-    phoneNumber: stringType().nullish(),
-    isBot: booleanType(),
-    isVerified: booleanType(),
-    isAdmin: booleanType(),
-    showOnlineStatus: booleanType().optional(),
-    readReceiptsEnabled: booleanType().optional(),
-    totpEnabled: booleanType().optional(),
-    createdAt: stringType()
+  "user": objectType({
+    "id": (void 0)(),
+    "username": stringType(),
+    "displayName": stringType(),
+    "bio": stringType().nullish(),
+    "avatarUrl": stringType().nullish(),
+    "avatarColor": stringType(),
+    "status": enumType(["online", "offline", "away"]),
+    "statusText": stringType().nullish(),
+    "lastSeen": stringType().nullish(),
+    "phoneNumber": stringType().nullish(),
+    "isBot": booleanType(),
+    "isVerified": booleanType(),
+    "isAdmin": booleanType(),
+    "showOnlineStatus": booleanType().optional(),
+    "readReceiptsEnabled": booleanType().optional(),
+    "totpEnabled": booleanType().optional(),
+    "createdAt": stringType()
   }),
-  stories: arrayType(
-    objectType({
-      id: numberType(),
-      userId: numberType(),
-      mediaUrl: stringType().optional(),
-      type: enumType(["image", "video", "text"]),
-      text: stringType().nullish(),
-      backgroundColor: stringType().nullish(),
-      expiresAt: stringType(),
-      viewCount: numberType(),
-      isViewed: booleanType(),
-      user: objectType({
-        id: numberType(),
-        username: stringType(),
-        displayName: stringType(),
-        bio: stringType().nullish(),
-        avatarUrl: stringType().nullish(),
-        avatarColor: stringType(),
-        status: enumType(["online", "offline", "away"]),
-        statusText: stringType().nullish(),
-        lastSeen: stringType().nullish(),
-        phoneNumber: stringType().nullish(),
-        isBot: booleanType(),
-        isVerified: booleanType(),
-        isAdmin: booleanType(),
-        showOnlineStatus: booleanType().optional(),
-        readReceiptsEnabled: booleanType().optional(),
-        totpEnabled: booleanType().optional(),
-        createdAt: stringType()
-      }).nullish(),
-      createdAt: stringType()
-    })
-  ),
-  hasUnviewed: booleanType()
+  "stories": arrayType(objectType({
+    "id": (void 0)(),
+    "userId": (void 0)(),
+    "mediaUrl": stringType().optional(),
+    "type": enumType(["image", "text"]),
+    "text": stringType().nullish(),
+    "backgroundColor": stringType().nullish(),
+    "expiresAt": stringType(),
+    "viewCount": (void 0)(),
+    "isViewed": booleanType(),
+    "user": unionType([objectType({
+      "id": (void 0)(),
+      "username": stringType(),
+      "displayName": stringType(),
+      "bio": stringType().nullish(),
+      "avatarUrl": stringType().nullish(),
+      "avatarColor": stringType(),
+      "status": enumType(["online", "offline", "away"]),
+      "statusText": stringType().nullish(),
+      "lastSeen": stringType().nullish(),
+      "phoneNumber": stringType().nullish(),
+      "isBot": booleanType(),
+      "isVerified": booleanType(),
+      "isAdmin": booleanType(),
+      "showOnlineStatus": booleanType().optional(),
+      "readReceiptsEnabled": booleanType().optional(),
+      "totpEnabled": booleanType().optional(),
+      "createdAt": stringType()
+    }), nullType()]).optional(),
+    "createdAt": stringType()
+  })),
+  "hasUnviewed": booleanType()
 });
 var GetStoriesResponse = arrayType(GetStoriesResponseItem);
 var CreateStoryBody = objectType({
-  mediaUrl: stringType().optional(),
-  type: enumType(["image", "video", "text"]),
-  text: stringType().optional(),
-  backgroundColor: stringType().optional(),
-  musicUrl: stringType().optional(),
-  musicName: stringType().optional()
+  "mediaUrl": stringType().optional(),
+  "type": enumType(["image", "text"]),
+  "text": stringType().optional(),
+  "backgroundColor": stringType().optional()
+});
+var CreateStoryResponse = objectType({
+  "id": (void 0)(),
+  "userId": (void 0)(),
+  "mediaUrl": stringType().optional(),
+  "type": enumType(["image", "text"]),
+  "text": stringType().nullish(),
+  "backgroundColor": stringType().nullish(),
+  "expiresAt": stringType(),
+  "viewCount": (void 0)(),
+  "isViewed": booleanType(),
+  "user": unionType([objectType({
+    "id": (void 0)(),
+    "username": stringType(),
+    "displayName": stringType(),
+    "bio": stringType().nullish(),
+    "avatarUrl": stringType().nullish(),
+    "avatarColor": stringType(),
+    "status": enumType(["online", "offline", "away"]),
+    "statusText": stringType().nullish(),
+    "lastSeen": stringType().nullish(),
+    "phoneNumber": stringType().nullish(),
+    "isBot": booleanType(),
+    "isVerified": booleanType(),
+    "isAdmin": booleanType(),
+    "showOnlineStatus": booleanType().optional(),
+    "readReceiptsEnabled": booleanType().optional(),
+    "totpEnabled": booleanType().optional(),
+    "createdAt": stringType()
+  }), nullType()]).optional(),
+  "createdAt": stringType()
 });
 var DeleteStoryParams = objectType({
-  storyId: coerce.number()
+  "storyId": coerce.number().int()
 });
+var DeleteStoryResponse = voidType();
 var MarkChatAsReadParams = objectType({
-  chatId: coerce.number()
+  "chatId": coerce.number().int()
 });
+var MarkChatAsReadResponse = voidType();
 var GetPostsResponseItem = objectType({
-  id: numberType(),
-  userId: numberType(),
-  text: stringType(),
-  imageUrl: stringType().nullish(),
-  likesCount: numberType(),
-  commentsCount: numberType(),
-  isLiked: booleanType(),
-  author: objectType({
-    id: numberType(),
-    username: stringType(),
-    displayName: stringType(),
-    bio: stringType().nullish(),
-    avatarUrl: stringType().nullish(),
-    avatarColor: stringType(),
-    status: enumType(["online", "offline", "away"]),
-    statusText: stringType().nullish(),
-    lastSeen: stringType().nullish(),
-    phoneNumber: stringType().nullish(),
-    isBot: booleanType(),
-    isVerified: booleanType(),
-    isAdmin: booleanType(),
-    showOnlineStatus: booleanType().optional(),
-    readReceiptsEnabled: booleanType().optional(),
-    totpEnabled: booleanType().optional(),
-    createdAt: stringType()
-  }).nullish(),
-  createdAt: stringType()
+  "id": (void 0)(),
+  "userId": (void 0)(),
+  "text": stringType(),
+  "imageUrl": stringType().nullish(),
+  "likesCount": (void 0)(),
+  "commentsCount": (void 0)(),
+  "isLiked": booleanType(),
+  "author": unionType([objectType({
+    "id": (void 0)(),
+    "username": stringType(),
+    "displayName": stringType(),
+    "bio": stringType().nullish(),
+    "avatarUrl": stringType().nullish(),
+    "avatarColor": stringType(),
+    "status": enumType(["online", "offline", "away"]),
+    "statusText": stringType().nullish(),
+    "lastSeen": stringType().nullish(),
+    "phoneNumber": stringType().nullish(),
+    "isBot": booleanType(),
+    "isVerified": booleanType(),
+    "isAdmin": booleanType(),
+    "showOnlineStatus": booleanType().optional(),
+    "readReceiptsEnabled": booleanType().optional(),
+    "totpEnabled": booleanType().optional(),
+    "createdAt": stringType()
+  }), nullType()]).optional(),
+  "createdAt": stringType()
 });
 var GetPostsResponse = arrayType(GetPostsResponseItem);
 var CreatePostBody = objectType({
-  text: stringType(),
-  imageUrl: stringType().optional()
+  "text": stringType(),
+  "imageUrl": stringType().optional()
+});
+var CreatePostResponse = objectType({
+  "id": (void 0)(),
+  "userId": (void 0)(),
+  "text": stringType(),
+  "imageUrl": stringType().nullish(),
+  "likesCount": (void 0)(),
+  "commentsCount": (void 0)(),
+  "isLiked": booleanType(),
+  "author": unionType([objectType({
+    "id": (void 0)(),
+    "username": stringType(),
+    "displayName": stringType(),
+    "bio": stringType().nullish(),
+    "avatarUrl": stringType().nullish(),
+    "avatarColor": stringType(),
+    "status": enumType(["online", "offline", "away"]),
+    "statusText": stringType().nullish(),
+    "lastSeen": stringType().nullish(),
+    "phoneNumber": stringType().nullish(),
+    "isBot": booleanType(),
+    "isVerified": booleanType(),
+    "isAdmin": booleanType(),
+    "showOnlineStatus": booleanType().optional(),
+    "readReceiptsEnabled": booleanType().optional(),
+    "totpEnabled": booleanType().optional(),
+    "createdAt": stringType()
+  }), nullType()]).optional(),
+  "createdAt": stringType()
 });
 var DeletePostParams = objectType({
-  postId: coerce.number()
+  "postId": coerce.number().int()
 });
+var DeletePostResponse = voidType();
 var LikePostParams = objectType({
-  postId: coerce.number()
+  "postId": coerce.number().int()
 });
 var LikePostResponse = objectType({
-  id: numberType(),
-  userId: numberType(),
-  text: stringType(),
-  imageUrl: stringType().nullish(),
-  likesCount: numberType(),
-  commentsCount: numberType(),
-  isLiked: booleanType(),
-  author: objectType({
-    id: numberType(),
-    username: stringType(),
-    displayName: stringType(),
-    bio: stringType().nullish(),
-    avatarUrl: stringType().nullish(),
-    avatarColor: stringType(),
-    status: enumType(["online", "offline", "away"]),
-    statusText: stringType().nullish(),
-    lastSeen: stringType().nullish(),
-    phoneNumber: stringType().nullish(),
-    isBot: booleanType(),
-    isVerified: booleanType(),
-    isAdmin: booleanType(),
-    showOnlineStatus: booleanType().optional(),
-    readReceiptsEnabled: booleanType().optional(),
-    totpEnabled: booleanType().optional(),
-    createdAt: stringType()
-  }).nullish(),
-  createdAt: stringType()
+  "id": (void 0)(),
+  "userId": (void 0)(),
+  "text": stringType(),
+  "imageUrl": stringType().nullish(),
+  "likesCount": (void 0)(),
+  "commentsCount": (void 0)(),
+  "isLiked": booleanType(),
+  "author": unionType([objectType({
+    "id": (void 0)(),
+    "username": stringType(),
+    "displayName": stringType(),
+    "bio": stringType().nullish(),
+    "avatarUrl": stringType().nullish(),
+    "avatarColor": stringType(),
+    "status": enumType(["online", "offline", "away"]),
+    "statusText": stringType().nullish(),
+    "lastSeen": stringType().nullish(),
+    "phoneNumber": stringType().nullish(),
+    "isBot": booleanType(),
+    "isVerified": booleanType(),
+    "isAdmin": booleanType(),
+    "showOnlineStatus": booleanType().optional(),
+    "readReceiptsEnabled": booleanType().optional(),
+    "totpEnabled": booleanType().optional(),
+    "createdAt": stringType()
+  }), nullType()]).optional(),
+  "createdAt": stringType()
 });
 var GetPostCommentsParams = objectType({
-  postId: coerce.number()
+  "postId": coerce.number().int()
 });
 var GetPostCommentsResponseItem = objectType({
-  id: numberType(),
-  postId: numberType(),
-  userId: numberType(),
-  text: stringType(),
-  author: objectType({
-    id: numberType(),
-    username: stringType(),
-    displayName: stringType(),
-    bio: stringType().nullish(),
-    avatarUrl: stringType().nullish(),
-    avatarColor: stringType(),
-    status: enumType(["online", "offline", "away"]),
-    statusText: stringType().nullish(),
-    lastSeen: stringType().nullish(),
-    phoneNumber: stringType().nullish(),
-    isBot: booleanType(),
-    isVerified: booleanType(),
-    isAdmin: booleanType(),
-    showOnlineStatus: booleanType().optional(),
-    readReceiptsEnabled: booleanType().optional(),
-    totpEnabled: booleanType().optional(),
-    createdAt: stringType()
-  }).nullish(),
-  createdAt: stringType()
+  "id": (void 0)(),
+  "postId": (void 0)(),
+  "userId": (void 0)(),
+  "text": stringType(),
+  "author": unionType([objectType({
+    "id": (void 0)(),
+    "username": stringType(),
+    "displayName": stringType(),
+    "bio": stringType().nullish(),
+    "avatarUrl": stringType().nullish(),
+    "avatarColor": stringType(),
+    "status": enumType(["online", "offline", "away"]),
+    "statusText": stringType().nullish(),
+    "lastSeen": stringType().nullish(),
+    "phoneNumber": stringType().nullish(),
+    "isBot": booleanType(),
+    "isVerified": booleanType(),
+    "isAdmin": booleanType(),
+    "showOnlineStatus": booleanType().optional(),
+    "readReceiptsEnabled": booleanType().optional(),
+    "totpEnabled": booleanType().optional(),
+    "createdAt": stringType()
+  }), nullType()]).optional(),
+  "createdAt": stringType()
 });
 var GetPostCommentsResponse = arrayType(GetPostCommentsResponseItem);
 var CreatePostCommentParams = objectType({
-  postId: coerce.number()
+  "postId": coerce.number().int()
 });
 var CreatePostCommentBody = objectType({
-  text: stringType()
+  "text": stringType()
+});
+var CreatePostCommentResponse = objectType({
+  "id": (void 0)(),
+  "postId": (void 0)(),
+  "userId": (void 0)(),
+  "text": stringType(),
+  "author": unionType([objectType({
+    "id": (void 0)(),
+    "username": stringType(),
+    "displayName": stringType(),
+    "bio": stringType().nullish(),
+    "avatarUrl": stringType().nullish(),
+    "avatarColor": stringType(),
+    "status": enumType(["online", "offline", "away"]),
+    "statusText": stringType().nullish(),
+    "lastSeen": stringType().nullish(),
+    "phoneNumber": stringType().nullish(),
+    "isBot": booleanType(),
+    "isVerified": booleanType(),
+    "isAdmin": booleanType(),
+    "showOnlineStatus": booleanType().optional(),
+    "readReceiptsEnabled": booleanType().optional(),
+    "totpEnabled": booleanType().optional(),
+    "createdAt": stringType()
+  }), nullType()]).optional(),
+  "createdAt": stringType()
 });
 var GetMyStatsResponse = objectType({
-  messagesSent: numberType(),
-  callsMade: numberType(),
-  callDurationSeconds: numberType(),
-  giftsSent: numberType(),
-  giftsReceived: numberType(),
-  chatsCount: numberType(),
-  contactsCount: numberType()
+  "messagesSent": (void 0)(),
+  "callsMade": (void 0)(),
+  "callDurationSeconds": (void 0)(),
+  "giftsSent": (void 0)(),
+  "giftsReceived": (void 0)(),
+  "chatsCount": (void 0)(),
+  "contactsCount": (void 0)()
 });
 var GetSecurityQuestionQueryParams = objectType({
-  username: coerce.string()
+  "username": coerce.string()
 });
 var GetSecurityQuestionResponse = objectType({
-  question: stringType()
+  "question": stringType()
 });
 var ResetPasswordBody = objectType({
-  username: stringType(),
-  answer: stringType(),
-  newPassword: stringType()
+  "username": stringType(),
+  "answer": stringType(),
+  "newPassword": stringType()
 });
 var ResetPasswordResponse = objectType({
-  success: booleanType(),
-  token: stringType()
+  "success": booleanType(),
+  "token": stringType()
 });
 var SetSecurityQuestionBody = objectType({
-  question: stringType(),
-  answer: stringType()
+  "question": stringType(),
+  "answer": stringType()
 });
 var SetSecurityQuestionResponse = objectType({
-  success: booleanType()
+  "success": booleanType()
 });
 var HasSecurityQuestionResponse = objectType({
-  hasQuestion: booleanType(),
-  question: stringType().optional()
+  "hasQuestion": booleanType(),
+  "question": stringType().optional()
 });
 
 // src/routes/health.ts
@@ -144780,6 +145401,22 @@ function moderationBlocksStartingDirectChat(type) {
   return type === "no_first_message";
 }
 
+// src/lib/halloweenEvent.ts
+init_src();
+init_drizzle_orm();
+async function isHalloweenEventEnabled() {
+  const rows = await db.execute(sql`
+    SELECT value FROM app_settings WHERE key = 'halloween_event' LIMIT 1
+  `);
+  const rawValue = rows.rows[0]?.value;
+  if (!rawValue) return true;
+  try {
+    return JSON.parse(rawValue).enabled !== false;
+  } catch {
+    return true;
+  }
+}
+
 // src/routes/users.ts
 var router4 = (0, import_express4.Router)();
 db.execute(sql`CREATE TABLE IF NOT EXISTS prize_codes (
@@ -144816,7 +145453,7 @@ router4.get("/users/me", async (req, res) => {
     const hasPrime = row?.has_prime === true || row?.has_prime === "t" || row?.has_prime === 1;
     const primeTier = row?.prime_tier ?? null;
     const ageVerified = row?.age_verified === true || row?.age_verified === "t" || row?.age_verified === 1;
-    const isAdmin4 = row?.is_admin === true || row?.is_admin === "t" || row?.is_admin === 1;
+    const isAdmin5 = row?.is_admin === true || row?.is_admin === "t" || row?.is_admin === 1;
     const isDeveloper = row?.is_developer === true || row?.is_developer === "t" || row?.is_developer === 1;
     const isYoutubeCreator = row?.is_youtube_creator === true || row?.is_youtube_creator === "t" || row?.is_youtube_creator === 1;
     const isTiktokCreator = row?.is_tiktok_creator === true || row?.is_tiktok_creator === "t" || row?.is_tiktok_creator === 1;
@@ -144831,7 +145468,7 @@ router4.get("/users/me", async (req, res) => {
       primeExpiresAt: row?.prime_expires_at ?? null,
       usernameChangedAt: row?.username_changed_at ?? null,
       ageVerified,
-      isAdmin: isAdmin4,
+      isAdmin: isAdmin5,
       isDeveloper,
       isYoutubeCreator,
       isTiktokCreator,
@@ -144876,6 +145513,7 @@ router4.post("/users/me/prize-codes/redeem", async (req, res) => {
     await db.execute(sql`ALTER TABLE prize_codes ADD COLUMN IF NOT EXISTS avatar_frame TEXT`);
     const code = String(req.body?.code || "").trim().toUpperCase();
     if (!/^[A-Z0-9-]{4,40}$/.test(code)) return res.status(400).json({ error: "\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043A\u043E\u0440\u0440\u0435\u043A\u0442\u043D\u044B\u0439 \u043A\u043E\u0434" });
+    const halloweenEnabled = await isHalloweenEventEnabled();
     const result = await db.transaction(async (tx) => {
       const codeRows = await tx.execute(sql`
         SELECT id, prize_amount, prize_description, prize_type, prime_months, nickname_style, avatar_frame, max_uses, uses, expires_at
@@ -144888,6 +145526,10 @@ router4.post("/users/me/prize-codes/redeem", async (req, res) => {
       }
       if (Number(prize.uses) >= Number(prize.max_uses)) {
         throw Object.assign(new Error("\u041B\u0438\u043C\u0438\u0442 \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u043D\u0438\u0439 \u044D\u0442\u043E\u0433\u043E \u043A\u043E\u0434\u0430 \u0438\u0441\u0447\u0435\u0440\u043F\u0430\u043D"), { status: 409 });
+      }
+      const grantsHalloween = prize.prize_type === "halloween" || prize.avatar_frame === "halloween" || prize.prize_type === "nickname" && prize.nickname_style === "halloween";
+      if (grantsHalloween && !halloweenEnabled) {
+        throw Object.assign(new Error("\u0425\u044D\u043B\u043B\u043E\u0443\u0438\u043D\u0441\u043A\u043E\u0435 \u0441\u043E\u0431\u044B\u0442\u0438\u0435 \u043E\u0442\u043A\u043B\u044E\u0447\u0435\u043D\u043E"), { status: 410 });
       }
       const redemption = await tx.execute(sql`
         INSERT INTO prize_code_redemptions (code_id, user_id) VALUES (${prize.id}, ${req.currentUserId})
@@ -144950,6 +145592,7 @@ router4.post("/users/me/prize-codes/redeem", async (req, res) => {
 });
 router4.get("/users/me/nickname-styles", async (req, res) => {
   try {
+    const halloweenEnabled = await isHalloweenEventEnabled();
     const rows = await db.execute(sql`
       SELECT ns.*, uns.id AS inventory_id, uns.source, uns.granted_at,
              (u.nickname_style = ns.slug) AS equipped
@@ -144957,6 +145600,7 @@ router4.get("/users/me/nickname-styles", async (req, res) => {
       JOIN nickname_styles ns ON ns.id = uns.style_id
       JOIN users u ON u.id = uns.user_id
       WHERE uns.user_id = ${req.currentUserId}
+        AND (${halloweenEnabled} OR ns.slug <> 'halloween')
       ORDER BY ns.sort_order, ns.id
     `);
     res.json(rows.rows);
@@ -144973,6 +145617,9 @@ router4.post("/users/me/nickname-styles/:styleId/equip", async (req, res) => {
       WHERE uns.user_id = ${req.currentUserId} AND ns.id = ${styleId}
     `);
     if (!rows.rows.length) return res.status(403).json({ error: "\u042D\u0442\u043E\u0433\u043E \u0441\u0442\u0438\u043B\u044F \u043D\u0435\u0442 \u0432 \u0432\u0430\u0448\u0435\u043C \u0438\u043D\u0432\u0435\u043D\u0442\u0430\u0440\u0435" });
+    if (rows.rows[0].slug === "halloween" && !await isHalloweenEventEnabled()) {
+      return res.status(410).json({ error: "\u0425\u044D\u043B\u043B\u043E\u0443\u0438\u043D\u0441\u043A\u043E\u0435 \u0441\u043E\u0431\u044B\u0442\u0438\u0435 \u043E\u0442\u043A\u043B\u044E\u0447\u0435\u043D\u043E" });
+    }
     await db.execute(sql`UPDATE users SET nickname_style = ${rows.rows[0].slug} WHERE id = ${req.currentUserId}`);
     res.json({ success: true, nicknameStyle: rows.rows[0].slug });
   } catch {
@@ -144981,12 +145628,14 @@ router4.post("/users/me/nickname-styles/:styleId/equip", async (req, res) => {
 });
 router4.get("/users/me/avatar-frames", async (req, res) => {
   try {
+    const halloweenEnabled = await isHalloweenEventEnabled();
     const rows = await db.execute(sql`
       SELECT uf.id, uf.frame_slug AS slug, uf.source, uf.granted_at,
              (u.avatar_frame = uf.frame_slug) AS equipped
       FROM user_avatar_frames uf
       JOIN users u ON u.id = uf.user_id
       WHERE uf.user_id = ${req.currentUserId}
+        AND (${halloweenEnabled} OR uf.frame_slug <> 'halloween')
       ORDER BY uf.granted_at DESC, uf.id DESC
     `);
     res.json(rows.rows.map((frame) => ({
@@ -145007,6 +145656,9 @@ router4.post("/users/me/avatar-frames/:frameSlug/equip", async (req, res) => {
       return res.json({ success: true, avatarFrame: null });
     }
     if (frameSlug !== "halloween") return res.status(400).json({ error: "\u041D\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043D\u0430\u044F \u0440\u0430\u043C\u043A\u0430" });
+    if (!await isHalloweenEventEnabled()) {
+      return res.status(410).json({ error: "\u0425\u044D\u043B\u043B\u043E\u0443\u0438\u043D\u0441\u043A\u043E\u0435 \u0441\u043E\u0431\u044B\u0442\u0438\u0435 \u043E\u0442\u043A\u043B\u044E\u0447\u0435\u043D\u043E" });
+    }
     const owned = await db.execute(sql`
       SELECT 1 FROM user_avatar_frames
       WHERE user_id = ${req.currentUserId} AND frame_slug = ${frameSlug}
@@ -145023,7 +145675,7 @@ var HALLOWEEN_QUEST_START = "2026-10-20T00:00:00.000Z";
 var HALLOWEEN_QUEST_END = "2026-11-08T00:00:00.000Z";
 var HALLOWEEN_QUEST_GOAL = 13;
 async function getHalloweenQuestState(userId) {
-  const [progressRows, claimRows] = await Promise.all([
+  const [progressRows, claimRows, eventEnabled] = await Promise.all([
     db.execute(sql`
       SELECT COUNT(*)::int AS progress
       FROM messages
@@ -145031,7 +145683,8 @@ async function getHalloweenQuestState(userId) {
         AND created_at >= ${HALLOWEEN_QUEST_START}
         AND created_at < ${HALLOWEEN_QUEST_END}
     `),
-    db.execute(sql`SELECT 1 FROM user_halloween_quest_claims WHERE user_id = ${userId} LIMIT 1`)
+    db.execute(sql`SELECT 1 FROM user_halloween_quest_claims WHERE user_id = ${userId} LIMIT 1`),
+    isHalloweenEventEnabled()
   ]);
   const now = Date.now();
   return {
@@ -145040,7 +145693,7 @@ async function getHalloweenQuestState(userId) {
     claimed: claimRows.rows.length > 0,
     startsAt: HALLOWEEN_QUEST_START,
     endsAt: HALLOWEEN_QUEST_END,
-    active: now >= Date.parse(HALLOWEEN_QUEST_START) && now < Date.parse(HALLOWEEN_QUEST_END)
+    active: eventEnabled && now >= Date.parse(HALLOWEEN_QUEST_START) && now < Date.parse(HALLOWEEN_QUEST_END)
   };
 }
 router4.get("/users/me/halloween-quest", async (req, res) => {
@@ -145053,6 +145706,9 @@ router4.get("/users/me/halloween-quest", async (req, res) => {
 });
 router4.post("/users/me/halloween-quest/claim", async (req, res) => {
   try {
+    if (!await isHalloweenEventEnabled()) {
+      return res.status(410).json({ error: "\u0425\u044D\u043B\u043B\u043E\u0443\u0438\u043D\u0441\u043A\u043E\u0435 \u0441\u043E\u0431\u044B\u0442\u0438\u0435 \u043E\u0442\u043A\u043B\u044E\u0447\u0435\u043D\u043E" });
+    }
     if (Date.now() < Date.parse(HALLOWEEN_QUEST_START) || Date.now() >= Date.parse(HALLOWEEN_QUEST_END)) {
       return res.status(410).json({ error: "\u0425\u044D\u043B\u043B\u043E\u0443\u0438\u043D\u0441\u043A\u0438\u0439 \u043A\u0432\u0435\u0441\u0442 \u0441\u0435\u0439\u0447\u0430\u0441 \u043D\u0435 \u0430\u043A\u0442\u0438\u0432\u0435\u043D" });
     }
@@ -145638,6 +146294,25 @@ init_src();
 init_drizzle_orm();
 init_sse();
 var router6 = (0, import_express6.Router)();
+function anonymousChatSender() {
+  return {
+    id: 0,
+    displayName: "\u0410\u043D\u043E\u043D\u0438\u043C\u043D\u044B\u0439 \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C",
+    username: "anonymous",
+    avatarColor: "#64748b",
+    avatarUrl: null,
+    nicknameStyle: null
+  };
+}
+async function isHiddenAnonymousGift(type, mediaUrl, senderId, viewerId) {
+  const match = type === "gift" && mediaUrl?.match(/^gift:(\d+)$/);
+  if (!match || senderId === viewerId) return false;
+  const rows = await db.execute(sql`
+    SELECT is_anonymous FROM gifts WHERE id = ${Number(match[1])} LIMIT 1
+  `);
+  const value = rows.rows[0]?.is_anonymous;
+  return value === true || value === "t";
+}
 async function getUserPrimeInfo2(userId) {
   try {
     const row = await db.execute(sql`SELECT has_prime, prime_tier, prime_expires_at FROM users WHERE id = ${userId}`);
@@ -145671,8 +146346,9 @@ async function buildChat(chatId, currentUserId2) {
     try {
       const pm = await db.query.messagesTable.findFirst({ where: eq(messagesTable.id, chat.pinnedMessageId) });
       if (pm) {
-        const pmSender = await db.query.usersTable.findFirst({ where: eq(usersTable.id, pm.senderId) });
-        pinnedMessage = { ...pm, sender: pmSender };
+        const hideSender = await isHiddenAnonymousGift(pm.type, pm.mediaUrl, pm.senderId, currentUserId2);
+        const pmSender = hideSender ? anonymousChatSender() : await db.query.usersTable.findFirst({ where: eq(usersTable.id, pm.senderId) });
+        pinnedMessage = { ...pm, senderId: hideSender ? 0 : pm.senderId, sender: pmSender };
       }
     } catch {
     }
@@ -145682,26 +146358,35 @@ async function buildChat(chatId, currentUserId2) {
     const pinnedRows = await db.execute(sql`
       SELECT pm.id as pin_id, pm.pinned_at, pm.pinned_by,
              m.id, m.chat_id, m.sender_id, m.text, m.type, m.media_url, m.created_at, m.is_deleted,
-             u.display_name, u.avatar_color, u.nickname_style
+              u.display_name, u.avatar_color, u.nickname_style,
+              gift_data.is_anonymous AS gift_is_anonymous
       FROM pinned_messages pm
       JOIN messages m ON m.id = pm.message_id
       JOIN users u ON u.id = m.sender_id
+      LEFT JOIN gifts gift_data ON gift_data.id = CASE
+        WHEN m.type = 'gift' AND m.media_url ~ '^gift:[0-9]+$'
+        THEN substring(m.media_url FROM 6)::int
+        ELSE NULL
+      END
       WHERE pm.chat_id = ${chatId}
       ORDER BY pm.pinned_at DESC
     `);
-    pinnedMessages = pinnedRows.rows.map((row) => ({
-      id: row.id,
-      pinId: row.pin_id,
-      chatId: row.chat_id,
-      senderId: row.sender_id,
-      text: row.text,
-      type: row.type,
-      mediaUrl: row.media_url,
-      createdAt: row.created_at,
-      isDeleted: row.is_deleted,
-      pinnedAt: row.pinned_at,
-      sender: { displayName: row.display_name, avatarColor: row.avatar_color, nicknameStyle: row.nickname_style }
-    }));
+    pinnedMessages = pinnedRows.rows.map((row) => {
+      const hideSender = (row.gift_is_anonymous === true || row.gift_is_anonymous === "t") && Number(row.sender_id) !== currentUserId2;
+      return {
+        id: row.id,
+        pinId: row.pin_id,
+        chatId: row.chat_id,
+        senderId: hideSender ? 0 : row.sender_id,
+        text: row.text,
+        type: row.type,
+        mediaUrl: row.media_url,
+        createdAt: row.created_at,
+        isDeleted: row.is_deleted,
+        pinnedAt: row.pinned_at,
+        sender: hideSender ? anonymousChatSender() : { displayName: row.display_name, avatarColor: row.avatar_color, nicknameStyle: row.nickname_style }
+      };
+    });
     if (!pinnedMessage && pinnedMessages.length > 0) {
       pinnedMessage = pinnedMessages[0];
     }
@@ -145712,7 +146397,13 @@ async function buildChat(chatId, currentUserId2) {
   const [lastMessageRow] = await db.select().from(messagesTable).where(chat.type === "channel" ? and(eq(messagesTable.chatId, chatId), isNull(messagesTable.replyToId)) : eq(messagesTable.chatId, chatId)).orderBy(desc(messagesTable.createdAt)).limit(1);
   let lastMessage = null;
   if (lastMessageRow) {
-    const sender = lastMessageRow.senderId ? await db.query.usersTable.findFirst({ where: eq(usersTable.id, lastMessageRow.senderId) }) : null;
+    const hideSender = await isHiddenAnonymousGift(
+      lastMessageRow.type,
+      lastMessageRow.mediaUrl,
+      lastMessageRow.senderId,
+      currentUserId2
+    );
+    const sender = hideSender ? anonymousChatSender() : lastMessageRow.senderId ? await db.query.usersTable.findFirst({ where: eq(usersTable.id, lastMessageRow.senderId) }) : null;
     const reactions = await db.select().from(reactionsTable).where(eq(reactionsTable.messageId, lastMessageRow.id));
     const otherMembers2 = await db.select({
       lastReadAt: chatMembersTable.lastReadAt,
@@ -145723,7 +146414,14 @@ async function buildChat(chatId, currentUserId2) {
     const maxDel2 = otherMembers2.reduce((mx, m3) => Math.max(mx, m3.lastDeliveredAt ? new Date(m3.lastDeliveredAt).getTime() : 0), 0);
     const lmIsRead = lastMessageRow.senderId === currentUserId2 ? maxRead2 >= msgTime : true;
     const lmIsDelivered = lastMessageRow.senderId === currentUserId2 ? maxDel2 >= msgTime : true;
-    lastMessage = { ...lastMessageRow, sender, reactions, isRead: lmIsRead, isDelivered: lmIsDelivered };
+    lastMessage = {
+      ...lastMessageRow,
+      senderId: hideSender ? 0 : lastMessageRow.senderId,
+      sender,
+      reactions,
+      isRead: lmIsRead,
+      isDelivered: lmIsDelivered
+    };
   }
   let unreadCount = 0;
   const lastReadAt = myMember?.member.lastReadAt;
@@ -145788,10 +146486,16 @@ async function buildChatsForUser(uid) {
         u.display_name AS sender_name, u.avatar_color AS sender_color,
         u.nickname_style AS sender_nickname_style,
         u.username AS sender_username,
+        gift_data.is_anonymous AS gift_is_anonymous,
         COALESCE((SELECT json_agg(r.*) FROM reactions r WHERE r.message_id = m.id), '[]'::json) AS reactions
       FROM messages m
       JOIN chats c ON c.id = m.chat_id
       LEFT JOIN users u ON u.id = m.sender_id
+      LEFT JOIN gifts gift_data ON gift_data.id = CASE
+        WHEN m.type = 'gift' AND m.media_url ~ '^gift:[0-9]+$'
+        THEN substring(m.media_url FROM 6)::int
+        ELSE NULL
+      END
       WHERE m.chat_id IN (${idList})
         AND (c.type <> 'channel' OR m.reply_to_id IS NULL)
       ORDER BY m.chat_id, m.created_at DESC
@@ -145823,10 +146527,16 @@ async function buildChatsForUser(uid) {
         pm.chat_id, pm.id AS pin_id, pm.pinned_at, pm.pinned_by,
         m.id AS msg_id, m.sender_id, m.text, m.type, m.media_url,
         m.created_at, m.is_deleted,
-        u.display_name, u.avatar_color, u.nickname_style
+        u.display_name, u.avatar_color, u.nickname_style,
+        gift_data.is_anonymous AS gift_is_anonymous
       FROM pinned_messages pm
       JOIN messages m ON m.id = pm.message_id
       JOIN users u ON u.id = m.sender_id
+      LEFT JOIN gifts gift_data ON gift_data.id = CASE
+        WHEN m.type = 'gift' AND m.media_url ~ '^gift:[0-9]+$'
+        THEN substring(m.media_url FROM 6)::int
+        ELSE NULL
+      END
       WHERE pm.chat_id IN (${idList})
       ORDER BY pm.pinned_at DESC
     `).catch(() => ({ rows: [] })),
@@ -145865,18 +146575,19 @@ async function buildChatsForUser(uid) {
   for (const p3 of pinnedRows.rows) {
     const cid = Number(p3.chat_id);
     if (!pinnedListMap.has(cid)) pinnedListMap.set(cid, []);
+    const hideSender = (p3.gift_is_anonymous === true || p3.gift_is_anonymous === "t") && Number(p3.sender_id) !== uid;
     pinnedListMap.get(cid).push({
       id: p3.msg_id,
       pinId: p3.pin_id,
       chatId: cid,
-      senderId: p3.sender_id,
+      senderId: hideSender ? 0 : p3.sender_id,
       text: p3.text,
       type: p3.type,
       mediaUrl: p3.media_url,
       createdAt: p3.created_at,
       isDeleted: p3.is_deleted,
       pinnedAt: p3.pinned_at,
-      sender: { displayName: p3.display_name, avatarColor: p3.avatar_color, nicknameStyle: p3.nickname_style }
+      sender: hideSender ? anonymousChatSender() : { displayName: p3.display_name, avatarColor: p3.avatar_color, nicknameStyle: p3.nickname_style }
     });
   }
   const result = [];
@@ -145887,6 +146598,7 @@ async function buildChatsForUser(uid) {
     const lm = lastMsgMap.get(chatId);
     let lastMessage = null;
     if (lm) {
+      const hideSender = (lm.gift_is_anonymous === true || lm.gift_is_anonymous === "t") && Number(lm.sender_id) !== uid;
       let isRead = true;
       let isDelivered = true;
       if (Number(lm.sender_id) === uid) {
@@ -145898,13 +146610,13 @@ async function buildChatsForUser(uid) {
       lastMessage = {
         id: lm.id,
         chatId: lm.chat_id,
-        senderId: lm.sender_id,
+        senderId: hideSender ? 0 : lm.sender_id,
         text: lm.text,
         type: lm.type,
         mediaUrl: lm.media_url,
         createdAt: lm.created_at,
         isDeleted: lm.is_deleted,
-        sender: lm.sender_id ? {
+        sender: hideSender ? anonymousChatSender() : lm.sender_id ? {
           displayName: lm.sender_name,
           avatarColor: lm.sender_color,
           username: lm.sender_username,
@@ -146139,6 +146851,74 @@ router6.get("/chats/:chatId", async (req, res) => {
   } catch (err2) {
     req.log.error(err2);
     res.status(500).json({ error: "Internal server error" });
+  }
+});
+router6.get("/chats/:chatId/media", async (req, res) => {
+  try {
+    const chatId = Number(req.params.chatId);
+    const userId = req.currentUserId;
+    if (!Number.isInteger(chatId) || chatId <= 0) {
+      return res.status(400).json({ error: "\u041D\u0435\u043A\u043E\u0440\u0440\u0435\u043A\u0442\u043D\u044B\u0439 \u0447\u0430\u0442" });
+    }
+    const membership = await db.execute(sql`
+      SELECT 1 FROM chat_members WHERE chat_id = ${chatId} AND user_id = ${userId} LIMIT 1
+    `);
+    if (!membership.rows.length) return res.status(403).json({ error: "\u041D\u0435\u0442 \u0434\u043E\u0441\u0442\u0443\u043F\u0430 \u043A \u044D\u0442\u043E\u043C\u0443 \u0447\u0430\u0442\u0443" });
+    const rows = await db.execute(sql`
+      SELECT m.id, m.sender_id, m.type, m.media_url, m.text, m.created_at,
+             u.display_name
+      FROM messages m
+      LEFT JOIN users u ON u.id = m.sender_id
+      WHERE m.chat_id = ${chatId}
+        AND m.is_deleted = false
+        AND m.type IN ('image', 'video', 'document')
+        AND m.media_url IS NOT NULL
+      ORDER BY m.created_at DESC
+      LIMIT 300
+    `);
+    const media = [];
+    for (const row of rows.rows) {
+      const messageType = String(row.type);
+      let type = messageType === "image" ? "image" : messageType === "video" ? "video" : null;
+      let fileName = null;
+      if (messageType === "document") {
+        let metadata = {};
+        try {
+          metadata = JSON.parse(String(row.text || "{}"));
+        } catch {
+        }
+        fileName = typeof metadata.name === "string" ? metadata.name : null;
+        const mime = String(metadata.mime || "").toLowerCase();
+        const extension = (fileName || "").split(".").pop()?.toLowerCase() || "";
+        if (mime.startsWith("video/") || ["mp4", "webm", "mkv", "avi", "mov", "m4v"].includes(extension)) type = "video";
+      }
+      if (!type) continue;
+      let urls = [String(row.media_url)];
+      if (type === "image") {
+        try {
+          const parsed = JSON.parse(String(row.media_url));
+          const candidates = Array.isArray(parsed) ? parsed : parsed?.urls;
+          if (Array.isArray(candidates)) urls = candidates.filter((url2) => typeof url2 === "string" && url2.length > 0);
+        } catch {
+        }
+      }
+      urls.forEach((mediaUrl, index2) => {
+        media.push({
+          id: `${row.id}-${index2}`,
+          messageId: Number(row.id),
+          senderId: Number(row.sender_id),
+          senderName: row.display_name || "\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C",
+          type,
+          mediaUrl,
+          fileName,
+          createdAt: row.created_at
+        });
+      });
+    }
+    res.json(media);
+  } catch (err2) {
+    req.log.error(err2);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u043C\u0435\u0434\u0438\u0430 \u0447\u0430\u0442\u0430" });
   }
 });
 router6.put("/chats/:chatId", async (req, res) => {
@@ -147308,6 +148088,87 @@ async function isChatMember(chatId, userId) {
   });
   return !!member2;
 }
+function getGiftIdFromMediaUrl(mediaUrl) {
+  const match = typeof mediaUrl === "string" ? mediaUrl.match(/^gift:(\d+)$/) : null;
+  return match ? Number(match[1]) : null;
+}
+function formatGiftInstanceRow(row, viewerId) {
+  const isAnonymous = Boolean(row.is_anonymous);
+  const hideSender = isAnonymous && Number(row.sender_id) !== viewerId;
+  const maxSupply = row.item_max_supply === null || row.item_max_supply === void 0 ? null : Number(row.item_max_supply);
+  const soldCount = Number(row.sold_count ?? 0);
+  return {
+    id: Number(row.id),
+    giftItemId: Number(row.gift_item_id),
+    senderId: hideSender ? null : Number(row.sender_id),
+    senderName: hideSender ? "\u0410\u043D\u043E\u043D\u0438\u043C\u043D\u044B\u0439 \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C" : row.sender_name || "\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C",
+    receiverId: Number(row.receiver_id),
+    receiverName: row.receiver_name || "\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C",
+    message: row.message,
+    isAnonymous,
+    chatId: row.chat_id === null ? null : Number(row.chat_id),
+    createdAt: row.created_at,
+    inventoryStatus: row.inventory_status,
+    isUpgraded: Boolean(row.is_upgraded),
+    serialNumber: row.serial_number === null ? null : Number(row.serial_number),
+    giftItem: {
+      id: Number(row.item_id),
+      name: row.item_name,
+      emoji: row.item_emoji,
+      animationType: row.item_animation_type,
+      rarity: row.item_rarity,
+      stars: Number(row.item_stars),
+      price: Number(row.item_price),
+      description: row.item_description ?? "",
+      primeOnly: Boolean(row.item_prime_only),
+      imageUrl: row.item_image_url ?? null,
+      isCollectible: Boolean(row.item_is_collectible),
+      isActive: Boolean(row.item_is_active),
+      maxSupply,
+      exchangeValue: Number(row.item_exchange_value ?? 0),
+      upgradePrice: Number(row.item_upgrade_price ?? 0),
+      soldCount,
+      availableCount: maxSupply === null ? null : Math.max(0, maxSupply - soldCount)
+    }
+  };
+}
+function anonymousGiftSender() {
+  return {
+    id: 0,
+    displayName: "\u0410\u043D\u043E\u043D\u0438\u043C\u043D\u044B\u0439 \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C",
+    username: "anonymous",
+    avatarColor: "#64748b",
+    avatarUrl: null,
+    hasPrime: false,
+    primeTier: null,
+    isAdmin: false
+  };
+}
+async function getGiftData(giftId, viewerId) {
+  const rows = await db.execute(sql`
+    SELECT g.id, g.gift_item_id, g.sender_id, g.receiver_id, g.message, g.is_anonymous, g.chat_id,
+           g.created_at, g.inventory_status, g.is_upgraded, g.serial_number,
+           gi.id AS item_id, gi.name AS item_name, gi.emoji AS item_emoji,
+           gi.animation_type AS item_animation_type, gi.rarity AS item_rarity,
+           gi.stars AS item_stars, gi.price AS item_price, gi.description AS item_description,
+           gi.prime_only AS item_prime_only, gi.image_url AS item_image_url,
+           gi.is_collectible AS item_is_collectible, gi.is_active AS item_is_active,
+           gi.max_supply AS item_max_supply, gi.exchange_value AS item_exchange_value,
+           gi.upgrade_price AS item_upgrade_price, COUNT(all_gifts.id)::int AS sold_count,
+           sender.display_name AS sender_name, receiver.display_name AS receiver_name
+    FROM gifts g
+    JOIN gift_items gi ON gi.id = g.gift_item_id
+    LEFT JOIN gifts all_gifts ON all_gifts.gift_item_id = gi.id
+    LEFT JOIN users sender ON sender.id = g.sender_id
+    LEFT JOIN users receiver ON receiver.id = g.receiver_id
+    WHERE g.id = ${giftId}
+    GROUP BY g.id, gi.id, sender.id, receiver.id
+    LIMIT 1
+  `);
+  const row = rows.rows[0];
+  if (!row) return null;
+  return formatGiftInstanceRow(row, viewerId);
+}
 async function isNovaSecurityChat2(chatId) {
   const row = await db.execute(sql`
     SELECT 1
@@ -147353,7 +148214,7 @@ async function getUserPrimeInfo3(userId) {
   }
 }
 var router8 = (0, import_express8.Router)();
-async function buildMessage(msg, viewerIsPrimePlus = false) {
+async function buildMessage(msg, viewerId, viewerIsPrimePlus = false) {
   const sender = await db.query.usersTable.findFirst({ where: eq(usersTable.id, msg.senderId) });
   const reactions = await db.select({
     reaction: reactionsTable,
@@ -147364,7 +148225,17 @@ async function buildMessage(msg, viewerIsPrimePlus = false) {
     const reply = await db.query.messagesTable.findFirst({ where: eq(messagesTable.id, msg.replyToId) });
     if (reply) {
       const replySender = await db.query.usersTable.findFirst({ where: eq(usersTable.id, reply.senderId) });
-      replyTo = { ...reply, sender: replySender, reactions: [], replyTo: null, giftData: null };
+      const replyGiftId = reply.type === "gift" ? getGiftIdFromMediaUrl(reply.mediaUrl) : null;
+      const replyGift = replyGiftId ? await getGiftData(replyGiftId, viewerId) : null;
+      const hideReplySender = Boolean(replyGift?.isAnonymous) && reply.senderId !== viewerId;
+      replyTo = {
+        ...reply,
+        senderId: hideReplySender ? 0 : reply.senderId,
+        sender: hideReplySender ? anonymousGiftSender() : replySender,
+        reactions: [],
+        replyTo: null,
+        giftData: replyGift
+      };
     }
   }
   let pollData = null;
@@ -147406,19 +148277,23 @@ async function buildMessage(msg, viewerIsPrimePlus = false) {
     } catch {
     }
   }
+  const giftId = msg.type === "gift" ? getGiftIdFromMediaUrl(msg.mediaUrl) : null;
+  const giftData = giftId ? await getGiftData(giftId, viewerId) : null;
+  const hideGiftSender = Boolean(giftData?.isAnonymous) && msg.senderId !== viewerId;
   return {
     ...msg,
+    senderId: hideGiftSender ? 0 : msg.senderId,
     text: maskedText,
     mediaUrl: maskedMediaUrl,
     deletedContentVisible,
-    sender: senderWithPrime,
+    sender: hideGiftSender ? anonymousGiftSender() : senderWithPrime,
     reactions: reactions.map((r5) => ({ ...r5.reaction, user: r5.user })),
     replyTo,
-    giftData: null,
+    giftData,
     pollData
   };
 }
-async function buildMessagesBatch(msgs, viewerIsPrimePlus = false) {
+async function buildMessagesBatch(msgs, viewerId, viewerIsPrimePlus = false) {
   if (msgs.length === 0) return [];
   const msgIds = msgs.map((m3) => m3.id);
   const senderIds = [...new Set(msgs.map((m3) => m3.senderId).filter((id) => id !== null && id !== void 0))];
@@ -147450,6 +148325,32 @@ async function buildMessagesBatch(msgs, viewerIsPrimePlus = false) {
     if (!votesMap.has(v.poll_id)) votesMap.set(v.poll_id, []);
     votesMap.get(v.poll_id).push(v);
   }
+  const giftMessageIds = [...new Set(
+    [...msgs, ...replyMessages].filter((msg) => msg.type === "gift").map((msg) => getGiftIdFromMediaUrl(msg.mediaUrl)).filter((id) => id !== null)
+  )];
+  const giftRows = giftMessageIds.length ? await db.execute(sql`
+      SELECT g.id, g.gift_item_id, g.sender_id, g.receiver_id, g.message, g.is_anonymous, g.chat_id, g.created_at,
+             g.inventory_status, g.is_upgraded, g.serial_number,
+             gi.id AS item_id, gi.name AS item_name, gi.emoji AS item_emoji,
+             gi.animation_type AS item_animation_type, gi.rarity AS item_rarity,
+             gi.stars AS item_stars, gi.price AS item_price, gi.description AS item_description,
+             gi.prime_only AS item_prime_only, gi.image_url AS item_image_url,
+             gi.is_collectible AS item_is_collectible, gi.is_active AS item_is_active,
+             gi.max_supply AS item_max_supply, gi.exchange_value AS item_exchange_value,
+             gi.upgrade_price AS item_upgrade_price, COUNT(all_gifts.id)::int AS sold_count,
+             sender.display_name AS sender_name, receiver.display_name AS receiver_name
+      FROM gifts g
+      JOIN gift_items gi ON gi.id = g.gift_item_id
+      LEFT JOIN gifts all_gifts ON all_gifts.gift_item_id = gi.id
+      LEFT JOIN users sender ON sender.id = g.sender_id
+      LEFT JOIN users receiver ON receiver.id = g.receiver_id
+      WHERE g.id = ANY(ARRAY[${sql.join(giftMessageIds.map((id) => sql`${id}`), sql`, `)}]::int[])
+      GROUP BY g.id, gi.id, sender.id, receiver.id
+    `) : { rows: [] };
+  const giftMap = /* @__PURE__ */ new Map();
+  for (const row of giftRows.rows) {
+    giftMap.set(Number(row.id), formatGiftInstanceRow(row, viewerId));
+  }
   return msgs.map((msg) => {
     const sender = senderMap.get(msg.senderId);
     const senderWithPrime = sender ? {
@@ -147475,7 +148376,17 @@ async function buildMessagesBatch(msgs, viewerIsPrimePlus = false) {
     if (msg.replyToId) {
       const reply = replyMsgMap.get(msg.replyToId);
       if (reply) {
-        replyTo = { ...reply, sender: replyUserMap.get(reply.senderId) ?? null, reactions: [], replyTo: null, giftData: null };
+        const replyGiftId = reply.type === "gift" ? getGiftIdFromMediaUrl(reply.mediaUrl) : null;
+        const replyGift = replyGiftId ? giftMap.get(replyGiftId) : null;
+        const hideReplySender = Boolean(replyGift?.isAnonymous) && reply.senderId !== viewerId;
+        replyTo = {
+          ...reply,
+          senderId: hideReplySender ? 0 : reply.senderId,
+          sender: hideReplySender ? anonymousGiftSender() : replyUserMap.get(reply.senderId) ?? null,
+          reactions: [],
+          replyTo: null,
+          giftData: replyGift ?? null
+        };
       }
     }
     let pollData = null;
@@ -147486,16 +148397,46 @@ async function buildMessagesBatch(msgs, viewerIsPrimePlus = false) {
         pollData = { ...poll, options: opts, votes: votesMap.get(poll.id) ?? [] };
       }
     }
+    const giftId = msg.type === "gift" ? getGiftIdFromMediaUrl(msg.mediaUrl) : null;
+    const giftData = giftId ? giftMap.get(giftId) ?? null : null;
+    const hideGiftSender = Boolean(giftData?.isAnonymous) && msg.senderId !== viewerId;
     return {
       ...msg,
+      senderId: hideGiftSender ? 0 : msg.senderId,
       text: maskedText,
       mediaUrl: maskedMediaUrl,
       deletedContentVisible,
-      sender: senderWithPrime,
+      sender: hideGiftSender ? anonymousGiftSender() : senderWithPrime,
       reactions: (reactionsMap.get(msg.id) ?? []).map((r5) => ({ ...r5.reaction, user: r5.user })),
       replyTo,
-      giftData: null,
+      giftData,
       pollData
+    };
+  });
+}
+async function maskAnonymousGiftSearchRows(rows, viewerId) {
+  const giftIds = [...new Set(
+    rows.filter((row) => row.type === "gift").map((row) => getGiftIdFromMediaUrl(row.media_url)).filter((id) => id !== null)
+  )];
+  if (!giftIds.length) return rows;
+  const giftRows = await db.execute(sql`
+    SELECT id, sender_id, is_anonymous
+    FROM gifts
+    WHERE id = ANY(ARRAY[${sql.join(giftIds.map((id) => sql`${id}`), sql`, `)}]::int[])
+  `);
+  const anonymousGiftIds = new Set(
+    giftRows.rows.filter((gift) => (gift.is_anonymous === true || gift.is_anonymous === "t") && Number(gift.sender_id) !== viewerId).map((gift) => Number(gift.id))
+  );
+  return rows.map((row) => {
+    const giftId = row.type === "gift" ? getGiftIdFromMediaUrl(row.media_url) : null;
+    if (!giftId || !anonymousGiftIds.has(giftId)) return row;
+    return {
+      ...row,
+      sender_id: 0,
+      sender_id_u: 0,
+      display_name: "\u0410\u043D\u043E\u043D\u0438\u043C\u043D\u044B\u0439 \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C",
+      avatar_color: "#64748b",
+      avatar_url: null
     };
   });
 }
@@ -147534,7 +148475,7 @@ router8.get("/messages/search", async (req, res) => {
             ORDER BY m.created_at DESC
             LIMIT ${limit}`
       );
-      return res.json(rows2.rows);
+      return res.json(await maskAnonymousGiftSearchRows(rows2.rows, uid));
     }
     const rows = await db.execute(
       sql`SELECT m.*, u.display_name, u.avatar_color, u.avatar_url, u.is_verified, u.is_bot,
@@ -147552,7 +148493,7 @@ router8.get("/messages/search", async (req, res) => {
           ORDER BY m.created_at DESC
           LIMIT ${limit}`
     );
-    return res.json(rows.rows);
+    return res.json(await maskAnonymousGiftSearchRows(rows.rows, uid));
   } catch (err2) {
     req.log.error(err2);
     res.status(500).json({ error: "Internal server error" });
@@ -147606,7 +148547,7 @@ router8.get("/messages", async (req, res) => {
       return t > max2 ? t : max2;
     }, 0);
     const reversed = msgs.reverse();
-    const built = await buildMessagesBatch(reversed, isPrimePlus);
+    const built = await buildMessagesBatch(reversed, uid, isPrimePlus);
     for (let i5 = 0; i5 < reversed.length; i5++) {
       const m3 = reversed[i5];
       if (m3.senderId === uid) {
@@ -148179,7 +149120,7 @@ router8.get("/messages/:messageId/thread", async (req, res) => {
     }
     const { isPrimePlus } = await getUserPrimeInfo3(uid);
     const replies = await db.select().from(messagesTable).where(and(eq(messagesTable.replyToId, messageId), eq(messagesTable.isDeleted, false))).orderBy(messagesTable.createdAt);
-    const built = await Promise.all(replies.map((m3) => buildMessage(m3, isPrimePlus)));
+    const built = await Promise.all(replies.map((m3) => buildMessage(m3, uid, isPrimePlus)));
     res.json(built);
   } catch (err2) {
     req.log.error(err2);
@@ -148198,7 +149139,7 @@ router8.put("/messages/:messageId", async (req, res) => {
       return res.status(400).json({ error: "\u0421\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u0435 \u0441\u043B\u0438\u0448\u043A\u043E\u043C \u0434\u043B\u0438\u043D\u043D\u043E\u0435 (\u043C\u0430\u043A\u0441\u0438\u043C\u0443\u043C 4000 \u0441\u0438\u043C\u0432\u043E\u043B\u043E\u0432)" });
     }
     const [msg] = await db.update(messagesTable).set({ text: body.text, isEdited: true }).where(eq(messagesTable.id, messageId)).returning();
-    const built = await buildMessage(msg, false);
+    const built = await buildMessage(msg, uid, false);
     broadcastToChat(msg.chatId, "new-message", { messageId: msg.id, chatId: msg.chatId });
     res.json(built);
   } catch (err2) {
@@ -148903,8 +149844,8 @@ router11.post("/posts", async (req, res) => {
     const { text: text2, imageUrl, topic } = req.body;
     if (!text2 && !imageUrl) return res.status(400).json({ error: "text or image required" });
     const isAdminRow = await db.execute(sql`SELECT is_admin FROM users WHERE id = ${uid}`);
-    const isAdmin4 = !!isAdminRow.rows[0]?.is_admin;
-    if (!isAdmin4 && await isUserFeedMuted(uid)) {
+    const isAdmin5 = !!isAdminRow.rows[0]?.is_admin;
+    if (!isAdmin5 && await isUserFeedMuted(uid)) {
       return res.status(429).json({
         error: "\u0412\u044B \u0432\u0440\u0435\u043C\u0435\u043D\u043D\u043E \u043E\u0433\u0440\u0430\u043D\u0438\u0447\u0435\u043D\u044B \u0432 \u043F\u0443\u0431\u043B\u0438\u043A\u0430\u0446\u0438\u044F\u0445 \u0438\u0437-\u0437\u0430 \u043D\u0430\u0440\u0443\u0448\u0435\u043D\u0438\u0439 \u043F\u0440\u0430\u0432\u0438\u043B. \u041E\u0433\u0440\u0430\u043D\u0438\u0447\u0435\u043D\u0438\u0435 \u0441\u043D\u0438\u043C\u0430\u0435\u0442\u0441\u044F \u0447\u0435\u0440\u0435\u0437 24 \u0447\u0430\u0441\u0430.",
         code: "FEED_MUTED"
@@ -148931,7 +149872,7 @@ router11.post("/posts", async (req, res) => {
         });
       }
     }
-    if (isAdmin4) {
+    if (isAdmin5) {
       const [post2] = await db.insert(postsTable).values({
         userId: uid,
         text: text2,
@@ -149050,9 +149991,9 @@ router11.delete("/posts/:postId", async (req, res) => {
     const postId = Number(req.params.postId);
     const post = await db.query.postsTable.findFirst({ where: eq(postsTable.id, postId) });
     const isAdminRow = await db.execute(sql`SELECT is_admin FROM users WHERE id = ${uid}`);
-    const isAdmin4 = !!isAdminRow.rows[0]?.is_admin;
+    const isAdmin5 = !!isAdminRow.rows[0]?.is_admin;
     if (!post) return res.status(404).json({ error: "Not found" });
-    if (post.userId !== uid && !isAdmin4) return res.status(403).json({ error: "Forbidden" });
+    if (post.userId !== uid && !isAdmin5) return res.status(403).json({ error: "Forbidden" });
     await db.execute(sql`DELETE FROM moderation_appeals WHERE post_id = ${postId}`);
     await db.delete(postCommentsTable).where(eq(postCommentsTable.postId, postId));
     await db.delete(postLikesTable).where(eq(postLikesTable.postId, postId));
@@ -149165,13 +150106,13 @@ router11.delete("/posts/:postId/comments/:commentId", async (req, res) => {
     const postId = Number(req.params.postId);
     const commentId = Number(req.params.commentId);
     const userRows = await db.execute(sql`SELECT is_admin FROM users WHERE id = ${uid} LIMIT 1`);
-    const isAdmin4 = userRows.rows[0]?.is_admin === true;
+    const isAdmin5 = userRows.rows[0]?.is_admin === true;
     const rows = await db.execute(
       sql`SELECT id, user_id FROM post_comments WHERE id = ${commentId} AND post_id = ${postId} LIMIT 1`
     );
     const comment = rows.rows[0];
     if (!comment) return res.status(404).json({ error: "\u041A\u043E\u043C\u043C\u0435\u043D\u0442\u0430\u0440\u0438\u0439 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D" });
-    if (comment.user_id !== uid && !isAdmin4) {
+    if (comment.user_id !== uid && !isAdmin5) {
       return res.status(403).json({ error: "\u041D\u0435\u0442 \u043F\u0440\u0430\u0432 \u0434\u043B\u044F \u0443\u0434\u0430\u043B\u0435\u043D\u0438\u044F" });
     }
     await db.execute(sql`DELETE FROM post_comments WHERE id = ${commentId}`);
@@ -149787,13 +150728,13 @@ router12.post("/admin/creator-verifications/:id/review", requireAdmin, async (re
 });
 router12.post("/admin/set-admin", requireAdmin, async (req, res) => {
   try {
-    const { userId, isAdmin: isAdmin4 } = req.body;
+    const { userId, isAdmin: isAdmin5 } = req.body;
     if (!userId) return res.status(400).json({ error: "\u0423\u043A\u0430\u0436\u0438\u0442\u0435 userId" });
     const targetId = Number(userId);
     if (ADMIN_USER_IDS.includes(targetId)) {
       return res.status(400).json({ error: "\u041D\u0435\u043B\u044C\u0437\u044F \u0438\u0437\u043C\u0435\u043D\u0438\u0442\u044C \u043F\u0440\u0430\u0432\u0430 \u0441\u0443\u043F\u0435\u0440\u0430\u0434\u043C\u0438\u043D\u0438\u0441\u0442\u0440\u0430\u0442\u043E\u0440\u0430" });
     }
-    await db.execute(sql`UPDATE users SET is_admin = ${!!isAdmin4} WHERE id = ${targetId}`);
+    await db.execute(sql`UPDATE users SET is_admin = ${!!isAdmin5} WHERE id = ${targetId}`);
     res.json({ success: true });
   } catch (err2) {
     req.log.error(err2);
@@ -150090,20 +151031,6 @@ router12.get("/admin/database-usage", requireAdmin, async (req, res) => {
       totalRows: Number(stat.total_rows),
       tablesBytesPretty: stat.tables_pretty,
       tables
-    });
-  } catch (err2) {
-    req.log.error(err2);
-    res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
-  }
-});
-router12.post("/admin/database-cleanup", requireAdmin, async (req, res) => {
-  try {
-    const expiredStories = await db.execute(sql`DELETE FROM stories WHERE expires_at IS NOT NULL AND expires_at < NOW() RETURNING id`);
-    const oldScheduled = await db.execute(sql`DELETE FROM scheduled_messages WHERE sent_at IS NOT NULL AND sent_at < NOW() - INTERVAL '7 days' RETURNING id`).catch(() => ({ rows: [] }));
-    res.json({
-      success: true,
-      deletedStories: expiredStories.rows.length,
-      deletedScheduled: oldScheduled.rows.length
     });
   } catch (err2) {
     req.log.error(err2);
@@ -150988,6 +151915,48 @@ router12.get("/maintenance", async (_req, res) => {
     return res.json({ active: false });
   }
 });
+router12.get("/halloween-event", async (req, res) => {
+  try {
+    const rows = await db.execute(sql`SELECT value FROM app_settings WHERE key = 'halloween_event' LIMIT 1`);
+    const row = rows.rows[0];
+    const settings = row?.value ? JSON.parse(row.value) : { enabled: true };
+    res.setHeader("Cache-Control", "no-store");
+    res.json({ enabled: settings.enabled !== false });
+  } catch (err2) {
+    req.log.error(err2);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u0441\u043E\u0441\u0442\u043E\u044F\u043D\u0438\u0435 \u0441\u043E\u0431\u044B\u0442\u0438\u044F" });
+  }
+});
+router12.get("/admin/halloween-event", requireAdmin, async (req, res) => {
+  try {
+    const rows = await db.execute(sql`SELECT value FROM app_settings WHERE key = 'halloween_event' LIMIT 1`);
+    const row = rows.rows[0];
+    const settings = row?.value ? JSON.parse(row.value) : { enabled: true };
+    res.json({ enabled: settings.enabled !== false });
+  } catch (err2) {
+    req.log.error(err2);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u0441\u043E\u0441\u0442\u043E\u044F\u043D\u0438\u0435 \u0441\u043E\u0431\u044B\u0442\u0438\u044F" });
+  }
+});
+router12.post("/admin/halloween-event", requireAdmin, async (req, res) => {
+  try {
+    if (typeof req.body?.enabled !== "boolean") {
+      return res.status(400).json({ error: "\u0423\u043A\u0430\u0436\u0438\u0442\u0435 \u0441\u043E\u0441\u0442\u043E\u044F\u043D\u0438\u0435 \u0441\u043E\u0431\u044B\u0442\u0438\u044F" });
+    }
+    const settings = { enabled: req.body.enabled };
+    const value = JSON.stringify(settings);
+    await db.execute(sql`
+      INSERT INTO app_settings (key, value, updated_at)
+      VALUES ('halloween_event', ${value}, NOW())
+      ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()
+    `);
+    broadcastToAll("halloween-event", settings);
+    res.json(settings);
+  } catch (err2) {
+    req.log.error(err2);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0441\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C \u0441\u043E\u0441\u0442\u043E\u044F\u043D\u0438\u0435 \u0441\u043E\u0431\u044B\u0442\u0438\u044F" });
+  }
+});
 router12.get("/admin/maintenance", requireAdmin, async (req, res) => {
   try {
     const rows = await db.execute(sql`SELECT value FROM app_settings WHERE key = 'maintenance' LIMIT 1`);
@@ -151192,61 +152161,6 @@ router12.patch("/admin/bots/:botId/code", requireAdmin, async (req, res) => {
     const newLang = lang === "javascript" ? "javascript" : "python";
     await db.execute(sql`UPDATE bot_tokens SET inline_code = ${newCode}, code_lang = ${newLang} WHERE bot_user_id = ${botId}`);
     res.json({ ok: true, hasCode: newCode !== null, lang: newLang });
-  } catch (err2) {
-    req.log.error(err2);
-    res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
-  }
-});
-router12.post("/admin/db-cleanup", requireAdmin, async (req, res) => {
-  try {
-    const { target, days } = req.body;
-    const d5 = Math.max(1, Number(days) || 30);
-    let deleted = 0;
-    if (target === "old_messages") {
-      const r5 = await db.execute(sql`
-        DELETE FROM messages WHERE created_at < NOW() - (${d5} || ' days')::INTERVAL
-        AND chat_id IN (SELECT id FROM chats WHERE type != 'direct')
-      `);
-      deleted = r5.rowCount ?? 0;
-    } else if (target === "bot_updates") {
-      const r5 = await db.execute(sql`
-        DELETE FROM bot_updates WHERE created_at < NOW() - (${d5} || ' days')::INTERVAL
-      `);
-      deleted = r5.rowCount ?? 0;
-    } else if (target === "old_sessions") {
-      const r5 = await db.execute(sql`
-        DELETE FROM user_sessions WHERE last_active_at < NOW() - (${d5} || ' days')::INTERVAL
-      `);
-      deleted = r5.rowCount ?? 0;
-    } else if (target === "push_subscriptions") {
-      const r5 = await db.execute(sql`DELETE FROM push_subscriptions`);
-      deleted = r5.rowCount ?? 0;
-    } else if (target === "reports") {
-      const r5 = await db.execute(sql`DELETE FROM user_reports WHERE status != 'pending'`);
-      const r22 = await db.execute(sql`DELETE FROM post_reports WHERE created_at < NOW() - INTERVAL '90 days'`);
-      deleted = (r5.rowCount ?? 0) + (r22.rowCount ?? 0);
-    } else {
-      return res.status(400).json({ error: "\u041D\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043D\u0430\u044F \u0446\u0435\u043B\u044C \u043E\u0447\u0438\u0441\u0442\u043A\u0438" });
-    }
-    res.json({ ok: true, deleted, target });
-  } catch (err2) {
-    req.log.error(err2);
-    res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
-  }
-});
-router12.get("/admin/db-stats", requireAdmin, async (req, res) => {
-  try {
-    const tables = ["messages", "bot_updates", "user_sessions", "push_subscriptions", "user_reports", "post_reports"];
-    const result = {};
-    for (const t of tables) {
-      try {
-        const r5 = await db.execute(sql.raw(`SELECT COUNT(*) as c FROM ${t}`));
-        result[t] = Number(r5.rows[0]?.c ?? 0);
-      } catch {
-        result[t] = 0;
-      }
-    }
-    res.json(result);
   } catch (err2) {
     req.log.error(err2);
     res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
@@ -151595,12 +152509,724 @@ router14.get("/wallet/activity", async (req, res) => {
 });
 var wallet_default = router14;
 
-// src/routes/bots.ts
+// src/routes/gifts.ts
 var import_express15 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
-import crypto4 from "node:crypto";
+init_sse();
 var router15 = (0, import_express15.Router)();
+var ADMIN_USER_IDS2 = [1, 4];
+var GIFT_RARITIES = /* @__PURE__ */ new Set(["common", "rare", "epic", "legendary", "cosmic"]);
+var GIFT_ANIMATIONS = /* @__PURE__ */ new Set([
+  "bounce",
+  "sparkle",
+  "hearts",
+  "confetti",
+  "roses",
+  "fireworks",
+  "orbit",
+  "bloom",
+  "stars",
+  "balloons",
+  "diamonds",
+  "flame",
+  "galaxy",
+  "lightning",
+  "magic",
+  "supernova",
+  "vortex"
+]);
+var profileGiftTableReady = null;
+function catalogGift(row) {
+  const soldCount = Number(row.sold_count ?? 0);
+  const maxSupply = row.max_supply === null || row.max_supply === void 0 ? null : Number(row.max_supply);
+  return {
+    id: Number(row.id),
+    name: row.name,
+    emoji: row.emoji,
+    animationType: row.animation_type,
+    rarity: row.rarity,
+    stars: Number(row.stars),
+    price: Number(row.price),
+    description: row.description ?? "",
+    primeOnly: Boolean(row.prime_only),
+    imageUrl: row.image_url ?? null,
+    isCollectible: Boolean(row.is_collectible),
+    isActive: row.is_active === void 0 ? true : Boolean(row.is_active),
+    maxSupply,
+    exchangeValue: Number(row.exchange_value ?? 0),
+    upgradePrice: Number(row.upgrade_price ?? 0),
+    soldCount,
+    availableCount: maxSupply === null ? null : Math.max(0, maxSupply - soldCount)
+  };
+}
+async function listGiftCatalog(includeInactive = false) {
+  const rows = await db.execute(sql`
+    SELECT gi.*, COUNT(g.id)::int AS sold_count
+    FROM gift_items gi
+    LEFT JOIN gifts g ON g.gift_item_id = gi.id
+    WHERE ${includeInactive} OR gi.is_active = TRUE
+    GROUP BY gi.id
+    ORDER BY gi.id
+  `);
+  return rows.rows.map(catalogGift);
+}
+function parseGiftInput(body, partial2 = false) {
+  const value = {};
+  const has = (key) => Object.prototype.hasOwnProperty.call(body ?? {}, key);
+  const stringField = (key, column, maxLength, required2 = false) => {
+    if (partial2 && !has(key)) return;
+    const raw = body?.[key];
+    const text2 = typeof raw === "string" ? raw.trim() : "";
+    if (required2 && !text2 || text2.length > maxLength) throw new Error(`\u041F\u0440\u043E\u0432\u0435\u0440\u044C\u0442\u0435 \u043F\u043E\u043B\u0435 \xAB${key}\xBB`);
+    value[column] = text2;
+  };
+  const integerField = (key, column, min2, max2, nullable2 = false, defaultValue) => {
+    if (partial2 && !has(key)) return;
+    const raw = body?.[key];
+    if (!partial2 && raw === void 0 && defaultValue !== void 0) {
+      value[column] = defaultValue;
+      return;
+    }
+    if (nullable2 && (raw === null || raw === "")) {
+      value[column] = null;
+      return;
+    }
+    const number4 = Number(raw);
+    if (!Number.isInteger(number4) || number4 < min2 || number4 > max2) throw new Error(`\u041D\u0435\u043A\u043E\u0440\u0440\u0435\u043A\u0442\u043D\u043E\u0435 \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0435 \u043F\u043E\u043B\u044F \xAB${key}\xBB`);
+    value[column] = number4;
+  };
+  stringField("name", "name", 80, !partial2);
+  stringField("emoji", "emoji", 32, !partial2);
+  stringField("description", "description", 280);
+  if (!partial2 || has("animationType")) {
+    const animationType = String(body?.animationType || "sparkle");
+    if (!GIFT_ANIMATIONS.has(animationType)) throw new Error("\u0412\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \u0430\u043D\u0438\u043C\u0430\u0446\u0438\u044E \u0438\u0437 \u0441\u043F\u0438\u0441\u043A\u0430");
+    value.animationType = animationType;
+  }
+  if (!partial2 || has("rarity")) {
+    const rarity = String(body?.rarity || "common");
+    if (!GIFT_RARITIES.has(rarity)) throw new Error("\u0412\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \u0440\u0435\u0434\u043A\u043E\u0441\u0442\u044C \u0438\u0437 \u0441\u043F\u0438\u0441\u043A\u0430");
+    value.rarity = rarity;
+  }
+  integerField("stars", "stars", 1, 1e6, false, 1);
+  integerField("price", "price", 0, 1e7, false, 100);
+  integerField("maxSupply", "maxSupply", 1, 1e7, true, null);
+  integerField("exchangeValue", "exchangeValue", 0, 1e7, false, 0);
+  integerField("upgradePrice", "upgradePrice", 0, 1e7, false, 0);
+  if (!partial2 || has("primeOnly")) {
+    if (typeof body?.primeOnly !== "boolean" && !partial2) throw new Error("\u0423\u043A\u0430\u0436\u0438\u0442\u0435 \u0434\u043E\u0441\u0442\u0443\u043F\u043D\u043E\u0441\u0442\u044C \u043F\u043E\u0434\u0430\u0440\u043A\u0430 Prime");
+    value.primeOnly = body?.primeOnly === true;
+  }
+  if (!partial2 || has("isCollectible")) {
+    if (typeof body?.isCollectible !== "boolean" && !partial2) throw new Error("\u0423\u043A\u0430\u0436\u0438\u0442\u0435, \u044F\u0432\u043B\u044F\u0435\u0442\u0441\u044F \u043B\u0438 \u043F\u043E\u0434\u0430\u0440\u043E\u043A \u043A\u043E\u043B\u043B\u0435\u043A\u0446\u0438\u043E\u043D\u043D\u044B\u043C");
+    value.isCollectible = body?.isCollectible === true;
+  }
+  if (!partial2 || has("isActive")) {
+    if (typeof body?.isActive !== "boolean" && !partial2) value.isActive = true;
+    else value.isActive = body?.isActive === true;
+  }
+  if (!partial2 || has("imageUrl")) {
+    const raw = body?.imageUrl;
+    if (raw === void 0 && partial2) {
+    } else if (raw === void 0 || raw === null || raw === "") {
+      value.imageUrl = null;
+    } else if (typeof raw === "string" && raw.length <= 2048 && (raw.startsWith("/") && !raw.startsWith("//"))) {
+      value.imageUrl = raw;
+    } else if (typeof raw === "string" && raw.length <= 2048) {
+      let parsed;
+      try {
+        parsed = new URL(raw);
+      } catch {
+        throw new Error("\u0423\u043A\u0430\u0436\u0438\u0442\u0435 \u043A\u043E\u0440\u0440\u0435\u043A\u0442\u043D\u044B\u0439 URL \u0438\u0437\u043E\u0431\u0440\u0430\u0436\u0435\u043D\u0438\u044F");
+      }
+      if (parsed.protocol !== "https:" && parsed.protocol !== "http:") throw new Error("\u0420\u0430\u0437\u0440\u0435\u0448\u0435\u043D\u044B \u0442\u043E\u043B\u044C\u043A\u043E HTTP(S)-\u0441\u0441\u044B\u043B\u043A\u0438 \u043D\u0430 \u0438\u0437\u043E\u0431\u0440\u0430\u0436\u0435\u043D\u0438\u0435");
+      value.imageUrl = raw;
+    } else {
+      throw new Error("\u0423\u043A\u0430\u0436\u0438\u0442\u0435 \u043A\u043E\u0440\u0440\u0435\u043A\u0442\u043D\u044B\u0439 URL \u0438\u0437\u043E\u0431\u0440\u0430\u0436\u0435\u043D\u0438\u044F");
+    }
+  }
+  return value;
+}
+function giftInstance(row, viewerId) {
+  const isReceived = Number(row.receiver_id) === viewerId;
+  const anonymous = Boolean(row.is_anonymous) && isReceived;
+  return {
+    id: Number(row.id),
+    giftItemId: Number(row.gift_item_id),
+    senderId: anonymous ? null : Number(row.sender_id),
+    senderName: anonymous ? "\u0410\u043D\u043E\u043D\u0438\u043C\u043D\u044B\u0439 \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C" : row.sender_name || "\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C",
+    receiverId: Number(row.receiver_id),
+    receiverName: row.receiver_name || "\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C",
+    message: row.message,
+    isAnonymous: Boolean(row.is_anonymous),
+    chatId: row.chat_id === null ? null : Number(row.chat_id),
+    createdAt: row.created_at,
+    inventoryStatus: row.inventory_status,
+    isUpgraded: Boolean(row.is_upgraded),
+    serialNumber: row.serial_number === null ? null : Number(row.serial_number),
+    giftItem: catalogGift({ ...row, id: row.gift_item_id, sold_count: row.sold_count })
+  };
+}
+async function getGiftInstance(giftId, viewerId) {
+  const rows = await db.execute(sql`
+    SELECT g.id, g.gift_item_id, g.sender_id, g.receiver_id, g.message, g.is_anonymous, g.chat_id,
+           g.created_at, g.inventory_status, g.is_upgraded, g.serial_number,
+           gi.name, gi.emoji, gi.animation_type, gi.rarity, gi.stars, gi.price, gi.description,
+           gi.prime_only, gi.image_url, gi.is_collectible, gi.is_active, gi.max_supply,
+           gi.exchange_value, gi.upgrade_price,
+           COUNT(all_gifts.id)::int AS sold_count,
+           sender.display_name AS sender_name,
+           receiver.display_name AS receiver_name
+    FROM gifts g
+    JOIN gift_items gi ON gi.id = g.gift_item_id
+    LEFT JOIN gifts all_gifts ON all_gifts.gift_item_id = gi.id
+    LEFT JOIN users sender ON sender.id = g.sender_id
+    LEFT JOIN users receiver ON receiver.id = g.receiver_id
+    WHERE g.id = ${giftId}
+    GROUP BY g.id, gi.id, sender.id, receiver.id
+    LIMIT 1
+  `);
+  const row = rows.rows[0];
+  return row ? giftInstance(row, viewerId) : null;
+}
+function ensureProfileGiftTable() {
+  if (!profileGiftTableReady) {
+    profileGiftTableReady = db.execute(sql`
+      CREATE TABLE IF NOT EXISTS profile_pinned_gifts (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        gift_id INTEGER NOT NULL REFERENCES gifts(id) ON DELETE CASCADE,
+        pinned_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE (user_id, gift_id)
+      )
+    `).then(() => void 0);
+  }
+  return profileGiftTableReady;
+}
+var profileGiftSelect = sql`
+  SELECT g.id, g.sender_id, g.receiver_id, g.message, g.is_anonymous, g.created_at,
+         g.inventory_status, g.is_upgraded, g.serial_number,
+         gi.name AS gift_name, gi.emoji AS gift_emoji, gi.image_url AS gift_image_url,
+         gi.description AS gift_description, gi.is_collectible, gi.max_supply,
+         gi.exchange_value, gi.upgrade_price, u.display_name AS sender_name
+  FROM gifts g
+  JOIN gift_items gi ON gi.id = g.gift_item_id
+  LEFT JOIN users u ON u.id = g.sender_id
+`;
+function formatProfileGift(row, isPinned = false) {
+  return {
+    id: Number(row.id),
+    senderId: row.is_anonymous ? null : Number(row.sender_id),
+    senderName: row.is_anonymous ? "\u0410\u043D\u043E\u043D\u0438\u043C\u043D\u043E" : row.sender_name || "\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C",
+    message: row.message,
+    createdAt: row.created_at,
+    name: row.gift_name,
+    emoji: row.gift_emoji,
+    imageUrl: row.gift_image_url,
+    description: row.gift_description,
+    isPinned,
+    isCollectible: Boolean(row.is_collectible),
+    maxSupply: row.max_supply === null ? null : Number(row.max_supply),
+    exchangeValue: Number(row.exchange_value ?? 0),
+    upgradePrice: Number(row.upgrade_price ?? 0),
+    inventoryStatus: row.inventory_status,
+    isUpgraded: Boolean(row.is_upgraded),
+    serialNumber: row.serial_number === null ? null : Number(row.serial_number)
+  };
+}
+async function isAdmin2(userId) {
+  if (ADMIN_USER_IDS2.includes(userId)) return true;
+  const rows = await db.execute(sql`SELECT is_admin FROM users WHERE id = ${userId} LIMIT 1`);
+  const value = rows.rows[0]?.is_admin;
+  return value === true || value === "t";
+}
+router15.get("/gifts", async (req, res) => {
+  try {
+    res.json(await listGiftCatalog());
+  } catch (err2) {
+    req.log.error(err2);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u043F\u043E\u0434\u0430\u0440\u043A\u0438" });
+  }
+});
+router15.get("/gifts/mine", async (req, res) => {
+  try {
+    const userId = req.currentUserId;
+    const rows = await db.execute(sql`
+      SELECT g.id, g.gift_item_id, g.sender_id, g.receiver_id, g.message, g.is_anonymous, g.chat_id,
+             g.created_at, g.inventory_status, g.is_upgraded, g.serial_number,
+             gi.name, gi.emoji, gi.animation_type, gi.rarity, gi.stars, gi.price, gi.description,
+             gi.prime_only, gi.image_url, gi.is_collectible, gi.is_active, gi.max_supply, gi.exchange_value, gi.upgrade_price,
+             COUNT(all_gifts.id)::int AS sold_count,
+             sender.display_name AS sender_name,
+             receiver.display_name AS receiver_name
+      FROM gifts g
+      JOIN gift_items gi ON gi.id = g.gift_item_id
+      LEFT JOIN gifts all_gifts ON all_gifts.gift_item_id = gi.id
+      LEFT JOIN users sender ON sender.id = g.sender_id
+      LEFT JOIN users receiver ON receiver.id = g.receiver_id
+      WHERE g.receiver_id = ${userId} OR g.sender_id = ${userId}
+      GROUP BY g.id, gi.id, sender.id, receiver.id
+      ORDER BY g.created_at DESC
+      LIMIT 250
+    `);
+    const all = rows.rows.map((row) => giftInstance(row, userId));
+    res.json({
+      received: all.filter((item) => item.receiverId === userId),
+      sent: all.filter((item) => item.senderId === userId)
+    });
+  } catch (err2) {
+    req.log.error(err2);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u0432\u0430\u0448\u0438 \u043F\u043E\u0434\u0430\u0440\u043A\u0438" });
+  }
+});
+router15.get("/gifts/sent", async (req, res) => {
+  try {
+    const rows = await db.execute(sql`
+      SELECT g.id, g.gift_item_id, g.sender_id, g.receiver_id, g.message, g.is_anonymous, g.chat_id,
+             g.created_at, g.inventory_status, g.is_upgraded, g.serial_number,
+             gi.name, gi.emoji, gi.animation_type, gi.rarity, gi.stars, gi.price, gi.description,
+             gi.prime_only, gi.image_url, gi.is_collectible, gi.is_active, gi.max_supply,
+             gi.exchange_value, gi.upgrade_price,
+             COUNT(all_gifts.id)::int AS sold_count,
+             sender.display_name AS sender_name,
+             receiver.display_name AS receiver_name
+      FROM gifts g
+      JOIN gift_items gi ON gi.id = g.gift_item_id
+      LEFT JOIN gifts all_gifts ON all_gifts.gift_item_id = gi.id
+      LEFT JOIN users sender ON sender.id = g.sender_id
+      LEFT JOIN users receiver ON receiver.id = g.receiver_id
+      WHERE g.sender_id = ${req.currentUserId}
+      GROUP BY g.id, gi.id, sender.id, receiver.id
+      ORDER BY g.created_at DESC
+      LIMIT 250
+    `);
+    res.json(rows.rows.map((row) => giftInstance(row, req.currentUserId)));
+  } catch (err2) {
+    req.log.error(err2);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u043E\u0442\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u043D\u044B\u0435 \u043F\u043E\u0434\u0430\u0440\u043A\u0438" });
+  }
+});
+router15.get("/gifts/received", async (req, res) => {
+  try {
+    const rows = await db.execute(sql`
+      SELECT g.id, g.gift_item_id, g.sender_id, g.receiver_id, g.message, g.is_anonymous, g.chat_id,
+             g.created_at, g.inventory_status, g.is_upgraded, g.serial_number,
+             gi.name, gi.emoji, gi.animation_type, gi.rarity, gi.stars, gi.price, gi.description,
+             gi.prime_only, gi.image_url, gi.is_collectible, gi.is_active, gi.max_supply,
+             gi.exchange_value, gi.upgrade_price,
+             COUNT(all_gifts.id)::int AS sold_count,
+             sender.display_name AS sender_name,
+             receiver.display_name AS receiver_name
+      FROM gifts g
+      JOIN gift_items gi ON gi.id = g.gift_item_id
+      LEFT JOIN gifts all_gifts ON all_gifts.gift_item_id = gi.id
+      LEFT JOIN users sender ON sender.id = g.sender_id
+      LEFT JOIN users receiver ON receiver.id = g.receiver_id
+      WHERE g.receiver_id = ${req.currentUserId}
+      GROUP BY g.id, gi.id, sender.id, receiver.id
+      ORDER BY g.created_at DESC
+      LIMIT 250
+    `);
+    res.json(rows.rows.map((row) => giftInstance(row, req.currentUserId)));
+  } catch (err2) {
+    req.log.error(err2);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u043F\u043E\u043B\u0443\u0447\u0435\u043D\u043D\u044B\u0435 \u043F\u043E\u0434\u0430\u0440\u043A\u0438" });
+  }
+});
+router15.post("/gifts/:giftId/open", async (req, res) => {
+  try {
+    const userId = req.currentUserId;
+    const giftId = Number(req.params.giftId);
+    if (!Number.isInteger(giftId) || giftId <= 0) return res.status(400).json({ error: "\u041D\u0435\u043A\u043E\u0440\u0440\u0435\u043A\u0442\u043D\u044B\u0439 \u043F\u043E\u0434\u0430\u0440\u043E\u043A" });
+    const updated = await db.execute(sql`
+      UPDATE gifts SET inventory_status = 'collected'
+      WHERE id = ${giftId} AND receiver_id = ${userId} AND inventory_status = 'received'
+      RETURNING id
+    `);
+    if (!updated.rows.length) {
+      const existing = await db.execute(sql`
+        SELECT inventory_status FROM gifts WHERE id = ${giftId} AND receiver_id = ${userId} LIMIT 1
+      `);
+      if (!existing.rows.length) return res.status(404).json({ error: "\u041F\u043E\u0434\u0430\u0440\u043E\u043A \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D \u0432 \u0432\u0430\u0448\u0435\u0439 \u043A\u043E\u043B\u043B\u0435\u043A\u0446\u0438\u0438" });
+      if (existing.rows[0].inventory_status === "exchanged") {
+        return res.status(409).json({ error: "\u042D\u0442\u043E\u0442 \u043F\u043E\u0434\u0430\u0440\u043E\u043A \u0443\u0436\u0435 \u043E\u0431\u043C\u0435\u043D\u044F\u043D" });
+      }
+    }
+    const gift = await getGiftInstance(giftId, userId);
+    if (!gift) return res.status(404).json({ error: "\u041F\u043E\u0434\u0430\u0440\u043E\u043A \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D" });
+    res.json(gift);
+  } catch (err2) {
+    req.log.error(err2);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u043E\u0442\u043A\u0440\u044B\u0442\u044C \u043F\u043E\u0434\u0430\u0440\u043E\u043A" });
+  }
+});
+router15.post("/gifts/:giftId/upgrade", async (req, res) => {
+  try {
+    const userId = req.currentUserId;
+    const giftId = Number(req.params.giftId);
+    if (!Number.isInteger(giftId) || giftId <= 0) return res.status(400).json({ error: "\u041D\u0435\u043A\u043E\u0440\u0440\u0435\u043A\u0442\u043D\u044B\u0439 \u043F\u043E\u0434\u0430\u0440\u043E\u043A" });
+    await db.transaction(async (tx) => {
+      const rows = await tx.execute(sql`
+        SELECT g.inventory_status, g.is_upgraded, gi.is_collectible, gi.upgrade_price, gi.name
+        FROM gifts g JOIN gift_items gi ON gi.id = g.gift_item_id
+        WHERE g.id = ${giftId} AND g.receiver_id = ${userId}
+        FOR UPDATE OF g
+      `);
+      const gift2 = rows.rows[0];
+      if (!gift2) throw Object.assign(new Error("\u041F\u043E\u0434\u0430\u0440\u043E\u043A \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D \u0432 \u0432\u0430\u0448\u0435\u0439 \u043A\u043E\u043B\u043B\u0435\u043A\u0446\u0438\u0438"), { status: 404 });
+      if (gift2.inventory_status === "exchanged") throw Object.assign(new Error("\u042D\u0442\u043E\u0442 \u043F\u043E\u0434\u0430\u0440\u043E\u043A \u0443\u0436\u0435 \u043E\u0431\u043C\u0435\u043D\u044F\u043D"), { status: 409 });
+      if (!gift2.is_collectible) throw Object.assign(new Error("\u042D\u0442\u043E\u0442 \u043F\u043E\u0434\u0430\u0440\u043E\u043A \u043D\u0435\u043B\u044C\u0437\u044F \u0443\u043B\u0443\u0447\u0448\u0438\u0442\u044C"), { status: 400 });
+      if (gift2.is_upgraded) throw Object.assign(new Error("\u042D\u0442\u043E\u0442 \u043F\u043E\u0434\u0430\u0440\u043E\u043A \u0443\u0436\u0435 \u0443\u043B\u0443\u0447\u0448\u0435\u043D"), { status: 409 });
+      const cost = Number(gift2.upgrade_price ?? 0);
+      const charged = await tx.execute(sql`
+        UPDATE users SET balance = COALESCE(balance, 0) - ${cost}
+        WHERE id = ${userId} AND COALESCE(balance, 0) >= ${cost}
+        RETURNING balance
+      `);
+      if (!charged.rows.length) throw Object.assign(new Error("\u041D\u0435\u0434\u043E\u0441\u0442\u0430\u0442\u043E\u0447\u043D\u043E \u0438\u0441\u043A\u0440 \u0434\u043B\u044F \u0443\u043B\u0443\u0447\u0448\u0435\u043D\u0438\u044F"), { status: 402 });
+      await tx.execute(sql`
+        UPDATE gifts SET is_upgraded = TRUE, inventory_status = 'collected'
+        WHERE id = ${giftId} AND receiver_id = ${userId}
+      `);
+      await tx.execute(sql`
+        INSERT INTO spark_activity (user_id, type, amount, description)
+        VALUES (${userId}, 'spent', ${-cost}, ${`\u0423\u043B\u0443\u0447\u0448\u0435\u043D\u0438\u0435 \u043F\u043E\u0434\u0430\u0440\u043A\u0430: ${gift2.name}`})
+      `).catch(() => {
+      });
+    });
+    const gift = await getGiftInstance(giftId, userId);
+    if (!gift) return res.status(404).json({ error: "\u041F\u043E\u0434\u0430\u0440\u043E\u043A \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D" });
+    res.json(gift);
+  } catch (err2) {
+    const status = Number(err2?.status) || 500;
+    if (status < 500) return res.status(status).json({ error: err2.message });
+    req.log.error(err2);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0443\u043B\u0443\u0447\u0448\u0438\u0442\u044C \u043F\u043E\u0434\u0430\u0440\u043E\u043A" });
+  }
+});
+router15.post("/gifts/:giftId/exchange", async (req, res) => {
+  try {
+    const userId = req.currentUserId;
+    const giftId = Number(req.params.giftId);
+    if (!Number.isInteger(giftId) || giftId <= 0) return res.status(400).json({ error: "\u041D\u0435\u043A\u043E\u0440\u0440\u0435\u043A\u0442\u043D\u044B\u0439 \u043F\u043E\u0434\u0430\u0440\u043E\u043A" });
+    let balance = 0;
+    await db.transaction(async (tx) => {
+      const rows = await tx.execute(sql`
+        SELECT g.inventory_status, gi.exchange_value, gi.name
+        FROM gifts g JOIN gift_items gi ON gi.id = g.gift_item_id
+        WHERE g.id = ${giftId} AND g.receiver_id = ${userId}
+        FOR UPDATE OF g
+      `);
+      const gift2 = rows.rows[0];
+      if (!gift2) throw Object.assign(new Error("\u041F\u043E\u0434\u0430\u0440\u043E\u043A \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D \u0432 \u0432\u0430\u0448\u0435\u0439 \u043A\u043E\u043B\u043B\u0435\u043A\u0446\u0438\u0438"), { status: 404 });
+      if (gift2.inventory_status === "exchanged") throw Object.assign(new Error("\u042D\u0442\u043E\u0442 \u043F\u043E\u0434\u0430\u0440\u043E\u043A \u0443\u0436\u0435 \u043E\u0431\u043C\u0435\u043D\u044F\u043D"), { status: 409 });
+      const value = Number(gift2.exchange_value ?? 0);
+      if (value <= 0) throw Object.assign(new Error("\u042D\u0442\u043E\u0442 \u043F\u043E\u0434\u0430\u0440\u043E\u043A \u043D\u0435\u043B\u044C\u0437\u044F \u043E\u0431\u043C\u0435\u043D\u044F\u0442\u044C"), { status: 400 });
+      const credited = await tx.execute(sql`
+        UPDATE users SET balance = COALESCE(balance, 0) + ${value}
+        WHERE id = ${userId}
+        RETURNING balance
+      `);
+      if (!credited.rows.length) throw Object.assign(new Error("\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D"), { status: 404 });
+      balance = Number(credited.rows[0].balance);
+      await tx.execute(sql`UPDATE gifts SET inventory_status = 'exchanged' WHERE id = ${giftId}`);
+      await tx.execute(sql`
+        INSERT INTO spark_activity (user_id, type, amount, description)
+        VALUES (${userId}, 'earned', ${value}, ${`\u041E\u0431\u043C\u0435\u043D \u043F\u043E\u0434\u0430\u0440\u043A\u0430: ${gift2.name}`})
+      `).catch(() => {
+      });
+    });
+    const gift = await getGiftInstance(giftId, userId);
+    if (!gift) return res.status(404).json({ error: "\u041F\u043E\u0434\u0430\u0440\u043E\u043A \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D" });
+    res.json({ gift, balance });
+  } catch (err2) {
+    const status = Number(err2?.status) || 500;
+    if (status < 500) return res.status(status).json({ error: err2.message });
+    req.log.error(err2);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u043E\u0431\u043C\u0435\u043D\u044F\u0442\u044C \u043F\u043E\u0434\u0430\u0440\u043E\u043A" });
+  }
+});
+router15.get("/users/:userId/profile-gifts", async (req, res) => {
+  try {
+    const userId = Number(req.params.userId);
+    if (!Number.isInteger(userId) || userId <= 0) return res.status(400).json({ error: "\u041D\u0435\u043A\u043E\u0440\u0440\u0435\u043A\u0442\u043D\u044B\u0439 \u043F\u0440\u043E\u0444\u0438\u043B\u044C" });
+    await ensureProfileGiftTable();
+    const pinnedRows = await db.execute(sql`
+      ${profileGiftSelect}
+      JOIN profile_pinned_gifts pg ON pg.gift_id = g.id
+      WHERE pg.user_id = ${userId} AND g.receiver_id = ${userId}
+      ORDER BY pg.pinned_at DESC
+      LIMIT 12
+    `);
+    const pinned = pinnedRows.rows.map((row) => formatProfileGift(row, true));
+    const received = userId === req.currentUserId ? await db.execute(sql`
+          ${profileGiftSelect}
+          WHERE g.receiver_id = ${userId}
+          ORDER BY g.created_at DESC
+          LIMIT 100
+        `) : null;
+    res.json({
+      pinned,
+      received: received?.rows?.map((row) => formatProfileGift(row, pinned.some((item) => item.id === Number(row.id)))) ?? []
+    });
+  } catch (err2) {
+    req.log.error(err2);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u043F\u043E\u0434\u0430\u0440\u043A\u0438 \u043F\u0440\u043E\u0444\u0438\u043B\u044F" });
+  }
+});
+router15.post("/users/me/profile-gifts/:giftId/pin", async (req, res) => {
+  try {
+    const userId = req.currentUserId;
+    const giftId = Number(req.params.giftId);
+    if (!Number.isInteger(giftId) || giftId <= 0) return res.status(400).json({ error: "\u041D\u0435\u043A\u043E\u0440\u0440\u0435\u043A\u0442\u043D\u044B\u0439 \u043F\u043E\u0434\u0430\u0440\u043E\u043A" });
+    await ensureProfileGiftTable();
+    const owned = await db.execute(sql`SELECT 1 FROM gifts WHERE id = ${giftId} AND receiver_id = ${userId} AND inventory_status <> 'exchanged' LIMIT 1`);
+    if (!owned.rows.length) return res.status(404).json({ error: "\u041F\u043E\u043B\u0443\u0447\u0435\u043D\u043D\u044B\u0439 \u043F\u043E\u0434\u0430\u0440\u043E\u043A \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D" });
+    const countRows = await db.execute(sql`SELECT COUNT(*)::int AS count FROM profile_pinned_gifts WHERE user_id = ${userId}`);
+    if (Number(countRows.rows[0]?.count ?? 0) >= 12) {
+      const existing = await db.execute(sql`SELECT 1 FROM profile_pinned_gifts WHERE user_id = ${userId} AND gift_id = ${giftId} LIMIT 1`);
+      if (!existing.rows.length) return res.status(400).json({ error: "\u041C\u043E\u0436\u043D\u043E \u0437\u0430\u043A\u0440\u0435\u043F\u0438\u0442\u044C \u043D\u0435 \u0431\u043E\u043B\u044C\u0448\u0435 12 \u043F\u043E\u0434\u0430\u0440\u043A\u043E\u0432" });
+    }
+    await db.execute(sql`
+      INSERT INTO profile_pinned_gifts (user_id, gift_id)
+      VALUES (${userId}, ${giftId})
+      ON CONFLICT (user_id, gift_id) DO NOTHING
+    `);
+    res.json({ success: true });
+  } catch (err2) {
+    req.log.error(err2);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0437\u0430\u043A\u0440\u0435\u043F\u0438\u0442\u044C \u043F\u043E\u0434\u0430\u0440\u043E\u043A" });
+  }
+});
+router15.delete("/users/me/profile-gifts/:giftId/pin", async (req, res) => {
+  try {
+    const userId = req.currentUserId;
+    const giftId = Number(req.params.giftId);
+    if (!Number.isInteger(giftId) || giftId <= 0) return res.status(400).json({ error: "\u041D\u0435\u043A\u043E\u0440\u0440\u0435\u043A\u0442\u043D\u044B\u0439 \u043F\u043E\u0434\u0430\u0440\u043E\u043A" });
+    await ensureProfileGiftTable();
+    await db.execute(sql`DELETE FROM profile_pinned_gifts WHERE user_id = ${userId} AND gift_id = ${giftId}`);
+    res.json({ success: true });
+  } catch (err2) {
+    req.log.error(err2);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0443\u0431\u0440\u0430\u0442\u044C \u043F\u043E\u0434\u0430\u0440\u043E\u043A \u0438\u0437 \u043F\u0440\u043E\u0444\u0438\u043B\u044F" });
+  }
+});
+router15.post("/gifts/send", async (req, res) => {
+  try {
+    const senderId = req.currentUserId;
+    const receiverId = Number(req.body?.receiverId);
+    const giftItemId = Number(req.body?.giftItemId);
+    const chatId = Number(req.body?.chatId);
+    const note = typeof req.body?.message === "string" ? req.body.message.trim().slice(0, 280) : "";
+    const isAnonymous = req.body?.isAnonymous === true;
+    if (!Number.isInteger(receiverId) || receiverId <= 0 || receiverId === senderId) {
+      return res.status(400).json({ error: "\u0423\u043A\u0430\u0436\u0438\u0442\u0435 \u0434\u0440\u0443\u0433\u043E\u0433\u043E \u043F\u043E\u043B\u0443\u0447\u0430\u0442\u0435\u043B\u044F" });
+    }
+    if (!Number.isInteger(giftItemId) || giftItemId <= 0) {
+      return res.status(400).json({ error: "\u0412\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \u043F\u043E\u0434\u0430\u0440\u043E\u043A" });
+    }
+    if (!Number.isInteger(chatId) || chatId <= 0) {
+      return res.status(400).json({ error: "\u0414\u043B\u044F \u043F\u043E\u0434\u0430\u0440\u043A\u0430 \u043D\u0443\u0436\u0435\u043D \u043E\u0431\u0449\u0438\u0439 \u0447\u0430\u0442" });
+    }
+    const sharedChat = await db.execute(sql`
+      SELECT c.type
+      FROM chats c
+      JOIN chat_members cm ON cm.chat_id = c.id
+      WHERE c.id = ${chatId} AND cm.user_id IN (${senderId}, ${receiverId})
+      GROUP BY c.id, c.type
+      HAVING COUNT(DISTINCT cm.user_id) = 2
+      LIMIT 1
+    `);
+    if (!sharedChat.rows.length) {
+      return res.status(403).json({ error: "\u0423 \u0432\u0430\u0441 \u043D\u0435\u0442 \u043E\u0431\u0449\u0435\u0433\u043E \u0447\u0430\u0442\u0430 \u0441 \u043F\u043E\u043B\u0443\u0447\u0430\u0442\u0435\u043B\u0435\u043C" });
+    }
+    const result = await db.transaction(async (tx) => {
+      const giftRows = await tx.execute(sql`
+        SELECT id, name, emoji, animation_type, rarity, stars, price, description, prime_only,
+               image_url, is_collectible, is_active, max_supply, exchange_value, upgrade_price
+        FROM gift_items WHERE id = ${giftItemId} FOR UPDATE
+      `);
+      const item = giftRows.rows[0];
+      if (!item) throw Object.assign(new Error("\u041F\u043E\u0434\u0430\u0440\u043E\u043A \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D"), { status: 404 });
+      if (!item.is_active) throw Object.assign(new Error("\u042D\u0442\u043E\u0442 \u043F\u043E\u0434\u0430\u0440\u043E\u043A \u0441\u0435\u0439\u0447\u0430\u0441 \u043D\u0435\u0434\u043E\u0441\u0442\u0443\u043F\u0435\u043D"), { status: 409 });
+      const soldRows = await tx.execute(sql`
+        SELECT COUNT(*)::int AS count FROM gifts WHERE gift_item_id = ${giftItemId}
+      `);
+      const soldCount = Number(soldRows.rows[0]?.count ?? 0);
+      const maxSupply = item.max_supply === null ? null : Number(item.max_supply);
+      if (maxSupply !== null && soldCount >= maxSupply) {
+        throw Object.assign(new Error("\u042D\u0442\u043E\u0442 \u043E\u0433\u0440\u0430\u043D\u0438\u0447\u0435\u043D\u043D\u044B\u0439 \u043F\u043E\u0434\u0430\u0440\u043E\u043A \u0443\u0436\u0435 \u0437\u0430\u043A\u043E\u043D\u0447\u0438\u043B\u0441\u044F"), { status: 409 });
+      }
+      const charged = await tx.execute(sql`
+        UPDATE users SET balance = COALESCE(balance, 0) - ${Number(item.price)}
+        WHERE id = ${senderId} AND COALESCE(balance, 0) >= ${Number(item.price)}
+        RETURNING balance
+      `);
+      if (!charged.rows.length) {
+        const current = await tx.execute(sql`SELECT COALESCE(balance, 0) AS balance FROM users WHERE id = ${senderId}`);
+        throw Object.assign(
+          new Error(`\u041D\u0435\u0434\u043E\u0441\u0442\u0430\u0442\u043E\u0447\u043D\u043E \u0438\u0441\u043A\u0440. \u0412\u0430\u0448 \u0431\u0430\u043B\u0430\u043D\u0441: ${Number(current.rows[0]?.balance ?? 0)} \u2726`),
+          { status: 402 }
+        );
+      }
+      const [gift] = await tx.insert(giftsTable).values({
+        giftItemId,
+        senderId,
+        receiverId,
+        message: note || null,
+        isAnonymous,
+        chatId,
+        serialNumber: item.is_collectible ? soldCount + 1 : null
+      }).returning();
+      const [message] = await tx.insert(messagesTable).values({
+        chatId,
+        senderId,
+        text: note || null,
+        type: "gift",
+        mediaUrl: `gift:${gift.id}`
+      }).returning();
+      return {
+        gift,
+        message,
+        item,
+        soldCount: soldCount + 1,
+        balance: Number(charged.rows[0].balance)
+      };
+    });
+    const [sender, receiver] = await Promise.all([
+      db.query.usersTable.findFirst({ where: eq(usersTable.id, senderId) }),
+      db.query.usersTable.findFirst({ where: eq(usersTable.id, receiverId) })
+    ]);
+    const giftData = {
+      ...result.gift,
+      giftItem: {
+        id: Number(result.item.id),
+        name: result.item.name,
+        emoji: result.item.emoji,
+        animationType: result.item.animation_type,
+        rarity: result.item.rarity,
+        stars: Number(result.item.stars),
+        price: Number(result.item.price),
+        description: result.item.description,
+        imageUrl: result.item.image_url,
+        primeOnly: Boolean(result.item.prime_only),
+        isCollectible: Boolean(result.item.is_collectible),
+        isActive: Boolean(result.item.is_active),
+        maxSupply: result.item.max_supply === null ? null : Number(result.item.max_supply),
+        exchangeValue: Number(result.item.exchange_value ?? 0),
+        upgradePrice: Number(result.item.upgrade_price ?? 0),
+        soldCount: result.soldCount,
+        availableCount: result.item.max_supply === null ? null : Math.max(0, Number(result.item.max_supply) - result.soldCount)
+      },
+      sender: sender ?? null,
+      receiver: receiver ?? null
+    };
+    const builtMessage = {
+      ...result.message,
+      sender: sender ?? null,
+      reactions: [],
+      replyTo: null,
+      giftData,
+      pollData: null
+    };
+    res.status(201).json({ message: builtMessage, balance: result.balance, chatId });
+    broadcastToChat(chatId, "new-message", { messageId: result.message.id, chatId });
+    broadcastToUser(receiverId, "new-message", {
+      messageId: result.message.id,
+      chatId,
+      senderName: isAnonymous ? "\u0410\u043D\u043E\u043D\u0438\u043C\u043D\u044B\u0439 \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C" : sender?.displayName || sender?.username || "\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C",
+      body: `\u{1F381} \u041F\u043E\u0434\u0430\u0440\u043E\u043A: ${result.item.name}`,
+      senderAvatar: isAnonymous ? null : sender?.avatarUrl || null
+    });
+    broadcastToUser(senderId, "new-message", { messageId: result.message.id, chatId });
+    db.execute(sql`
+      INSERT INTO spark_activity (user_id, type, amount, description)
+      VALUES (${senderId}, 'spent', ${-Number(result.item.price)}, ${`\u041F\u043E\u0434\u0430\u0440\u043E\u043A: ${result.item.name}`})
+    `).catch(() => {
+    });
+  } catch (err2) {
+    const status = Number(err2?.status) || 500;
+    if (status < 500) return res.status(status).json({ error: err2.message });
+    req.log.error(err2);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u043E\u0442\u043F\u0440\u0430\u0432\u0438\u0442\u044C \u043F\u043E\u0434\u0430\u0440\u043E\u043A" });
+  }
+});
+router15.get("/admin/gifts", async (req, res) => {
+  try {
+    if (!await isAdmin2(req.currentUserId)) return res.status(403).json({ error: "\u0414\u043E\u0441\u0442\u0443\u043F \u0437\u0430\u043F\u0440\u0435\u0449\u0451\u043D" });
+    res.json(await listGiftCatalog(true));
+  } catch (err2) {
+    req.log.error(err2);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u043A\u0430\u0442\u0430\u043B\u043E\u0433" });
+  }
+});
+router15.post("/admin/gifts", async (req, res) => {
+  try {
+    if (!await isAdmin2(req.currentUserId)) return res.status(403).json({ error: "\u0414\u043E\u0441\u0442\u0443\u043F \u0437\u0430\u043F\u0440\u0435\u0449\u0451\u043D" });
+    let values;
+    try {
+      values = parseGiftInput(req.body);
+    } catch (err2) {
+      return res.status(400).json({ error: err2 instanceof Error ? err2.message : "\u041F\u0440\u043E\u0432\u0435\u0440\u044C\u0442\u0435 \u043F\u0430\u0440\u0430\u043C\u0435\u0442\u0440\u044B \u043F\u043E\u0434\u0430\u0440\u043A\u0430" });
+    }
+    const [gift] = await db.insert(giftItemsTable).values(values).returning();
+    if (!gift) return res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0441\u043E\u0437\u0434\u0430\u0442\u044C \u043F\u043E\u0434\u0430\u0440\u043E\u043A" });
+    res.status(201).json(catalogGift(gift));
+  } catch (err2) {
+    if (err2?.code === "23505") return res.status(409).json({ error: "\u041F\u043E\u0434\u0430\u0440\u043E\u043A \u0441 \u0442\u0430\u043A\u0438\u043C \u043D\u0430\u0437\u0432\u0430\u043D\u0438\u0435\u043C \u0443\u0436\u0435 \u0435\u0441\u0442\u044C" });
+    req.log.error(err2);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0441\u043E\u0437\u0434\u0430\u0442\u044C \u043F\u043E\u0434\u0430\u0440\u043E\u043A" });
+  }
+});
+router15.patch("/admin/gifts/:giftId", async (req, res) => {
+  try {
+    if (!await isAdmin2(req.currentUserId)) return res.status(403).json({ error: "\u0414\u043E\u0441\u0442\u0443\u043F \u0437\u0430\u043F\u0440\u0435\u0449\u0451\u043D" });
+    const giftId = Number(req.params.giftId);
+    if (!Number.isInteger(giftId) || giftId <= 0) return res.status(400).json({ error: "\u041D\u0435\u043A\u043E\u0440\u0440\u0435\u043A\u0442\u043D\u044B\u0439 \u043F\u043E\u0434\u0430\u0440\u043E\u043A" });
+    let values;
+    try {
+      values = parseGiftInput(req.body, true);
+    } catch (err2) {
+      return res.status(400).json({ error: err2 instanceof Error ? err2.message : "\u041F\u0440\u043E\u0432\u0435\u0440\u044C\u0442\u0435 \u043F\u0430\u0440\u0430\u043C\u0435\u0442\u0440\u044B \u043F\u043E\u0434\u0430\u0440\u043A\u0430" });
+    }
+    if (Object.keys(values).length === 0) return res.status(400).json({ error: "\u0423\u043A\u0430\u0436\u0438\u0442\u0435 \u043F\u043E\u043B\u044F \u0434\u043B\u044F \u0438\u0437\u043C\u0435\u043D\u0435\u043D\u0438\u044F" });
+    const [gift] = await db.update(giftItemsTable).set(values).where(eq(giftItemsTable.id, giftId)).returning();
+    if (!gift) return res.status(404).json({ error: "\u041F\u043E\u0434\u0430\u0440\u043E\u043A \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D" });
+    const catalog = await db.execute(sql`
+      SELECT gi.*, COUNT(g.id)::int AS sold_count
+      FROM gift_items gi LEFT JOIN gifts g ON g.gift_item_id = gi.id
+      WHERE gi.id = ${giftId}
+      GROUP BY gi.id
+    `);
+    res.json(catalogGift(catalog.rows[0] ?? gift));
+  } catch (err2) {
+    if (err2?.code === "23505") return res.status(409).json({ error: "\u041F\u043E\u0434\u0430\u0440\u043E\u043A \u0441 \u0442\u0430\u043A\u0438\u043C \u043D\u0430\u0437\u0432\u0430\u043D\u0438\u0435\u043C \u0443\u0436\u0435 \u0435\u0441\u0442\u044C" });
+    req.log.error(err2);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0441\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C \u043F\u043E\u0434\u0430\u0440\u043E\u043A" });
+  }
+});
+router15.delete("/admin/gifts/:giftId", async (req, res) => {
+  try {
+    if (!await isAdmin2(req.currentUserId)) return res.status(403).json({ error: "\u0414\u043E\u0441\u0442\u0443\u043F \u0437\u0430\u043F\u0440\u0435\u0449\u0451\u043D" });
+    const giftId = Number(req.params.giftId);
+    if (!Number.isInteger(giftId) || giftId <= 0) return res.status(400).json({ error: "\u041D\u0435\u043A\u043E\u0440\u0440\u0435\u043A\u0442\u043D\u044B\u0439 \u043F\u043E\u0434\u0430\u0440\u043E\u043A" });
+    const [gift] = await db.update(giftItemsTable).set({ isActive: false }).where(eq(giftItemsTable.id, giftId)).returning({ id: giftItemsTable.id });
+    if (!gift) return res.status(404).json({ error: "\u041F\u043E\u0434\u0430\u0440\u043E\u043A \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D" });
+    res.json({ success: true });
+  } catch (err2) {
+    req.log.error(err2);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0441\u043A\u0440\u044B\u0442\u044C \u043F\u043E\u0434\u0430\u0440\u043E\u043A" });
+  }
+});
+var gifts_default = router15;
+
+// src/routes/bots.ts
+var import_express16 = __toESM(require_express2(), 1);
+init_src();
+init_drizzle_orm();
+import crypto4 from "node:crypto";
+var router16 = (0, import_express16.Router)();
 function generateToken() {
   const part1 = Math.floor(Math.random() * 9e9 + 1e9).toString();
   const part2 = crypto4.randomBytes(20).toString("base64url");
@@ -151610,7 +153236,7 @@ function randomColor() {
   const colors = ["#6366f1", "#8b5cf6", "#ec4899", "#f59e0b", "#10b981", "#3b82f6", "#ef4444", "#14b8a6"];
   return colors[Math.floor(Math.random() * colors.length)];
 }
-router15.get("/bots", async (req, res) => {
+router16.get("/bots", async (req, res) => {
   try {
     const uid = req.currentUserId;
     const rows = await db.execute(sql`
@@ -151629,7 +153255,7 @@ router15.get("/bots", async (req, res) => {
     res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
   }
 });
-router15.post("/bots", async (req, res) => {
+router16.post("/bots", async (req, res) => {
   try {
     const uid = req.currentUserId;
     const { name: name2, username, description } = req.body;
@@ -151681,7 +153307,7 @@ router15.post("/bots", async (req, res) => {
     res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
   }
 });
-router15.patch("/bots/:botId", async (req, res) => {
+router16.patch("/bots/:botId", async (req, res) => {
   try {
     const uid = req.currentUserId;
     const botId = Number(req.params.botId);
@@ -151706,7 +153332,7 @@ router15.patch("/bots/:botId", async (req, res) => {
     res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
   }
 });
-router15.post("/bots/:botId/token", async (req, res) => {
+router16.post("/bots/:botId/token", async (req, res) => {
   try {
     const uid = req.currentUserId;
     const botId = Number(req.params.botId);
@@ -151720,7 +153346,7 @@ router15.post("/bots/:botId/token", async (req, res) => {
     res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
   }
 });
-router15.patch("/bots/:botId/code", async (req, res) => {
+router16.patch("/bots/:botId/code", async (req, res) => {
   try {
     const uid = req.currentUserId;
     const botId = Number(req.params.botId);
@@ -151736,7 +153362,7 @@ router15.patch("/bots/:botId/code", async (req, res) => {
     res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
   }
 });
-router15.delete("/bots/:botId", async (req, res) => {
+router16.delete("/bots/:botId", async (req, res) => {
   try {
     const uid = req.currentUserId;
     const botId = Number(req.params.botId);
@@ -151753,14 +153379,14 @@ router15.delete("/bots/:botId", async (req, res) => {
     res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
   }
 });
-var bots_default = router15;
+var bots_default = router16;
 
 // src/routes/support.ts
-var import_express16 = __toESM(require_express2(), 1);
+var import_express17 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
-var router16 = (0, import_express16.Router)();
-router16.post("/support/bugs", async (req, res) => {
+var router17 = (0, import_express17.Router)();
+router17.post("/support/bugs", async (req, res) => {
   try {
     const uid = req.currentUserId;
     const { title, description, category, platformInfo, screenshotUrl } = req.body;
@@ -151783,7 +153409,7 @@ router16.post("/support/bugs", async (req, res) => {
     res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
   }
 });
-router16.get("/support/bugs", async (req, res) => {
+router17.get("/support/bugs", async (req, res) => {
   try {
     const uid = req.currentUserId;
     const rows = await db.execute(sql`
@@ -151797,7 +153423,7 @@ router16.get("/support/bugs", async (req, res) => {
     res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
   }
 });
-router16.delete("/support/bugs/:id", async (req, res) => {
+router17.delete("/support/bugs/:id", async (req, res) => {
   try {
     const uid = req.currentUserId;
     const bugId = Number(req.params.id);
@@ -151809,7 +153435,7 @@ router16.delete("/support/bugs/:id", async (req, res) => {
     res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
   }
 });
-router16.post("/support/tickets", async (req, res) => {
+router17.post("/support/tickets", async (req, res) => {
   try {
     const uid = req.currentUserId;
     const { subject, firstMessage, imageUrl } = req.body;
@@ -151835,7 +153461,7 @@ router16.post("/support/tickets", async (req, res) => {
     res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
   }
 });
-router16.get("/support/tickets", async (req, res) => {
+router17.get("/support/tickets", async (req, res) => {
   try {
     const uid = req.currentUserId;
     const rows = await db.execute(sql`
@@ -151854,7 +153480,7 @@ router16.get("/support/tickets", async (req, res) => {
     res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
   }
 });
-router16.get("/support/tickets/:ticketId", async (req, res) => {
+router17.get("/support/tickets/:ticketId", async (req, res) => {
   try {
     const uid = req.currentUserId;
     const ticketId = Number(req.params.ticketId);
@@ -151875,7 +153501,7 @@ router16.get("/support/tickets/:ticketId", async (req, res) => {
     res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
   }
 });
-router16.post("/support/tickets/:ticketId/messages", async (req, res) => {
+router17.post("/support/tickets/:ticketId/messages", async (req, res) => {
   try {
     const uid = req.currentUserId;
     const ticketId = Number(req.params.ticketId);
@@ -151912,13 +153538,14 @@ router16.post("/support/tickets/:ticketId/messages", async (req, res) => {
     res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
   }
 });
-var support_default = router16;
+var support_default = router17;
 
 // src/routes/prime.ts
-var import_express17 = __toESM(require_express2(), 1);
+var import_express18 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
-var router17 = (0, import_express17.Router)();
+init_sse();
+var router18 = (0, import_express18.Router)();
 var PRIME_PLANS = {
   monthly: { spark: 499, months: 1 },
   halfyear: { spark: 1974, months: 6 },
@@ -151972,7 +153599,7 @@ async function ensurePrimePlusLounge(userId) {
     return null;
   }
 }
-router17.post("/prime/subscribe", async (req, res) => {
+router18.post("/prime/subscribe", async (req, res) => {
   try {
     const uid = req.currentUserId;
     const { planId, tier } = req.body;
@@ -152039,7 +153666,7 @@ router17.post("/prime/subscribe", async (req, res) => {
     res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
   }
 });
-router17.get("/prime/status", async (req, res) => {
+router18.get("/prime/status", async (req, res) => {
   try {
     const uid = req.currentUserId;
     const rows = await db.execute(sql`SELECT has_prime, prime_tier, prime_expires_at FROM users WHERE id = ${uid}`);
@@ -152057,7 +153684,7 @@ router17.get("/prime/status", async (req, res) => {
     res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
   }
 });
-router17.get("/prime/lounge", async (req, res) => {
+router18.get("/prime/lounge", async (req, res) => {
   try {
     const uid = req.currentUserId;
     const primeRow = await db.execute(sql`SELECT has_prime, prime_tier, prime_expires_at FROM users WHERE id = ${uid}`);
@@ -152073,48 +153700,74 @@ router17.get("/prime/lounge", async (req, res) => {
     res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
   }
 });
-router17.post("/prime/gift", async (req, res) => {
+router18.post("/prime/gift", async (req, res) => {
   try {
     const senderId = req.currentUserId;
     const { planId, recipientId, tier } = req.body;
+    if (tier !== "prime" && tier !== "prime_plus") {
+      return res.status(400).json({ error: "\u0412\u044B\u0431\u0435\u0440\u0438\u0442\u0435 Prime \u0438\u043B\u0438 Prime+" });
+    }
     const isPlus = tier === "prime_plus";
     const plans = isPlus ? PLUS_PLANS : PRIME_PLANS;
     const plan = plans[planId];
     if (!plan) return res.status(400).json({ error: "\u041D\u0435\u0432\u0435\u0440\u043D\u044B\u0439 \u043F\u043B\u0430\u043D \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0438" });
-    if (!recipientId || typeof recipientId !== "number") return res.status(400).json({ error: "\u0423\u043A\u0430\u0436\u0438\u0442\u0435 \u043F\u043E\u043B\u0443\u0447\u0430\u0442\u0435\u043B\u044F" });
-    if (recipientId === senderId) return res.status(400).json({ error: "\u041D\u0435\u043B\u044C\u0437\u044F \u043F\u043E\u0434\u0430\u0440\u0438\u0442\u044C \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0443 \u0441\u0430\u043C\u043E\u043C\u0443 \u0441\u0435\u0431\u0435" });
-    const PLAN_STARS = { monthly: 1e3, halfyear: 1500, yearly: 2500 };
-    const cost = PLAN_STARS[planId] ?? plan.spark;
-    const senderRows = await db.execute(sql`SELECT balance FROM users WHERE id = ${senderId}`);
-    const sender = senderRows.rows[0];
-    if (!sender) return res.status(404).json({ error: "\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D" });
-    const senderBalance = Number(sender.balance ?? 0);
-    if (senderBalance < cost) {
-      return res.status(400).json({ error: `\u041D\u0435\u0434\u043E\u0441\u0442\u0430\u0442\u043E\u0447\u043D\u043E \u041C\u043E\u043D\u0435\u0442. \u041D\u0443\u0436\u043D\u043E ${cost}, \u0443 \u0432\u0430\u0441 ${senderBalance}`, balance: senderBalance });
-    }
-    const recipientRows = await db.execute(sql`SELECT id, has_prime, prime_expires_at FROM users WHERE id = ${recipientId}`);
-    const recipient = recipientRows.rows[0];
-    if (!recipient) return res.status(404).json({ error: "\u041F\u043E\u043B\u0443\u0447\u0430\u0442\u0435\u043B\u044C \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D" });
-    const now = /* @__PURE__ */ new Date();
-    const currentExpiry = recipient.prime_expires_at ? new Date(recipient.prime_expires_at) : now;
-    const base = currentExpiry > now ? currentExpiry : now;
-    const newExpiry = new Date(base);
-    newExpiry.setMonth(newExpiry.getMonth() + plan.months);
+    const targetId = Number(recipientId);
+    if (!Number.isInteger(targetId) || targetId <= 0) return res.status(400).json({ error: "\u0423\u043A\u0430\u0436\u0438\u0442\u0435 \u043F\u043E\u043B\u0443\u0447\u0430\u0442\u0435\u043B\u044F" });
+    if (targetId === senderId) return res.status(400).json({ error: "\u041D\u0435\u043B\u044C\u0437\u044F \u043F\u043E\u0434\u0430\u0440\u0438\u0442\u044C \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0443 \u0441\u0430\u043C\u043E\u043C\u0443 \u0441\u0435\u0431\u0435" });
     const tierValue = isPlus ? "prime_plus" : "prime";
-    await db.execute(sql`UPDATE users SET balance = balance - ${cost} WHERE id = ${senderId}`);
-    await db.execute(sql`UPDATE users SET has_prime = true, prime_tier = ${tierValue}, prime_expires_at = ${newExpiry.toISOString()} WHERE id = ${recipientId}`);
-    if (isPlus) {
-      await ensurePrimePlusLounge(recipientId);
+    const cost = plan.spark;
+    const result = await db.transaction(async (tx) => {
+      const accountRows = await tx.execute(sql`
+        SELECT id, balance, has_prime, prime_tier, prime_expires_at
+        FROM users
+        WHERE id IN (${senderId}, ${targetId})
+        ORDER BY id
+        FOR UPDATE
+      `);
+      const accounts = accountRows.rows;
+      const sender = accounts.find((account) => Number(account.id) === senderId);
+      const recipient = accounts.find((account) => Number(account.id) === targetId);
+      if (!sender) throw Object.assign(new Error("\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D"), { status: 404 });
+      if (!recipient) throw Object.assign(new Error("\u041F\u043E\u043B\u0443\u0447\u0430\u0442\u0435\u043B\u044C \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D"), { status: 404 });
+      const senderBalance = Number(sender.balance ?? 0);
+      if (senderBalance < cost) {
+        throw Object.assign(new Error(`\u041D\u0435\u0434\u043E\u0441\u0442\u0430\u0442\u043E\u0447\u043D\u043E Nova \u2726. \u041D\u0443\u0436\u043D\u043E ${cost}, \u0443 \u0432\u0430\u0441 ${senderBalance} \u2726`), { status: 402 });
+      }
+      const now = /* @__PURE__ */ new Date();
+      const currentExpiry = recipient.prime_expires_at ? new Date(recipient.prime_expires_at) : now;
+      const hasActivePrime = currentExpiry > now;
+      const base = hasActivePrime ? currentExpiry : now;
+      const newExpiry = new Date(base);
+      newExpiry.setMonth(newExpiry.getMonth() + plan.months);
+      const recipientTier = hasActivePrime && recipient.prime_tier === "prime_plus" && !isPlus ? "prime_plus" : tierValue;
+      await tx.execute(sql`UPDATE users SET balance = balance - ${cost} WHERE id = ${senderId}`);
+      await tx.execute(sql`
+        UPDATE users
+        SET has_prime = true, prime_tier = ${recipientTier}, prime_expires_at = ${newExpiry.toISOString()}
+        WHERE id = ${targetId}
+      `);
+      await tx.execute(sql`
+        INSERT INTO spark_activity (user_id, type, amount, description)
+        VALUES (${senderId}, 'spent', ${-cost}, ${`\u041F\u043E\u0434\u0430\u0440\u043E\u043A \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0438 ${recipientTier}: ${planId}`})
+      `);
+      return {
+        balance: senderBalance - cost,
+        primeExpiresAt: newExpiry.toISOString(),
+        primeTier: recipientTier
+      };
+    });
+    if (result.primeTier === "prime_plus") {
+      await ensurePrimePlusLounge(targetId);
     }
-    const updated = await db.execute(sql`SELECT balance FROM users WHERE id = ${senderId}`);
-    const newBalance = Number(updated.rows[0]?.balance ?? 0);
-    res.json({ success: true, balance: newBalance, primeExpiresAt: newExpiry.toISOString(), primeTier: tierValue });
+    res.json({ success: true, balance: result.balance, primeExpiresAt: result.primeExpiresAt, primeTier: result.primeTier });
+    broadcastToUser(targetId, "prime-update", { userId: targetId, hasPrime: true, primeTier: result.primeTier, primeExpiresAt: result.primeExpiresAt });
   } catch (err2) {
     req.log.error(err2);
-    res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
+    const status = Number(err2?.status) || 500;
+    res.status(status).json({ error: status < 500 ? err2.message : "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
   }
 });
-router17.post("/prime/cancel", async (req, res) => {
+router18.post("/prime/cancel", async (req, res) => {
   try {
     const uid = req.currentUserId;
     const rows = await db.execute(sql`SELECT has_prime FROM users WHERE id = ${uid}`);
@@ -152130,19 +153783,19 @@ router17.post("/prime/cancel", async (req, res) => {
     res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
   }
 });
-var prime_default = router17;
+var prime_default = router18;
 
 // src/routes/polls.ts
-var import_express18 = __toESM(require_express2(), 1);
+var import_express19 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
 init_sse();
-var router18 = (0, import_express18.Router)();
+var router19 = (0, import_express19.Router)();
 async function isChatMember2(chatId, userId) {
   const rows = await db.execute(sql`SELECT 1 FROM chat_members WHERE chat_id = ${chatId} AND user_id = ${userId} LIMIT 1`);
   return rows.rows.length > 0;
 }
-router18.post("/polls", async (req, res) => {
+router19.post("/polls", async (req, res) => {
   try {
     const uid = req.currentUserId;
     const { chatId, question, options, allowMultiple } = req.body;
@@ -152178,7 +153831,7 @@ router18.post("/polls", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-router18.get("/polls/:pollId", async (req, res) => {
+router19.get("/polls/:pollId", async (req, res) => {
   try {
     const uid = req.currentUserId;
     const pollId = Number(req.params.pollId);
@@ -152207,7 +153860,7 @@ router18.get("/polls/:pollId", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-router18.post("/polls/:pollId/vote", async (req, res) => {
+router19.post("/polls/:pollId/vote", async (req, res) => {
   try {
     const uid = req.currentUserId;
     const pollId = Number(req.params.pollId);
@@ -152250,11 +153903,11 @@ router18.post("/polls/:pollId/vote", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-var polls_default = router18;
+var polls_default = router19;
 
 // src/routes/translate.ts
-var import_express19 = __toESM(require_express2(), 1);
-var router19 = (0, import_express19.Router)();
+var import_express20 = __toESM(require_express2(), 1);
+var router20 = (0, import_express20.Router)();
 async function callPollinations(prompt) {
   try {
     const url2 = `https://text.pollinations.ai/${encodeURIComponent(prompt)}?model=openai&seed=${Math.floor(Math.random() * 99999)}`;
@@ -152266,7 +153919,7 @@ async function callPollinations(prompt) {
     return null;
   }
 }
-router19.post("/ai/translate", async (req, res) => {
+router20.post("/ai/translate", async (req, res) => {
   try {
     const { text: text2, targetLang } = req.body;
     if (!text2 || !targetLang) {
@@ -152306,7 +153959,7 @@ ${text2}`;
     res.status(500).json({ error: "Internal server error" });
   }
 });
-router19.post("/ai/smart-replies", async (req, res) => {
+router20.post("/ai/smart-replies", async (req, res) => {
   try {
     const { lastMessage, chatContext } = req.body;
     if (!lastMessage) {
@@ -152343,14 +153996,14 @@ JSON-\u043C\u0430\u0441\u0441\u0438\u0432:`;
     res.status(500).json({ error: "Internal server error" });
   }
 });
-var translate_default = router19;
+var translate_default = router20;
 
 // src/routes/referral.ts
-var import_express20 = __toESM(require_express2(), 1);
+var import_express21 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
-var router20 = (0, import_express20.Router)();
-router20.get("/referral/my-code", async (req, res) => {
+var router21 = (0, import_express21.Router)();
+router21.get("/referral/my-code", async (req, res) => {
   try {
     const uid = req.currentUserId;
     const rows = await db.execute(sql`SELECT referral_code FROM users WHERE id = ${uid}`);
@@ -152371,7 +154024,7 @@ router20.get("/referral/my-code", async (req, res) => {
     res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
   }
 });
-router20.get("/referral/leaderboard", async (req, res) => {
+router21.get("/referral/leaderboard", async (req, res) => {
   try {
     const rows = await db.execute(sql`
       SELECT
@@ -152404,14 +154057,14 @@ function generateCode() {
   for (let i5 = 0; i5 < 8; i5++) code += chars2[Math.floor(Math.random() * chars2.length)];
   return code;
 }
-var referral_default = router20;
+var referral_default = router21;
 
 // src/routes/folders.ts
-var import_express21 = __toESM(require_express2(), 1);
+var import_express22 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
-var router21 = (0, import_express21.Router)();
-router21.get("/folders", async (req, res) => {
+var router22 = (0, import_express22.Router)();
+router22.get("/folders", async (req, res) => {
   try {
     const uid = req.currentUserId;
     const rows = await db.execute(sql`
@@ -152431,7 +154084,7 @@ router21.get("/folders", async (req, res) => {
     res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
   }
 });
-router21.post("/folders", async (req, res) => {
+router22.post("/folders", async (req, res) => {
   try {
     const uid = req.currentUserId;
     const { name: name2, icon } = req.body;
@@ -152454,7 +154107,7 @@ router21.post("/folders", async (req, res) => {
     res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
   }
 });
-router21.patch("/folders/:id", async (req, res) => {
+router22.patch("/folders/:id", async (req, res) => {
   try {
     const uid = req.currentUserId;
     const folderId = Number(req.params.id);
@@ -152474,7 +154127,7 @@ router21.patch("/folders/:id", async (req, res) => {
     res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
   }
 });
-router21.delete("/folders/:id", async (req, res) => {
+router22.delete("/folders/:id", async (req, res) => {
   try {
     const uid = req.currentUserId;
     const folderId = Number(req.params.id);
@@ -152487,7 +154140,7 @@ router21.delete("/folders/:id", async (req, res) => {
     res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
   }
 });
-router21.get("/folders/:id/chats", async (req, res) => {
+router22.get("/folders/:id/chats", async (req, res) => {
   try {
     const uid = req.currentUserId;
     const folderId = Number(req.params.id);
@@ -152500,7 +154153,7 @@ router21.get("/folders/:id/chats", async (req, res) => {
     res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
   }
 });
-router21.post("/folders/:id/chats", async (req, res) => {
+router22.post("/folders/:id/chats", async (req, res) => {
   try {
     const uid = req.currentUserId;
     const folderId = Number(req.params.id);
@@ -152518,7 +154171,7 @@ router21.post("/folders/:id/chats", async (req, res) => {
     res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
   }
 });
-router21.delete("/folders/:id/chats/:chatId", async (req, res) => {
+router22.delete("/folders/:id/chats/:chatId", async (req, res) => {
   try {
     const uid = req.currentUserId;
     const folderId = Number(req.params.id);
@@ -152532,14 +154185,14 @@ router21.delete("/folders/:id/chats/:chatId", async (req, res) => {
     res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
   }
 });
-var folders_default = router21;
+var folders_default = router22;
 
 // src/routes/platform-events.ts
-var import_express22 = __toESM(require_express2(), 1);
+var import_express23 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
-var router22 = (0, import_express22.Router)();
-var ADMIN_USER_IDS2 = [4];
+var router23 = (0, import_express23.Router)();
+var ADMIN_USER_IDS3 = [4];
 async function settleExpiredGiveaways() {
   const expired = await db.execute(sql`
     SELECT id, title, prize_amount, prize_description
@@ -152622,7 +154275,7 @@ async function rescheduleWinnerNotification(settled) {
   });
 }
 async function isAdminUser2(userId) {
-  if (ADMIN_USER_IDS2.includes(userId)) return true;
+  if (ADMIN_USER_IDS3.includes(userId)) return true;
   try {
     const rows = await db.execute(sql`SELECT is_admin FROM users WHERE id = ${userId}`);
     const user = rows.rows[0];
@@ -152631,7 +154284,7 @@ async function isAdminUser2(userId) {
     return false;
   }
 }
-router22.get("/platform-events", async (req, res) => {
+router23.get("/platform-events", async (req, res) => {
   try {
     await settleExpiredGiveaways();
     const now = /* @__PURE__ */ new Date();
@@ -152648,7 +154301,7 @@ router22.get("/platform-events", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-router22.get("/platform-events/joined", async (req, res) => {
+router23.get("/platform-events/joined", async (req, res) => {
   try {
     const uid = req.currentUserId;
     const rows = await db.execute(sql`SELECT event_id FROM event_participants WHERE user_id = ${uid}`);
@@ -152658,7 +154311,7 @@ router22.get("/platform-events/joined", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-router22.post("/platform-events/:id/join", async (req, res) => {
+router23.post("/platform-events/:id/join", async (req, res) => {
   try {
     const uid = req.currentUserId;
     const eventId = Number(req.params.id);
@@ -152695,7 +154348,7 @@ router22.post("/platform-events/:id/join", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-router22.post("/platform-events/:id/leave", async (req, res) => {
+router23.post("/platform-events/:id/leave", async (req, res) => {
   try {
     const uid = req.currentUserId;
     const eventId = Number(req.params.id);
@@ -152711,7 +154364,7 @@ router22.post("/platform-events/:id/leave", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-router22.get("/admin/platform-events", async (req, res) => {
+router23.get("/admin/platform-events", async (req, res) => {
   try {
     if (!await isAdminUser2(req.currentUserId)) return res.status(403).json({ error: "\u0414\u043E\u0441\u0442\u0443\u043F \u0437\u0430\u043F\u0440\u0435\u0449\u0451\u043D" });
     await settleExpiredGiveaways();
@@ -152722,7 +154375,7 @@ router22.get("/admin/platform-events", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-router22.post("/admin/platform-events", async (req, res) => {
+router23.post("/admin/platform-events", async (req, res) => {
   try {
     if (!await isAdminUser2(req.currentUserId)) return res.status(403).json({ error: "\u0414\u043E\u0441\u0442\u0443\u043F \u0437\u0430\u043F\u0440\u0435\u0449\u0451\u043D" });
     const { title, description, imageUrl, bannerColor, startAt, endAt, isActive, eventType, cost, conditions, prizeAmount, prizeDescription } = req.body;
@@ -152748,7 +154401,7 @@ router22.post("/admin/platform-events", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-router22.patch("/admin/platform-events/:id", async (req, res) => {
+router23.patch("/admin/platform-events/:id", async (req, res) => {
   try {
     if (!await isAdminUser2(req.currentUserId)) return res.status(403).json({ error: "\u0414\u043E\u0441\u0442\u0443\u043F \u0437\u0430\u043F\u0440\u0435\u0449\u0451\u043D" });
     const id = Number(req.params.id);
@@ -152774,7 +154427,7 @@ router22.patch("/admin/platform-events/:id", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-router22.delete("/admin/platform-events/:id", async (req, res) => {
+router23.delete("/admin/platform-events/:id", async (req, res) => {
   try {
     if (!await isAdminUser2(req.currentUserId)) return res.status(403).json({ error: "\u0414\u043E\u0441\u0442\u0443\u043F \u0437\u0430\u043F\u0440\u0435\u0449\u0451\u043D" });
     const id = Number(req.params.id);
@@ -152785,15 +154438,15 @@ router22.delete("/admin/platform-events/:id", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-var platform_events_default = router22;
+var platform_events_default = router23;
 
 // src/routes/contact-requests.ts
-var import_express23 = __toESM(require_express2(), 1);
+var import_express24 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
 init_sse();
-var router23 = (0, import_express23.Router)();
-router23.get("/contact-requests/incoming", async (req, res) => {
+var router24 = (0, import_express24.Router)();
+router24.get("/contact-requests/incoming", async (req, res) => {
   try {
     const uid = req.currentUserId;
     const rows = await db.execute(sql`
@@ -152811,7 +154464,7 @@ router23.get("/contact-requests/incoming", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-router23.get("/contact-requests/outgoing", async (req, res) => {
+router24.get("/contact-requests/outgoing", async (req, res) => {
   try {
     const uid = req.currentUserId;
     const rows = await db.execute(sql`
@@ -152829,7 +154482,7 @@ router23.get("/contact-requests/outgoing", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-router23.post("/contact-requests", async (req, res) => {
+router24.post("/contact-requests", async (req, res) => {
   try {
     const uid = req.currentUserId;
     const moderation = await getActiveUserModeration(uid);
@@ -152874,7 +154527,7 @@ router23.post("/contact-requests", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-router23.post("/contact-requests/:id/accept", async (req, res) => {
+router24.post("/contact-requests/:id/accept", async (req, res) => {
   try {
     const uid = req.currentUserId;
     const reqId = Number(req.params.id);
@@ -152899,7 +154552,7 @@ router23.post("/contact-requests/:id/accept", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-router23.post("/contact-requests/:id/decline", async (req, res) => {
+router24.post("/contact-requests/:id/decline", async (req, res) => {
   try {
     const uid = req.currentUserId;
     const reqId = Number(req.params.id);
@@ -152914,7 +154567,7 @@ router23.post("/contact-requests/:id/decline", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-router23.delete("/contact-requests/:id", async (req, res) => {
+router24.delete("/contact-requests/:id", async (req, res) => {
   try {
     const uid = req.currentUserId;
     const reqId = Number(req.params.id);
@@ -152927,13 +154580,13 @@ router23.delete("/contact-requests/:id", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-var contact_requests_default = router23;
+var contact_requests_default = router24;
 
 // src/routes/clans.ts
-var import_express24 = __toESM(require_express2(), 1);
+var import_express25 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
-var router24 = (0, import_express24.Router)();
+var router25 = (0, import_express25.Router)();
 var init = async () => {
   await db.execute(sql`
     CREATE TABLE IF NOT EXISTS clans (
@@ -153002,12 +154655,12 @@ var init = async () => {
   });
 };
 init();
-async function isAdmin2(userId) {
+async function isAdmin3(userId) {
   if (!userId) return false;
   const row = await db.execute(sql`SELECT is_admin FROM users WHERE id = ${userId} LIMIT 1`);
   return !!row.rows[0]?.is_admin;
 }
-router24.get("/clans", async (req, res) => {
+router25.get("/clans", async (req, res) => {
   try {
     const rows = await db.execute(sql`
       SELECT c.id, c.name, c.tag, c.description, c.logo_url, c.cover_url,
@@ -153029,7 +154682,7 @@ router24.get("/clans", async (req, res) => {
     res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
   }
 });
-router24.get("/clans/wars", async (req, res) => {
+router25.get("/clans/wars", async (req, res) => {
   try {
     const rows = await db.execute(sql`
       SELECT w.*,
@@ -153049,7 +154702,7 @@ router24.get("/clans/wars", async (req, res) => {
     res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
   }
 });
-router24.get("/clans/:id", async (req, res) => {
+router25.get("/clans/:id", async (req, res) => {
   try {
     const clanId = Number(req.params.id);
     if (!clanId) return res.status(400).json({ error: "\u041D\u0435\u0432\u0435\u0440\u043D\u044B\u0439 id" });
@@ -153096,7 +154749,7 @@ router24.get("/clans/:id", async (req, res) => {
     res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
   }
 });
-router24.post("/clans", async (req, res) => {
+router25.post("/clans", async (req, res) => {
   const uid = req.currentUserId;
   if (!uid) return res.status(401).json({ error: "\u0422\u0440\u0435\u0431\u0443\u0435\u0442\u0441\u044F \u0430\u0432\u0442\u043E\u0440\u0438\u0437\u0430\u0446\u0438\u044F" });
   try {
@@ -153125,7 +154778,7 @@ router24.post("/clans", async (req, res) => {
     res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
   }
 });
-router24.put("/clans/:id", async (req, res) => {
+router25.put("/clans/:id", async (req, res) => {
   const uid = req.currentUserId;
   if (!uid) return res.status(401).json({ error: "\u0422\u0440\u0435\u0431\u0443\u0435\u0442\u0441\u044F \u0430\u0432\u0442\u043E\u0440\u0438\u0437\u0430\u0446\u0438\u044F" });
   try {
@@ -153149,7 +154802,7 @@ router24.put("/clans/:id", async (req, res) => {
     res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
   }
 });
-router24.delete("/clans/:id", async (req, res) => {
+router25.delete("/clans/:id", async (req, res) => {
   const uid = req.currentUserId;
   if (!uid) return res.status(401).json({ error: "\u0422\u0440\u0435\u0431\u0443\u0435\u0442\u0441\u044F \u0430\u0432\u0442\u043E\u0440\u0438\u0437\u0430\u0446\u0438\u044F" });
   try {
@@ -153157,7 +154810,7 @@ router24.delete("/clans/:id", async (req, res) => {
     const clan = await db.execute(sql`SELECT owner_id FROM clans WHERE id = ${clanId} LIMIT 1`);
     const owner = clan.rows[0];
     if (!owner) return res.status(404).json({ error: "\u041A\u043B\u0430\u043D \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D" });
-    const admin = await isAdmin2(uid);
+    const admin = await isAdmin3(uid);
     if (owner.owner_id !== uid && !admin) return res.status(403).json({ error: "\u0422\u043E\u043B\u044C\u043A\u043E \u0432\u043B\u0430\u0434\u0435\u043B\u0435\u0446 \u043C\u043E\u0436\u0435\u0442 \u0443\u0434\u0430\u043B\u0438\u0442\u044C \u043A\u043B\u0430\u043D" });
     await db.execute(sql`DELETE FROM clans WHERE id = ${clanId}`);
     res.json({ ok: true });
@@ -153166,7 +154819,7 @@ router24.delete("/clans/:id", async (req, res) => {
     res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
   }
 });
-router24.post("/clans/:id/join", async (req, res) => {
+router25.post("/clans/:id/join", async (req, res) => {
   const uid = req.currentUserId;
   if (!uid) return res.status(401).json({ error: "\u0422\u0440\u0435\u0431\u0443\u0435\u0442\u0441\u044F \u0430\u0432\u0442\u043E\u0440\u0438\u0437\u0430\u0446\u0438\u044F" });
   try {
@@ -153187,7 +154840,7 @@ router24.post("/clans/:id/join", async (req, res) => {
     res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
   }
 });
-router24.post("/clans/:id/leave", async (req, res) => {
+router25.post("/clans/:id/leave", async (req, res) => {
   const uid = req.currentUserId;
   if (!uid) return res.status(401).json({ error: "\u0422\u0440\u0435\u0431\u0443\u0435\u0442\u0441\u044F \u0430\u0432\u0442\u043E\u0440\u0438\u0437\u0430\u0446\u0438\u044F" });
   try {
@@ -153219,7 +154872,7 @@ router24.post("/clans/:id/leave", async (req, res) => {
     res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
   }
 });
-router24.post("/clans/:id/request", async (req, res) => {
+router25.post("/clans/:id/request", async (req, res) => {
   const uid = req.currentUserId;
   if (!uid) return res.status(401).json({ error: "\u0422\u0440\u0435\u0431\u0443\u0435\u0442\u0441\u044F \u0430\u0432\u0442\u043E\u0440\u0438\u0437\u0430\u0446\u0438\u044F" });
   try {
@@ -153244,7 +154897,7 @@ router24.post("/clans/:id/request", async (req, res) => {
     res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
   }
 });
-router24.get("/clans/:id/requests", async (req, res) => {
+router25.get("/clans/:id/requests", async (req, res) => {
   const uid = req.currentUserId;
   if (!uid) return res.status(401).json({ error: "\u0422\u0440\u0435\u0431\u0443\u0435\u0442\u0441\u044F \u0430\u0432\u0442\u043E\u0440\u0438\u0437\u0430\u0446\u0438\u044F" });
   try {
@@ -153266,7 +154919,7 @@ router24.get("/clans/:id/requests", async (req, res) => {
     res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
   }
 });
-router24.post("/clans/:id/requests/:reqId/accept", async (req, res) => {
+router25.post("/clans/:id/requests/:reqId/accept", async (req, res) => {
   const uid = req.currentUserId;
   if (!uid) return res.status(401).json({ error: "\u0422\u0440\u0435\u0431\u0443\u0435\u0442\u0441\u044F \u0430\u0432\u0442\u043E\u0440\u0438\u0437\u0430\u0446\u0438\u044F" });
   try {
@@ -153290,7 +154943,7 @@ router24.post("/clans/:id/requests/:reqId/accept", async (req, res) => {
     res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
   }
 });
-router24.post("/clans/:id/requests/:reqId/decline", async (req, res) => {
+router25.post("/clans/:id/requests/:reqId/decline", async (req, res) => {
   const uid = req.currentUserId;
   if (!uid) return res.status(401).json({ error: "\u0422\u0440\u0435\u0431\u0443\u0435\u0442\u0441\u044F \u0430\u0432\u0442\u043E\u0440\u0438\u0437\u0430\u0446\u0438\u044F" });
   try {
@@ -153305,7 +154958,7 @@ router24.post("/clans/:id/requests/:reqId/decline", async (req, res) => {
     res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
   }
 });
-router24.delete("/clans/:id/members/:userId", async (req, res) => {
+router25.delete("/clans/:id/members/:userId", async (req, res) => {
   const uid = req.currentUserId;
   if (!uid) return res.status(401).json({ error: "\u0422\u0440\u0435\u0431\u0443\u0435\u0442\u0441\u044F \u0430\u0432\u0442\u043E\u0440\u0438\u0437\u0430\u0446\u0438\u044F" });
   try {
@@ -153326,7 +154979,7 @@ router24.delete("/clans/:id/members/:userId", async (req, res) => {
     res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
   }
 });
-router24.patch("/clans/:id/members/:userId/role", async (req, res) => {
+router25.patch("/clans/:id/members/:userId/role", async (req, res) => {
   const uid = req.currentUserId;
   if (!uid) return res.status(401).json({ error: "\u0422\u0440\u0435\u0431\u0443\u0435\u0442\u0441\u044F \u0430\u0432\u0442\u043E\u0440\u0438\u0437\u0430\u0446\u0438\u044F" });
   try {
@@ -153343,9 +154996,9 @@ router24.patch("/clans/:id/members/:userId/role", async (req, res) => {
     res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
   }
 });
-router24.get("/admin/clans", async (req, res) => {
+router25.get("/admin/clans", async (req, res) => {
   const uid = req.currentUserId;
-  if (!uid || !await isAdmin2(uid)) return res.status(403).json({ error: "\u041D\u0435\u0442 \u043F\u0440\u0430\u0432" });
+  if (!uid || !await isAdmin3(uid)) return res.status(403).json({ error: "\u041D\u0435\u0442 \u043F\u0440\u0430\u0432" });
   try {
     const rows = await db.execute(sql`
       SELECT c.id, c.name, c.tag, c.wins, c.losses,
@@ -153359,9 +155012,9 @@ router24.get("/admin/clans", async (req, res) => {
     res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
   }
 });
-router24.post("/admin/clans/wars", async (req, res) => {
+router25.post("/admin/clans/wars", async (req, res) => {
   const uid = req.currentUserId;
-  if (!uid || !await isAdmin2(uid)) return res.status(403).json({ error: "\u041D\u0435\u0442 \u043F\u0440\u0430\u0432" });
+  if (!uid || !await isAdmin3(uid)) return res.status(403).json({ error: "\u041D\u0435\u0442 \u043F\u0440\u0430\u0432" });
   try {
     const { title, challengerId, defenderId, startAt, endAt, prizeDescription } = req.body;
     if (!title || !challengerId || !defenderId || !startAt || !endAt)
@@ -153385,9 +155038,9 @@ router24.post("/admin/clans/wars", async (req, res) => {
     res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
   }
 });
-router24.put("/admin/clans/wars/:id", async (req, res) => {
+router25.put("/admin/clans/wars/:id", async (req, res) => {
   const uid = req.currentUserId;
-  if (!uid || !await isAdmin2(uid)) return res.status(403).json({ error: "\u041D\u0435\u0442 \u043F\u0440\u0430\u0432" });
+  if (!uid || !await isAdmin3(uid)) return res.status(403).json({ error: "\u041D\u0435\u0442 \u043F\u0440\u0430\u0432" });
   try {
     const warId = Number(req.params.id);
     const { challengerScore, defenderScore, status, winnerId } = req.body;
@@ -153417,9 +155070,9 @@ router24.put("/admin/clans/wars/:id", async (req, res) => {
     res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
   }
 });
-router24.delete("/admin/clans/wars/:id", async (req, res) => {
+router25.delete("/admin/clans/wars/:id", async (req, res) => {
   const uid = req.currentUserId;
-  if (!uid || !await isAdmin2(uid)) return res.status(403).json({ error: "\u041D\u0435\u0442 \u043F\u0440\u0430\u0432" });
+  if (!uid || !await isAdmin3(uid)) return res.status(403).json({ error: "\u041D\u0435\u0442 \u043F\u0440\u0430\u0432" });
   try {
     const warId = Number(req.params.id);
     await db.execute(sql`DELETE FROM clan_wars WHERE id = ${warId}`);
@@ -153429,13 +155082,13 @@ router24.delete("/admin/clans/wars/:id", async (req, res) => {
     res.status(500).json({ error: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430" });
   }
 });
-var clans_default = router24;
+var clans_default = router25;
 
 // src/routes/feature-hub.ts
-var import_express25 = __toESM(require_express2(), 1);
+var import_express26 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
-var router25 = (0, import_express25.Router)();
+var router26 = (0, import_express26.Router)();
 var PRIVACY_DEFAULTS = {
   whoCanMessage: "everyone",
   whoCanInvite: "contacts",
@@ -153561,7 +155214,7 @@ async function canManageChat(chatId, userId) {
   const row = result.rows[0];
   return row && (row.role === "owner" || row.role === "admin" || row.extended_role === "owner" || row.extended_role === "moderator");
 }
-router25.get("/privacy/settings", async (req, res) => {
+router26.get("/privacy/settings", async (req, res) => {
   const userId = auth(req, res);
   if (!userId) return;
   try {
@@ -153580,7 +155233,7 @@ router25.get("/privacy/settings", async (req, res) => {
     res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u043D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438 \u043F\u0440\u0438\u0432\u0430\u0442\u043D\u043E\u0441\u0442\u0438" });
   }
 });
-router25.put("/privacy/settings", async (req, res) => {
+router26.put("/privacy/settings", async (req, res) => {
   const userId = auth(req, res);
   if (!userId) return;
   try {
@@ -153621,7 +155274,7 @@ router25.put("/privacy/settings", async (req, res) => {
     res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0441\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C \u043D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438 \u043F\u0440\u0438\u0432\u0430\u0442\u043D\u043E\u0441\u0442\u0438" });
   }
 });
-router25.get("/privacy/overrides", async (req, res) => {
+router26.get("/privacy/overrides", async (req, res) => {
   const userId = auth(req, res);
   if (!userId) return;
   try {
@@ -153639,7 +155292,7 @@ router25.get("/privacy/overrides", async (req, res) => {
     res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u0438\u0441\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u044F \u043F\u0440\u0438\u0432\u0430\u0442\u043D\u043E\u0441\u0442\u0438" });
   }
 });
-router25.put("/privacy/overrides/:contactId", async (req, res) => {
+router26.put("/privacy/overrides/:contactId", async (req, res) => {
   const userId = auth(req, res);
   if (!userId) return;
   const contactId = Number(req.params.contactId);
@@ -153665,7 +155318,7 @@ router25.put("/privacy/overrides/:contactId", async (req, res) => {
     res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0441\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C \u0438\u0441\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u0435" });
   }
 });
-router25.delete("/privacy/overrides/:contactId", async (req, res) => {
+router26.delete("/privacy/overrides/:contactId", async (req, res) => {
   const userId = auth(req, res);
   if (!userId) return;
   try {
@@ -153677,7 +155330,7 @@ router25.delete("/privacy/overrides/:contactId", async (req, res) => {
     res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0443\u0434\u0430\u043B\u0438\u0442\u044C \u0438\u0441\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u0435" });
   }
 });
-router25.get("/chats/:chatId/antispam", async (req, res) => {
+router26.get("/chats/:chatId/antispam", async (req, res) => {
   const userId = auth(req, res);
   if (!userId) return;
   const chatId = Number(req.params.chatId);
@@ -153695,7 +155348,7 @@ router25.get("/chats/:chatId/antispam", async (req, res) => {
     res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u0430\u043D\u0442\u0438\u0441\u043F\u0430\u043C" });
   }
 });
-router25.put("/chats/:chatId/antispam", async (req, res) => {
+router26.put("/chats/:chatId/antispam", async (req, res) => {
   const userId = auth(req, res);
   if (!userId) return;
   const chatId = Number(req.params.chatId);
@@ -153724,7 +155377,7 @@ router25.put("/chats/:chatId/antispam", async (req, res) => {
     res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0441\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C \u0430\u043D\u0442\u0438\u0441\u043F\u0430\u043C" });
   }
 });
-router25.get("/chats/:chatId/roles", async (req, res) => {
+router26.get("/chats/:chatId/roles", async (req, res) => {
   const userId = auth(req, res);
   if (!userId) return;
   const chatId = Number(req.params.chatId);
@@ -153748,7 +155401,7 @@ router25.get("/chats/:chatId/roles", async (req, res) => {
     res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u0440\u043E\u043B\u0438" });
   }
 });
-router25.patch("/chats/:chatId/roles/:memberId", async (req, res) => {
+router26.patch("/chats/:chatId/roles/:memberId", async (req, res) => {
   const userId = auth(req, res);
   if (!userId) return;
   const chatId = Number(req.params.chatId);
@@ -153773,7 +155426,7 @@ router25.patch("/chats/:chatId/roles/:memberId", async (req, res) => {
     res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0438\u0437\u043C\u0435\u043D\u0438\u0442\u044C \u0440\u043E\u043B\u044C" });
   }
 });
-router25.get("/chats/:chatId/action-log", async (req, res) => {
+router26.get("/chats/:chatId/action-log", async (req, res) => {
   const userId = auth(req, res);
   if (!userId) return;
   const chatId = Number(req.params.chatId);
@@ -153793,7 +155446,7 @@ router25.get("/chats/:chatId/action-log", async (req, res) => {
     res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u0436\u0443\u0440\u043D\u0430\u043B \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u0439" });
   }
 });
-router25.get("/playlists", async (req, res) => {
+router26.get("/playlists", async (req, res) => {
   const userId = auth(req, res);
   if (!userId) return;
   try {
@@ -153810,7 +155463,7 @@ router25.get("/playlists", async (req, res) => {
     res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u043F\u043B\u0435\u0439\u043B\u0438\u0441\u0442\u044B" });
   }
 });
-router25.get("/users/:userId/playlists", async (req, res) => {
+router26.get("/users/:userId/playlists", async (req, res) => {
   const viewerId = auth(req, res);
   if (!viewerId) return;
   const profileUserId = Number(req.params.userId);
@@ -153850,7 +155503,7 @@ router25.get("/users/:userId/playlists", async (req, res) => {
     res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u043F\u0443\u0431\u043B\u0438\u0447\u043D\u044B\u0435 \u043F\u043B\u0435\u0439\u043B\u0438\u0441\u0442\u044B" });
   }
 });
-router25.post("/playlists", async (req, res) => {
+router26.post("/playlists", async (req, res) => {
   const userId = auth(req, res);
   if (!userId) return;
   const name2 = String(req.body?.name || "").trim().slice(0, 80);
@@ -153868,7 +155521,7 @@ router25.post("/playlists", async (req, res) => {
     res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0441\u043E\u0437\u0434\u0430\u0442\u044C \u043F\u043B\u0435\u0439\u043B\u0438\u0441\u0442" });
   }
 });
-router25.get("/playlists/:playlistId", async (req, res) => {
+router26.get("/playlists/:playlistId", async (req, res) => {
   const userId = auth(req, res);
   if (!userId) return;
   try {
@@ -153882,7 +155535,7 @@ router25.get("/playlists/:playlistId", async (req, res) => {
     res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u043F\u043B\u0435\u0439\u043B\u0438\u0441\u0442" });
   }
 });
-router25.post("/playlists/:playlistId/tracks", async (req, res) => {
+router26.post("/playlists/:playlistId/tracks", async (req, res) => {
   const userId = auth(req, res);
   if (!userId) return;
   const playlistId = Number(req.params.playlistId);
@@ -153916,7 +155569,7 @@ router25.post("/playlists/:playlistId/tracks", async (req, res) => {
     res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0434\u043E\u0431\u0430\u0432\u0438\u0442\u044C \u0442\u0440\u0435\u043A" });
   }
 });
-router25.delete("/playlists/:playlistId/tracks/:trackId", async (req, res) => {
+router26.delete("/playlists/:playlistId/tracks/:trackId", async (req, res) => {
   const userId = auth(req, res);
   if (!userId) return;
   try {
@@ -153932,13 +155585,13 @@ router25.delete("/playlists/:playlistId/tracks/:trackId", async (req, res) => {
     res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0443\u0434\u0430\u043B\u0438\u0442\u044C \u0442\u0440\u0435\u043A" });
   }
 });
-var feature_hub_default = router25;
+var feature_hub_default = router26;
 
 // src/routes/enhancements.ts
-var import_express26 = __toESM(require_express2(), 1);
+var import_express27 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
-var router26 = (0, import_express26.Router)();
+var router27 = (0, import_express27.Router)();
 function auth2(req) {
   return Number(req.currentUserId || 0);
 }
@@ -153948,7 +155601,7 @@ async function isMember(chatId, userId) {
   `);
   return result.rows.length > 0;
 }
-router26.get("/chats/:chatId/space", async (req, res) => {
+router27.get("/chats/:chatId/space", async (req, res) => {
   const userId = auth2(req);
   const chatId = Number(req.params.chatId);
   if (!userId || !await isMember(chatId, userId)) return res.status(403).json({ error: "\u041D\u0435\u0442 \u0434\u043E\u0441\u0442\u0443\u043F\u0430" });
@@ -153966,7 +155619,7 @@ router26.get("/chats/:chatId/space", async (req, res) => {
   ]);
   return res.json({ notes: notes.rows, tasks: tasks.rows });
 });
-router26.post("/chats/:chatId/space/notes", async (req, res) => {
+router27.post("/chats/:chatId/space/notes", async (req, res) => {
   const userId = auth2(req);
   const chatId = Number(req.params.chatId);
   if (!userId || !await isMember(chatId, userId)) return res.status(403).json({ error: "\u041D\u0435\u0442 \u0434\u043E\u0441\u0442\u0443\u043F\u0430" });
@@ -153980,7 +155633,7 @@ router26.post("/chats/:chatId/space/notes", async (req, res) => {
   `);
   return res.status(201).json(inserted.rows[0]);
 });
-router26.put("/chats/:chatId/space/notes/:noteId", async (req, res) => {
+router27.put("/chats/:chatId/space/notes/:noteId", async (req, res) => {
   const userId = auth2(req);
   const chatId = Number(req.params.chatId);
   const noteId = Number(req.params.noteId);
@@ -153995,14 +155648,14 @@ router26.put("/chats/:chatId/space/notes/:noteId", async (req, res) => {
   if (!updated.rows.length) return res.status(404).json({ error: "\u0417\u0430\u043C\u0435\u0442\u043A\u0430 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u0430" });
   return res.json(updated.rows[0]);
 });
-router26.delete("/chats/:chatId/space/notes/:noteId", async (req, res) => {
+router27.delete("/chats/:chatId/space/notes/:noteId", async (req, res) => {
   const userId = auth2(req);
   const chatId = Number(req.params.chatId);
   if (!userId || !await isMember(chatId, userId)) return res.status(403).json({ error: "\u041D\u0435\u0442 \u0434\u043E\u0441\u0442\u0443\u043F\u0430" });
   await db.execute(sql`DELETE FROM chat_space_notes WHERE id = ${Number(req.params.noteId)} AND chat_id = ${chatId}`);
   return res.status(204).end();
 });
-router26.post("/chats/:chatId/space/tasks", async (req, res) => {
+router27.post("/chats/:chatId/space/tasks", async (req, res) => {
   const userId = auth2(req);
   const chatId = Number(req.params.chatId);
   if (!userId || !await isMember(chatId, userId)) return res.status(403).json({ error: "\u041D\u0435\u0442 \u0434\u043E\u0441\u0442\u0443\u043F\u0430" });
@@ -154016,7 +155669,7 @@ router26.post("/chats/:chatId/space/tasks", async (req, res) => {
   `);
   return res.status(201).json(inserted.rows[0]);
 });
-router26.patch("/chats/:chatId/space/tasks/:taskId", async (req, res) => {
+router27.patch("/chats/:chatId/space/tasks/:taskId", async (req, res) => {
   const userId = auth2(req);
   const chatId = Number(req.params.chatId);
   if (!userId || !await isMember(chatId, userId)) return res.status(403).json({ error: "\u041D\u0435\u0442 \u0434\u043E\u0441\u0442\u0443\u043F\u0430" });
@@ -154031,14 +155684,14 @@ router26.patch("/chats/:chatId/space/tasks/:taskId", async (req, res) => {
   if (!updated.rows.length) return res.status(404).json({ error: "\u0417\u0430\u0434\u0430\u0447\u0430 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u0430" });
   return res.json(updated.rows[0]);
 });
-router26.delete("/chats/:chatId/space/tasks/:taskId", async (req, res) => {
+router27.delete("/chats/:chatId/space/tasks/:taskId", async (req, res) => {
   const userId = auth2(req);
   const chatId = Number(req.params.chatId);
   if (!userId || !await isMember(chatId, userId)) return res.status(403).json({ error: "\u041D\u0435\u0442 \u0434\u043E\u0441\u0442\u0443\u043F\u0430" });
   await db.execute(sql`DELETE FROM chat_space_tasks WHERE id = ${Number(req.params.taskId)} AND chat_id = ${chatId}`);
   return res.status(204).end();
 });
-router26.get("/chats/:chatId/media", async (req, res) => {
+router27.get("/chats/:chatId/media", async (req, res) => {
   const userId = auth2(req);
   const chatId = Number(req.params.chatId);
   if (!userId || !await isMember(chatId, userId)) return res.status(403).json({ error: "\u041D\u0435\u0442 \u0434\u043E\u0441\u0442\u0443\u043F\u0430" });
@@ -154055,7 +155708,7 @@ router26.get("/chats/:chatId/media", async (req, res) => {
   `);
   return res.json(result.rows);
 });
-router26.get("/public/users/:username", async (req, res) => {
+router27.get("/public/users/:username", async (req, res) => {
   const username = String(req.params.username || "").trim().toLowerCase();
   const result = await db.execute(sql`
     SELECT id, username, display_name, bio, avatar_url, avatar_color, status_text,
@@ -154065,7 +155718,7 @@ router26.get("/public/users/:username", async (req, res) => {
   if (!result.rows.length) return res.status(404).json({ error: "\u041F\u0440\u043E\u0444\u0438\u043B\u044C \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D" });
   return res.json(result.rows[0]);
 });
-router26.get("/achievements/me", async (req, res) => {
+router27.get("/achievements/me", async (req, res) => {
   const userId = auth2(req);
   const [messages, calls, reactions, contacts, stories] = await Promise.all([
     db.execute(sql`SELECT COUNT(*)::int AS count FROM messages WHERE sender_id = ${userId}`),
@@ -154092,20 +155745,20 @@ router26.get("/achievements/me", async (req, res) => {
   ].map((item) => ({ ...item, completed: item.value >= item.target, progress: Math.min(100, Math.round(item.value / item.target * 100)) }));
   return res.json({ stats, achievements });
 });
-var enhancements_default = router26;
+var enhancements_default = router27;
 
 // src/routes/drafts.ts
-var import_express27 = __toESM(require_express2(), 1);
+var import_express28 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
-var router27 = (0, import_express27.Router)();
+var router28 = (0, import_express28.Router)();
 async function canAccessChat(chatId, userId) {
   const member2 = await db.query.chatMembersTable.findFirst({
     where: and(eq(chatMembersTable.chatId, chatId), eq(chatMembersTable.userId, userId))
   });
   return !!member2;
 }
-router27.get("/drafts", async (req, res) => {
+router28.get("/drafts", async (req, res) => {
   try {
     const drafts = await db.select({
       chatId: chatDraftsTable.chatId,
@@ -154118,7 +155771,7 @@ router27.get("/drafts", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-router27.get("/drafts/:chatId", async (req, res) => {
+router28.get("/drafts/:chatId", async (req, res) => {
   try {
     const chatId = Number(req.params.chatId);
     if (!Number.isInteger(chatId) || !await canAccessChat(chatId, req.currentUserId)) {
@@ -154133,7 +155786,7 @@ router27.get("/drafts/:chatId", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-router27.put("/drafts/:chatId", async (req, res) => {
+router28.put("/drafts/:chatId", async (req, res) => {
   try {
     const chatId = Number(req.params.chatId);
     if (!Number.isInteger(chatId) || !await canAccessChat(chatId, req.currentUserId)) {
@@ -154154,14 +155807,14 @@ router27.put("/drafts/:chatId", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-var drafts_default = router27;
+var drafts_default = router28;
 
 // src/routes/audio-rooms.ts
-var import_express28 = __toESM(require_express2(), 1);
+var import_express29 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
-var router28 = (0, import_express28.Router)();
-router28.get("/audio-rooms", async (_req, res) => {
+var router29 = (0, import_express29.Router)();
+router29.get("/audio-rooms", async (_req, res) => {
   try {
     const rooms = await db.select().from(audioRoomsTable).where(eq(audioRoomsTable.status, "active")).orderBy(desc(audioRoomsTable.createdAt));
     res.json(rooms);
@@ -154170,7 +155823,7 @@ router28.get("/audio-rooms", async (_req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-router28.post("/audio-rooms", async (req, res) => {
+router29.post("/audio-rooms", async (req, res) => {
   try {
     const name2 = typeof req.body?.name === "string" && req.body.name.trim() ? req.body.name.trim().slice(0, 80) : "\u0410\u0443\u0434\u0438\u043E\u043A\u043E\u043C\u043D\u0430\u0442\u0430";
     const [call] = await db.insert(callsTable).values({
@@ -154191,7 +155844,7 @@ router28.post("/audio-rooms", async (req, res) => {
     res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0441\u043E\u0437\u0434\u0430\u0442\u044C \u0430\u0443\u0434\u0438\u043E\u043A\u043E\u043C\u043D\u0430\u0442\u0443" });
   }
 });
-router28.delete("/audio-rooms/:roomId", async (req, res) => {
+router29.delete("/audio-rooms/:roomId", async (req, res) => {
   try {
     const roomId = Number(req.params.roomId);
     const room = await db.query.audioRoomsTable.findFirst({ where: eq(audioRoomsTable.id, roomId) });
@@ -154205,13 +155858,13 @@ router28.delete("/audio-rooms/:roomId", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-var audio_rooms_default = router28;
+var audio_rooms_default = router29;
 
 // src/routes/plugins.ts
-var import_express29 = __toESM(require_express2(), 1);
+var import_express30 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
-var router29 = (0, import_express29.Router)();
+var router30 = (0, import_express30.Router)();
 var schemaPromise2 = null;
 function ensureSchema2() {
   if (!schemaPromise2) {
@@ -154245,7 +155898,7 @@ function currentUserId(req, res) {
   }
   return userId;
 }
-async function isAdmin3(userId) {
+async function isAdmin4(userId) {
   const rows = await db.execute(sql`SELECT is_admin FROM users WHERE id = ${userId}`);
   const value = rows.rows[0]?.is_admin;
   return value === true || value === "t" || value === 1;
@@ -154253,7 +155906,7 @@ async function isAdmin3(userId) {
 async function requireAdmin2(req, res) {
   const userId = currentUserId(req, res);
   if (!userId) return null;
-  if (!await isAdmin3(userId)) {
+  if (!await isAdmin4(userId)) {
     res.status(403).json({ error: "\u0414\u043E\u0441\u0442\u0443\u043F \u0437\u0430\u043F\u0440\u0435\u0449\u0451\u043D" });
     return null;
   }
@@ -154269,7 +155922,7 @@ function validateEntryUrl(raw) {
     return null;
   }
 }
-router29.get("/plugins", async (req, res) => {
+router30.get("/plugins", async (req, res) => {
   const userId = currentUserId(req, res);
   if (!userId) return;
   try {
@@ -154288,7 +155941,7 @@ router29.get("/plugins", async (req, res) => {
     res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u043A\u0430\u0442\u0430\u043B\u043E\u0433 \u043F\u043B\u0430\u0433\u0438\u043D\u043E\u0432" });
   }
 });
-router29.get("/plugins/submissions/mine", async (req, res) => {
+router30.get("/plugins/submissions/mine", async (req, res) => {
   const userId = currentUserId(req, res);
   if (!userId) return;
   try {
@@ -154305,7 +155958,7 @@ router29.get("/plugins/submissions/mine", async (req, res) => {
     res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u0432\u0430\u0448\u0438 \u0437\u0430\u044F\u0432\u043A\u0438" });
   }
 });
-router29.post("/plugins/submissions", async (req, res) => {
+router30.post("/plugins/submissions", async (req, res) => {
   const userId = currentUserId(req, res);
   if (!userId) return;
   const name2 = String(req.body?.name || "").trim().slice(0, 80);
@@ -154336,7 +155989,7 @@ router29.post("/plugins/submissions", async (req, res) => {
     res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u043E\u0442\u043F\u0440\u0430\u0432\u0438\u0442\u044C \u0437\u0430\u044F\u0432\u043A\u0443" });
   }
 });
-router29.get("/admin/plugin-submissions", async (req, res) => {
+router30.get("/admin/plugin-submissions", async (req, res) => {
   const adminId = await requireAdmin2(req, res);
   if (!adminId) return;
   try {
@@ -154353,7 +156006,7 @@ router29.get("/admin/plugin-submissions", async (req, res) => {
     res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u0437\u0430\u044F\u0432\u043A\u0438 \u043D\u0430 \u043F\u043B\u0430\u0433\u0438\u043D\u044B" });
   }
 });
-router29.post("/admin/plugin-submissions/:id/review", async (req, res) => {
+router30.post("/admin/plugin-submissions/:id/review", async (req, res) => {
   const adminId = await requireAdmin2(req, res);
   if (!adminId) return;
   const submissionId = Number(req.params.id);
@@ -154378,47 +156031,48 @@ router29.post("/admin/plugin-submissions/:id/review", async (req, res) => {
     res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u043E\u0431\u043D\u043E\u0432\u0438\u0442\u044C \u0437\u0430\u044F\u0432\u043A\u0443" });
   }
 });
-var plugins_default = router29;
+var plugins_default = router30;
 
 // src/routes/index.ts
-var router30 = (0, import_express30.Router)();
-router30.use(health_default);
-router30.use(auth_default);
-router30.use(qr_auth_default);
-router30.use(users_default);
-router30.use(contacts_default);
-router30.use(chats_default);
-router30.use(messages_default);
-router30.use(calls_default);
-router30.use(stories_default);
-router30.use(posts_default);
-router30.use(admin_default);
-router30.use(events_default);
-router30.use(wallet_default);
-if (!process.env.DISABLE_BOTS) router30.use(bots_default);
-router30.use(support_default);
-router30.use(prime_default);
-router30.use(push_default);
-router30.use(polls_default);
-router30.use(translate_default);
-router30.use(referral_default);
-router30.use(folders_default);
-router30.use(platform_events_default);
-router30.use(contact_requests_default);
-router30.use(clans_default);
-router30.use(feature_hub_default);
-router30.use(enhancements_default);
-router30.use(drafts_default);
-router30.use(audio_rooms_default);
-router30.use(plugins_default);
-var routes_default = router30;
+var router31 = (0, import_express31.Router)();
+router31.use(health_default);
+router31.use(auth_default);
+router31.use(qr_auth_default);
+router31.use(users_default);
+router31.use(contacts_default);
+router31.use(chats_default);
+router31.use(messages_default);
+router31.use(calls_default);
+router31.use(stories_default);
+router31.use(posts_default);
+router31.use(admin_default);
+router31.use(events_default);
+router31.use(wallet_default);
+router31.use(gifts_default);
+if (!process.env.DISABLE_BOTS) router31.use(bots_default);
+router31.use(support_default);
+router31.use(prime_default);
+router31.use(push_default);
+router31.use(polls_default);
+router31.use(translate_default);
+router31.use(referral_default);
+router31.use(folders_default);
+router31.use(platform_events_default);
+router31.use(contact_requests_default);
+router31.use(clans_default);
+router31.use(feature_hub_default);
+router31.use(enhancements_default);
+router31.use(drafts_default);
+router31.use(audio_rooms_default);
+router31.use(plugins_default);
+var routes_default = router31;
 
 // src/routes/botapi.ts
-var import_express31 = __toESM(require_express2(), 1);
+var import_express32 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
 init_sse();
-var botApiRouter = (0, import_express31.Router)();
+var botApiRouter = (0, import_express32.Router)();
 async function resolveBot(token) {
   const rows = await db.execute(sql`SELECT bot_user_id FROM bot_tokens WHERE token = ${token}`);
   if (rows.rows.length === 0) return null;
@@ -154629,7 +156283,7 @@ if (!process.env.JWT_SECRET) {
 }
 var JWT_SECRET = process.env.JWT_SECRET;
 var EFFECTIVE_JWT_SECRET = JWT_SECRET;
-var app = (0, import_express32.default)();
+var app = (0, import_express33.default)();
 app.set("trust proxy", 1);
 app.use(
   helmet({
@@ -154706,19 +156360,19 @@ app.use(
     }
   })
 );
-app.use("/api/upload", import_express32.default.json({ limit: "2gb" }));
-app.use("/api/upload", import_express32.default.urlencoded({ extended: true, limit: "2gb" }));
-app.use("/api/stories", import_express32.default.json({ limit: "2gb" }));
-app.use("/api/stories", import_express32.default.urlencoded({ extended: true, limit: "2gb" }));
-app.use("/api/users/me", import_express32.default.json({ limit: "2gb" }));
-app.use("/api/messages", import_express32.default.json({ limit: "2gb" }));
-app.use("/api/messages", import_express32.default.urlencoded({ extended: true, limit: "2gb" }));
-app.use("/api/support", import_express32.default.json({ limit: "2gb" }));
-app.use("/api/support", import_express32.default.urlencoded({ extended: true, limit: "2gb" }));
-app.use("/api/playlists", import_express32.default.json({ limit: "24mb" }));
-app.use("/api/playlists", import_express32.default.urlencoded({ extended: true, limit: "24mb" }));
-app.use(import_express32.default.json({ limit: "2mb" }));
-app.use(import_express32.default.urlencoded({ extended: true, limit: "2mb" }));
+app.use("/api/upload", import_express33.default.json({ limit: "2gb" }));
+app.use("/api/upload", import_express33.default.urlencoded({ extended: true, limit: "2gb" }));
+app.use("/api/stories", import_express33.default.json({ limit: "2gb" }));
+app.use("/api/stories", import_express33.default.urlencoded({ extended: true, limit: "2gb" }));
+app.use("/api/users/me", import_express33.default.json({ limit: "2gb" }));
+app.use("/api/messages", import_express33.default.json({ limit: "2gb" }));
+app.use("/api/messages", import_express33.default.urlencoded({ extended: true, limit: "2gb" }));
+app.use("/api/support", import_express33.default.json({ limit: "2gb" }));
+app.use("/api/support", import_express33.default.urlencoded({ extended: true, limit: "2gb" }));
+app.use("/api/playlists", import_express33.default.json({ limit: "24mb" }));
+app.use("/api/playlists", import_express33.default.urlencoded({ extended: true, limit: "24mb" }));
+app.use(import_express33.default.json({ limit: "2mb" }));
+app.use(import_express33.default.urlencoded({ extended: true, limit: "2mb" }));
 function sanitizeString(val, maxLen = 1e3) {
   if (typeof val !== "string") return "";
   return val.trim().slice(0, maxLen).replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, "").replace(/<[^>]+>/g, "").replace(/javascript:/gi, "").replace(/on\w+\s*=/gi, "");
@@ -154803,6 +156457,7 @@ var PUBLIC_API_PATHS = [
   "/auth/reset-password-final",
   // Public maintenance status check (no auth — shown before login)
   "/maintenance",
+  "/halloween-event",
   // Public app changelog — visible to everyone (no auth required)
   "/updates",
   "/public/users"
@@ -154961,7 +156616,7 @@ app.use("/api", (req, res, next) => {
   }
   next();
 });
-var MAINTENANCE_ALLOWED_PATHS = ["/maintenance", "/auth/login", "/auth/logout", "/events"];
+var MAINTENANCE_ALLOWED_PATHS = ["/maintenance", "/halloween-event", "/auth/login", "/auth/logout", "/events"];
 app.use("/api", async (req, res, next) => {
   if (MAINTENANCE_ALLOWED_PATHS.some((p3) => req.path === p3 || req.path.startsWith(p3 + "/"))) return next();
   try {
@@ -154996,7 +156651,7 @@ app.use("/api", (_req, res) => {
 });
 if (process.env.NODE_ENV === "production") {
   const staticDir = path.join(process.cwd(), "artifacts/pulse/dist");
-  app.use(import_express32.default.static(staticDir, { maxAge: "1h", index: false }));
+  app.use(import_express33.default.static(staticDir, { maxAge: "1h", index: false }));
   app.use("/{*path}", (_req, res) => {
     res.sendFile(path.join(staticDir, "index.html"));
   });
@@ -155178,6 +156833,170 @@ function initSocketIO(server) {
 // src/seed.ts
 init_src();
 init_drizzle_orm();
+var GIFT_CATALOG = [
+  // ── COMMON (50–200 ⚡) ──────────────────────────────────────────────────
+  { name: "\u042F\u0431\u043B\u043E\u043A\u043E", emoji: "\u{1F34E}", animationType: "bounce", rarity: "common", stars: 1, price: 60, description: "\u0421\u043F\u0435\u043B\u043E\u0435 \u043A\u0440\u0430\u0441\u043D\u043E\u0435 \u044F\u0431\u043B\u043E\u043A\u043E", primeOnly: false },
+  { name: "\u041F\u0435\u0440\u0441\u0438\u043A", emoji: "\u{1F351}", animationType: "bounce", rarity: "common", stars: 1, price: 65, description: "\u0421\u043B\u0430\u0434\u043A\u0438\u0439 \u043B\u0435\u0442\u043D\u0438\u0439 \u043F\u0435\u0440\u0441\u0438\u043A", primeOnly: false },
+  { name: "\u0412\u0438\u0448\u043D\u044F", emoji: "\u{1F352}", animationType: "bounce", rarity: "common", stars: 1, price: 70, description: "\u0421\u043F\u0435\u043B\u0430\u044F \u0432\u0438\u0448\u043D\u044F \u2014 \u0434\u0432\u043E\u0439\u043D\u0430\u044F \u0443\u0434\u0430\u0447\u0430", primeOnly: false },
+  { name: "\u0412\u0438\u043D\u043E\u0433\u0440\u0430\u0434", emoji: "\u{1F347}", animationType: "bounce", rarity: "common", stars: 1, price: 75, description: "\u0421\u043E\u0447\u043D\u0430\u044F \u0433\u0440\u043E\u0437\u0434\u044C \u0432\u0438\u043D\u043E\u0433\u0440\u0430\u0434\u0430", primeOnly: false },
+  { name: "\u041A\u0430\u043F\u043A\u0435\u0439\u043A", emoji: "\u{1F9C1}", animationType: "confetti", rarity: "common", stars: 1, price: 80, description: "\u041D\u0435\u0436\u043D\u044B\u0439 \u043A\u0430\u043F\u043A\u0435\u0439\u043A \u0441\u043E \u0441\u043B\u0438\u0432\u043A\u0430\u043C\u0438", primeOnly: false },
+  { name: "\u0428\u043E\u043A\u043E\u043B\u0430\u0434", emoji: "\u{1F36B}", animationType: "bounce", rarity: "common", stars: 2, price: 90, description: "\u0413\u043E\u0440\u044C\u043A\u0438\u0439 \u0448\u043E\u043A\u043E\u043B\u0430\u0434 \u2014 \u043D\u0430\u0441\u0442\u043E\u044F\u0449\u0438\u0439 \u0432\u043A\u0443\u0441", primeOnly: false },
+  { name: "\u041F\u0435\u0447\u0435\u043D\u044C\u0435", emoji: "\u{1F36A}", animationType: "bounce", rarity: "common", stars: 1, price: 70, description: "\u0425\u0440\u0443\u0441\u0442\u044F\u0449\u0435\u0435 \u0434\u043E\u043C\u0430\u0448\u043D\u0435\u0435 \u043F\u0435\u0447\u0435\u043D\u044C\u0435", primeOnly: false },
+  { name: "\u0410\u0440\u0431\u0443\u0437", emoji: "\u{1F349}", animationType: "bounce", rarity: "common", stars: 1, price: 70, description: "\u0421\u043E\u0447\u043D\u044B\u0439 \u043B\u0435\u0442\u043D\u0438\u0439 \u0430\u0440\u0431\u0443\u0437", primeOnly: false },
+  { name: "\u0422\u044E\u043B\u044C\u043F\u0430\u043D", emoji: "\u{1F337}", animationType: "confetti", rarity: "common", stars: 2, price: 90, description: "\u042F\u0440\u043A\u0438\u0439 \u0432\u0435\u0441\u0435\u043D\u043D\u0438\u0439 \u0442\u044E\u043B\u044C\u043F\u0430\u043D", primeOnly: false },
+  { name: "\u0413\u0438\u0431\u0438\u0441\u043A\u0443\u0441", emoji: "\u{1F33A}", animationType: "confetti", rarity: "common", stars: 2, price: 95, description: "\u0422\u0440\u043E\u043F\u0438\u0447\u0435\u0441\u043A\u0438\u0439 \u0446\u0432\u0435\u0442\u043E\u043A \u0433\u0438\u0431\u0438\u0441\u043A\u0443\u0441\u0430", primeOnly: false },
+  { name: "\u041F\u0438\u043D\u0433\u0432\u0438\u043D", emoji: "\u{1F427}", animationType: "bounce", rarity: "common", stars: 2, price: 110, description: "\u0417\u0430\u0431\u0430\u0432\u043D\u044B\u0439 \u043F\u0438\u043D\u0433\u0432\u0438\u043D \u0438\u0437 \u0410\u043D\u0442\u0430\u0440\u043A\u0442\u0438\u043A\u0438", primeOnly: false },
+  { name: "\u0429\u0435\u043D\u043E\u043A", emoji: "\u{1F436}", animationType: "hearts", rarity: "common", stars: 2, price: 120, description: "\u0421\u0430\u043C\u044B\u0439 \u0432\u0435\u0440\u043D\u044B\u0439 \u0434\u0440\u0443\u0433", primeOnly: false },
+  { name: "\u041A\u0440\u043E\u043B\u0438\u043A", emoji: "\u{1F430}", animationType: "bounce", rarity: "common", stars: 2, price: 110, description: "\u041F\u0443\u0448\u0438\u0441\u0442\u044B\u0439 \u0431\u0435\u043B\u044B\u0439 \u043A\u0440\u043E\u043B\u0438\u043A", primeOnly: false },
+  { name: "\u0425\u043E\u043C\u044F\u0447\u043E\u043A", emoji: "\u{1F439}", animationType: "hearts", rarity: "common", stars: 2, price: 120, description: "\u041C\u0438\u043B\u044B\u0439 \u0445\u043E\u043C\u044F\u0447\u043E\u043A \u0437\u0430 \u0449\u0451\u0447\u043A\u043E\u0439", primeOnly: false },
+  { name: "\u041F\u0430\u043B\u044C\u043C\u0430", emoji: "\u{1F334}", animationType: "sparkle", rarity: "common", stars: 2, price: 100, description: "\u0422\u0440\u043E\u043F\u0438\u0447\u0435\u0441\u043A\u0430\u044F \u043F\u0430\u043B\u044C\u043C\u0430 \u0443 \u043C\u043E\u0440\u044F", primeOnly: false },
+  { name: "\u0421\u043D\u0435\u0436\u0438\u043D\u043A\u0430", emoji: "\u2744\uFE0F", animationType: "sparkle", rarity: "common", stars: 2, price: 90, description: "\u0423\u043D\u0438\u043A\u0430\u043B\u044C\u043D\u0430\u044F \u0441\u043D\u0435\u0436\u0438\u043D\u043A\u0430", primeOnly: false },
+  { name: "\u041E\u0441\u044C\u043C\u0438\u043D\u043E\u0433", emoji: "\u{1F419}", animationType: "bounce", rarity: "common", stars: 2, price: 130, description: "\u0425\u0438\u0442\u0440\u044B\u0439 \u0432\u043E\u0441\u044C\u043C\u0438\u043D\u043E\u0433\u0438\u0439 \u0434\u0440\u0443\u0433", primeOnly: false },
+  { name: "\u041A\u0440\u0430\u0431", emoji: "\u{1F980}", animationType: "bounce", rarity: "common", stars: 2, price: 130, description: "\u0411\u043E\u043A\u043E\u0432\u043E\u0435 \u043C\u044B\u0448\u043B\u0435\u043D\u0438\u0435 \u2014 \u043A\u0440\u0430\u0431 \u0434\u0443\u043C\u0430\u0435\u0442 \u0438\u043D\u0430\u0447\u0435", primeOnly: false },
+  { name: "\u0427\u0435\u0440\u0435\u043F\u0430\u0445\u0430", emoji: "\u{1F422}", animationType: "bounce", rarity: "common", stars: 2, price: 100, description: "\u041C\u0443\u0434\u0440\u0430\u044F \u0447\u0435\u0440\u0435\u043F\u0430\u0445\u0430", primeOnly: false },
+  { name: "\u041B\u044F\u0433\u0443\u0448\u043A\u0430", emoji: "\u{1F438}", animationType: "bounce", rarity: "common", stars: 1, price: 75, description: "\u0412\u0435\u0441\u0451\u043B\u0430\u044F \u0437\u0435\u043B\u0451\u043D\u0430\u044F \u043B\u044F\u0433\u0443\u0448\u043A\u0430", primeOnly: false },
+  { name: "\u0421\u0435\u0440\u0434\u0435\u0447\u043A\u043E", emoji: "\u2764\uFE0F", animationType: "hearts", rarity: "common", stars: 1, price: 50, description: "\u0422\u0451\u043F\u043B\u043E\u0435 \u0441\u0435\u0440\u0434\u0435\u0447\u043A\u043E \u0434\u043B\u044F \u0431\u043B\u0438\u0437\u043A\u043E\u0433\u043E \u0447\u0435\u043B\u043E\u0432\u0435\u043A\u0430", primeOnly: false },
+  { name: "\u0417\u0432\u0451\u0437\u0434\u043E\u0447\u043A\u0430", emoji: "\u2B50", animationType: "stars", rarity: "common", stars: 1, price: 50, description: "\u041C\u0430\u043B\u0435\u043D\u044C\u043A\u0430\u044F, \u043D\u043E \u044F\u0440\u043A\u0430\u044F \u0437\u0432\u0435\u0437\u0434\u0430", primeOnly: false },
+  { name: "\u041C\u044B\u043B\u044C\u043D\u044B\u0439 \u043F\u0443\u0437\u044B\u0440\u044C", emoji: "\u{1FAE7}", animationType: "sparkle", rarity: "common", stars: 1, price: 50, description: "\u0420\u0430\u0434\u0443\u0436\u043D\u044B\u0439 \u043F\u0443\u0437\u044B\u0440\u044C \u2014 \u043B\u0451\u0433\u043A\u043E\u0441\u0442\u044C \u0438 \u0440\u0430\u0434\u043E\u0441\u0442\u044C", primeOnly: false },
+  { name: "\u041A\u043E\u043D\u0444\u0435\u0442\u0430", emoji: "\u{1F36C}", animationType: "bounce", rarity: "common", stars: 1, price: 60, description: "\u0421\u043B\u0430\u0434\u043A\u0430\u044F \u043A\u043E\u043D\u0444\u0435\u0442\u0430 \u0434\u043B\u044F \u0445\u043E\u0440\u043E\u0448\u0435\u0433\u043E \u043D\u0430\u0441\u0442\u0440\u043E\u0435\u043D\u0438\u044F", primeOnly: false },
+  { name: "\u041A\u043B\u0443\u0431\u043D\u0438\u043A\u0430", emoji: "\u{1F353}", animationType: "bounce", rarity: "common", stars: 1, price: 70, description: "\u0421\u043F\u0435\u043B\u0430\u044F \u0438 \u0441\u043E\u0447\u043D\u0430\u044F \u043A\u043B\u0443\u0431\u043D\u0438\u043A\u0430", primeOnly: false },
+  { name: "\u041B\u0435\u0434\u0435\u043D\u0435\u0446", emoji: "\u{1F36D}", animationType: "sparkle", rarity: "common", stars: 1, price: 70, description: "\u042F\u0440\u043A\u0438\u0439 \u043B\u0435\u0434\u0435\u043D\u0435\u0446 \u043D\u0430 \u043F\u0430\u043B\u043E\u0447\u043A\u0435", primeOnly: false },
+  { name: "\u0420\u043E\u043C\u0430\u0448\u043A\u0430", emoji: "\u{1F33C}", animationType: "confetti", rarity: "common", stars: 1, price: 70, description: "\u041D\u0435\u0436\u043D\u0430\u044F \u0440\u043E\u043C\u0430\u0448\u043A\u0430 \u2014 \u0441\u0438\u043C\u0432\u043E\u043B \u0447\u0438\u0441\u0442\u043E\u0442\u044B", primeOnly: false },
+  { name: "\u0426\u0432\u0435\u0442\u043E\u043A \u0441\u0430\u043A\u0443\u0440\u044B", emoji: "\u{1F338}", animationType: "confetti", rarity: "common", stars: 1, price: 80, description: "\u041D\u0435\u0436\u043D\u044B\u0439 \u0446\u0432\u0435\u0442\u043E\u043A \u0432\u0435\u0441\u043D\u044B", primeOnly: false },
+  { name: "\u041F\u043E\u043D\u0447\u0438\u043A", emoji: "\u{1F369}", animationType: "bounce", rarity: "common", stars: 1, price: 80, description: "\u0421\u043B\u0430\u0434\u043A\u0438\u0439 \u043F\u043E\u043D\u0447\u0438\u043A \u043D\u0430 \u0443\u0434\u0430\u0447\u0443", primeOnly: false },
+  { name: "\u041C\u043E\u0440\u043E\u0436\u0435\u043D\u043E\u0435", emoji: "\u{1F366}", animationType: "bounce", rarity: "common", stars: 2, price: 80, description: "\u0425\u043E\u043B\u043E\u0434\u043D\u043E\u0435 \u0438 \u0432\u043A\u0443\u0441\u043D\u043E\u0435 \u043C\u043E\u0440\u043E\u0436\u0435\u043D\u043E\u0435", primeOnly: false },
+  { name: "\u0420\u044B\u0431\u043A\u0430", emoji: "\u{1F41F}", animationType: "bounce", rarity: "common", stars: 2, price: 90, description: "\u042F\u0440\u043A\u0430\u044F \u0442\u0440\u043E\u043F\u0438\u0447\u0435\u0441\u043A\u0430\u044F \u0440\u044B\u0431\u043A\u0430", primeOnly: false },
+  { name: "\u041F\u043E\u0434\u0441\u043E\u043B\u043D\u0443\u0445", emoji: "\u{1F33B}", animationType: "sparkle", rarity: "common", stars: 2, price: 90, description: "\u0421\u043E\u043B\u043D\u0435\u0447\u043D\u044B\u0439 \u043F\u043E\u0434\u0441\u043E\u043B\u043D\u0443\u0445 \u2014 \u0437\u0430\u0440\u044F\u0434 \u044D\u043D\u0435\u0440\u0433\u0438\u0438", primeOnly: false },
+  { name: "\u0427\u0430\u0448\u043A\u0430 \u043A\u043E\u0444\u0435", emoji: "\u2615", animationType: "sparkle", rarity: "common", stars: 2, price: 100, description: "\u0410\u0440\u043E\u043C\u0430\u0442\u043D\u0430\u044F \u0447\u0430\u0448\u043A\u0430 \u043A\u043E\u0444\u0435", primeOnly: false },
+  { name: "\u041B\u0443\u043D\u0430", emoji: "\u{1F319}", animationType: "sparkle", rarity: "common", stars: 2, price: 100, description: "\u041D\u043E\u0447\u043D\u0430\u044F \u043B\u0443\u043D\u0430 \u0441\u0432\u0435\u0442\u0438\u0442 \u0442\u043E\u043B\u044C\u043A\u043E \u0442\u0435\u0431\u0435", primeOnly: false },
+  { name: "\u0427\u0435\u0442\u044B\u0440\u0451\u0445\u043B\u0438\u0441\u0442\u043D\u0438\u043A", emoji: "\u{1F340}", animationType: "confetti", rarity: "common", stars: 2, price: 100, description: "\u041A\u043B\u0435\u0432\u0435\u0440 \u2014 \u0441\u0438\u043C\u0432\u043E\u043B \u0443\u0434\u0430\u0447\u0438", primeOnly: false },
+  { name: "\u0411\u0430\u0431\u043E\u0447\u043A\u0430", emoji: "\u{1F98B}", animationType: "magic", rarity: "common", stars: 2, price: 110, description: "\u041F\u0440\u0435\u043A\u0440\u0430\u0441\u043D\u0430\u044F \u0431\u0430\u0431\u043E\u0447\u043A\u0430 \u2014 \u0441\u0438\u043C\u0432\u043E\u043B \u043F\u0435\u0440\u0435\u043C\u0435\u043D", primeOnly: false },
+  { name: "\u041A\u043E\u0442\u0451\u043D\u043E\u043A", emoji: "\u{1F431}", animationType: "hearts", rarity: "common", stars: 2, price: 120, description: "\u0421\u0430\u043C\u044B\u0439 \u043C\u0438\u043B\u044B\u0439 \u043A\u043E\u0442\u0451\u043D\u043E\u043A", primeOnly: false },
+  { name: "\u0412\u043E\u0437\u0434\u0443\u0448\u043D\u044B\u0439 \u0448\u0430\u0440", emoji: "\u{1F388}", animationType: "balloons", rarity: "common", stars: 2, price: 120, description: "\u041F\u0440\u0430\u0437\u0434\u043D\u0438\u0447\u043D\u044B\u0439 \u0432\u043E\u0437\u0434\u0443\u0448\u043D\u044B\u0439 \u0448\u0430\u0440\u0438\u043A", primeOnly: false },
+  { name: "\u0420\u0435\u0442\u0440\u043E-\u0442\u0435\u043B\u0435\u0444\u043E\u043D", emoji: "\u{1F4DE}", animationType: "bounce", rarity: "common", stars: 2, price: 140, description: "\u041A\u043B\u0430\u0441\u0441\u0438\u0447\u0435\u0441\u043A\u0438\u0439 \u0440\u0435\u0442\u0440\u043E-\u0442\u0435\u043B\u0435\u0444\u043E\u043D", primeOnly: false },
+  { name: "\u041F\u0438\u0446\u0446\u0430", emoji: "\u{1F355}", animationType: "bounce", rarity: "common", stars: 2, price: 150, description: "\u041A\u0443\u0441\u043E\u0447\u0435\u043A \u0434\u0440\u0443\u0436\u0431\u044B \u0438 \u0442\u0435\u043F\u043B\u0430", primeOnly: false },
+  { name: "\u041C\u0435\u0434\u0432\u0435\u0436\u043E\u043D\u043E\u043A", emoji: "\u{1F9F8}", animationType: "hearts", rarity: "common", stars: 2, price: 160, description: "\u041C\u044F\u0433\u043A\u0438\u0439 \u043F\u043B\u044E\u0448\u0435\u0432\u044B\u0439 \u043C\u0435\u0434\u0432\u0435\u0436\u043E\u043D\u043E\u043A", primeOnly: false },
+  { name: "\u0422\u043E\u0440\u0442", emoji: "\u{1F382}", animationType: "confetti", rarity: "common", stars: 2, price: 180, description: "\u041F\u0440\u0430\u0437\u0434\u043D\u0438\u0447\u043D\u044B\u0439 \u0442\u043E\u0440\u0442", primeOnly: false },
+  { name: "\u0418\u0433\u0440\u043E\u0432\u0430\u044F \u043F\u0440\u0438\u0441\u0442\u0430\u0432\u043A\u0430", emoji: "\u{1F3AE}", animationType: "lightning", rarity: "common", stars: 2, price: 180, description: "\u0414\u043B\u044F \u043D\u0430\u0441\u0442\u043E\u044F\u0449\u0438\u0445 \u0433\u0435\u0439\u043C\u0435\u0440\u043E\u0432", primeOnly: false },
+  { name: "\u0421\u043D\u0435\u0433\u043E\u0432\u0438\u043A", emoji: "\u26C4", animationType: "sparkle", rarity: "common", stars: 2, price: 110, description: "\u0412\u0435\u0441\u0451\u043B\u044B\u0439 \u0441\u043D\u0435\u0433\u043E\u0432\u0438\u043A \u2014 \u0437\u0438\u043C\u043D\u0435\u0435 \u043D\u0430\u0441\u0442\u0440\u043E\u0435\u043D\u0438\u0435", primeOnly: false },
+  { name: "\u0420\u0430\u0434\u0443\u0436\u043D\u044B\u0439 \u043A\u0438\u0442", emoji: "\u{1F433}", animationType: "balloons", rarity: "common", stars: 2, price: 130, description: "\u041E\u0433\u0440\u043E\u043C\u043D\u044B\u0439 \u0434\u043E\u0431\u0440\u043E\u0434\u0443\u0448\u043D\u044B\u0439 \u043A\u0438\u0442", primeOnly: false },
+  // ── RARE (500–2000 ⚡) ─────────────────────────────────────────────────
+  { name: "\u041F\u0430\u043B\u0438\u0442\u0440\u0430", emoji: "\u{1F3A8}", animationType: "sparkle", rarity: "rare", stars: 3, price: 600, description: "\u041F\u0430\u043B\u0438\u0442\u0440\u0430 \u0445\u0443\u0434\u043E\u0436\u043D\u0438\u043A\u0430 \u2014 \u0442\u0432\u043E\u0440\u0447\u0435\u0441\u0442\u0432\u043E \u0431\u0435\u0437 \u0433\u0440\u0430\u043D\u0438\u0446", primeOnly: false },
+  { name: "\u041F\u0430\u0437\u043B", emoji: "\u{1F9E9}", animationType: "sparkle", rarity: "rare", stars: 3, price: 650, description: "\u041F\u043E\u0441\u043B\u0435\u0434\u043D\u0438\u0439 \u043A\u0443\u0441\u043E\u0447\u0435\u043A \u043F\u0430\u0437\u043B\u0430", primeOnly: false },
+  { name: "\u041C\u0438\u0448\u0435\u043D\u044C", emoji: "\u{1F3AF}", animationType: "lightning", rarity: "rare", stars: 3, price: 700, description: "\u0422\u043E\u0447\u043D\u043E \u0432 \u0446\u0435\u043B\u044C!", primeOnly: false },
+  { name: "\u0411\u0430\u0440\u0430\u0431\u0430\u043D\u044B", emoji: "\u{1F941}", animationType: "lightning", rarity: "rare", stars: 4, price: 850, description: "\u0420\u0438\u0442\u043C, \u0447\u0442\u043E \u0437\u0430\u0436\u0438\u0433\u0430\u0435\u0442", primeOnly: false },
+  { name: "\u041F\u0438\u0430\u043D\u0438\u043D\u043E", emoji: "\u{1F3B9}", animationType: "magic", rarity: "rare", stars: 4, price: 950, description: "\u041A\u043B\u0430\u0432\u0438\u0448\u0438 \u0441\u0443\u0434\u044C\u0431\u044B", primeOnly: false },
+  { name: "\u0411\u0430\u043D\u0442", emoji: "\u{1F380}", animationType: "hearts", rarity: "rare", stars: 3, price: 580, description: "\u041D\u0435\u0436\u043D\u044B\u0439 \u0431\u0430\u043D\u0442 \u2014 \u0441\u044E\u0440\u043F\u0440\u0438\u0437 \u0432\u043D\u0443\u0442\u0440\u0438", primeOnly: false },
+  { name: "\u0412\u043E\u043B\u043D\u0430", emoji: "\u{1F30A}", animationType: "bounce", rarity: "rare", stars: 4, price: 780, description: "\u041C\u043E\u0449\u043D\u0430\u044F \u0432\u043E\u043B\u043D\u0430 \u043E\u043A\u0435\u0430\u043D\u0430", primeOnly: false },
+  { name: "\u0413\u043E\u0440\u0430", emoji: "\u{1F3D4}\uFE0F", animationType: "sparkle", rarity: "rare", stars: 3, price: 720, description: "\u0413\u043E\u0440\u043D\u0430\u044F \u0432\u0435\u0440\u0448\u0438\u043D\u0430 \u2014 \u043F\u043E\u043A\u043E\u0440\u0438 \u0435\u0451!", primeOnly: false },
+  { name: "\u0421\u0432\u0435\u0447\u0430", emoji: "\u{1F56F}\uFE0F", animationType: "flame", rarity: "rare", stars: 4, price: 880, description: "\u0422\u0451\u043F\u043B\u043E\u0435 \u043F\u043B\u0430\u043C\u044F \u0441\u0432\u0435\u0447\u0438", primeOnly: false },
+  { name: "\u041C\u0430\u0441\u043A\u0430", emoji: "\u{1F3AD}", animationType: "magic", rarity: "rare", stars: 4, price: 1050, description: "\u0422\u0435\u0430\u0442\u0440\u0430\u043B\u044C\u043D\u0430\u044F \u043C\u0430\u0441\u043A\u0430 \u0434\u0432\u0443\u0445 \u043B\u0438\u0446", primeOnly: false },
+  { name: "\u0416\u0435\u043C\u0447\u0443\u0433", emoji: "\u{1FAAC}", animationType: "magic", rarity: "rare", stars: 5, price: 1800, description: "\u0416\u0435\u043C\u0447\u0443\u0436\u043D\u044B\u0439 \u0430\u043C\u0443\u043B\u0435\u0442 \u0437\u0430\u0449\u0438\u0442\u044B", primeOnly: false },
+  { name: "\u041C\u0430\u044F\u043A", emoji: "\u{1F5FC}", animationType: "sparkle", rarity: "rare", stars: 3, price: 880, description: "\u041C\u0430\u044F\u043A \u0432 \u043D\u043E\u0447\u0438 \u2014 \u043E\u0440\u0438\u0435\u043D\u0442\u0438\u0440 \u0434\u043B\u044F \u043A\u043E\u0440\u0430\u0431\u043B\u0435\u0439", primeOnly: false },
+  { name: "\u041A\u043E\u0440\u043E\u043D\u0430", emoji: "\u{1F451}", animationType: "sparkle", rarity: "rare", stars: 3, price: 500, description: "\u041F\u043E\u0447\u0443\u0432\u0441\u0442\u0432\u0443\u0439 \u0441\u0435\u0431\u044F \u043A\u043E\u0440\u043E\u043B\u0451\u043C", primeOnly: false },
+  { name: "\u041A\u0440\u0430\u0441\u043D\u0430\u044F \u0440\u043E\u0437\u0430", emoji: "\u{1F339}", animationType: "hearts", rarity: "rare", stars: 3, price: 750, description: "\u0410\u043B\u0430\u044F \u0440\u043E\u0437\u0430 \u2014 \u0441\u0438\u043C\u0432\u043E\u043B \u0441\u0442\u0440\u0430\u0441\u0442\u0438", primeOnly: false },
+  { name: "\u0411\u0440\u0438\u043B\u043B\u0438\u0430\u043D\u0442", emoji: "\u{1F48E}", animationType: "diamonds", rarity: "rare", stars: 4, price: 1e3, description: "\u0421\u0432\u0435\u0440\u043A\u0430\u044E\u0449\u0438\u0439 \u0431\u0440\u0438\u043B\u043B\u0438\u0430\u043D\u0442", primeOnly: false },
+  { name: "\u0417\u043E\u043B\u043E\u0442\u0430\u044F \u043C\u043E\u043D\u0435\u0442\u0430", emoji: "\u{1FA99}", animationType: "sparkle", rarity: "rare", stars: 3, price: 800, description: "\u0420\u0435\u0434\u043A\u0430\u044F \u0437\u043E\u043B\u043E\u0442\u0430\u044F \u043C\u043E\u043D\u0435\u0442\u0430 \u043D\u0430 \u0443\u0434\u0430\u0447\u0443", primeOnly: false },
+  { name: "\u0420\u0430\u043A\u0435\u0442\u0430", emoji: "\u{1F680}", animationType: "lightning", rarity: "rare", stars: 4, price: 1250, description: "\u0412 \u043D\u0435\u0431\u043E \u0438 \u0432\u044B\u0448\u0435!", primeOnly: false },
+  { name: "\u0413\u0438\u0442\u0430\u0440\u0430", emoji: "\u{1F3B8}", animationType: "sparkle", rarity: "rare", stars: 4, price: 1e3, description: "\u0420\u043E\u043A-\u043D-\u0440\u043E\u043B\u043B \u043D\u0430\u0432\u0441\u0435\u0433\u0434\u0430", primeOnly: false },
+  { name: "\u041A\u0443\u0431\u043E\u043A", emoji: "\u{1F3C6}", animationType: "fireworks", rarity: "rare", stars: 5, price: 1750, description: "\u0422\u044B \u043D\u0430\u0441\u0442\u043E\u044F\u0449\u0438\u0439 \u043F\u043E\u0431\u0435\u0434\u0438\u0442\u0435\u043B\u044C", primeOnly: false },
+  { name: "\u0420\u0430\u0434\u0443\u0433\u0430", emoji: "\u{1F308}", animationType: "confetti", rarity: "rare", stars: 4, price: 880, description: "\u042F\u0440\u043A\u0430\u044F \u0440\u0430\u0434\u0443\u0433\u0430 \u043F\u043E\u0441\u043B\u0435 \u0434\u043E\u0436\u0434\u044F", primeOnly: false },
+  { name: "\u041C\u043E\u043B\u043D\u0438\u044F", emoji: "\u26A1", animationType: "lightning", rarity: "rare", stars: 5, price: 1500, description: "\u042D\u043B\u0435\u043A\u0442\u0440\u0438\u0447\u0435\u0441\u043A\u0430\u044F \u044D\u043D\u0435\u0440\u0433\u0438\u044F", primeOnly: false },
+  { name: "\u0414\u0435\u043B\u044C\u0444\u0438\u043D", emoji: "\u{1F42C}", animationType: "bounce", rarity: "rare", stars: 4, price: 700, description: "\u0418\u0433\u0440\u0438\u0432\u044B\u0439 \u0438 \u0443\u043C\u043D\u044B\u0439 \u0434\u0435\u043B\u044C\u0444\u0438\u043D", primeOnly: false },
+  { name: "\u041B\u0438\u0441\u0430", emoji: "\u{1F98A}", animationType: "bounce", rarity: "rare", stars: 3, price: 620, description: "\u0425\u0438\u0442\u0440\u0430\u044F \u0438 \u043E\u0431\u0430\u044F\u0442\u0435\u043B\u044C\u043D\u0430\u044F \u043B\u0438\u0441\u0430", primeOnly: false },
+  { name: "\u0421\u043E\u0432\u0430", emoji: "\u{1F989}", animationType: "sparkle", rarity: "rare", stars: 4, price: 840, description: "\u041C\u0443\u0434\u0440\u0430\u044F \u043D\u043E\u0447\u043D\u0430\u044F \u0441\u043E\u0432\u0430", primeOnly: false },
+  { name: "\u0410\u043A\u0443\u043B\u0430", emoji: "\u{1F988}", animationType: "lightning", rarity: "rare", stars: 4, price: 1200, description: "\u0413\u0440\u043E\u0437\u043D\u0430\u044F \u0445\u043E\u0437\u044F\u0439\u043A\u0430 \u043C\u043E\u0440\u0435\u0439", primeOnly: false },
+  { name: "\u041F\u0430\u0440\u0443\u0441\u043D\u0438\u043A", emoji: "\u26F5", animationType: "bounce", rarity: "rare", stars: 3, price: 900, description: "\u0421\u0432\u043E\u0431\u043E\u0434\u043D\u044B\u0439 \u043F\u0430\u0440\u0443\u0441\u043D\u0438\u043A \u0432 \u043E\u0442\u043A\u0440\u044B\u0442\u043E\u043C \u043C\u043E\u0440\u0435", primeOnly: false },
+  { name: "\u0421\u0430\u043C\u043E\u0446\u0432\u0435\u0442", emoji: "\u{1F3C5}", animationType: "sparkle", rarity: "rare", stars: 5, price: 2e3, description: "\u0420\u0435\u0434\u043A\u0438\u0439 \u0441\u0430\u043C\u043E\u0446\u0432\u0435\u0442", primeOnly: false },
+  { name: "\u041C\u0435\u0434\u0430\u043B\u044C", emoji: "\u{1F947}", animationType: "fireworks", rarity: "rare", stars: 5, price: 1900, description: "\u0417\u043E\u043B\u043E\u0442\u0430\u044F \u043C\u0435\u0434\u0430\u043B\u044C \u0437\u0430 \u043F\u043E\u0431\u0435\u0434\u0443", primeOnly: false },
+  { name: "\u041F\u043E\u043F\u0443\u0433\u0430\u0439", emoji: "\u{1F99C}", animationType: "confetti", rarity: "rare", stars: 3, price: 760, description: "\u042F\u0440\u043A\u0438\u0439 \u0442\u0440\u043E\u043F\u0438\u0447\u0435\u0441\u043A\u0438\u0439 \u043F\u043E\u043F\u0443\u0433\u0430\u0439", primeOnly: false },
+  { name: "\u0412\u043E\u043B\u0448\u0435\u0431\u043D\u0430\u044F \u043B\u0430\u043C\u043F\u0430", emoji: "\u{1FA94}", animationType: "magic", rarity: "rare", stars: 4, price: 1100, description: "\u041B\u0430\u043C\u043F\u0430 \u0410\u043B\u0430\u0434\u0434\u0438\u043D\u0430 \u2014 \u0438\u0441\u043F\u043E\u043B\u043D\u0438 \u0436\u0435\u043B\u0430\u043D\u0438\u0435", primeOnly: false },
+  { name: "\u041C\u043E\u0440\u0441\u043A\u0430\u044F \u0437\u0432\u0435\u0437\u0434\u0430", emoji: "\u2B50", animationType: "stars", rarity: "rare", stars: 4, price: 960, description: "\u042F\u0440\u043A\u0430\u044F \u043C\u043E\u0440\u0441\u043A\u0430\u044F \u0437\u0432\u0435\u0437\u0434\u0430", primeOnly: false },
+  { name: "\u0413\u043E\u0440\u044F\u0449\u0435\u0435 \u0441\u0435\u0440\u0434\u0446\u0435", emoji: "\u2764\uFE0F\u200D\u{1F525}", animationType: "flame", rarity: "rare", stars: 5, price: 1600, description: "\u0421\u0442\u0440\u0430\u0441\u0442\u043D\u043E\u0435 \u043E\u0433\u043D\u0435\u043D\u043D\u043E\u0435 \u0441\u0435\u0440\u0434\u0446\u0435", primeOnly: false },
+  // ── EPIC (3000–12000 ⚡) ───────────────────────────────────────────────
+  { name: "\u041B\u0435\u0432", emoji: "\u{1F981}", animationType: "flame", rarity: "epic", stars: 6, price: 3200, description: "\u0426\u0430\u0440\u044C \u0437\u0432\u0435\u0440\u0435\u0439, \u0433\u043E\u0440\u0434\u044B\u0439 \u0438 \u043D\u0435\u043F\u043E\u0431\u0435\u0434\u0438\u043C\u044B\u0439", primeOnly: false },
+  { name: "\u0422\u0438\u0433\u0440", emoji: "\u{1F42F}", animationType: "flame", rarity: "epic", stars: 7, price: 4600, description: "\u041F\u043E\u043B\u043E\u0441\u0430\u0442\u044B\u0439 \u043E\u0445\u043E\u0442\u043D\u0438\u043A \u0434\u0436\u0443\u043D\u0433\u043B\u0435\u0439", primeOnly: false },
+  { name: "\u041E\u0440\u0451\u043B", emoji: "\u{1F985}", animationType: "lightning", rarity: "epic", stars: 7, price: 5400, description: "\u041E\u0440\u0451\u043B \u043F\u0430\u0440\u0438\u0442 \u0432\u044B\u0448\u0435 \u0432\u0441\u0435\u0445", primeOnly: false },
+  { name: "\u0412\u0443\u043B\u043A\u0430\u043D", emoji: "\u{1F30B}", animationType: "flame", rarity: "epic", stars: 8, price: 6800, description: "\u0418\u0437\u0432\u0435\u0440\u0433\u0430\u044E\u0449\u0438\u0439\u0441\u044F \u0432\u0443\u043B\u043A\u0430\u043D \u0441\u0438\u043B\u044B", primeOnly: false },
+  { name: "\u0414\u041D\u041A \u0436\u0438\u0437\u043D\u0438", emoji: "\u{1F9EC}", animationType: "galaxy", rarity: "epic", stars: 7, price: 4800, description: "\u041A\u043E\u0434 \u0436\u0438\u0437\u043D\u0438 \u2014 \u0442\u0430\u0439\u043D\u0430 \u0432\u0441\u0435\u043B\u0435\u043D\u043D\u043E\u0439", primeOnly: false },
+  { name: "\u0424\u0435\u0439\u0435\u0440\u0432\u0435\u0440\u043A", emoji: "\u{1F386}", animationType: "fireworks", rarity: "epic", stars: 8, price: 7200, description: "\u042F\u0440\u043A\u0438\u0439 \u0432\u0437\u0440\u044B\u0432 \u0444\u0435\u0439\u0435\u0440\u0432\u0435\u0440\u043A\u0430", primeOnly: false },
+  { name: "\u0410\u043B\u0445\u0438\u043C\u0438\u044F", emoji: "\u2697\uFE0F", animationType: "magic", rarity: "epic", stars: 9, price: 10500, description: "\u041F\u0440\u0435\u0432\u0440\u0430\u0442\u0438\u0442\u044C \u0441\u0432\u0438\u043D\u0435\u0446 \u0432 \u0437\u043E\u043B\u043E\u0442\u043E", primeOnly: false },
+  { name: "\u0413\u043E\u0440\u0438\u043B\u043B\u0430", emoji: "\u{1F98D}", animationType: "flame", rarity: "epic", stars: 6, price: 3400, description: "\u041C\u043E\u0433\u0443\u0447\u0430\u044F \u0433\u043E\u0440\u0438\u043B\u043B\u0430 \u2014 \u0441\u0438\u043B\u0430 \u0438 \u043C\u0443\u0434\u0440\u043E\u0441\u0442\u044C", primeOnly: false },
+  { name: "\u041C\u0435\u0434\u0443\u0437\u0430", emoji: "\u{1FABC}", animationType: "magic", rarity: "epic", stars: 7, price: 5e3, description: "\u0421\u0432\u0435\u0442\u044F\u0449\u0430\u044F\u0441\u044F \u043C\u0435\u0434\u0443\u0437\u0430 \u0433\u043B\u0443\u0431\u0438\u043D", primeOnly: false },
+  { name: "\u041F\u0430\u043D\u0442\u0435\u0440\u0430", emoji: "\u{1F406}", animationType: "lightning", rarity: "epic", stars: 8, price: 7600, description: "\u0411\u044B\u0441\u0442\u0440\u0430\u044F \u0438 \u0441\u043C\u0435\u0440\u0442\u043E\u043D\u043E\u0441\u043D\u0430\u044F \u043F\u0430\u043D\u0442\u0435\u0440\u0430", primeOnly: false },
+  { name: "\u041C\u043E\u043B\u043E\u0442 \u0422\u043E\u0440\u0430", emoji: "\u{1F528}", animationType: "lightning", rarity: "epic", stars: 9, price: 9500, description: "\u041C\u043E\u043B\u043E\u0442 \u0431\u043E\u0433\u0430 \u0433\u0440\u043E\u043C\u0430", primeOnly: false },
+  { name: "\u041F\u0430\u0443\u0442\u0438\u043D\u0430", emoji: "\u{1F578}\uFE0F", animationType: "magic", rarity: "epic", stars: 6, price: 3600, description: "\u0422\u043E\u043D\u043A\u0430\u044F \u0441\u0435\u0442\u044C \u0441\u0443\u0434\u044C\u0431\u044B", primeOnly: false },
+  { name: "\u0414\u0440\u0430\u043A\u043E\u043D", emoji: "\u{1F409}", animationType: "flame", rarity: "epic", stars: 6, price: 3e3, description: "\u041C\u043E\u0433\u0443\u0449\u0435\u0441\u0442\u0432\u0435\u043D\u043D\u044B\u0439 \u043E\u0433\u043D\u0435\u0434\u044B\u0448\u0430\u0449\u0438\u0439 \u0434\u0440\u0430\u043A\u043E\u043D", primeOnly: false },
+  { name: "\u0415\u0434\u0438\u043D\u043E\u0440\u043E\u0433", emoji: "\u{1F984}", animationType: "magic", rarity: "epic", stars: 7, price: 5e3, description: "\u041C\u0430\u0433\u0438\u0447\u0435\u0441\u043A\u0438\u0439 \u0435\u0434\u0438\u043D\u043E\u0440\u043E\u0433 \u0438\u0437 \u043B\u0435\u0433\u0435\u043D\u0434", primeOnly: false },
+  { name: "\u0424\u0435\u043D\u0438\u043A\u0441", emoji: "\u{1F985}", animationType: "flame", rarity: "epic", stars: 7, price: 6e3, description: "\u041F\u0442\u0438\u0446\u0430 \u0444\u0435\u043D\u0438\u043A\u0441 \u2014 \u0432\u043E\u0437\u0440\u043E\u0436\u0434\u0435\u043D\u0438\u0435", primeOnly: false },
+  { name: "\u041F\u043B\u0430\u043D\u0435\u0442\u0430", emoji: "\u{1FA90}", animationType: "galaxy", rarity: "epic", stars: 8, price: 7500, description: "\u0414\u0430\u043B\u0451\u043A\u0430\u044F \u0437\u0430\u0433\u0430\u0434\u043E\u0447\u043D\u0430\u044F \u043F\u043B\u0430\u043D\u0435\u0442\u0430", primeOnly: false },
+  { name: "\u0412\u043E\u043B\u0448\u0435\u0431\u0441\u0442\u0432\u043E", emoji: "\u{1FA84}", animationType: "magic", rarity: "epic", stars: 8, price: 9e3, description: "\u0418\u0441\u043F\u043E\u043B\u043D\u0438 \u043B\u044E\u0431\u043E\u0435 \u0436\u0435\u043B\u0430\u043D\u0438\u0435", primeOnly: false },
+  { name: "\u041A\u0440\u0438\u0441\u0442\u0430\u043B\u043B", emoji: "\u{1F52E}", animationType: "galaxy", rarity: "epic", stars: 9, price: 12e3, description: "\u041C\u0430\u0433\u0438\u0447\u0435\u0441\u043A\u0438\u0439 \u043F\u0440\u0435\u0434\u0441\u043A\u0430\u0437\u0430\u0442\u0435\u043B\u044C\u043D\u044B\u0439 \u0448\u0430\u0440", primeOnly: false },
+  { name: "\u041F\u0435\u0433\u0430\u0441", emoji: "\u{1F40E}", animationType: "magic", rarity: "epic", stars: 6, price: 4e3, description: "\u041A\u0440\u044B\u043B\u0430\u0442\u044B\u0439 \u043A\u043E\u043D\u044C \u0431\u043E\u0433\u043E\u0432", primeOnly: false },
+  { name: "\u041D\u0430\u0440\u0432\u0430\u043B", emoji: "\u{1F40B}", animationType: "sparkle", rarity: "epic", stars: 7, price: 4400, description: "\u041C\u0438\u0444\u0438\u0447\u0435\u0441\u043A\u0438\u0439 \u043C\u043E\u0440\u0441\u043A\u043E\u0439 \u0435\u0434\u0438\u043D\u043E\u0440\u043E\u0433", primeOnly: false },
+  { name: "\u0425\u0440\u0443\u0441\u0442\u0430\u043B\u044C\u043D\u043E\u0435 \u0441\u0435\u0440\u0434\u0446\u0435", emoji: "\u{1F4A0}", animationType: "diamonds", rarity: "epic", stars: 8, price: 7e3, description: "\u0425\u0440\u0443\u0441\u0442\u0430\u043B\u044C\u043D\u043E\u0435 \u0441\u0435\u0440\u0434\u0446\u0435 \u0432\u0435\u0447\u043D\u043E\u0439 \u043B\u044E\u0431\u0432\u0438", primeOnly: false },
+  { name: "\u0416\u0430\u0440-\u043F\u0442\u0438\u0446\u0430", emoji: "\u{1F525}", animationType: "flame", rarity: "epic", stars: 7, price: 8e3, description: "\u041E\u0433\u043D\u0435\u043D\u043D\u0430\u044F \u043F\u0442\u0438\u0446\u0430 \u0438\u0437 \u0441\u043A\u0430\u0437\u043E\u043A", primeOnly: false },
+  { name: "\u041C\u043E\u0440\u0441\u043A\u043E\u0439 \u043A\u043E\u043D\u0451\u043A", emoji: "\u{1FAC0}", animationType: "magic", rarity: "epic", stars: 7, price: 5600, description: "\u0412\u043E\u043B\u0448\u0435\u0431\u043D\u044B\u0439 \u043C\u043E\u0440\u0441\u043A\u043E\u0439 \u043A\u043E\u043D\u0451\u043A", primeOnly: false },
+  { name: "\u0413\u0440\u0438\u0444\u043E\u043D", emoji: "\u{1F981}", animationType: "flame", rarity: "epic", stars: 9, price: 1e4, description: "\u0413\u043E\u0440\u0434\u044B\u0439 \u0441\u0442\u0440\u0430\u0436 \u2014 \u043B\u0435\u0432 \u0438 \u043E\u0440\u0451\u043B \u0432 \u043E\u0434\u043D\u043E\u043C", primeOnly: false },
+  { name: "\u0421\u0430\u043F\u0444\u0438\u0440\u043E\u0432\u044B\u0439 \u043A\u0443\u043B\u043E\u043D", emoji: "\u{1F48E}", animationType: "diamonds", rarity: "epic", stars: 8, price: 6400, description: "\u0420\u0435\u0434\u043A\u0438\u0439 \u0441\u0430\u043F\u0444\u0438\u0440\u043E\u0432\u044B\u0439 \u043A\u0443\u043B\u043E\u043D", primeOnly: false },
+  { name: "\u041C\u0430\u0433\u0438\u0447\u0435\u0441\u043A\u0438\u0439 \u0433\u0440\u0438\u0431", emoji: "\u{1F344}", animationType: "magic", rarity: "epic", stars: 6, price: 3400, description: "\u0412\u043E\u043B\u0448\u0435\u0431\u043D\u044B\u0439 \u0433\u0440\u0438\u0431 \u0438\u0437 \u0434\u0440\u0443\u0433\u043E\u0433\u043E \u043C\u0438\u0440\u0430", primeOnly: false },
+  { name: "\u0417\u043E\u043B\u043E\u0442\u0430\u044F \u0440\u044B\u0431\u043A\u0430", emoji: "\u{1F41F}", animationType: "sparkle", rarity: "epic", stars: 7, price: 4200, description: "\u0418\u0441\u043F\u043E\u043B\u043D\u044F\u0435\u0442 \u0442\u0440\u0438 \u0436\u0435\u043B\u0430\u043D\u0438\u044F", primeOnly: false },
+  { name: "\u0420\u0443\u0431\u0438\u043D\u043E\u0432\u043E\u0435 \u043A\u043E\u043B\u044C\u0446\u043E", emoji: "\u{1F48D}", animationType: "hearts", rarity: "epic", stars: 8, price: 8400, description: "\u041A\u043E\u043B\u044C\u0446\u043E \u0441 \u043E\u0433\u043D\u0435\u043D\u043D\u044B\u043C \u0440\u0443\u0431\u0438\u043D\u043E\u043C", primeOnly: false },
+  { name: "\u0412\u043E\u043B\u0448\u0435\u0431\u043D\u0430\u044F \u0441\u043A\u0440\u0438\u043F\u043A\u0430", emoji: "\u{1F3BB}", animationType: "magic", rarity: "epic", stars: 7, price: 7800, description: "\u0421\u043A\u0440\u0438\u043F\u043A\u0430, \u0438\u0433\u0440\u0430\u044E\u0449\u0430\u044F \u0441\u0430\u043C\u0430 \u043F\u043E \u0441\u0435\u0431\u0435", primeOnly: false },
+  { name: "\u0427\u0451\u0440\u043D\u044B\u0439 \u043A\u043E\u0442", emoji: "\u{1F408}\u200D\u2B1B", animationType: "magic", rarity: "epic", stars: 6, price: 5200, description: "\u0422\u0430\u0438\u043D\u0441\u0442\u0432\u0435\u043D\u043D\u044B\u0439 \u0447\u0451\u0440\u043D\u044B\u0439 \u043A\u043E\u0442 \u0441 \u043B\u0443\u043D\u043E\u0439", primeOnly: false },
+  { name: "\u0421\u0444\u0438\u043D\u043A\u0441", emoji: "\u{1F3FA}", animationType: "galaxy", rarity: "epic", stars: 9, price: 11e3, description: "\u0417\u0430\u0433\u0430\u0434\u043E\u0447\u043D\u044B\u0439 \u0441\u0442\u0440\u0430\u0436 \u0442\u0430\u0439\u043D \u0432\u0435\u043A\u043E\u0432", primeOnly: false },
+  { name: "\u041E\u0433\u043D\u0435\u043D\u043D\u044B\u0439 \u0434\u0440\u0430\u043A\u043E\u043D", emoji: "\u{1F432}", animationType: "flame", rarity: "epic", stars: 7, price: 3600, description: "\u0414\u0440\u0430\u043A\u043E\u043D, \u0438\u0437\u0432\u0435\u0440\u0433\u0430\u044E\u0449\u0438\u0439 \u043F\u043B\u0430\u043C\u044F", primeOnly: false },
+  // ── LEGENDARY (25000–250000 ⚡) ────────────────────────────────────────
+  { name: "\u041C\u0435\u0442\u0435\u043E\u0440", emoji: "\u{1F320}", animationType: "stars", rarity: "legendary", stars: 13, price: 28e3, description: "\u041F\u0430\u0434\u0430\u044E\u0449\u0438\u0439 \u043C\u0435\u0442\u0435\u043E\u0440 \u2014 \u0437\u0430\u0433\u0430\u0434\u0430\u0439 \u0436\u0435\u043B\u0430\u043D\u0438\u0435", primeOnly: false },
+  { name: "\u041F\u043B\u0430\u043D\u0435\u0442\u0430 \u0417\u0435\u043C\u043B\u044F", emoji: "\u{1F30D}", animationType: "galaxy", rarity: "legendary", stars: 16, price: 38e3, description: "\u0412\u0435\u0441\u044C \u043D\u0430\u0448 \u043C\u0438\u0440 \u2014 \u0442\u0435\u0431\u0435 \u0432 \u043F\u043E\u0434\u0430\u0440\u043E\u043A", primeOnly: false },
+  { name: "\u0412\u0435\u0447\u043D\u044B\u0439 \u043B\u0451\u0434", emoji: "\u{1F9CA}", animationType: "diamonds", rarity: "legendary", stars: 17, price: 42e3, description: "\u041B\u0435\u0434\u044F\u043D\u043E\u0439 \u043C\u043E\u043D\u043E\u043B\u0438\u0442 \u0432\u0435\u0447\u043D\u043E\u0441\u0442\u0438", primeOnly: false },
+  { name: "\u041C\u0430\u0433\u043D\u0438\u0442 \u0421\u0443\u0434\u044C\u0431\u044B", emoji: "\u{1F9F2}", animationType: "magic", rarity: "legendary", stars: 15, price: 45e3, description: "\u041C\u0430\u0433\u043D\u0438\u0442, \u043F\u0440\u0438\u0442\u044F\u0433\u0438\u0432\u0430\u044E\u0449\u0438\u0439 \u0443\u0434\u0430\u0447\u0443", primeOnly: false },
+  { name: "\u0410\u0442\u043E\u043C\u043D\u044B\u0439 \u0432\u0438\u0445\u0440\u044C", emoji: "\u2622\uFE0F", animationType: "vortex", rarity: "legendary", stars: 19, price: 75e3, description: "\u042D\u043D\u0435\u0440\u0433\u0438\u044F \u0430\u0442\u043E\u043C\u043D\u043E\u0433\u043E \u044F\u0434\u0440\u0430", primeOnly: false },
+  { name: "\u0410\u043B\u043C\u0430\u0437\u043D\u044B\u0439 \u0441\u043A\u0438\u043F\u0435\u0442\u0440", emoji: "\u{1FA84}", animationType: "diamonds", rarity: "legendary", stars: 20, price: 85e3, description: "\u0421\u043A\u0438\u043F\u0435\u0442\u0440 \u0438\u0437 \u0430\u043B\u043C\u0430\u0437\u043E\u0432 \u2014 \u0432\u043B\u0430\u0441\u0442\u044C \u0430\u0431\u0441\u043E\u043B\u044E\u0442\u043D\u0430", primeOnly: false },
+  { name: "\u0421\u0430\u043F\u0444\u0438\u0440\u043E\u0432\u044B\u0439 \u0449\u0438\u0442", emoji: "\u{1F6E1}\uFE0F", animationType: "diamonds", rarity: "legendary", stars: 14, price: 32e3, description: "\u0421\u0430\u043F\u0444\u0438\u0440\u043E\u0432\u044B\u0439 \u0449\u0438\u0442 \u2014 \u0437\u0430\u0449\u0438\u0442\u0430 \u043D\u0430 \u0432\u0435\u043A\u0430", primeOnly: false },
+  { name: "\u0413\u0430\u043B\u0430\u043A\u0442\u0438\u043A\u0430", emoji: "\u{1F30C}", animationType: "galaxy", rarity: "legendary", stars: 12, price: 25e3, description: "\u0426\u0435\u043B\u0430\u044F \u0433\u0430\u043B\u0430\u043A\u0442\u0438\u043A\u0430 \u0432 \u0442\u0432\u043E\u0438\u0445 \u0440\u0443\u043A\u0430\u0445", primeOnly: false },
+  { name: "\u0410\u043D\u0433\u0435\u043B", emoji: "\u{1F47C}", animationType: "magic", rarity: "legendary", stars: 15, price: 5e4, description: "\u041D\u0435\u0431\u0435\u0441\u043D\u044B\u0439 \u0430\u043D\u0433\u0435\u043B-\u0445\u0440\u0430\u043D\u0438\u0442\u0435\u043B\u044C", primeOnly: false },
+  { name: "\u041D\u043E\u0432\u0430", emoji: "\u{1F49C}", animationType: "fireworks", rarity: "legendary", stars: 20, price: 1e5, description: "\u0421\u0438\u043C\u0432\u043E\u043B \u043C\u0435\u0441\u0441\u0435\u043D\u0434\u0436\u0435\u0440\u0430 Nova", primeOnly: false },
+  { name: "\u041B\u0435\u0433\u0435\u043D\u0434\u0430\u0440\u043D\u0430\u044F \u0437\u0432\u0435\u0437\u0434\u0430", emoji: "\u{1F31F}", animationType: "stars", rarity: "legendary", stars: 25, price: 15e4, description: "\u041B\u0435\u0433\u0435\u043D\u0434\u0430\u0440\u043D\u0430\u044F \u043F\u0443\u0442\u0435\u0432\u043E\u0434\u043D\u0430\u044F \u0437\u0432\u0435\u0437\u0434\u0430", primeOnly: false },
+  { name: "\u0411\u0435\u0441\u043A\u043E\u043D\u0435\u0447\u043D\u043E\u0441\u0442\u044C", emoji: "\u267E\uFE0F", animationType: "galaxy", rarity: "legendary", stars: 50, price: 25e4, description: "\u0411\u0435\u0441\u043A\u043E\u043D\u0435\u0447\u043D\u043E\u0441\u0442\u044C \u0438 \u0434\u0430\u043B\u0435\u0435 \u2014 \u0432\u044B\u0441\u0448\u0438\u0439 \u043F\u043E\u0434\u0430\u0440\u043E\u043A", primeOnly: false },
+  { name: "\u0417\u043E\u043B\u043E\u0442\u043E\u0439 \u0434\u0440\u0430\u043A\u043E\u043D", emoji: "\u{1F409}", animationType: "galaxy", rarity: "legendary", stars: 14, price: 3e4, description: "\u041C\u043E\u0433\u0443\u0449\u0435\u0441\u0442\u0432\u0435\u043D\u043D\u044B\u0439 \u0437\u043E\u043B\u043E\u0442\u043E\u0439 \u0434\u0440\u0430\u043A\u043E\u043D \u0443\u0434\u0430\u0447\u0438", primeOnly: false },
+  { name: "\u041D\u0435\u0431\u0435\u0441\u043D\u044B\u0439 \u043A\u0438\u0442", emoji: "\u{1F40B}", animationType: "galaxy", rarity: "legendary", stars: 16, price: 36e3, description: "\u0413\u0438\u0433\u0430\u043D\u0442\u0441\u043A\u0438\u0439 \u043A\u0438\u0442 \u043F\u043B\u044B\u0432\u0451\u0442 \u0432 \u043D\u0435\u0431\u0435\u0441\u0430\u0445", primeOnly: false },
+  { name: "\u0421\u0435\u0432\u0435\u0440\u043D\u043E\u0435 \u0441\u0438\u044F\u043D\u0438\u0435", emoji: "\u{1F30C}", animationType: "magic", rarity: "legendary", stars: 17, price: 44e3, description: "\u041C\u0430\u0433\u0438\u0447\u0435\u0441\u043A\u043E\u0435 \u0441\u0435\u0432\u0435\u0440\u043D\u043E\u0435 \u0441\u0438\u044F\u043D\u0438\u0435", primeOnly: false },
+  { name: "\u0414\u0436\u0438\u043D\u043D", emoji: "\u{1F9DE}", animationType: "vortex", rarity: "legendary", stars: 18, price: 6e4, description: "\u041C\u043E\u0433\u0443\u0449\u0435\u0441\u0442\u0432\u0435\u043D\u043D\u044B\u0439 \u0434\u0436\u0438\u043D\u043D \u0438\u0441\u043F\u043E\u043B\u043D\u044F\u0435\u0442 \u0436\u0435\u043B\u0430\u043D\u0438\u044F", primeOnly: false },
+  { name: "\u0425\u0440\u0443\u0441\u0442\u0430\u043B\u044C\u043D\u044B\u0439 \u0434\u0432\u043E\u0440\u0435\u0446", emoji: "\u{1F3F0}", animationType: "diamonds", rarity: "legendary", stars: 19, price: 7e4, description: "\u0412\u0435\u043B\u0438\u0447\u0435\u0441\u0442\u0432\u0435\u043D\u043D\u044B\u0439 \u0434\u0432\u043E\u0440\u0435\u0446 \u0438\u0437 \u0445\u0440\u0443\u0441\u0442\u0430\u043B\u044F", primeOnly: false },
+  { name: "\u0415\u0434\u0438\u043D\u044B\u0439 \u0442\u0440\u043E\u043D", emoji: "\u{1F451}", animationType: "fireworks", rarity: "legendary", stars: 21, price: 9e4, description: "\u0422\u0440\u043E\u043D \u0432\u0441\u0435\u0445 \u043A\u043E\u0440\u043E\u043B\u0435\u0439 \u0438 \u0431\u043E\u0433\u043E\u0432", primeOnly: false },
+  { name: "\u041C\u0438\u0440\u043E\u0432\u043E\u0435 \u0434\u0435\u0440\u0435\u0432\u043E", emoji: "\u{1F332}", animationType: "magic", rarity: "legendary", stars: 15, price: 4e4, description: "\u0418\u0433\u0433\u0434\u0440\u0430\u0441\u0438\u043B\u044C \u2014 \u043E\u0441\u044C \u0432\u0441\u0435\u0433\u043E \u043C\u0438\u0440\u043E\u0437\u0434\u0430\u043D\u0438\u044F", primeOnly: false },
+  { name: "\u041D\u0435\u0431\u0435\u0441\u043D\u044B\u0439 \u0444\u0435\u043D\u0438\u043A\u0441", emoji: "\u{1F985}", animationType: "supernova", rarity: "legendary", stars: 22, price: 8e4, description: "\u0424\u0435\u043D\u0438\u043A\u0441, \u0440\u043E\u0436\u0434\u0451\u043D\u043D\u044B\u0439 \u0438\u0437 \u0437\u0432\u0451\u0437\u0434", primeOnly: false },
+  { name: "\u041D\u0435\u043F\u0442\u0443\u043D", emoji: "\u{1F531}", animationType: "vortex", rarity: "legendary", stars: 23, price: 12e4, description: "\u0412\u043B\u0430\u0441\u0442\u0435\u043B\u0438\u043D \u043C\u043E\u0440\u0435\u0439 \u0438 \u043E\u043A\u0435\u0430\u043D\u043E\u0432", primeOnly: false },
+  { name: "\u0417\u0432\u0451\u0437\u0434\u043D\u0430\u044F \u043A\u043E\u043B\u0435\u0441\u043D\u0438\u0446\u0430", emoji: "\u2B50", animationType: "stars", rarity: "legendary", stars: 24, price: 2e5, description: "\u041A\u043E\u043B\u0435\u0441\u043D\u0438\u0446\u0430 \u0431\u043E\u0433\u043E\u0432 \u043D\u0435\u0441\u0451\u0442\u0441\u044F \u0441\u043A\u0432\u043E\u0437\u044C \u0437\u0432\u0451\u0437\u0434\u044B", primeOnly: false },
+  // ── COSMIC (300000–2000000 ⚡) ─────────────────────────────────────────
+  { name: "\u041D\u0435\u0439\u0442\u0440\u043E\u043D\u043D\u0430\u044F \u0437\u0432\u0435\u0437\u0434\u0430", emoji: "\u{1F4A5}", animationType: "supernova", rarity: "cosmic", stars: 60, price: 3e5, description: "\u0421\u0432\u0435\u0440\u0445\u043F\u043B\u043E\u0442\u043D\u0430\u044F \u0437\u0432\u0435\u0437\u0434\u0430 \u0441 \u043D\u0435\u0432\u0435\u0440\u043E\u044F\u0442\u043D\u043E\u0439 \u044D\u043D\u0435\u0440\u0433\u0438\u0435\u0439", primeOnly: false },
+  { name: "\u041A\u0432\u0430\u0437\u0430\u0440", emoji: "\u{1F320}", animationType: "supernova", rarity: "cosmic", stars: 75, price: 5e5, description: "\u041C\u043E\u0449\u043D\u0435\u0439\u0448\u0438\u0439 \u0438\u0441\u0442\u043E\u0447\u043D\u0438\u043A \u0441\u0432\u0435\u0442\u0430 \u0432\u043E \u0432\u0441\u0435\u043B\u0435\u043D\u043D\u043E\u0439", primeOnly: false },
+  { name: "\u0427\u0451\u0440\u043D\u0430\u044F \u0434\u044B\u0440\u0430", emoji: "\u{1F300}", animationType: "vortex", rarity: "cosmic", stars: 90, price: 75e4, description: "\u0422\u043E\u0447\u043A\u0430, \u0438\u0437 \u043A\u043E\u0442\u043E\u0440\u043E\u0439 \u043D\u0435\u0442 \u0432\u043E\u0437\u0432\u0440\u0430\u0442\u0430", primeOnly: false },
+  { name: "\u041C\u0443\u043B\u044C\u0442\u0438\u0432\u0441\u0435\u043B\u0435\u043D\u043D\u0430\u044F", emoji: "\u{1FAA9}", animationType: "vortex", rarity: "cosmic", stars: 99, price: 9e5, description: "\u0411\u0435\u0441\u043A\u043E\u043D\u0435\u0447\u043D\u043E\u0435 \u043C\u043D\u043E\u0436\u0435\u0441\u0442\u0432\u043E \u043F\u0430\u0440\u0430\u043B\u043B\u0435\u043B\u044C\u043D\u044B\u0445 \u043C\u0438\u0440\u043E\u0432", primeOnly: false },
+  { name: "\u0410\u0431\u0441\u043E\u043B\u044E\u0442", emoji: "\u269C\uFE0F", animationType: "supernova", rarity: "cosmic", stars: 100, price: 1e6, description: "\u0410\u0431\u0441\u043E\u043B\u044E\u0442\u043D\u043E\u0435 \u0441\u043E\u0432\u0435\u0440\u0448\u0435\u043D\u0441\u0442\u0432\u043E \u2014 \u043F\u0440\u0435\u0434\u0435\u043B \u0432\u043E\u0437\u043C\u043E\u0436\u043D\u043E\u0433\u043E", primeOnly: false },
+  { name: "\u0421\u0438\u043D\u0433\u0443\u043B\u044F\u0440\u043D\u043E\u0441\u0442\u044C", emoji: "\u{1F4A0}", animationType: "vortex", rarity: "cosmic", stars: 150, price: 15e5, description: "\u0422\u043E\u0447\u043A\u0430 \u043D\u0430\u0447\u0430\u043B\u0430 \u0432\u0441\u0435\u0433\u043E \u2014 \u0431\u0435\u0441\u043A\u043E\u043D\u0435\u0447\u043D\u0430\u044F \u043F\u043B\u043E\u0442\u043D\u043E\u0441\u0442\u044C \u0431\u044B\u0442\u0438\u044F", primeOnly: false },
+  { name: "\u0421\u043E\u0437\u0434\u0430\u0442\u0435\u043B\u044C", emoji: "\u{1F310}", animationType: "supernova", rarity: "cosmic", stars: 200, price: 2e6, description: "\u0412\u044B\u0441\u0448\u0438\u0439 \u043F\u043E\u0434\u0430\u0440\u043E\u043A \u0432\u0441\u0435\u043B\u0435\u043D\u043D\u043E\u0439", primeOnly: false },
+  { name: "\u0412\u0441\u0435\u043B\u0435\u043D\u0441\u043A\u0438\u0439 \u043E\u0433\u043E\u043D\u044C", emoji: "\u{1F525}", animationType: "supernova", rarity: "cosmic", stars: 80, price: 6e5, description: "\u041F\u0435\u0440\u0432\u0438\u0447\u043D\u044B\u0439 \u043E\u0433\u043E\u043D\u044C \u043D\u0430\u0447\u0430\u043B\u0430 \u0432\u0441\u0435\u0433\u043E", primeOnly: false },
+  { name: "\u0411\u043E\u0433 \u0413\u0440\u043E\u043C\u0430", emoji: "\u26A1", animationType: "lightning", rarity: "cosmic", stars: 70, price: 4e5, description: "\u0413\u0440\u043E\u043C\u043E\u0432\u0435\u0440\u0436\u0435\u0446 \u2014 \u043F\u043E\u0432\u0435\u043B\u0438\u0442\u0435\u043B\u044C \u043C\u043E\u043B\u043D\u0438\u0439", primeOnly: false },
+  { name: "\u041E\u0441\u044C \u041C\u0438\u0440\u0430", emoji: "\u2696\uFE0F", animationType: "galaxy", rarity: "cosmic", stars: 65, price: 35e4, description: "\u041D\u0435\u0437\u0440\u0438\u043C\u0430\u044F \u043E\u0441\u044C, \u043D\u0430 \u043A\u043E\u0442\u043E\u0440\u043E\u0439 \u0434\u0435\u0440\u0436\u0438\u0442\u0441\u044F \u0432\u0441\u0435\u043B\u0435\u043D\u043D\u0430\u044F", primeOnly: false },
+  { name: "\u041B\u0435\u0432\u0438\u0430\u0444\u0430\u043D", emoji: "\u{1F409}", animationType: "vortex", rarity: "cosmic", stars: 88, price: 7e5, description: "\u0411\u0438\u0431\u043B\u0435\u0439\u0441\u043A\u043E\u0435 \u0447\u0443\u0434\u043E\u0432\u0438\u0449\u0435 \u0433\u043B\u0443\u0431\u0438\u043D", primeOnly: false },
+  { name: "\u0421\u043E\u043B\u043D\u0435\u0447\u043D\u044B\u0439 \u0434\u0440\u0430\u043A\u043E\u043D", emoji: "\u{1F31E}", animationType: "supernova", rarity: "cosmic", stars: 77, price: 56e4, description: "\u0414\u0440\u0430\u043A\u043E\u043D, \u0440\u043E\u0436\u0434\u0451\u043D\u043D\u044B\u0439 \u0432 \u043A\u043E\u0440\u043E\u043D\u0435 \u0441\u043E\u043B\u043D\u0446\u0430", primeOnly: false },
+  { name: "\u0412\u0435\u0447\u043D\u043E\u0441\u0442\u044C", emoji: "\u267E\uFE0F", animationType: "galaxy", rarity: "cosmic", stars: 95, price: 84e4, description: "\u0411\u0435\u0441\u043A\u043E\u043D\u0435\u0447\u043D\u043E\u0435 \u0442\u0435\u0447\u0435\u043D\u0438\u0435 \u0432\u0440\u0435\u043C\u0435\u043D\u0438", primeOnly: false },
+  { name: "\u041F\u0435\u0440\u0432\u043E\u0437\u0434\u0430\u043D\u043D\u044B\u0439 \u0425\u0430\u043E\u0441", emoji: "\u{1F4AB}", animationType: "vortex", rarity: "cosmic", stars: 98, price: 96e4, description: "\u0414\u043E \u0441\u043B\u043E\u0432\u0430 \xAB\u0434\u0430 \u0431\u0443\u0434\u0435\u0442 \u0441\u0432\u0435\u0442\xBB \u0431\u044B\u043B \u0425\u0430\u043E\u0441", primeOnly: false },
+  { name: "\u0412\u044B\u0441\u0448\u0438\u0439 \u0420\u0430\u0437\u0443\u043C", emoji: "\u{1F52E}", animationType: "supernova", rarity: "cosmic", stars: 110, price: 11e5, description: "\u0421\u043E\u0437\u043D\u0430\u043D\u0438\u0435, \u043F\u0440\u043E\u043D\u0438\u0437\u044B\u0432\u0430\u044E\u0449\u0435\u0435 \u0432\u0441\u0451 \u0441\u0443\u0449\u0435\u0435", primeOnly: false },
+  // ── PRIME EXCLUSIVE ────────────────────────────────────────────────────
+  { name: "\u041A\u043E\u0440\u043E\u043D\u0430 Prime", emoji: "\u{1F451}", animationType: "magic", rarity: "epic", stars: 10, price: 1e4, description: "\u042D\u043A\u0441\u043A\u043B\u044E\u0437\u0438\u0432\u043D\u0430\u044F \u043A\u043E\u0440\u043E\u043D\u0430 \u0434\u043B\u044F \u0438\u0437\u0431\u0440\u0430\u043D\u043D\u044B\u0445 Prime-\u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u043E\u0432", primeOnly: true },
+  { name: "\u041F\u0443\u043B\u044C\u0441 \u0421\u0435\u0440\u0434\u0446\u0430", emoji: "\u{1F49C}", animationType: "hearts", rarity: "legendary", stars: 18, price: 6e4, description: "\u0411\u044C\u044E\u0449\u0438\u0439\u0441\u044F \u043F\u0443\u043B\u044C\u0441 \u2014 \u0441\u0438\u043C\u0432\u043E\u043B \u0432\u0435\u0447\u043D\u043E\u0439 \u0441\u0432\u044F\u0437\u0438 Prime", primeOnly: true },
+  { name: "\u0417\u0432\u0435\u0437\u0434\u0430 Prime", emoji: "\u2B50", animationType: "stars", rarity: "legendary", stars: 22, price: 11e4, description: "\u042D\u043A\u0441\u043A\u043B\u044E\u0437\u0438\u0432\u043D\u0430\u044F \u0437\u0432\u0435\u0437\u0434\u0430 \u2014 \u0442\u043E\u043B\u044C\u043A\u043E \u0434\u043B\u044F Prime-\u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u043E\u0432", primeOnly: true },
+  { name: "\u0412\u0441\u0435\u043B\u0435\u043D\u0441\u043A\u0438\u0439 \u041E\u0433\u043E\u043D\u044C", emoji: "\u{1F525}", animationType: "flame", rarity: "cosmic", stars: 80, price: 6e5, description: "\u041E\u0433\u043E\u043D\u044C, \u0447\u0442\u043E \u0433\u043E\u0440\u0438\u0442 \u0432\u0435\u0447\u043D\u043E \u2014 \u043E\u0441\u043E\u0431\u044B\u0439 \u0434\u0430\u0440 Prime", primeOnly: true },
+  { name: "\u0421\u0430\u043F\u0444\u0438\u0440\u043E\u0432\u044B\u0439 \u0422\u0440\u043E\u043D", emoji: "\u{1F48E}", animationType: "galaxy", rarity: "cosmic", stars: 85, price: 24e4, description: "\u0422\u0440\u043E\u043D \u0438\u0437 \u0441\u0430\u043F\u0444\u0438\u0440\u0430 \u0434\u043B\u044F \u0438\u0441\u0442\u0438\u043D\u043D\u044B\u0445 Prime-\u043D\u0435\u0431\u043E\u0436\u0438\u0442\u0435\u043B\u0435\u0439", primeOnly: true }
+];
+var FEATURED_GIFTS = [
+  { name: "\u0420\u043E\u0437\u0430", emoji: "\u{1F339}", animationType: "roses", rarity: "common", stars: 1, price: 10, description: "\u0420\u043E\u0437\u0430 \u0432 \u043C\u0435\u0440\u0446\u0430\u044E\u0449\u0435\u043C \u0441\u0442\u0435\u043A\u043B\u044F\u043D\u043D\u043E\u043C \u043A\u043E\u043B\u043F\u0430\u043A\u0435", primeOnly: false, imageUrl: "/gifts/rose-in-glass.png" },
+  { name: "\u041F\u043E\u0434\u0430\u0440\u043E\u043A", emoji: "\u{1F381}", animationType: "confetti", rarity: "rare", stars: 2, price: 50, description: "\u041F\u043E\u0434\u0430\u0440\u043E\u0447\u043D\u0430\u044F \u043A\u043E\u0440\u043E\u0431\u043A\u0430 \u0441 \u043F\u0440\u0430\u0437\u0434\u043D\u0438\u0447\u043D\u043E\u0439 \u043B\u0435\u043D\u0442\u043E\u0439", primeOnly: false, imageUrl: "/gifts/gift-box.svg" },
+  { name: "\u0421\u0435\u0440\u0434\u0446\u0435", emoji: "\u{1F496}", animationType: "hearts", rarity: "legendary", stars: 4, price: 200, description: "\u0421\u0438\u044F\u044E\u0449\u0435\u0435 \u0441\u0435\u0440\u0434\u0446\u0435 \u0441 \u0442\u0451\u043F\u043B\u044B\u043C \u043F\u043E\u0441\u043B\u0430\u043D\u0438\u0435\u043C", primeOnly: false, imageUrl: "/gifts/heart.svg" }
+];
 var SYSTEM_USERS = [
   {
     username: "creater_messenger",
@@ -155202,6 +157021,22 @@ var SYSTEM_USERS = [
   }
 ];
 async function runSeed() {
+  const allGifts = [...GIFT_CATALOG, ...FEATURED_GIFTS];
+  await db.execute(sql`
+    INSERT INTO gift_items
+      (name, emoji, animation_type, rarity, stars, price, description, prime_only, image_url,
+       is_collectible, is_active, max_supply, exchange_value, upgrade_price)
+    VALUES ${sql.join(allGifts.map((gift) => {
+    const isCollectible = gift.rarity !== "common";
+    const maxSupply = gift.rarity === "cosmic" ? 100 : gift.rarity === "legendary" ? 500 : gift.rarity === "epic" ? 1e3 : gift.rarity === "rare" ? 5e3 : null;
+    return sql`(
+        ${gift.name}, ${gift.emoji}, ${gift.animationType}, ${gift.rarity}, ${gift.stars},
+        ${gift.price}, ${gift.description}, ${gift.primeOnly}, ${"imageUrl" in gift ? gift.imageUrl : null}, ${isCollectible},
+        TRUE, ${maxSupply}, ${Math.round(gift.price * 0.85)}, ${Math.round(gift.price * 0.5)}
+      )`;
+  }), sql`, `)}
+    ON CONFLICT (name) DO NOTHING
+  `);
   await db.execute(sql`
     UPDATE users SET username = 'nova_security', display_name = 'Nova Security'
     WHERE is_bot = true
@@ -155425,6 +157260,20 @@ if (Number.isNaN(port) || port <= 0) {
       await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_tiktok_creator BOOLEAN NOT NULL DEFAULT FALSE`);
     }
     await db.execute(sql`ALTER TABLE chat_members ADD COLUMN IF NOT EXISTS is_archived BOOLEAN NOT NULL DEFAULT FALSE`);
+    await db.execute(sql`CREATE TABLE IF NOT EXISTS app_settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL,
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    )`);
+    await db.execute(sql`ALTER TABLE gift_items ADD COLUMN IF NOT EXISTS image_url TEXT`);
+    await db.execute(sql`ALTER TABLE gift_items ADD COLUMN IF NOT EXISTS is_collectible BOOLEAN NOT NULL DEFAULT FALSE`);
+    await db.execute(sql`ALTER TABLE gift_items ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT TRUE`);
+    await db.execute(sql`ALTER TABLE gift_items ADD COLUMN IF NOT EXISTS max_supply INTEGER`);
+    await db.execute(sql`ALTER TABLE gift_items ADD COLUMN IF NOT EXISTS exchange_value INTEGER NOT NULL DEFAULT 0`);
+    await db.execute(sql`ALTER TABLE gift_items ADD COLUMN IF NOT EXISTS upgrade_price INTEGER NOT NULL DEFAULT 0`);
+    await db.execute(sql`ALTER TABLE gifts ADD COLUMN IF NOT EXISTS inventory_status TEXT NOT NULL DEFAULT 'received'`);
+    await db.execute(sql`ALTER TABLE gifts ADD COLUMN IF NOT EXISTS is_upgraded BOOLEAN NOT NULL DEFAULT FALSE`);
+    await db.execute(sql`ALTER TABLE gifts ADD COLUMN IF NOT EXISTS serial_number INTEGER`);
     await db.execute(sql`CREATE TABLE IF NOT EXISTS nickname_styles (
       id SERIAL PRIMARY KEY,
       slug TEXT NOT NULL UNIQUE,

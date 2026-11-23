@@ -4,6 +4,7 @@ import { ArrowLeftRight, Check, ChevronRight, LockKeyhole, MessageCircle, Sparkl
 import { useQueryClient } from "@tanstack/react-query";
 import {
   getGetGiftCatalogQueryKey,
+  getGetMessagesQueryKey,
   getGetMeQueryKey,
   getGetMyGiftsQueryKey,
   useExchangeGift,
@@ -71,6 +72,9 @@ export function GiftDetailsDialog({
       queryClient.invalidateQueries({ queryKey: getGetMyGiftsQueryKey() }),
       queryClient.invalidateQueries({ queryKey: getGetGiftCatalogQueryKey() }),
       queryClient.invalidateQueries({ queryKey: getGetMeQueryKey() }),
+      ...(gift.chatId
+        ? [queryClient.invalidateQueries({ queryKey: getGetMessagesQueryKey({ chatId: gift.chatId }) })]
+        : []),
     ]);
   };
 

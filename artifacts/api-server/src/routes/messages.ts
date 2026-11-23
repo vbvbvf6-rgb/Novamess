@@ -43,40 +43,86 @@ function getGiftIdFromMediaUrl(mediaUrl: string | null | undefined): number | nu
   return match ? Number(match[1]) : null;
 }
 
-async function getGiftData(giftId: number) {
-  const rows = await db.execute(sql`
-    SELECT g.id, g.gift_item_id, g.sender_id, g.receiver_id, g.message, g.is_anonymous, g.chat_id, g.created_at,
-           gi.name AS item_name, gi.emoji AS item_emoji, gi.animation_type AS item_animation_type,
-           gi.rarity AS item_rarity, gi.stars AS item_stars, gi.price AS item_price,
-           gi.description AS item_description, gi.image_url AS item_image_url
-    FROM gifts g
-    JOIN gift_items gi ON gi.id = g.gift_item_id
-    WHERE g.id = ${giftId}
-    LIMIT 1
-  `);
-  const row = rows.rows[0] as any;
-  if (!row) return null;
+function formatGiftInstanceRow(row: any, viewerId: number) {
+  const isAnonymous = Boolean(row.is_anonymous);
+  const hideSender = isAnonymous && Number(row.sender_id) !== viewerId;
+  const maxSupply = row.item_max_supply === null || row.item_max_supply === undefined
+    ? null
+    : Number(row.item_max_supply);
+  const soldCount = Number(row.sold_count ?? 0);
   return {
     id: Number(row.id),
     giftItemId: Number(row.gift_item_id),
-    senderId: Number(row.sender_id),
+    senderId: hideSender ? null : Number(row.sender_id),
+    senderName: hideSender ? "Анонимный пользователь" : row.sender_name || "Пользователь",
     receiverId: Number(row.receiver_id),
+    receiverName: row.receiver_name || "Пользователь",
     message: row.message,
-    isAnonymous: Boolean(row.is_anonymous),
+    isAnonymous,
     chatId: row.chat_id === null ? null : Number(row.chat_id),
     createdAt: row.created_at,
+    inventoryStatus: row.inventory_status,
+    isUpgraded: Boolean(row.is_upgraded),
+    serialNumber: row.serial_number === null ? null : Number(row.serial_number),
     giftItem: {
-      id: Number(row.gift_item_id),
+      id: Number(row.item_id),
       name: row.item_name,
       emoji: row.item_emoji,
       animationType: row.item_animation_type,
       rarity: row.item_rarity,
       stars: Number(row.item_stars),
       price: Number(row.item_price),
-      description: row.item_description,
-      imageUrl: row.item_image_url,
+      description: row.item_description ?? "",
+      primeOnly: Boolean(row.item_prime_only),
+      imageUrl: row.item_image_url ?? null,
+      isCollectible: Boolean(row.item_is_collectible),
+      isActive: Boolean(row.item_is_active),
+      maxSupply,
+      exchangeValue: Number(row.item_exchange_value ?? 0),
+      upgradePrice: Number(row.item_upgrade_price ?? 0),
+      soldCount,
+      availableCount: maxSupply === null ? null : Math.max(0, maxSupply - soldCount),
     },
   };
+}
+
+function anonymousGiftSender() {
+  return {
+    id: 0,
+    displayName: "Анонимный пользователь",
+    username: "anonymous",
+    avatarColor: "#64748b",
+    avatarUrl: null,
+    hasPrime: false,
+    primeTier: null,
+    isAdmin: false,
+  };
+}
+
+async function getGiftData(giftId: number, viewerId: number) {
+  const rows = await db.execute(sql`
+    SELECT g.id, g.gift_item_id, g.sender_id, g.receiver_id, g.message, g.is_anonymous, g.chat_id,
+           g.created_at, g.inventory_status, g.is_upgraded, g.serial_number,
+           gi.id AS item_id, gi.name AS item_name, gi.emoji AS item_emoji,
+           gi.animation_type AS item_animation_type, gi.rarity AS item_rarity,
+           gi.stars AS item_stars, gi.price AS item_price, gi.description AS item_description,
+           gi.prime_only AS item_prime_only, gi.image_url AS item_image_url,
+           gi.is_collectible AS item_is_collectible, gi.is_active AS item_is_active,
+           gi.max_supply AS item_max_supply, gi.exchange_value AS item_exchange_value,
+           gi.upgrade_price AS item_upgrade_price, COUNT(all_gifts.id)::int AS sold_count,
+           sender.display_name AS sender_name, receiver.display_name AS receiver_name
+    FROM gifts g
+    JOIN gift_items gi ON gi.id = g.gift_item_id
+    LEFT JOIN gifts all_gifts ON all_gifts.gift_item_id = gi.id
+    LEFT JOIN users sender ON sender.id = g.sender_id
+    LEFT JOIN users receiver ON receiver.id = g.receiver_id
+    WHERE g.id = ${giftId}
+    GROUP BY g.id, gi.id, sender.id, receiver.id
+    LIMIT 1
+  `);
+  const row = rows.rows[0] as any;
+  if (!row) return null;
+  return formatGiftInstanceRow(row, viewerId);
 }
 
 async function isNovaSecurityChat(chatId: number): Promise<boolean> {
@@ -126,7 +172,7 @@ async function getUserPrimeInfo(userId: number): Promise<{ hasPrime: boolean; is
 
 const router = Router();
 
-async function buildMessage(msg: typeof messagesTable.$inferSelect, viewerIsPrimePlus = false) {
+async function buildMessage(msg: typeof messagesTable.$inferSelect, viewerId: number, viewerIsPrimePlus = false) {
   const sender = await db.query.usersTable.findFirst({ where: eq(usersTable.id, msg.senderId) });
   const reactions = await db.select({
     reaction: reactionsTable,
@@ -140,7 +186,17 @@ async function buildMessage(msg: typeof messagesTable.$inferSelect, viewerIsPrim
     const reply = await db.query.messagesTable.findFirst({ where: eq(messagesTable.id, msg.replyToId) });
     if (reply) {
       const replySender = await db.query.usersTable.findFirst({ where: eq(usersTable.id, reply.senderId) });
-      replyTo = { ...reply, sender: replySender, reactions: [], replyTo: null, giftData: null };
+      const replyGiftId = reply.type === "gift" ? getGiftIdFromMediaUrl(reply.mediaUrl) : null;
+      const replyGift = replyGiftId ? await getGiftData(replyGiftId, viewerId) : null;
+      const hideReplySender = Boolean(replyGift?.isAnonymous) && reply.senderId !== viewerId;
+      replyTo = {
+        ...reply,
+        senderId: hideReplySender ? 0 : reply.senderId,
+        sender: hideReplySender ? anonymousGiftSender() : replySender,
+        reactions: [],
+        replyTo: null,
+        giftData: replyGift,
+      };
     }
   }
 
@@ -189,23 +245,26 @@ async function buildMessage(msg: typeof messagesTable.$inferSelect, viewerIsPrim
     } catch {}
   }
 
+  const giftId = msg.type === "gift" ? getGiftIdFromMediaUrl(msg.mediaUrl) : null;
+  const giftData = giftId ? await getGiftData(giftId, viewerId) : null;
+  const hideGiftSender = Boolean(giftData?.isAnonymous) && msg.senderId !== viewerId;
+
   return {
     ...msg,
+    senderId: hideGiftSender ? 0 : msg.senderId,
     text: maskedText,
     mediaUrl: maskedMediaUrl,
     deletedContentVisible,
-    sender: senderWithPrime,
+    sender: hideGiftSender ? anonymousGiftSender() : senderWithPrime,
     reactions: reactions.map(r => ({ ...r.reaction, user: r.user })),
     replyTo,
-    giftData: msg.type === "gift" && getGiftIdFromMediaUrl(msg.mediaUrl)
-      ? await getGiftData(getGiftIdFromMediaUrl(msg.mediaUrl)!)
-      : null,
+    giftData,
     pollData,
   };
 }
 
 // ── Batch builder — replaces N+1 with 5 fixed queries for any message list ──
-async function buildMessagesBatch(msgs: (typeof messagesTable.$inferSelect)[], viewerIsPrimePlus = false) {
+async function buildMessagesBatch(msgs: (typeof messagesTable.$inferSelect)[], viewerId: number, viewerIsPrimePlus = false) {
   if (msgs.length === 0) return [];
 
   const msgIds = msgs.map(m => m.id);
@@ -265,7 +324,7 @@ async function buildMessagesBatch(msgs: (typeof messagesTable.$inferSelect)[], v
   }
 
   const giftMessageIds = [...new Set(
-    msgs
+    [...msgs, ...replyMessages]
       .filter((msg) => msg.type === "gift")
       .map((msg) => getGiftIdFromMediaUrl(msg.mediaUrl))
       .filter((id): id is number => id !== null),
@@ -273,37 +332,27 @@ async function buildMessagesBatch(msgs: (typeof messagesTable.$inferSelect)[], v
   const giftRows = giftMessageIds.length
     ? await db.execute(sql`
       SELECT g.id, g.gift_item_id, g.sender_id, g.receiver_id, g.message, g.is_anonymous, g.chat_id, g.created_at,
-             gi.name AS item_name, gi.emoji AS item_emoji, gi.animation_type AS item_animation_type,
-             gi.rarity AS item_rarity, gi.stars AS item_stars, gi.price AS item_price,
-             gi.description AS item_description, gi.image_url AS item_image_url
+             g.inventory_status, g.is_upgraded, g.serial_number,
+             gi.id AS item_id, gi.name AS item_name, gi.emoji AS item_emoji,
+             gi.animation_type AS item_animation_type, gi.rarity AS item_rarity,
+             gi.stars AS item_stars, gi.price AS item_price, gi.description AS item_description,
+             gi.prime_only AS item_prime_only, gi.image_url AS item_image_url,
+             gi.is_collectible AS item_is_collectible, gi.is_active AS item_is_active,
+             gi.max_supply AS item_max_supply, gi.exchange_value AS item_exchange_value,
+             gi.upgrade_price AS item_upgrade_price, COUNT(all_gifts.id)::int AS sold_count,
+             sender.display_name AS sender_name, receiver.display_name AS receiver_name
       FROM gifts g
       JOIN gift_items gi ON gi.id = g.gift_item_id
+      LEFT JOIN gifts all_gifts ON all_gifts.gift_item_id = gi.id
+      LEFT JOIN users sender ON sender.id = g.sender_id
+      LEFT JOIN users receiver ON receiver.id = g.receiver_id
       WHERE g.id = ANY(ARRAY[${sql.join(giftMessageIds.map((id) => sql`${id}`), sql`, `)}]::int[])
+      GROUP BY g.id, gi.id, sender.id, receiver.id
     `)
     : { rows: [] };
   const giftMap = new Map<number, any>();
   for (const row of giftRows.rows as any[]) {
-    giftMap.set(Number(row.id), {
-      id: Number(row.id),
-      giftItemId: Number(row.gift_item_id),
-      senderId: Number(row.sender_id),
-      receiverId: Number(row.receiver_id),
-      message: row.message,
-      isAnonymous: Boolean(row.is_anonymous),
-      chatId: row.chat_id === null ? null : Number(row.chat_id),
-      createdAt: row.created_at,
-      giftItem: {
-        id: Number(row.gift_item_id),
-        name: row.item_name,
-        emoji: row.item_emoji,
-        animationType: row.item_animation_type,
-        rarity: row.item_rarity,
-        stars: Number(row.item_stars),
-        price: Number(row.item_price),
-        description: row.item_description,
-        imageUrl: row.item_image_url,
-      },
-    });
+    giftMap.set(Number(row.id), formatGiftInstanceRow(row, viewerId));
   }
 
   return msgs.map(msg => {
@@ -338,7 +387,17 @@ async function buildMessagesBatch(msgs: (typeof messagesTable.$inferSelect)[], v
     if (msg.replyToId) {
       const reply = replyMsgMap.get(msg.replyToId);
       if (reply) {
-        replyTo = { ...reply, sender: replyUserMap.get(reply.senderId) ?? null, reactions: [], replyTo: null, giftData: null };
+        const replyGiftId = reply.type === "gift" ? getGiftIdFromMediaUrl(reply.mediaUrl) : null;
+        const replyGift = replyGiftId ? giftMap.get(replyGiftId) : null;
+        const hideReplySender = Boolean(replyGift?.isAnonymous) && reply.senderId !== viewerId;
+        replyTo = {
+          ...reply,
+          senderId: hideReplySender ? 0 : reply.senderId,
+          sender: hideReplySender ? anonymousGiftSender() : replyUserMap.get(reply.senderId) ?? null,
+          reactions: [],
+          replyTo: null,
+          giftData: replyGift ?? null,
+        };
       }
     }
 
@@ -352,18 +411,55 @@ async function buildMessagesBatch(msgs: (typeof messagesTable.$inferSelect)[], v
       }
     }
 
+    const giftId = msg.type === "gift" ? getGiftIdFromMediaUrl(msg.mediaUrl) : null;
+    const giftData = giftId ? giftMap.get(giftId) ?? null : null;
+    const hideGiftSender = Boolean(giftData?.isAnonymous) && msg.senderId !== viewerId;
+
     return {
       ...msg,
+      senderId: hideGiftSender ? 0 : msg.senderId,
       text: maskedText,
       mediaUrl: maskedMediaUrl,
       deletedContentVisible,
-      sender: senderWithPrime,
+      sender: hideGiftSender ? anonymousGiftSender() : senderWithPrime,
       reactions: (reactionsMap.get(msg.id) ?? []).map(r => ({ ...r.reaction, user: r.user })),
       replyTo,
-      giftData: msg.type === "gift" && getGiftIdFromMediaUrl(msg.mediaUrl)
-        ? giftMap.get(getGiftIdFromMediaUrl(msg.mediaUrl)!) ?? null
-        : null,
+      giftData,
       pollData,
+    };
+  });
+}
+
+async function maskAnonymousGiftSearchRows(rows: any[], viewerId: number) {
+  const giftIds = [...new Set(
+    rows
+      .filter(row => row.type === "gift")
+      .map(row => getGiftIdFromMediaUrl(row.media_url))
+      .filter((id): id is number => id !== null),
+  )];
+  if (!giftIds.length) return rows;
+
+  const giftRows = await db.execute(sql`
+    SELECT id, sender_id, is_anonymous
+    FROM gifts
+    WHERE id = ANY(ARRAY[${sql.join(giftIds.map(id => sql`${id}`), sql`, `)}]::int[])
+  `);
+  const anonymousGiftIds = new Set(
+    (giftRows.rows as any[])
+      .filter(gift => (gift.is_anonymous === true || gift.is_anonymous === "t") && Number(gift.sender_id) !== viewerId)
+      .map(gift => Number(gift.id)),
+  );
+
+  return rows.map(row => {
+    const giftId = row.type === "gift" ? getGiftIdFromMediaUrl(row.media_url) : null;
+    if (!giftId || !anonymousGiftIds.has(giftId)) return row;
+    return {
+      ...row,
+      sender_id: 0,
+      sender_id_u: 0,
+      display_name: "Анонимный пользователь",
+      avatar_color: "#64748b",
+      avatar_url: null,
     };
   });
 }
@@ -405,7 +501,7 @@ router.get("/messages/search", async (req, res) => {
             ORDER BY m.created_at DESC
             LIMIT ${limit}`
       );
-      return res.json(rows.rows);
+      return res.json(await maskAnonymousGiftSearchRows(rows.rows as any[], uid));
     }
 
     const rows = await db.execute(
@@ -424,7 +520,7 @@ router.get("/messages/search", async (req, res) => {
           ORDER BY m.created_at DESC
           LIMIT ${limit}`
     );
-    return res.json(rows.rows);
+    return res.json(await maskAnonymousGiftSearchRows(rows.rows as any[], uid));
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });
@@ -494,7 +590,7 @@ router.get("/messages", async (req, res) => {
     }, 0);
 
     const reversed = msgs.reverse();
-    const built = await buildMessagesBatch(reversed, isPrimePlus);
+    const built = await buildMessagesBatch(reversed, uid, isPrimePlus);
     for (let i = 0; i < reversed.length; i++) {
       const m = reversed[i];
       if (m.senderId === uid) {
@@ -1124,7 +1220,7 @@ router.get("/messages/:messageId/thread", async (req, res) => {
       .from(messagesTable)
       .where(and(eq(messagesTable.replyToId, messageId), eq(messagesTable.isDeleted, false)))
       .orderBy(messagesTable.createdAt);
-    const built = await Promise.all(replies.map(m => buildMessage(m, isPrimePlus)));
+    const built = await Promise.all(replies.map(m => buildMessage(m, uid, isPrimePlus)));
     res.json(built);
   } catch (err) {
     req.log.error(err);
@@ -1150,7 +1246,7 @@ router.put("/messages/:messageId", async (req, res) => {
       .set({ text: body.text, isEdited: true })
       .where(eq(messagesTable.id, messageId))
       .returning();
-    const built = await buildMessage(msg, false);
+    const built = await buildMessage(msg, uid, false);
     broadcastToChat(msg.chatId, "new-message", { messageId: msg.id, chatId: msg.chatId });
     res.json(built);
   } catch (err) {

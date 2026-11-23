@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { useLocation } from "wouter";
-import { Message, useGetMe, useGetChats } from "@workspace/api-client-react";
+import { Message, useGetMe, useGetChats, type GiftInstance } from "@workspace/api-client-react";
 import { format } from "date-fns";
 import { useAppContext } from "@/contexts/AppContext";
 import { useQueryClient } from "@tanstack/react-query";
@@ -13,6 +14,8 @@ import { BOT_AVATAR_URL } from "@/lib/botAvatar";
 import { decryptMessage, isEncryptedMessage } from "@/lib/e2e";
 import { emojiToTwemojiUrl } from "@/lib/twemoji";
 import { VideoPlayer } from "@/components/media/VideoPlayer";
+import { GiftArtwork } from "@/components/gifts/GiftArtwork";
+import { GiftDetailsDialog } from "@/components/gifts/GiftDetailsDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -596,6 +599,7 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
   const lastTapRef = useRef<number>(0);
   const [heartFlash, setHeartFlash] = useState(false);
   const [decryptedText, setDecryptedText] = useState<string | null>(null);
+  const [giftDetails, setGiftDetails] = useState<{ gift: GiftInstance; direction: "received" | "sent" } | null>(null);
 
   useEffect(() => {
     if (!isEncryptedMessage(message.text)) {
@@ -916,17 +920,29 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
   const renderContent = () => {
     switch (message.type as string) {
       case "gift": {
-        const giftData = (message as any).giftData;
+        const giftData = (message as any).giftData as GiftInstance | null;
         const giftItem = giftData?.giftItem;
-        const imageUrl = giftItem?.imageUrl as string | undefined;
         const giftName = giftItem?.name || "Подарок";
         const note = message.text || giftData?.message;
         return (
-          <motion.div
+          <motion.button
+            type="button"
             initial={{ opacity: 0, scale: 0.78, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ type: "spring", stiffness: 260, damping: 18 }}
-            className="gift-message-card relative min-w-[190px] overflow-hidden rounded-2xl border border-pink-400/25 bg-gradient-to-br from-pink-500/15 via-background/70 to-violet-500/15 p-3 text-center"
+            onPointerDown={event => event.stopPropagation()}
+            onClick={event => {
+              event.stopPropagation();
+              if (giftData) {
+                setGiftDetails({
+                  gift: giftData,
+                  direction: giftData.senderId === currentUserId ? "sent" : "received",
+                });
+              }
+            }}
+            disabled={!giftData}
+            aria-label={`Подробнее о подарке «${giftName}»`}
+            className="gift-message-card relative min-w-[190px] overflow-hidden rounded-2xl border border-pink-400/25 bg-gradient-to-br from-pink-500/15 via-background/70 to-violet-500/15 p-3 text-center disabled:cursor-default"
             data-testid={`card-chat-gift-${message.id}`}
           >
             <div className="gift-message-shimmer pointer-events-none absolute inset-0" aria-hidden="true" />
@@ -936,23 +952,16 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
               className="relative mx-auto flex h-28 w-28 items-center justify-center"
             >
               <div className="absolute inset-3 rounded-full bg-pink-400/20 blur-xl" />
-              {imageUrl ? (
-                <img
-                  src={imageUrl}
-                  alt={giftName}
-                  className="gift-art relative z-10 h-24 w-24 object-contain drop-shadow-xl"
-                />
-              ) : (
-                <span className="gift-art relative z-10 text-6xl" role="img" aria-label={giftName}>
-                  {giftItem?.emoji || "🎁"}
-                </span>
-              )}
+              {giftItem && <GiftArtwork item={giftItem} className="relative z-10 h-24 w-24 drop-shadow-xl" />}
             </motion.div>
             <p className="relative text-[10px] font-black uppercase tracking-[0.18em] text-pink-400">Подарок</p>
             <h3 className="relative mt-0.5 text-sm font-black text-foreground">{giftName}</h3>
             {giftItem?.description && <p className="relative mt-1 text-[10px] leading-relaxed text-muted-foreground">{giftItem.description}</p>}
             {note && <p className="relative mt-2 border-t border-border/70 pt-2 text-xs font-medium text-foreground/90">{note}</p>}
-          </motion.div>
+            <span className="relative mt-3 block border-t border-white/10 pt-2 text-[10px] font-bold text-pink-300">
+              Открыть подарок · статус и детали
+            </span>
+          </motion.button>
         );
       }
       case "poll":
@@ -1223,9 +1232,9 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
           <div className="overflow-hidden -mx-1 -mt-1 mb-1 relative group rounded-xl">
             <VideoPlayer
               src={message.mediaUrl || ""}
-              fit="cover"
+              fit="contain"
               className="max-w-[280px] w-full rounded-xl"
-              videoClassName="h-auto max-h-[320px] aspect-video"
+              videoClassName="h-auto max-h-[320px] w-full"
             />
             <div className="flex items-center gap-1 px-2 pb-1 pt-1">
               <p className="text-[11px] text-muted-foreground truncate flex-1">{videoName}</p>
@@ -1289,8 +1298,8 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
               <VideoPlayer
                 src={message.mediaUrl}
                 className="max-w-[280px] max-h-[320px] w-full rounded-xl"
-                videoClassName="h-auto max-h-[320px] aspect-video"
-                fit="cover"
+                videoClassName="h-auto max-h-[320px] w-full"
+                fit="contain"
                 onPlay={() => window.dispatchEvent(new CustomEvent("pulse:play-media", { detail: { url: message.mediaUrl, type: "video", title: docMeta.name } }))}
               />
               <div className={`flex items-center gap-2 px-2 pb-1 pt-1 text-[11px] ${isMine ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
@@ -2056,6 +2065,15 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
           </motion.div>
         )}
       </AnimatePresence>
+      {giftDetails && createPortal(
+        <GiftDetailsDialog
+          gift={giftDetails.gift}
+          direction={giftDetails.direction}
+          onClose={() => setGiftDetails(null)}
+          onGiftChanged={updated => setGiftDetails(current => current ? { ...current, gift: updated } : null)}
+        />,
+        document.body,
+      )}
       </>
     </div>
   );

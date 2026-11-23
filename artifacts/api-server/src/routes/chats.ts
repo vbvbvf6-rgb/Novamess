@@ -8,6 +8,27 @@ import { getActiveUserModeration, moderationBlocksStartingDirectChat } from "../
 
 const router = Router();
 
+function anonymousChatSender() {
+  return {
+    id: 0,
+    displayName: "Анонимный пользователь",
+    username: "anonymous",
+    avatarColor: "#64748b",
+    avatarUrl: null,
+    nicknameStyle: null,
+  };
+}
+
+async function isHiddenAnonymousGift(type: string, mediaUrl: string | null, senderId: number | null, viewerId: number) {
+  const match = type === "gift" && mediaUrl?.match(/^gift:(\d+)$/);
+  if (!match || senderId === viewerId) return false;
+  const rows = await db.execute(sql`
+    SELECT is_anonymous FROM gifts WHERE id = ${Number(match[1])} LIMIT 1
+  `);
+  const value = (rows.rows[0] as any)?.is_anonymous;
+  return value === true || value === "t";
+}
+
 async function getUserPrimeInfo(userId: number): Promise<{ hasPrime: boolean; isPrimePlus: boolean }> {
   try {
     const row = await db.execute(sql`SELECT has_prime, prime_tier, prime_expires_at FROM users WHERE id = ${userId}`);
@@ -43,8 +64,11 @@ async function buildChat(chatId: number, currentUserId: number) {
     try {
       const pm = await db.query.messagesTable.findFirst({ where: eq(messagesTable.id, (chat as any).pinnedMessageId) });
       if (pm) {
-        const pmSender = await db.query.usersTable.findFirst({ where: eq(usersTable.id, pm.senderId) });
-        pinnedMessage = { ...pm, sender: pmSender };
+        const hideSender = await isHiddenAnonymousGift(pm.type, pm.mediaUrl, pm.senderId, currentUserId);
+        const pmSender = hideSender
+          ? anonymousChatSender()
+          : await db.query.usersTable.findFirst({ where: eq(usersTable.id, pm.senderId) });
+        pinnedMessage = { ...pm, senderId: hideSender ? 0 : pm.senderId, sender: pmSender };
       }
     } catch {}
   }
@@ -55,26 +79,38 @@ async function buildChat(chatId: number, currentUserId: number) {
     const pinnedRows = await db.execute(sql`
       SELECT pm.id as pin_id, pm.pinned_at, pm.pinned_by,
              m.id, m.chat_id, m.sender_id, m.text, m.type, m.media_url, m.created_at, m.is_deleted,
-             u.display_name, u.avatar_color, u.nickname_style
+              u.display_name, u.avatar_color, u.nickname_style,
+              gift_data.is_anonymous AS gift_is_anonymous
       FROM pinned_messages pm
       JOIN messages m ON m.id = pm.message_id
       JOIN users u ON u.id = m.sender_id
+      LEFT JOIN gifts gift_data ON gift_data.id = CASE
+        WHEN m.type = 'gift' AND m.media_url ~ '^gift:[0-9]+$'
+        THEN substring(m.media_url FROM 6)::int
+        ELSE NULL
+      END
       WHERE pm.chat_id = ${chatId}
       ORDER BY pm.pinned_at DESC
     `);
-    pinnedMessages = (pinnedRows.rows as any[]).map(row => ({
-      id: row.id,
-      pinId: row.pin_id,
-      chatId: row.chat_id,
-      senderId: row.sender_id,
-      text: row.text,
-      type: row.type,
-      mediaUrl: row.media_url,
-      createdAt: row.created_at,
-      isDeleted: row.is_deleted,
-      pinnedAt: row.pinned_at,
-      sender: { displayName: row.display_name, avatarColor: row.avatar_color, nicknameStyle: row.nickname_style },
-    }));
+    pinnedMessages = (pinnedRows.rows as any[]).map(row => {
+      const hideSender = (row.gift_is_anonymous === true || row.gift_is_anonymous === "t") &&
+        Number(row.sender_id) !== currentUserId;
+      return {
+        id: row.id,
+        pinId: row.pin_id,
+        chatId: row.chat_id,
+        senderId: hideSender ? 0 : row.sender_id,
+        text: row.text,
+        type: row.type,
+        mediaUrl: row.media_url,
+        createdAt: row.created_at,
+        isDeleted: row.is_deleted,
+        pinnedAt: row.pinned_at,
+        sender: hideSender
+          ? anonymousChatSender()
+          : { displayName: row.display_name, avatarColor: row.avatar_color, nicknameStyle: row.nickname_style },
+      };
+    });
 
     // Use first pinned message as legacy pinnedMessage if not already set
     if (!pinnedMessage && pinnedMessages.length > 0) {
@@ -101,8 +137,16 @@ async function buildChat(chatId: number, currentUserId: number) {
 
   let lastMessage = null;
   if (lastMessageRow) {
+    const hideSender = await isHiddenAnonymousGift(
+      lastMessageRow.type,
+      lastMessageRow.mediaUrl,
+      lastMessageRow.senderId,
+      currentUserId,
+    );
     // senderId can be null (deleted user) — guard against passing null to eq()
-    const sender = lastMessageRow.senderId
+    const sender = hideSender
+      ? anonymousChatSender()
+      : lastMessageRow.senderId
       ? await db.query.usersTable.findFirst({ where: eq(usersTable.id, lastMessageRow.senderId) })
       : null;
     const reactions = await db.select().from(reactionsTable).where(eq(reactionsTable.messageId, lastMessageRow.id));
@@ -117,7 +161,14 @@ async function buildChat(chatId: number, currentUserId: number) {
     const maxDel2  = otherMembers2.reduce((mx, m) => Math.max(mx, m.lastDeliveredAt ? new Date(m.lastDeliveredAt).getTime() : 0), 0);
     const lmIsRead      = lastMessageRow.senderId === currentUserId ? maxRead2 >= msgTime : true;
     const lmIsDelivered = lastMessageRow.senderId === currentUserId ? maxDel2  >= msgTime : true;
-    lastMessage = { ...lastMessageRow, sender, reactions, isRead: lmIsRead, isDelivered: lmIsDelivered };
+    lastMessage = {
+      ...lastMessageRow,
+      senderId: hideSender ? 0 : lastMessageRow.senderId,
+      sender,
+      reactions,
+      isRead: lmIsRead,
+      isDelivered: lmIsDelivered,
+    };
   }
 
   let unreadCount = 0;
@@ -199,10 +250,16 @@ async function buildChatsForUser(uid: number) {
         u.display_name AS sender_name, u.avatar_color AS sender_color,
         u.nickname_style AS sender_nickname_style,
         u.username AS sender_username,
+        gift_data.is_anonymous AS gift_is_anonymous,
         COALESCE((SELECT json_agg(r.*) FROM reactions r WHERE r.message_id = m.id), '[]'::json) AS reactions
       FROM messages m
       JOIN chats c ON c.id = m.chat_id
       LEFT JOIN users u ON u.id = m.sender_id
+      LEFT JOIN gifts gift_data ON gift_data.id = CASE
+        WHEN m.type = 'gift' AND m.media_url ~ '^gift:[0-9]+$'
+        THEN substring(m.media_url FROM 6)::int
+        ELSE NULL
+      END
       WHERE m.chat_id IN (${idList})
         AND (c.type <> 'channel' OR m.reply_to_id IS NULL)
       ORDER BY m.chat_id, m.created_at DESC
@@ -237,10 +294,16 @@ async function buildChatsForUser(uid: number) {
         pm.chat_id, pm.id AS pin_id, pm.pinned_at, pm.pinned_by,
         m.id AS msg_id, m.sender_id, m.text, m.type, m.media_url,
         m.created_at, m.is_deleted,
-        u.display_name, u.avatar_color, u.nickname_style
+        u.display_name, u.avatar_color, u.nickname_style,
+        gift_data.is_anonymous AS gift_is_anonymous
       FROM pinned_messages pm
       JOIN messages m ON m.id = pm.message_id
       JOIN users u ON u.id = m.sender_id
+      LEFT JOIN gifts gift_data ON gift_data.id = CASE
+        WHEN m.type = 'gift' AND m.media_url ~ '^gift:[0-9]+$'
+        THEN substring(m.media_url FROM 6)::int
+        ELSE NULL
+      END
       WHERE pm.chat_id IN (${idList})
       ORDER BY pm.pinned_at DESC
     `).catch(() => ({ rows: [] })),
@@ -285,12 +348,16 @@ async function buildChatsForUser(uid: number) {
   for (const p of pinnedRows.rows as any[]) {
     const cid = Number(p.chat_id);
     if (!pinnedListMap.has(cid)) pinnedListMap.set(cid, []);
+    const hideSender = (p.gift_is_anonymous === true || p.gift_is_anonymous === "t") &&
+      Number(p.sender_id) !== uid;
     pinnedListMap.get(cid)!.push({
       id: p.msg_id, pinId: p.pin_id, chatId: cid,
-      senderId: p.sender_id, text: p.text, type: p.type,
+      senderId: hideSender ? 0 : p.sender_id, text: p.text, type: p.type,
       mediaUrl: p.media_url, createdAt: p.created_at,
       isDeleted: p.is_deleted, pinnedAt: p.pinned_at,
-      sender: { displayName: p.display_name, avatarColor: p.avatar_color, nicknameStyle: p.nickname_style },
+      sender: hideSender
+        ? anonymousChatSender()
+        : { displayName: p.display_name, avatarColor: p.avatar_color, nicknameStyle: p.nickname_style },
     });
   }
 
@@ -303,6 +370,8 @@ async function buildChatsForUser(uid: number) {
     const lm = lastMsgMap.get(chatId);
     let lastMessage: any = null;
     if (lm) {
+      const hideSender = (lm.gift_is_anonymous === true || lm.gift_is_anonymous === "t") &&
+        Number(lm.sender_id) !== uid;
       // Compute isRead/isDelivered only when current user sent the message
       let isRead = true;
       let isDelivered = true;
@@ -313,10 +382,10 @@ async function buildChatsForUser(uid: number) {
         isDelivered = rs?.max_delivered_at ? new Date(rs.max_delivered_at).getTime() >= msgTime : false;
       }
       lastMessage = {
-        id: lm.id, chatId: lm.chat_id, senderId: lm.sender_id,
+        id: lm.id, chatId: lm.chat_id, senderId: hideSender ? 0 : lm.sender_id,
         text: lm.text, type: lm.type, mediaUrl: lm.media_url,
         createdAt: lm.created_at, isDeleted: lm.is_deleted,
-        sender: lm.sender_id ? {
+        sender: hideSender ? anonymousChatSender() : lm.sender_id ? {
           displayName: lm.sender_name, avatarColor: lm.sender_color, username: lm.sender_username,
           nicknameStyle: lm.sender_nickname_style,
         } : null,
