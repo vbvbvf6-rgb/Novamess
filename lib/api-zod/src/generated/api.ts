@@ -19,7 +19,7 @@ export const HealthCheckResponse = zod.object({
  * @summary Get current user
  */
 export const GetMeResponse = zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "username": zod.string(),
   "displayName": zod.string(),
   "bio": zod.string().nullish(),
@@ -55,7 +55,7 @@ export const UpdateMeBody = zod.object({
 })
 
 export const UpdateMeResponse = zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "username": zod.string(),
   "displayName": zod.string(),
   "bio": zod.string().nullish(),
@@ -83,7 +83,7 @@ export const SearchUsersQueryParams = zod.object({
 })
 
 export const SearchUsersResponseItem = zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "username": zod.string(),
   "displayName": zod.string(),
   "bio": zod.string().nullish(),
@@ -109,7 +109,7 @@ export const GetUserByIdParams = zod.object({
 })
 
 export const GetUserByIdResponse = zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "username": zod.string(),
   "displayName": zod.string(),
   "bio": zod.string().nullish(),
@@ -133,7 +133,7 @@ export const GetUserByIdResponse = zod.object({
  * @summary Get user contacts
  */
 export const GetContactsResponseItem = zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "username": zod.string(),
   "displayName": zod.string(),
   "bio": zod.string().nullish(),
@@ -158,11 +158,11 @@ export const GetContactsResponse = zod.array(GetContactsResponseItem)
  * @summary Add a contact
  */
 export const AddContactBody = zod.object({
-  "userId": zod.int()
+  "userId": zod.number().int()
 })
 
 export const AddContactResponse = zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "username": zod.string(),
   "displayName": zod.string(),
   "bio": zod.string().nullish(),
@@ -193,7 +193,7 @@ export const RemoveContactResponse = zod.void()
  * @summary Get all chats for current user
  */
 export const GetChatsResponseItem = zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "type": zod.enum(['direct', 'group', 'channel']),
   "name": zod.string().nullish(),
   "description": zod.string().nullish(),
@@ -201,24 +201,24 @@ export const GetChatsResponseItem = zod.object({
   "avatarColor": zod.string(),
   "isPinned": zod.boolean(),
   "isMuted": zod.boolean(),
-  "unreadCount": zod.int(),
+  "unreadCount": zod.number().int(),
   "lastMessage": zod.union([zod.object({
-  "id": zod.int(),
-  "chatId": zod.int(),
-  "senderId": zod.int(),
+  "id": zod.number().int(),
+  "chatId": zod.number().int(),
+  "senderId": zod.number().int(),
   "text": zod.string().nullish(),
   "type": zod.enum(['text', 'image', 'video', 'audio', 'file', 'gift', 'call', 'sticker', 'system']),
   "mediaUrl": zod.string().nullish(),
-  "replyToId": zod.int().nullish(),
+  "replyToId": zod.number().int().nullish(),
   "isEdited": zod.boolean(),
   "isRead": zod.boolean(),
   "reactions": zod.array(zod.object({
-  "id": zod.int(),
-  "messageId": zod.int(),
-  "userId": zod.int(),
+  "id": zod.number().int(),
+  "messageId": zod.number().int(),
+  "userId": zod.number().int(),
   "emoji": zod.string(),
   "user": zod.union([zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "username": zod.string(),
   "displayName": zod.string(),
   "bio": zod.string().nullish(),
@@ -239,7 +239,7 @@ export const GetChatsResponseItem = zod.object({
   "createdAt": zod.string()
 })),
   "sender": zod.union([zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "username": zod.string(),
   "displayName": zod.string(),
   "bio": zod.string().nullish(),
@@ -259,50 +259,50 @@ export const GetChatsResponseItem = zod.object({
 }),zod.null()]).optional(),
   "replyTo": zod.union([zod.unknown(),zod.null()]).optional(),
   "giftData": zod.union([zod.object({
-  "id": zod.int(),
-  "giftItemId": zod.int(),
-  "senderId": zod.int().nullable(),
+  "id": zod.number().int(),
+  "giftItemId": zod.number().int(),
+  "senderId": zod.number().int().nullable(),
   "senderName": zod.string(),
-  "receiverId": zod.int(),
+  "receiverId": zod.number().int(),
   "receiverName": zod.string(),
   "message": zod.string().nullish(),
   "isAnonymous": zod.boolean(),
-  "chatId": zod.int().nullable(),
+  "chatId": zod.number().int().nullable(),
   "createdAt": zod.string(),
   "inventoryStatus": zod.enum(['received', 'collected', 'exchanged']),
   "isUpgraded": zod.boolean(),
-  "serialNumber": zod.int().nullable(),
+  "serialNumber": zod.number().int().nullable(),
   "giftItem": zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "name": zod.string(),
   "emoji": zod.string(),
   "animationType": zod.enum(['bounce', 'confetti', 'sparkle', 'hearts', 'fireworks', 'stars', 'balloons', 'roses', 'orbit', 'bloom', 'diamonds', 'flame', 'galaxy', 'lightning', 'magic', 'supernova', 'vortex']),
   "rarity": zod.enum(['common', 'rare', 'epic', 'legendary', 'cosmic']),
-  "stars": zod.int(),
-  "price": zod.int(),
+  "stars": zod.number().int(),
+  "price": zod.number().int(),
   "description": zod.string(),
   "primeOnly": zod.boolean(),
   "imageUrl": zod.string().nullish(),
   "isCollectible": zod.boolean(),
   "isActive": zod.boolean(),
-  "maxSupply": zod.int().nullable(),
-  "exchangeValue": zod.int(),
-  "upgradePrice": zod.int(),
-  "soldCount": zod.int(),
-  "availableCount": zod.int().nullable()
+  "maxSupply": zod.number().int().nullable(),
+  "exchangeValue": zod.number().int(),
+  "upgradePrice": zod.number().int(),
+  "soldCount": zod.number().int(),
+  "availableCount": zod.number().int().nullable()
 })
 }),zod.null()]).optional(),
   "createdAt": zod.string(),
   "updatedAt": zod.string()
 }),zod.null()]).optional(),
   "members": zod.array(zod.object({
-  "id": zod.int(),
-  "chatId": zod.int(),
-  "userId": zod.int(),
+  "id": zod.number().int(),
+  "chatId": zod.number().int(),
+  "userId": zod.number().int(),
   "role": zod.enum(['owner', 'admin', 'member']),
   "joinedAt": zod.string(),
   "user": zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "username": zod.string(),
   "displayName": zod.string(),
   "bio": zod.string().nullish(),
@@ -322,7 +322,7 @@ export const GetChatsResponseItem = zod.object({
 }).optional()
 })).optional(),
   "otherUser": zod.union([zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "username": zod.string(),
   "displayName": zod.string(),
   "bio": zod.string().nullish(),
@@ -353,11 +353,11 @@ export const CreateChatBody = zod.object({
   "type": zod.enum(['direct', 'group', 'channel']),
   "name": zod.string().optional(),
   "description": zod.string().optional(),
-  "memberIds": zod.array(zod.int()).optional()
+  "memberIds": zod.array(zod.number().int()).optional()
 })
 
 export const CreateChatResponse = zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "type": zod.enum(['direct', 'group', 'channel']),
   "name": zod.string().nullish(),
   "description": zod.string().nullish(),
@@ -365,24 +365,24 @@ export const CreateChatResponse = zod.object({
   "avatarColor": zod.string(),
   "isPinned": zod.boolean(),
   "isMuted": zod.boolean(),
-  "unreadCount": zod.int(),
+  "unreadCount": zod.number().int(),
   "lastMessage": zod.union([zod.object({
-  "id": zod.int(),
-  "chatId": zod.int(),
-  "senderId": zod.int(),
+  "id": zod.number().int(),
+  "chatId": zod.number().int(),
+  "senderId": zod.number().int(),
   "text": zod.string().nullish(),
   "type": zod.enum(['text', 'image', 'video', 'audio', 'file', 'gift', 'call', 'sticker', 'system']),
   "mediaUrl": zod.string().nullish(),
-  "replyToId": zod.int().nullish(),
+  "replyToId": zod.number().int().nullish(),
   "isEdited": zod.boolean(),
   "isRead": zod.boolean(),
   "reactions": zod.array(zod.object({
-  "id": zod.int(),
-  "messageId": zod.int(),
-  "userId": zod.int(),
+  "id": zod.number().int(),
+  "messageId": zod.number().int(),
+  "userId": zod.number().int(),
   "emoji": zod.string(),
   "user": zod.union([zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "username": zod.string(),
   "displayName": zod.string(),
   "bio": zod.string().nullish(),
@@ -403,7 +403,7 @@ export const CreateChatResponse = zod.object({
   "createdAt": zod.string()
 })),
   "sender": zod.union([zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "username": zod.string(),
   "displayName": zod.string(),
   "bio": zod.string().nullish(),
@@ -423,50 +423,50 @@ export const CreateChatResponse = zod.object({
 }),zod.null()]).optional(),
   "replyTo": zod.union([zod.unknown(),zod.null()]).optional(),
   "giftData": zod.union([zod.object({
-  "id": zod.int(),
-  "giftItemId": zod.int(),
-  "senderId": zod.int().nullable(),
+  "id": zod.number().int(),
+  "giftItemId": zod.number().int(),
+  "senderId": zod.number().int().nullable(),
   "senderName": zod.string(),
-  "receiverId": zod.int(),
+  "receiverId": zod.number().int(),
   "receiverName": zod.string(),
   "message": zod.string().nullish(),
   "isAnonymous": zod.boolean(),
-  "chatId": zod.int().nullable(),
+  "chatId": zod.number().int().nullable(),
   "createdAt": zod.string(),
   "inventoryStatus": zod.enum(['received', 'collected', 'exchanged']),
   "isUpgraded": zod.boolean(),
-  "serialNumber": zod.int().nullable(),
+  "serialNumber": zod.number().int().nullable(),
   "giftItem": zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "name": zod.string(),
   "emoji": zod.string(),
   "animationType": zod.enum(['bounce', 'confetti', 'sparkle', 'hearts', 'fireworks', 'stars', 'balloons', 'roses', 'orbit', 'bloom', 'diamonds', 'flame', 'galaxy', 'lightning', 'magic', 'supernova', 'vortex']),
   "rarity": zod.enum(['common', 'rare', 'epic', 'legendary', 'cosmic']),
-  "stars": zod.int(),
-  "price": zod.int(),
+  "stars": zod.number().int(),
+  "price": zod.number().int(),
   "description": zod.string(),
   "primeOnly": zod.boolean(),
   "imageUrl": zod.string().nullish(),
   "isCollectible": zod.boolean(),
   "isActive": zod.boolean(),
-  "maxSupply": zod.int().nullable(),
-  "exchangeValue": zod.int(),
-  "upgradePrice": zod.int(),
-  "soldCount": zod.int(),
-  "availableCount": zod.int().nullable()
+  "maxSupply": zod.number().int().nullable(),
+  "exchangeValue": zod.number().int(),
+  "upgradePrice": zod.number().int(),
+  "soldCount": zod.number().int(),
+  "availableCount": zod.number().int().nullable()
 })
 }),zod.null()]).optional(),
   "createdAt": zod.string(),
   "updatedAt": zod.string()
 }),zod.null()]).optional(),
   "members": zod.array(zod.object({
-  "id": zod.int(),
-  "chatId": zod.int(),
-  "userId": zod.int(),
+  "id": zod.number().int(),
+  "chatId": zod.number().int(),
+  "userId": zod.number().int(),
   "role": zod.enum(['owner', 'admin', 'member']),
   "joinedAt": zod.string(),
   "user": zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "username": zod.string(),
   "displayName": zod.string(),
   "bio": zod.string().nullish(),
@@ -486,7 +486,7 @@ export const CreateChatResponse = zod.object({
 }).optional()
 })).optional(),
   "otherUser": zod.union([zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "username": zod.string(),
   "displayName": zod.string(),
   "bio": zod.string().nullish(),
@@ -514,7 +514,7 @@ export const GetChatByIdParams = zod.object({
 })
 
 export const GetChatByIdResponse = zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "type": zod.enum(['direct', 'group', 'channel']),
   "name": zod.string().nullish(),
   "description": zod.string().nullish(),
@@ -522,24 +522,24 @@ export const GetChatByIdResponse = zod.object({
   "avatarColor": zod.string(),
   "isPinned": zod.boolean(),
   "isMuted": zod.boolean(),
-  "unreadCount": zod.int(),
+  "unreadCount": zod.number().int(),
   "lastMessage": zod.union([zod.object({
-  "id": zod.int(),
-  "chatId": zod.int(),
-  "senderId": zod.int(),
+  "id": zod.number().int(),
+  "chatId": zod.number().int(),
+  "senderId": zod.number().int(),
   "text": zod.string().nullish(),
   "type": zod.enum(['text', 'image', 'video', 'audio', 'file', 'gift', 'call', 'sticker', 'system']),
   "mediaUrl": zod.string().nullish(),
-  "replyToId": zod.int().nullish(),
+  "replyToId": zod.number().int().nullish(),
   "isEdited": zod.boolean(),
   "isRead": zod.boolean(),
   "reactions": zod.array(zod.object({
-  "id": zod.int(),
-  "messageId": zod.int(),
-  "userId": zod.int(),
+  "id": zod.number().int(),
+  "messageId": zod.number().int(),
+  "userId": zod.number().int(),
   "emoji": zod.string(),
   "user": zod.union([zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "username": zod.string(),
   "displayName": zod.string(),
   "bio": zod.string().nullish(),
@@ -560,7 +560,7 @@ export const GetChatByIdResponse = zod.object({
   "createdAt": zod.string()
 })),
   "sender": zod.union([zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "username": zod.string(),
   "displayName": zod.string(),
   "bio": zod.string().nullish(),
@@ -580,50 +580,50 @@ export const GetChatByIdResponse = zod.object({
 }),zod.null()]).optional(),
   "replyTo": zod.union([zod.unknown(),zod.null()]).optional(),
   "giftData": zod.union([zod.object({
-  "id": zod.int(),
-  "giftItemId": zod.int(),
-  "senderId": zod.int().nullable(),
+  "id": zod.number().int(),
+  "giftItemId": zod.number().int(),
+  "senderId": zod.number().int().nullable(),
   "senderName": zod.string(),
-  "receiverId": zod.int(),
+  "receiverId": zod.number().int(),
   "receiverName": zod.string(),
   "message": zod.string().nullish(),
   "isAnonymous": zod.boolean(),
-  "chatId": zod.int().nullable(),
+  "chatId": zod.number().int().nullable(),
   "createdAt": zod.string(),
   "inventoryStatus": zod.enum(['received', 'collected', 'exchanged']),
   "isUpgraded": zod.boolean(),
-  "serialNumber": zod.int().nullable(),
+  "serialNumber": zod.number().int().nullable(),
   "giftItem": zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "name": zod.string(),
   "emoji": zod.string(),
   "animationType": zod.enum(['bounce', 'confetti', 'sparkle', 'hearts', 'fireworks', 'stars', 'balloons', 'roses', 'orbit', 'bloom', 'diamonds', 'flame', 'galaxy', 'lightning', 'magic', 'supernova', 'vortex']),
   "rarity": zod.enum(['common', 'rare', 'epic', 'legendary', 'cosmic']),
-  "stars": zod.int(),
-  "price": zod.int(),
+  "stars": zod.number().int(),
+  "price": zod.number().int(),
   "description": zod.string(),
   "primeOnly": zod.boolean(),
   "imageUrl": zod.string().nullish(),
   "isCollectible": zod.boolean(),
   "isActive": zod.boolean(),
-  "maxSupply": zod.int().nullable(),
-  "exchangeValue": zod.int(),
-  "upgradePrice": zod.int(),
-  "soldCount": zod.int(),
-  "availableCount": zod.int().nullable()
+  "maxSupply": zod.number().int().nullable(),
+  "exchangeValue": zod.number().int(),
+  "upgradePrice": zod.number().int(),
+  "soldCount": zod.number().int(),
+  "availableCount": zod.number().int().nullable()
 })
 }),zod.null()]).optional(),
   "createdAt": zod.string(),
   "updatedAt": zod.string()
 }),zod.null()]).optional(),
   "members": zod.array(zod.object({
-  "id": zod.int(),
-  "chatId": zod.int(),
-  "userId": zod.int(),
+  "id": zod.number().int(),
+  "chatId": zod.number().int(),
+  "userId": zod.number().int(),
   "role": zod.enum(['owner', 'admin', 'member']),
   "joinedAt": zod.string(),
   "user": zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "username": zod.string(),
   "displayName": zod.string(),
   "bio": zod.string().nullish(),
@@ -643,7 +643,7 @@ export const GetChatByIdResponse = zod.object({
 }).optional()
 })).optional(),
   "otherUser": zod.union([zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "username": zod.string(),
   "displayName": zod.string(),
   "bio": zod.string().nullish(),
@@ -678,7 +678,7 @@ export const UpdateChatBody = zod.object({
 })
 
 export const UpdateChatResponse = zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "type": zod.enum(['direct', 'group', 'channel']),
   "name": zod.string().nullish(),
   "description": zod.string().nullish(),
@@ -686,24 +686,24 @@ export const UpdateChatResponse = zod.object({
   "avatarColor": zod.string(),
   "isPinned": zod.boolean(),
   "isMuted": zod.boolean(),
-  "unreadCount": zod.int(),
+  "unreadCount": zod.number().int(),
   "lastMessage": zod.union([zod.object({
-  "id": zod.int(),
-  "chatId": zod.int(),
-  "senderId": zod.int(),
+  "id": zod.number().int(),
+  "chatId": zod.number().int(),
+  "senderId": zod.number().int(),
   "text": zod.string().nullish(),
   "type": zod.enum(['text', 'image', 'video', 'audio', 'file', 'gift', 'call', 'sticker', 'system']),
   "mediaUrl": zod.string().nullish(),
-  "replyToId": zod.int().nullish(),
+  "replyToId": zod.number().int().nullish(),
   "isEdited": zod.boolean(),
   "isRead": zod.boolean(),
   "reactions": zod.array(zod.object({
-  "id": zod.int(),
-  "messageId": zod.int(),
-  "userId": zod.int(),
+  "id": zod.number().int(),
+  "messageId": zod.number().int(),
+  "userId": zod.number().int(),
   "emoji": zod.string(),
   "user": zod.union([zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "username": zod.string(),
   "displayName": zod.string(),
   "bio": zod.string().nullish(),
@@ -724,7 +724,7 @@ export const UpdateChatResponse = zod.object({
   "createdAt": zod.string()
 })),
   "sender": zod.union([zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "username": zod.string(),
   "displayName": zod.string(),
   "bio": zod.string().nullish(),
@@ -744,50 +744,50 @@ export const UpdateChatResponse = zod.object({
 }),zod.null()]).optional(),
   "replyTo": zod.union([zod.unknown(),zod.null()]).optional(),
   "giftData": zod.union([zod.object({
-  "id": zod.int(),
-  "giftItemId": zod.int(),
-  "senderId": zod.int().nullable(),
+  "id": zod.number().int(),
+  "giftItemId": zod.number().int(),
+  "senderId": zod.number().int().nullable(),
   "senderName": zod.string(),
-  "receiverId": zod.int(),
+  "receiverId": zod.number().int(),
   "receiverName": zod.string(),
   "message": zod.string().nullish(),
   "isAnonymous": zod.boolean(),
-  "chatId": zod.int().nullable(),
+  "chatId": zod.number().int().nullable(),
   "createdAt": zod.string(),
   "inventoryStatus": zod.enum(['received', 'collected', 'exchanged']),
   "isUpgraded": zod.boolean(),
-  "serialNumber": zod.int().nullable(),
+  "serialNumber": zod.number().int().nullable(),
   "giftItem": zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "name": zod.string(),
   "emoji": zod.string(),
   "animationType": zod.enum(['bounce', 'confetti', 'sparkle', 'hearts', 'fireworks', 'stars', 'balloons', 'roses', 'orbit', 'bloom', 'diamonds', 'flame', 'galaxy', 'lightning', 'magic', 'supernova', 'vortex']),
   "rarity": zod.enum(['common', 'rare', 'epic', 'legendary', 'cosmic']),
-  "stars": zod.int(),
-  "price": zod.int(),
+  "stars": zod.number().int(),
+  "price": zod.number().int(),
   "description": zod.string(),
   "primeOnly": zod.boolean(),
   "imageUrl": zod.string().nullish(),
   "isCollectible": zod.boolean(),
   "isActive": zod.boolean(),
-  "maxSupply": zod.int().nullable(),
-  "exchangeValue": zod.int(),
-  "upgradePrice": zod.int(),
-  "soldCount": zod.int(),
-  "availableCount": zod.int().nullable()
+  "maxSupply": zod.number().int().nullable(),
+  "exchangeValue": zod.number().int(),
+  "upgradePrice": zod.number().int(),
+  "soldCount": zod.number().int(),
+  "availableCount": zod.number().int().nullable()
 })
 }),zod.null()]).optional(),
   "createdAt": zod.string(),
   "updatedAt": zod.string()
 }),zod.null()]).optional(),
   "members": zod.array(zod.object({
-  "id": zod.int(),
-  "chatId": zod.int(),
-  "userId": zod.int(),
+  "id": zod.number().int(),
+  "chatId": zod.number().int(),
+  "userId": zod.number().int(),
   "role": zod.enum(['owner', 'admin', 'member']),
   "joinedAt": zod.string(),
   "user": zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "username": zod.string(),
   "displayName": zod.string(),
   "bio": zod.string().nullish(),
@@ -807,7 +807,7 @@ export const UpdateChatResponse = zod.object({
 }).optional()
 })).optional(),
   "otherUser": zod.union([zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "username": zod.string(),
   "displayName": zod.string(),
   "bio": zod.string().nullish(),
@@ -842,13 +842,13 @@ export const GetChatMembersParams = zod.object({
 })
 
 export const GetChatMembersResponseItem = zod.object({
-  "id": zod.int(),
-  "chatId": zod.int(),
-  "userId": zod.int(),
+  "id": zod.number().int(),
+  "chatId": zod.number().int(),
+  "userId": zod.number().int(),
   "role": zod.enum(['owner', 'admin', 'member']),
   "joinedAt": zod.string(),
   "user": zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "username": zod.string(),
   "displayName": zod.string(),
   "bio": zod.string().nullish(),
@@ -877,18 +877,18 @@ export const AddChatMemberParams = zod.object({
 export const addChatMemberBodyRoleDefault = `member`;
 
 export const AddChatMemberBody = zod.object({
-  "userId": zod.int(),
+  "userId": zod.number().int(),
   "role": zod.enum(['admin', 'member']).default(addChatMemberBodyRoleDefault)
 })
 
 export const AddChatMemberResponse = zod.object({
-  "id": zod.int(),
-  "chatId": zod.int(),
-  "userId": zod.int(),
+  "id": zod.number().int(),
+  "chatId": zod.number().int(),
+  "userId": zod.number().int(),
   "role": zod.enum(['owner', 'admin', 'member']),
   "joinedAt": zod.string(),
   "user": zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "username": zod.string(),
   "displayName": zod.string(),
   "bio": zod.string().nullish(),
@@ -922,7 +922,7 @@ export const PinChatParams = zod.object({
 })
 
 export const PinChatResponse = zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "type": zod.enum(['direct', 'group', 'channel']),
   "name": zod.string().nullish(),
   "description": zod.string().nullish(),
@@ -930,24 +930,24 @@ export const PinChatResponse = zod.object({
   "avatarColor": zod.string(),
   "isPinned": zod.boolean(),
   "isMuted": zod.boolean(),
-  "unreadCount": zod.int(),
+  "unreadCount": zod.number().int(),
   "lastMessage": zod.union([zod.object({
-  "id": zod.int(),
-  "chatId": zod.int(),
-  "senderId": zod.int(),
+  "id": zod.number().int(),
+  "chatId": zod.number().int(),
+  "senderId": zod.number().int(),
   "text": zod.string().nullish(),
   "type": zod.enum(['text', 'image', 'video', 'audio', 'file', 'gift', 'call', 'sticker', 'system']),
   "mediaUrl": zod.string().nullish(),
-  "replyToId": zod.int().nullish(),
+  "replyToId": zod.number().int().nullish(),
   "isEdited": zod.boolean(),
   "isRead": zod.boolean(),
   "reactions": zod.array(zod.object({
-  "id": zod.int(),
-  "messageId": zod.int(),
-  "userId": zod.int(),
+  "id": zod.number().int(),
+  "messageId": zod.number().int(),
+  "userId": zod.number().int(),
   "emoji": zod.string(),
   "user": zod.union([zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "username": zod.string(),
   "displayName": zod.string(),
   "bio": zod.string().nullish(),
@@ -968,7 +968,7 @@ export const PinChatResponse = zod.object({
   "createdAt": zod.string()
 })),
   "sender": zod.union([zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "username": zod.string(),
   "displayName": zod.string(),
   "bio": zod.string().nullish(),
@@ -988,50 +988,50 @@ export const PinChatResponse = zod.object({
 }),zod.null()]).optional(),
   "replyTo": zod.union([zod.unknown(),zod.null()]).optional(),
   "giftData": zod.union([zod.object({
-  "id": zod.int(),
-  "giftItemId": zod.int(),
-  "senderId": zod.int().nullable(),
+  "id": zod.number().int(),
+  "giftItemId": zod.number().int(),
+  "senderId": zod.number().int().nullable(),
   "senderName": zod.string(),
-  "receiverId": zod.int(),
+  "receiverId": zod.number().int(),
   "receiverName": zod.string(),
   "message": zod.string().nullish(),
   "isAnonymous": zod.boolean(),
-  "chatId": zod.int().nullable(),
+  "chatId": zod.number().int().nullable(),
   "createdAt": zod.string(),
   "inventoryStatus": zod.enum(['received', 'collected', 'exchanged']),
   "isUpgraded": zod.boolean(),
-  "serialNumber": zod.int().nullable(),
+  "serialNumber": zod.number().int().nullable(),
   "giftItem": zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "name": zod.string(),
   "emoji": zod.string(),
   "animationType": zod.enum(['bounce', 'confetti', 'sparkle', 'hearts', 'fireworks', 'stars', 'balloons', 'roses', 'orbit', 'bloom', 'diamonds', 'flame', 'galaxy', 'lightning', 'magic', 'supernova', 'vortex']),
   "rarity": zod.enum(['common', 'rare', 'epic', 'legendary', 'cosmic']),
-  "stars": zod.int(),
-  "price": zod.int(),
+  "stars": zod.number().int(),
+  "price": zod.number().int(),
   "description": zod.string(),
   "primeOnly": zod.boolean(),
   "imageUrl": zod.string().nullish(),
   "isCollectible": zod.boolean(),
   "isActive": zod.boolean(),
-  "maxSupply": zod.int().nullable(),
-  "exchangeValue": zod.int(),
-  "upgradePrice": zod.int(),
-  "soldCount": zod.int(),
-  "availableCount": zod.int().nullable()
+  "maxSupply": zod.number().int().nullable(),
+  "exchangeValue": zod.number().int(),
+  "upgradePrice": zod.number().int(),
+  "soldCount": zod.number().int(),
+  "availableCount": zod.number().int().nullable()
 })
 }),zod.null()]).optional(),
   "createdAt": zod.string(),
   "updatedAt": zod.string()
 }),zod.null()]).optional(),
   "members": zod.array(zod.object({
-  "id": zod.int(),
-  "chatId": zod.int(),
-  "userId": zod.int(),
+  "id": zod.number().int(),
+  "chatId": zod.number().int(),
+  "userId": zod.number().int(),
   "role": zod.enum(['owner', 'admin', 'member']),
   "joinedAt": zod.string(),
   "user": zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "username": zod.string(),
   "displayName": zod.string(),
   "bio": zod.string().nullish(),
@@ -1051,7 +1051,7 @@ export const PinChatResponse = zod.object({
 }).optional()
 })).optional(),
   "otherUser": zod.union([zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "username": zod.string(),
   "displayName": zod.string(),
   "bio": zod.string().nullish(),
@@ -1086,22 +1086,22 @@ export const GetMessagesQueryParams = zod.object({
 })
 
 export const GetMessagesResponseItem = zod.object({
-  "id": zod.int(),
-  "chatId": zod.int(),
-  "senderId": zod.int(),
+  "id": zod.number().int(),
+  "chatId": zod.number().int(),
+  "senderId": zod.number().int(),
   "text": zod.string().nullish(),
   "type": zod.enum(['text', 'image', 'video', 'audio', 'file', 'gift', 'call', 'sticker', 'system']),
   "mediaUrl": zod.string().nullish(),
-  "replyToId": zod.int().nullish(),
+  "replyToId": zod.number().int().nullish(),
   "isEdited": zod.boolean(),
   "isRead": zod.boolean(),
   "reactions": zod.array(zod.object({
-  "id": zod.int(),
-  "messageId": zod.int(),
-  "userId": zod.int(),
+  "id": zod.number().int(),
+  "messageId": zod.number().int(),
+  "userId": zod.number().int(),
   "emoji": zod.string(),
   "user": zod.union([zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "username": zod.string(),
   "displayName": zod.string(),
   "bio": zod.string().nullish(),
@@ -1122,7 +1122,7 @@ export const GetMessagesResponseItem = zod.object({
   "createdAt": zod.string()
 })),
   "sender": zod.union([zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "username": zod.string(),
   "displayName": zod.string(),
   "bio": zod.string().nullish(),
@@ -1142,37 +1142,37 @@ export const GetMessagesResponseItem = zod.object({
 }),zod.null()]).optional(),
   "replyTo": zod.union([zod.unknown(),zod.null()]).optional(),
   "giftData": zod.union([zod.object({
-  "id": zod.int(),
-  "giftItemId": zod.int(),
-  "senderId": zod.int().nullable(),
+  "id": zod.number().int(),
+  "giftItemId": zod.number().int(),
+  "senderId": zod.number().int().nullable(),
   "senderName": zod.string(),
-  "receiverId": zod.int(),
+  "receiverId": zod.number().int(),
   "receiverName": zod.string(),
   "message": zod.string().nullish(),
   "isAnonymous": zod.boolean(),
-  "chatId": zod.int().nullable(),
+  "chatId": zod.number().int().nullable(),
   "createdAt": zod.string(),
   "inventoryStatus": zod.enum(['received', 'collected', 'exchanged']),
   "isUpgraded": zod.boolean(),
-  "serialNumber": zod.int().nullable(),
+  "serialNumber": zod.number().int().nullable(),
   "giftItem": zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "name": zod.string(),
   "emoji": zod.string(),
   "animationType": zod.enum(['bounce', 'confetti', 'sparkle', 'hearts', 'fireworks', 'stars', 'balloons', 'roses', 'orbit', 'bloom', 'diamonds', 'flame', 'galaxy', 'lightning', 'magic', 'supernova', 'vortex']),
   "rarity": zod.enum(['common', 'rare', 'epic', 'legendary', 'cosmic']),
-  "stars": zod.int(),
-  "price": zod.int(),
+  "stars": zod.number().int(),
+  "price": zod.number().int(),
   "description": zod.string(),
   "primeOnly": zod.boolean(),
   "imageUrl": zod.string().nullish(),
   "isCollectible": zod.boolean(),
   "isActive": zod.boolean(),
-  "maxSupply": zod.int().nullable(),
-  "exchangeValue": zod.int(),
-  "upgradePrice": zod.int(),
-  "soldCount": zod.int(),
-  "availableCount": zod.int().nullable()
+  "maxSupply": zod.number().int().nullable(),
+  "exchangeValue": zod.number().int(),
+  "upgradePrice": zod.number().int(),
+  "soldCount": zod.number().int(),
+  "availableCount": zod.number().int().nullable()
 })
 }),zod.null()]).optional(),
   "createdAt": zod.string(),
@@ -1187,30 +1187,30 @@ export const GetMessagesResponse = zod.array(GetMessagesResponseItem)
 export const sendMessageBodyTypeDefault = `text`;
 
 export const SendMessageBody = zod.object({
-  "chatId": zod.int(),
+  "chatId": zod.number().int(),
   "text": zod.string().optional(),
   "type": zod.enum(['text', 'image', 'video', 'audio', 'file', 'sticker', 'album', 'document']).default(sendMessageBodyTypeDefault),
   "mediaUrl": zod.string().optional(),
-  "replyToId": zod.int().optional()
+  "replyToId": zod.number().int().optional()
 })
 
 export const SendMessageResponse = zod.object({
-  "id": zod.int(),
-  "chatId": zod.int(),
-  "senderId": zod.int(),
+  "id": zod.number().int(),
+  "chatId": zod.number().int(),
+  "senderId": zod.number().int(),
   "text": zod.string().nullish(),
   "type": zod.enum(['text', 'image', 'video', 'audio', 'file', 'gift', 'call', 'sticker', 'system']),
   "mediaUrl": zod.string().nullish(),
-  "replyToId": zod.int().nullish(),
+  "replyToId": zod.number().int().nullish(),
   "isEdited": zod.boolean(),
   "isRead": zod.boolean(),
   "reactions": zod.array(zod.object({
-  "id": zod.int(),
-  "messageId": zod.int(),
-  "userId": zod.int(),
+  "id": zod.number().int(),
+  "messageId": zod.number().int(),
+  "userId": zod.number().int(),
   "emoji": zod.string(),
   "user": zod.union([zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "username": zod.string(),
   "displayName": zod.string(),
   "bio": zod.string().nullish(),
@@ -1231,7 +1231,7 @@ export const SendMessageResponse = zod.object({
   "createdAt": zod.string()
 })),
   "sender": zod.union([zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "username": zod.string(),
   "displayName": zod.string(),
   "bio": zod.string().nullish(),
@@ -1251,37 +1251,37 @@ export const SendMessageResponse = zod.object({
 }),zod.null()]).optional(),
   "replyTo": zod.union([zod.unknown(),zod.null()]).optional(),
   "giftData": zod.union([zod.object({
-  "id": zod.int(),
-  "giftItemId": zod.int(),
-  "senderId": zod.int().nullable(),
+  "id": zod.number().int(),
+  "giftItemId": zod.number().int(),
+  "senderId": zod.number().int().nullable(),
   "senderName": zod.string(),
-  "receiverId": zod.int(),
+  "receiverId": zod.number().int(),
   "receiverName": zod.string(),
   "message": zod.string().nullish(),
   "isAnonymous": zod.boolean(),
-  "chatId": zod.int().nullable(),
+  "chatId": zod.number().int().nullable(),
   "createdAt": zod.string(),
   "inventoryStatus": zod.enum(['received', 'collected', 'exchanged']),
   "isUpgraded": zod.boolean(),
-  "serialNumber": zod.int().nullable(),
+  "serialNumber": zod.number().int().nullable(),
   "giftItem": zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "name": zod.string(),
   "emoji": zod.string(),
   "animationType": zod.enum(['bounce', 'confetti', 'sparkle', 'hearts', 'fireworks', 'stars', 'balloons', 'roses', 'orbit', 'bloom', 'diamonds', 'flame', 'galaxy', 'lightning', 'magic', 'supernova', 'vortex']),
   "rarity": zod.enum(['common', 'rare', 'epic', 'legendary', 'cosmic']),
-  "stars": zod.int(),
-  "price": zod.int(),
+  "stars": zod.number().int(),
+  "price": zod.number().int(),
   "description": zod.string(),
   "primeOnly": zod.boolean(),
   "imageUrl": zod.string().nullish(),
   "isCollectible": zod.boolean(),
   "isActive": zod.boolean(),
-  "maxSupply": zod.int().nullable(),
-  "exchangeValue": zod.int(),
-  "upgradePrice": zod.int(),
-  "soldCount": zod.int(),
-  "availableCount": zod.int().nullable()
+  "maxSupply": zod.number().int().nullable(),
+  "exchangeValue": zod.number().int(),
+  "upgradePrice": zod.number().int(),
+  "soldCount": zod.number().int(),
+  "availableCount": zod.number().int().nullable()
 })
 }),zod.null()]).optional(),
   "createdAt": zod.string(),
@@ -1298,22 +1298,22 @@ export const EditMessageBody = zod.object({
 })
 
 export const EditMessageResponse = zod.object({
-  "id": zod.int(),
-  "chatId": zod.int(),
-  "senderId": zod.int(),
+  "id": zod.number().int(),
+  "chatId": zod.number().int(),
+  "senderId": zod.number().int(),
   "text": zod.string().nullish(),
   "type": zod.enum(['text', 'image', 'video', 'audio', 'file', 'gift', 'call', 'sticker', 'system']),
   "mediaUrl": zod.string().nullish(),
-  "replyToId": zod.int().nullish(),
+  "replyToId": zod.number().int().nullish(),
   "isEdited": zod.boolean(),
   "isRead": zod.boolean(),
   "reactions": zod.array(zod.object({
-  "id": zod.int(),
-  "messageId": zod.int(),
-  "userId": zod.int(),
+  "id": zod.number().int(),
+  "messageId": zod.number().int(),
+  "userId": zod.number().int(),
   "emoji": zod.string(),
   "user": zod.union([zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "username": zod.string(),
   "displayName": zod.string(),
   "bio": zod.string().nullish(),
@@ -1334,7 +1334,7 @@ export const EditMessageResponse = zod.object({
   "createdAt": zod.string()
 })),
   "sender": zod.union([zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "username": zod.string(),
   "displayName": zod.string(),
   "bio": zod.string().nullish(),
@@ -1354,37 +1354,37 @@ export const EditMessageResponse = zod.object({
 }),zod.null()]).optional(),
   "replyTo": zod.union([zod.unknown(),zod.null()]).optional(),
   "giftData": zod.union([zod.object({
-  "id": zod.int(),
-  "giftItemId": zod.int(),
-  "senderId": zod.int().nullable(),
+  "id": zod.number().int(),
+  "giftItemId": zod.number().int(),
+  "senderId": zod.number().int().nullable(),
   "senderName": zod.string(),
-  "receiverId": zod.int(),
+  "receiverId": zod.number().int(),
   "receiverName": zod.string(),
   "message": zod.string().nullish(),
   "isAnonymous": zod.boolean(),
-  "chatId": zod.int().nullable(),
+  "chatId": zod.number().int().nullable(),
   "createdAt": zod.string(),
   "inventoryStatus": zod.enum(['received', 'collected', 'exchanged']),
   "isUpgraded": zod.boolean(),
-  "serialNumber": zod.int().nullable(),
+  "serialNumber": zod.number().int().nullable(),
   "giftItem": zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "name": zod.string(),
   "emoji": zod.string(),
   "animationType": zod.enum(['bounce', 'confetti', 'sparkle', 'hearts', 'fireworks', 'stars', 'balloons', 'roses', 'orbit', 'bloom', 'diamonds', 'flame', 'galaxy', 'lightning', 'magic', 'supernova', 'vortex']),
   "rarity": zod.enum(['common', 'rare', 'epic', 'legendary', 'cosmic']),
-  "stars": zod.int(),
-  "price": zod.int(),
+  "stars": zod.number().int(),
+  "price": zod.number().int(),
   "description": zod.string(),
   "primeOnly": zod.boolean(),
   "imageUrl": zod.string().nullish(),
   "isCollectible": zod.boolean(),
   "isActive": zod.boolean(),
-  "maxSupply": zod.int().nullable(),
-  "exchangeValue": zod.int(),
-  "upgradePrice": zod.int(),
-  "soldCount": zod.int(),
-  "availableCount": zod.int().nullable()
+  "maxSupply": zod.number().int().nullable(),
+  "exchangeValue": zod.number().int(),
+  "upgradePrice": zod.number().int(),
+  "soldCount": zod.number().int(),
+  "availableCount": zod.number().int().nullable()
 })
 }),zod.null()]).optional(),
   "createdAt": zod.string(),
@@ -1408,12 +1408,12 @@ export const AddReactionBody = zod.object({
 })
 
 export const AddReactionResponse = zod.object({
-  "id": zod.int(),
-  "messageId": zod.int(),
-  "userId": zod.int(),
+  "id": zod.number().int(),
+  "messageId": zod.number().int(),
+  "userId": zod.number().int(),
   "emoji": zod.string(),
   "user": zod.union([zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "username": zod.string(),
   "displayName": zod.string(),
   "bio": zod.string().nullish(),
@@ -1450,17 +1450,17 @@ export const RemoveReactionResponse = zod.void()
  * @summary Get call history
  */
 export const GetCallHistoryResponseItem = zod.object({
-  "id": zod.int(),
-  "chatId": zod.int().nullish(),
-  "callerId": zod.int(),
-  "calleeId": zod.int().nullish(),
+  "id": zod.number().int(),
+  "chatId": zod.number().int().nullish(),
+  "callerId": zod.number().int(),
+  "calleeId": zod.number().int().nullish(),
   "type": zod.enum(['audio', 'video', 'group']),
   "status": zod.enum(['ringing', 'active', 'ended', 'missed', 'declined']),
   "startedAt": zod.string().nullish(),
   "endedAt": zod.string().nullish(),
-  "durationSeconds": zod.int().nullish(),
+  "durationSeconds": zod.number().int().nullish(),
   "caller": zod.union([zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "username": zod.string(),
   "displayName": zod.string(),
   "bio": zod.string().nullish(),
@@ -1479,7 +1479,7 @@ export const GetCallHistoryResponseItem = zod.object({
   "createdAt": zod.string()
 }),zod.null()]).optional(),
   "callee": zod.union([zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "username": zod.string(),
   "displayName": zod.string(),
   "bio": zod.string().nullish(),
@@ -1506,23 +1506,23 @@ export const GetCallHistoryResponse = zod.array(GetCallHistoryResponseItem)
  * @summary Initiate a call
  */
 export const InitiateCallBody = zod.object({
-  "calleeId": zod.int().optional(),
-  "chatId": zod.int().optional(),
+  "calleeId": zod.number().int().optional(),
+  "chatId": zod.number().int().optional(),
   "type": zod.enum(['audio', 'video', 'group'])
 })
 
 export const InitiateCallResponse = zod.object({
-  "id": zod.int(),
-  "chatId": zod.int().nullish(),
-  "callerId": zod.int(),
-  "calleeId": zod.int().nullish(),
+  "id": zod.number().int(),
+  "chatId": zod.number().int().nullish(),
+  "callerId": zod.number().int(),
+  "calleeId": zod.number().int().nullish(),
   "type": zod.enum(['audio', 'video', 'group']),
   "status": zod.enum(['ringing', 'active', 'ended', 'missed', 'declined']),
   "startedAt": zod.string().nullish(),
   "endedAt": zod.string().nullish(),
-  "durationSeconds": zod.int().nullish(),
+  "durationSeconds": zod.number().int().nullish(),
   "caller": zod.union([zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "username": zod.string(),
   "displayName": zod.string(),
   "bio": zod.string().nullish(),
@@ -1541,7 +1541,7 @@ export const InitiateCallResponse = zod.object({
   "createdAt": zod.string()
 }),zod.null()]).optional(),
   "callee": zod.union([zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "username": zod.string(),
   "displayName": zod.string(),
   "bio": zod.string().nullish(),
@@ -1568,17 +1568,17 @@ export const GetCallByIdParams = zod.object({
 })
 
 export const GetCallByIdResponse = zod.object({
-  "id": zod.int(),
-  "chatId": zod.int().nullish(),
-  "callerId": zod.int(),
-  "calleeId": zod.int().nullish(),
+  "id": zod.number().int(),
+  "chatId": zod.number().int().nullish(),
+  "callerId": zod.number().int(),
+  "calleeId": zod.number().int().nullish(),
   "type": zod.enum(['audio', 'video', 'group']),
   "status": zod.enum(['ringing', 'active', 'ended', 'missed', 'declined']),
   "startedAt": zod.string().nullish(),
   "endedAt": zod.string().nullish(),
-  "durationSeconds": zod.int().nullish(),
+  "durationSeconds": zod.number().int().nullish(),
   "caller": zod.union([zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "username": zod.string(),
   "displayName": zod.string(),
   "bio": zod.string().nullish(),
@@ -1597,7 +1597,7 @@ export const GetCallByIdResponse = zod.object({
   "createdAt": zod.string()
 }),zod.null()]).optional(),
   "callee": zod.union([zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "username": zod.string(),
   "displayName": zod.string(),
   "bio": zod.string().nullish(),
@@ -1628,17 +1628,17 @@ export const UpdateCallStatusBody = zod.object({
 })
 
 export const UpdateCallStatusResponse = zod.object({
-  "id": zod.int(),
-  "chatId": zod.int().nullish(),
-  "callerId": zod.int(),
-  "calleeId": zod.int().nullish(),
+  "id": zod.number().int(),
+  "chatId": zod.number().int().nullish(),
+  "callerId": zod.number().int(),
+  "calleeId": zod.number().int().nullish(),
   "type": zod.enum(['audio', 'video', 'group']),
   "status": zod.enum(['ringing', 'active', 'ended', 'missed', 'declined']),
   "startedAt": zod.string().nullish(),
   "endedAt": zod.string().nullish(),
-  "durationSeconds": zod.int().nullish(),
+  "durationSeconds": zod.number().int().nullish(),
   "caller": zod.union([zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "username": zod.string(),
   "displayName": zod.string(),
   "bio": zod.string().nullish(),
@@ -1657,7 +1657,7 @@ export const UpdateCallStatusResponse = zod.object({
   "createdAt": zod.string()
 }),zod.null()]).optional(),
   "callee": zod.union([zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "username": zod.string(),
   "displayName": zod.string(),
   "bio": zod.string().nullish(),
@@ -1683,23 +1683,23 @@ export const UpdateCallStatusResponse = zod.object({
  * @summary Get available gift catalog
  */
 export const GetGiftCatalogResponseItem = zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "name": zod.string(),
   "emoji": zod.string(),
   "animationType": zod.enum(['bounce', 'confetti', 'sparkle', 'hearts', 'fireworks', 'stars', 'balloons', 'roses', 'orbit', 'bloom', 'diamonds', 'flame', 'galaxy', 'lightning', 'magic', 'supernova', 'vortex']),
   "rarity": zod.enum(['common', 'rare', 'epic', 'legendary', 'cosmic']),
-  "stars": zod.int(),
-  "price": zod.int(),
+  "stars": zod.number().int(),
+  "price": zod.number().int(),
   "description": zod.string(),
   "primeOnly": zod.boolean(),
   "imageUrl": zod.string().nullish(),
   "isCollectible": zod.boolean(),
   "isActive": zod.boolean(),
-  "maxSupply": zod.int().nullable(),
-  "exchangeValue": zod.int(),
-  "upgradePrice": zod.int(),
-  "soldCount": zod.int(),
-  "availableCount": zod.int().nullable()
+  "maxSupply": zod.number().int().nullable(),
+  "exchangeValue": zod.number().int(),
+  "upgradePrice": zod.number().int(),
+  "soldCount": zod.number().int(),
+  "availableCount": zod.number().int().nullable()
 })
 export const GetGiftCatalogResponse = zod.array(GetGiftCatalogResponseItem)
 
@@ -1709,71 +1709,71 @@ export const GetGiftCatalogResponse = zod.array(GetGiftCatalogResponseItem)
  */
 export const GetMyGiftsResponse = zod.object({
   "received": zod.array(zod.object({
-  "id": zod.int(),
-  "giftItemId": zod.int(),
-  "senderId": zod.int().nullable(),
+  "id": zod.number().int(),
+  "giftItemId": zod.number().int(),
+  "senderId": zod.number().int().nullable(),
   "senderName": zod.string(),
-  "receiverId": zod.int(),
+  "receiverId": zod.number().int(),
   "receiverName": zod.string(),
   "message": zod.string().nullish(),
   "isAnonymous": zod.boolean(),
-  "chatId": zod.int().nullable(),
+  "chatId": zod.number().int().nullable(),
   "createdAt": zod.string(),
   "inventoryStatus": zod.enum(['received', 'collected', 'exchanged']),
   "isUpgraded": zod.boolean(),
-  "serialNumber": zod.int().nullable(),
+  "serialNumber": zod.number().int().nullable(),
   "giftItem": zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "name": zod.string(),
   "emoji": zod.string(),
   "animationType": zod.enum(['bounce', 'confetti', 'sparkle', 'hearts', 'fireworks', 'stars', 'balloons', 'roses', 'orbit', 'bloom', 'diamonds', 'flame', 'galaxy', 'lightning', 'magic', 'supernova', 'vortex']),
   "rarity": zod.enum(['common', 'rare', 'epic', 'legendary', 'cosmic']),
-  "stars": zod.int(),
-  "price": zod.int(),
+  "stars": zod.number().int(),
+  "price": zod.number().int(),
   "description": zod.string(),
   "primeOnly": zod.boolean(),
   "imageUrl": zod.string().nullish(),
   "isCollectible": zod.boolean(),
   "isActive": zod.boolean(),
-  "maxSupply": zod.int().nullable(),
-  "exchangeValue": zod.int(),
-  "upgradePrice": zod.int(),
-  "soldCount": zod.int(),
-  "availableCount": zod.int().nullable()
+  "maxSupply": zod.number().int().nullable(),
+  "exchangeValue": zod.number().int(),
+  "upgradePrice": zod.number().int(),
+  "soldCount": zod.number().int(),
+  "availableCount": zod.number().int().nullable()
 })
 })),
   "sent": zod.array(zod.object({
-  "id": zod.int(),
-  "giftItemId": zod.int(),
-  "senderId": zod.int().nullable(),
+  "id": zod.number().int(),
+  "giftItemId": zod.number().int(),
+  "senderId": zod.number().int().nullable(),
   "senderName": zod.string(),
-  "receiverId": zod.int(),
+  "receiverId": zod.number().int(),
   "receiverName": zod.string(),
   "message": zod.string().nullish(),
   "isAnonymous": zod.boolean(),
-  "chatId": zod.int().nullable(),
+  "chatId": zod.number().int().nullable(),
   "createdAt": zod.string(),
   "inventoryStatus": zod.enum(['received', 'collected', 'exchanged']),
   "isUpgraded": zod.boolean(),
-  "serialNumber": zod.int().nullable(),
+  "serialNumber": zod.number().int().nullable(),
   "giftItem": zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "name": zod.string(),
   "emoji": zod.string(),
   "animationType": zod.enum(['bounce', 'confetti', 'sparkle', 'hearts', 'fireworks', 'stars', 'balloons', 'roses', 'orbit', 'bloom', 'diamonds', 'flame', 'galaxy', 'lightning', 'magic', 'supernova', 'vortex']),
   "rarity": zod.enum(['common', 'rare', 'epic', 'legendary', 'cosmic']),
-  "stars": zod.int(),
-  "price": zod.int(),
+  "stars": zod.number().int(),
+  "price": zod.number().int(),
   "description": zod.string(),
   "primeOnly": zod.boolean(),
   "imageUrl": zod.string().nullish(),
   "isCollectible": zod.boolean(),
   "isActive": zod.boolean(),
-  "maxSupply": zod.int().nullable(),
-  "exchangeValue": zod.int(),
-  "upgradePrice": zod.int(),
-  "soldCount": zod.int(),
-  "availableCount": zod.int().nullable()
+  "maxSupply": zod.number().int().nullable(),
+  "exchangeValue": zod.number().int(),
+  "upgradePrice": zod.number().int(),
+  "soldCount": zod.number().int(),
+  "availableCount": zod.number().int().nullable()
 })
 }))
 })
@@ -1783,37 +1783,37 @@ export const GetMyGiftsResponse = zod.object({
  * @summary Get gifts sent by current user
  */
 export const GetSentGiftsResponseItem = zod.object({
-  "id": zod.int(),
-  "giftItemId": zod.int(),
-  "senderId": zod.int().nullable(),
+  "id": zod.number().int(),
+  "giftItemId": zod.number().int(),
+  "senderId": zod.number().int().nullable(),
   "senderName": zod.string(),
-  "receiverId": zod.int(),
+  "receiverId": zod.number().int(),
   "receiverName": zod.string(),
   "message": zod.string().nullish(),
   "isAnonymous": zod.boolean(),
-  "chatId": zod.int().nullable(),
+  "chatId": zod.number().int().nullable(),
   "createdAt": zod.string(),
   "inventoryStatus": zod.enum(['received', 'collected', 'exchanged']),
   "isUpgraded": zod.boolean(),
-  "serialNumber": zod.int().nullable(),
+  "serialNumber": zod.number().int().nullable(),
   "giftItem": zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "name": zod.string(),
   "emoji": zod.string(),
   "animationType": zod.enum(['bounce', 'confetti', 'sparkle', 'hearts', 'fireworks', 'stars', 'balloons', 'roses', 'orbit', 'bloom', 'diamonds', 'flame', 'galaxy', 'lightning', 'magic', 'supernova', 'vortex']),
   "rarity": zod.enum(['common', 'rare', 'epic', 'legendary', 'cosmic']),
-  "stars": zod.int(),
-  "price": zod.int(),
+  "stars": zod.number().int(),
+  "price": zod.number().int(),
   "description": zod.string(),
   "primeOnly": zod.boolean(),
   "imageUrl": zod.string().nullish(),
   "isCollectible": zod.boolean(),
   "isActive": zod.boolean(),
-  "maxSupply": zod.int().nullable(),
-  "exchangeValue": zod.int(),
-  "upgradePrice": zod.int(),
-  "soldCount": zod.int(),
-  "availableCount": zod.int().nullable()
+  "maxSupply": zod.number().int().nullable(),
+  "exchangeValue": zod.number().int(),
+  "upgradePrice": zod.number().int(),
+  "soldCount": zod.number().int(),
+  "availableCount": zod.number().int().nullable()
 })
 })
 export const GetSentGiftsResponse = zod.array(GetSentGiftsResponseItem)
@@ -1823,37 +1823,37 @@ export const GetSentGiftsResponse = zod.array(GetSentGiftsResponseItem)
  * @summary Get gifts received by current user
  */
 export const GetReceivedGiftsResponseItem = zod.object({
-  "id": zod.int(),
-  "giftItemId": zod.int(),
-  "senderId": zod.int().nullable(),
+  "id": zod.number().int(),
+  "giftItemId": zod.number().int(),
+  "senderId": zod.number().int().nullable(),
   "senderName": zod.string(),
-  "receiverId": zod.int(),
+  "receiverId": zod.number().int(),
   "receiverName": zod.string(),
   "message": zod.string().nullish(),
   "isAnonymous": zod.boolean(),
-  "chatId": zod.int().nullable(),
+  "chatId": zod.number().int().nullable(),
   "createdAt": zod.string(),
   "inventoryStatus": zod.enum(['received', 'collected', 'exchanged']),
   "isUpgraded": zod.boolean(),
-  "serialNumber": zod.int().nullable(),
+  "serialNumber": zod.number().int().nullable(),
   "giftItem": zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "name": zod.string(),
   "emoji": zod.string(),
   "animationType": zod.enum(['bounce', 'confetti', 'sparkle', 'hearts', 'fireworks', 'stars', 'balloons', 'roses', 'orbit', 'bloom', 'diamonds', 'flame', 'galaxy', 'lightning', 'magic', 'supernova', 'vortex']),
   "rarity": zod.enum(['common', 'rare', 'epic', 'legendary', 'cosmic']),
-  "stars": zod.int(),
-  "price": zod.int(),
+  "stars": zod.number().int(),
+  "price": zod.number().int(),
   "description": zod.string(),
   "primeOnly": zod.boolean(),
   "imageUrl": zod.string().nullish(),
   "isCollectible": zod.boolean(),
   "isActive": zod.boolean(),
-  "maxSupply": zod.int().nullable(),
-  "exchangeValue": zod.int(),
-  "upgradePrice": zod.int(),
-  "soldCount": zod.int(),
-  "availableCount": zod.int().nullable()
+  "maxSupply": zod.number().int().nullable(),
+  "exchangeValue": zod.number().int(),
+  "upgradePrice": zod.number().int(),
+  "soldCount": zod.number().int(),
+  "availableCount": zod.number().int().nullable()
 })
 })
 export const GetReceivedGiftsResponse = zod.array(GetReceivedGiftsResponseItem)
@@ -1865,31 +1865,31 @@ export const GetReceivedGiftsResponse = zod.array(GetReceivedGiftsResponseItem)
 export const sendGiftBodyIsAnonymousDefault = false;
 
 export const SendGiftBody = zod.object({
-  "receiverId": zod.int(),
-  "giftItemId": zod.int(),
+  "receiverId": zod.number().int(),
+  "giftItemId": zod.number().int(),
   "message": zod.string().optional(),
   "isAnonymous": zod.boolean().default(sendGiftBodyIsAnonymousDefault),
-  "chatId": zod.int().optional()
+  "chatId": zod.number().int().optional()
 })
 
 export const SendGiftResponse = zod.object({
   "message": zod.object({
-  "id": zod.int(),
-  "chatId": zod.int(),
-  "senderId": zod.int(),
+  "id": zod.number().int(),
+  "chatId": zod.number().int(),
+  "senderId": zod.number().int(),
   "text": zod.string().nullish(),
   "type": zod.enum(['text', 'image', 'video', 'audio', 'file', 'gift', 'call', 'sticker', 'system']),
   "mediaUrl": zod.string().nullish(),
-  "replyToId": zod.int().nullish(),
+  "replyToId": zod.number().int().nullish(),
   "isEdited": zod.boolean(),
   "isRead": zod.boolean(),
   "reactions": zod.array(zod.object({
-  "id": zod.int(),
-  "messageId": zod.int(),
-  "userId": zod.int(),
+  "id": zod.number().int(),
+  "messageId": zod.number().int(),
+  "userId": zod.number().int(),
   "emoji": zod.string(),
   "user": zod.union([zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "username": zod.string(),
   "displayName": zod.string(),
   "bio": zod.string().nullish(),
@@ -1910,7 +1910,7 @@ export const SendGiftResponse = zod.object({
   "createdAt": zod.string()
 })),
   "sender": zod.union([zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "username": zod.string(),
   "displayName": zod.string(),
   "bio": zod.string().nullish(),
@@ -1930,44 +1930,44 @@ export const SendGiftResponse = zod.object({
 }),zod.null()]).optional(),
   "replyTo": zod.union([zod.unknown(),zod.null()]).optional(),
   "giftData": zod.union([zod.object({
-  "id": zod.int(),
-  "giftItemId": zod.int(),
-  "senderId": zod.int().nullable(),
+  "id": zod.number().int(),
+  "giftItemId": zod.number().int(),
+  "senderId": zod.number().int().nullable(),
   "senderName": zod.string(),
-  "receiverId": zod.int(),
+  "receiverId": zod.number().int(),
   "receiverName": zod.string(),
   "message": zod.string().nullish(),
   "isAnonymous": zod.boolean(),
-  "chatId": zod.int().nullable(),
+  "chatId": zod.number().int().nullable(),
   "createdAt": zod.string(),
   "inventoryStatus": zod.enum(['received', 'collected', 'exchanged']),
   "isUpgraded": zod.boolean(),
-  "serialNumber": zod.int().nullable(),
+  "serialNumber": zod.number().int().nullable(),
   "giftItem": zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "name": zod.string(),
   "emoji": zod.string(),
   "animationType": zod.enum(['bounce', 'confetti', 'sparkle', 'hearts', 'fireworks', 'stars', 'balloons', 'roses', 'orbit', 'bloom', 'diamonds', 'flame', 'galaxy', 'lightning', 'magic', 'supernova', 'vortex']),
   "rarity": zod.enum(['common', 'rare', 'epic', 'legendary', 'cosmic']),
-  "stars": zod.int(),
-  "price": zod.int(),
+  "stars": zod.number().int(),
+  "price": zod.number().int(),
   "description": zod.string(),
   "primeOnly": zod.boolean(),
   "imageUrl": zod.string().nullish(),
   "isCollectible": zod.boolean(),
   "isActive": zod.boolean(),
-  "maxSupply": zod.int().nullable(),
-  "exchangeValue": zod.int(),
-  "upgradePrice": zod.int(),
-  "soldCount": zod.int(),
-  "availableCount": zod.int().nullable()
+  "maxSupply": zod.number().int().nullable(),
+  "exchangeValue": zod.number().int(),
+  "upgradePrice": zod.number().int(),
+  "soldCount": zod.number().int(),
+  "availableCount": zod.number().int().nullable()
 })
 }),zod.null()]).optional(),
   "createdAt": zod.string(),
   "updatedAt": zod.string()
 }),
-  "balance": zod.int(),
-  "chatId": zod.int()
+  "balance": zod.number().int(),
+  "chatId": zod.number().int()
 })
 
 
@@ -1979,37 +1979,37 @@ export const OpenGiftParams = zod.object({
 })
 
 export const OpenGiftResponse = zod.object({
-  "id": zod.int(),
-  "giftItemId": zod.int(),
-  "senderId": zod.int().nullable(),
+  "id": zod.number().int(),
+  "giftItemId": zod.number().int(),
+  "senderId": zod.number().int().nullable(),
   "senderName": zod.string(),
-  "receiverId": zod.int(),
+  "receiverId": zod.number().int(),
   "receiverName": zod.string(),
   "message": zod.string().nullish(),
   "isAnonymous": zod.boolean(),
-  "chatId": zod.int().nullable(),
+  "chatId": zod.number().int().nullable(),
   "createdAt": zod.string(),
   "inventoryStatus": zod.enum(['received', 'collected', 'exchanged']),
   "isUpgraded": zod.boolean(),
-  "serialNumber": zod.int().nullable(),
+  "serialNumber": zod.number().int().nullable(),
   "giftItem": zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "name": zod.string(),
   "emoji": zod.string(),
   "animationType": zod.enum(['bounce', 'confetti', 'sparkle', 'hearts', 'fireworks', 'stars', 'balloons', 'roses', 'orbit', 'bloom', 'diamonds', 'flame', 'galaxy', 'lightning', 'magic', 'supernova', 'vortex']),
   "rarity": zod.enum(['common', 'rare', 'epic', 'legendary', 'cosmic']),
-  "stars": zod.int(),
-  "price": zod.int(),
+  "stars": zod.number().int(),
+  "price": zod.number().int(),
   "description": zod.string(),
   "primeOnly": zod.boolean(),
   "imageUrl": zod.string().nullish(),
   "isCollectible": zod.boolean(),
   "isActive": zod.boolean(),
-  "maxSupply": zod.int().nullable(),
-  "exchangeValue": zod.int(),
-  "upgradePrice": zod.int(),
-  "soldCount": zod.int(),
-  "availableCount": zod.int().nullable()
+  "maxSupply": zod.number().int().nullable(),
+  "exchangeValue": zod.number().int(),
+  "upgradePrice": zod.number().int(),
+  "soldCount": zod.number().int(),
+  "availableCount": zod.number().int().nullable()
 })
 })
 
@@ -2022,37 +2022,37 @@ export const UpgradeGiftParams = zod.object({
 })
 
 export const UpgradeGiftResponse = zod.object({
-  "id": zod.int(),
-  "giftItemId": zod.int(),
-  "senderId": zod.int().nullable(),
+  "id": zod.number().int(),
+  "giftItemId": zod.number().int(),
+  "senderId": zod.number().int().nullable(),
   "senderName": zod.string(),
-  "receiverId": zod.int(),
+  "receiverId": zod.number().int(),
   "receiverName": zod.string(),
   "message": zod.string().nullish(),
   "isAnonymous": zod.boolean(),
-  "chatId": zod.int().nullable(),
+  "chatId": zod.number().int().nullable(),
   "createdAt": zod.string(),
   "inventoryStatus": zod.enum(['received', 'collected', 'exchanged']),
   "isUpgraded": zod.boolean(),
-  "serialNumber": zod.int().nullable(),
+  "serialNumber": zod.number().int().nullable(),
   "giftItem": zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "name": zod.string(),
   "emoji": zod.string(),
   "animationType": zod.enum(['bounce', 'confetti', 'sparkle', 'hearts', 'fireworks', 'stars', 'balloons', 'roses', 'orbit', 'bloom', 'diamonds', 'flame', 'galaxy', 'lightning', 'magic', 'supernova', 'vortex']),
   "rarity": zod.enum(['common', 'rare', 'epic', 'legendary', 'cosmic']),
-  "stars": zod.int(),
-  "price": zod.int(),
+  "stars": zod.number().int(),
+  "price": zod.number().int(),
   "description": zod.string(),
   "primeOnly": zod.boolean(),
   "imageUrl": zod.string().nullish(),
   "isCollectible": zod.boolean(),
   "isActive": zod.boolean(),
-  "maxSupply": zod.int().nullable(),
-  "exchangeValue": zod.int(),
-  "upgradePrice": zod.int(),
-  "soldCount": zod.int(),
-  "availableCount": zod.int().nullable()
+  "maxSupply": zod.number().int().nullable(),
+  "exchangeValue": zod.number().int(),
+  "upgradePrice": zod.number().int(),
+  "soldCount": zod.number().int(),
+  "availableCount": zod.number().int().nullable()
 })
 })
 
@@ -2066,40 +2066,40 @@ export const ExchangeGiftParams = zod.object({
 
 export const ExchangeGiftResponse = zod.object({
   "gift": zod.object({
-  "id": zod.int(),
-  "giftItemId": zod.int(),
-  "senderId": zod.int().nullable(),
+  "id": zod.number().int(),
+  "giftItemId": zod.number().int(),
+  "senderId": zod.number().int().nullable(),
   "senderName": zod.string(),
-  "receiverId": zod.int(),
+  "receiverId": zod.number().int(),
   "receiverName": zod.string(),
   "message": zod.string().nullish(),
   "isAnonymous": zod.boolean(),
-  "chatId": zod.int().nullable(),
+  "chatId": zod.number().int().nullable(),
   "createdAt": zod.string(),
   "inventoryStatus": zod.enum(['received', 'collected', 'exchanged']),
   "isUpgraded": zod.boolean(),
-  "serialNumber": zod.int().nullable(),
+  "serialNumber": zod.number().int().nullable(),
   "giftItem": zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "name": zod.string(),
   "emoji": zod.string(),
   "animationType": zod.enum(['bounce', 'confetti', 'sparkle', 'hearts', 'fireworks', 'stars', 'balloons', 'roses', 'orbit', 'bloom', 'diamonds', 'flame', 'galaxy', 'lightning', 'magic', 'supernova', 'vortex']),
   "rarity": zod.enum(['common', 'rare', 'epic', 'legendary', 'cosmic']),
-  "stars": zod.int(),
-  "price": zod.int(),
+  "stars": zod.number().int(),
+  "price": zod.number().int(),
   "description": zod.string(),
   "primeOnly": zod.boolean(),
   "imageUrl": zod.string().nullish(),
   "isCollectible": zod.boolean(),
   "isActive": zod.boolean(),
-  "maxSupply": zod.int().nullable(),
-  "exchangeValue": zod.int(),
-  "upgradePrice": zod.int(),
-  "soldCount": zod.int(),
-  "availableCount": zod.int().nullable()
+  "maxSupply": zod.number().int().nullable(),
+  "exchangeValue": zod.number().int(),
+  "upgradePrice": zod.number().int(),
+  "soldCount": zod.number().int(),
+  "availableCount": zod.number().int().nullable()
 })
 }),
-  "balance": zod.int()
+  "balance": zod.number().int()
 })
 
 
@@ -2107,23 +2107,23 @@ export const ExchangeGiftResponse = zod.object({
  * @summary Get the gift catalog for administration
  */
 export const GetAdminGiftCatalogResponseItem = zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "name": zod.string(),
   "emoji": zod.string(),
   "animationType": zod.enum(['bounce', 'confetti', 'sparkle', 'hearts', 'fireworks', 'stars', 'balloons', 'roses', 'orbit', 'bloom', 'diamonds', 'flame', 'galaxy', 'lightning', 'magic', 'supernova', 'vortex']),
   "rarity": zod.enum(['common', 'rare', 'epic', 'legendary', 'cosmic']),
-  "stars": zod.int(),
-  "price": zod.int(),
+  "stars": zod.number().int(),
+  "price": zod.number().int(),
   "description": zod.string(),
   "primeOnly": zod.boolean(),
   "imageUrl": zod.string().nullish(),
   "isCollectible": zod.boolean(),
   "isActive": zod.boolean(),
-  "maxSupply": zod.int().nullable(),
-  "exchangeValue": zod.int(),
-  "upgradePrice": zod.int(),
-  "soldCount": zod.int(),
-  "availableCount": zod.int().nullable()
+  "maxSupply": zod.number().int().nullable(),
+  "exchangeValue": zod.number().int(),
+  "upgradePrice": zod.number().int(),
+  "soldCount": zod.number().int(),
+  "availableCount": zod.number().int().nullable()
 })
 export const GetAdminGiftCatalogResponse = zod.array(GetAdminGiftCatalogResponseItem)
 
@@ -2136,36 +2136,36 @@ export const CreateAdminGiftBody = zod.object({
   "emoji": zod.string(),
   "animationType": zod.enum(['bounce', 'confetti', 'sparkle', 'hearts', 'fireworks', 'stars', 'balloons', 'roses', 'orbit', 'bloom', 'diamonds', 'flame', 'galaxy', 'lightning', 'magic', 'supernova', 'vortex']),
   "rarity": zod.enum(['common', 'rare', 'epic', 'legendary', 'cosmic']),
-  "stars": zod.int(),
-  "price": zod.int(),
+  "stars": zod.number().int(),
+  "price": zod.number().int(),
   "description": zod.string(),
   "primeOnly": zod.boolean(),
   "imageUrl": zod.string().nullish(),
   "isCollectible": zod.boolean(),
   "isActive": zod.boolean().optional(),
-  "maxSupply": zod.int().nullable(),
-  "exchangeValue": zod.int(),
-  "upgradePrice": zod.int()
+  "maxSupply": zod.number().int().nullable(),
+  "exchangeValue": zod.number().int(),
+  "upgradePrice": zod.number().int()
 })
 
 export const CreateAdminGiftResponse = zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "name": zod.string(),
   "emoji": zod.string(),
   "animationType": zod.enum(['bounce', 'confetti', 'sparkle', 'hearts', 'fireworks', 'stars', 'balloons', 'roses', 'orbit', 'bloom', 'diamonds', 'flame', 'galaxy', 'lightning', 'magic', 'supernova', 'vortex']),
   "rarity": zod.enum(['common', 'rare', 'epic', 'legendary', 'cosmic']),
-  "stars": zod.int(),
-  "price": zod.int(),
+  "stars": zod.number().int(),
+  "price": zod.number().int(),
   "description": zod.string(),
   "primeOnly": zod.boolean(),
   "imageUrl": zod.string().nullish(),
   "isCollectible": zod.boolean(),
   "isActive": zod.boolean(),
-  "maxSupply": zod.int().nullable(),
-  "exchangeValue": zod.int(),
-  "upgradePrice": zod.int(),
-  "soldCount": zod.int(),
-  "availableCount": zod.int().nullable()
+  "maxSupply": zod.number().int().nullable(),
+  "exchangeValue": zod.number().int(),
+  "upgradePrice": zod.number().int(),
+  "soldCount": zod.number().int(),
+  "availableCount": zod.number().int().nullable()
 })
 
 
@@ -2181,36 +2181,36 @@ export const UpdateAdminGiftBody = zod.object({
   "emoji": zod.string(),
   "animationType": zod.enum(['bounce', 'confetti', 'sparkle', 'hearts', 'fireworks', 'stars', 'balloons', 'roses', 'orbit', 'bloom', 'diamonds', 'flame', 'galaxy', 'lightning', 'magic', 'supernova', 'vortex']),
   "rarity": zod.enum(['common', 'rare', 'epic', 'legendary', 'cosmic']),
-  "stars": zod.int(),
-  "price": zod.int(),
+  "stars": zod.number().int(),
+  "price": zod.number().int(),
   "description": zod.string(),
   "primeOnly": zod.boolean(),
   "imageUrl": zod.string().nullish(),
   "isCollectible": zod.boolean(),
   "isActive": zod.boolean().optional(),
-  "maxSupply": zod.int().nullable(),
-  "exchangeValue": zod.int(),
-  "upgradePrice": zod.int()
+  "maxSupply": zod.number().int().nullable(),
+  "exchangeValue": zod.number().int(),
+  "upgradePrice": zod.number().int()
 })
 
 export const UpdateAdminGiftResponse = zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "name": zod.string(),
   "emoji": zod.string(),
   "animationType": zod.enum(['bounce', 'confetti', 'sparkle', 'hearts', 'fireworks', 'stars', 'balloons', 'roses', 'orbit', 'bloom', 'diamonds', 'flame', 'galaxy', 'lightning', 'magic', 'supernova', 'vortex']),
   "rarity": zod.enum(['common', 'rare', 'epic', 'legendary', 'cosmic']),
-  "stars": zod.int(),
-  "price": zod.int(),
+  "stars": zod.number().int(),
+  "price": zod.number().int(),
   "description": zod.string(),
   "primeOnly": zod.boolean(),
   "imageUrl": zod.string().nullish(),
   "isCollectible": zod.boolean(),
   "isActive": zod.boolean(),
-  "maxSupply": zod.int().nullable(),
-  "exchangeValue": zod.int(),
-  "upgradePrice": zod.int(),
-  "soldCount": zod.int(),
-  "availableCount": zod.int().nullable()
+  "maxSupply": zod.number().int().nullable(),
+  "exchangeValue": zod.number().int(),
+  "upgradePrice": zod.number().int(),
+  "soldCount": zod.number().int(),
+  "availableCount": zod.number().int().nullable()
 })
 
 
@@ -2231,7 +2231,7 @@ export const ArchiveAdminGiftResponse = zod.object({
  */
 export const GetStoriesResponseItem = zod.object({
   "user": zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "username": zod.string(),
   "displayName": zod.string(),
   "bio": zod.string().nullish(),
@@ -2250,17 +2250,17 @@ export const GetStoriesResponseItem = zod.object({
   "createdAt": zod.string()
 }),
   "stories": zod.array(zod.object({
-  "id": zod.int(),
-  "userId": zod.int(),
+  "id": zod.number().int(),
+  "userId": zod.number().int(),
   "mediaUrl": zod.string().optional(),
   "type": zod.enum(['image', 'text']),
   "text": zod.string().nullish(),
   "backgroundColor": zod.string().nullish(),
   "expiresAt": zod.string(),
-  "viewCount": zod.int(),
+  "viewCount": zod.number().int(),
   "isViewed": zod.boolean(),
   "user": zod.union([zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "username": zod.string(),
   "displayName": zod.string(),
   "bio": zod.string().nullish(),
@@ -2296,17 +2296,17 @@ export const CreateStoryBody = zod.object({
 })
 
 export const CreateStoryResponse = zod.object({
-  "id": zod.int(),
-  "userId": zod.int(),
+  "id": zod.number().int(),
+  "userId": zod.number().int(),
   "mediaUrl": zod.string().optional(),
   "type": zod.enum(['image', 'text']),
   "text": zod.string().nullish(),
   "backgroundColor": zod.string().nullish(),
   "expiresAt": zod.string(),
-  "viewCount": zod.int(),
+  "viewCount": zod.number().int(),
   "isViewed": zod.boolean(),
   "user": zod.union([zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "username": zod.string(),
   "displayName": zod.string(),
   "bio": zod.string().nullish(),
@@ -2349,15 +2349,15 @@ export const MarkChatAsReadResponse = zod.void()
  * @summary Get feed posts
  */
 export const GetPostsResponseItem = zod.object({
-  "id": zod.int(),
-  "userId": zod.int(),
+  "id": zod.number().int(),
+  "userId": zod.number().int(),
   "text": zod.string(),
   "imageUrl": zod.string().nullish(),
-  "likesCount": zod.int(),
-  "commentsCount": zod.int(),
+  "likesCount": zod.number().int(),
+  "commentsCount": zod.number().int(),
   "isLiked": zod.boolean(),
   "author": zod.union([zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "username": zod.string(),
   "displayName": zod.string(),
   "bio": zod.string().nullish(),
@@ -2389,15 +2389,15 @@ export const CreatePostBody = zod.object({
 })
 
 export const CreatePostResponse = zod.object({
-  "id": zod.int(),
-  "userId": zod.int(),
+  "id": zod.number().int(),
+  "userId": zod.number().int(),
   "text": zod.string(),
   "imageUrl": zod.string().nullish(),
-  "likesCount": zod.int(),
-  "commentsCount": zod.int(),
+  "likesCount": zod.number().int(),
+  "commentsCount": zod.number().int(),
   "isLiked": zod.boolean(),
   "author": zod.union([zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "username": zod.string(),
   "displayName": zod.string(),
   "bio": zod.string().nullish(),
@@ -2431,15 +2431,15 @@ export const LikePostParams = zod.object({
 })
 
 export const LikePostResponse = zod.object({
-  "id": zod.int(),
-  "userId": zod.int(),
+  "id": zod.number().int(),
+  "userId": zod.number().int(),
   "text": zod.string(),
   "imageUrl": zod.string().nullish(),
-  "likesCount": zod.int(),
-  "commentsCount": zod.int(),
+  "likesCount": zod.number().int(),
+  "commentsCount": zod.number().int(),
   "isLiked": zod.boolean(),
   "author": zod.union([zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "username": zod.string(),
   "displayName": zod.string(),
   "bio": zod.string().nullish(),
@@ -2466,12 +2466,12 @@ export const GetPostCommentsParams = zod.object({
 })
 
 export const GetPostCommentsResponseItem = zod.object({
-  "id": zod.int(),
-  "postId": zod.int(),
-  "userId": zod.int(),
+  "id": zod.number().int(),
+  "postId": zod.number().int(),
+  "userId": zod.number().int(),
   "text": zod.string(),
   "author": zod.union([zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "username": zod.string(),
   "displayName": zod.string(),
   "bio": zod.string().nullish(),
@@ -2503,12 +2503,12 @@ export const CreatePostCommentBody = zod.object({
 })
 
 export const CreatePostCommentResponse = zod.object({
-  "id": zod.int(),
-  "postId": zod.int(),
-  "userId": zod.int(),
+  "id": zod.number().int(),
+  "postId": zod.number().int(),
+  "userId": zod.number().int(),
   "text": zod.string(),
   "author": zod.union([zod.object({
-  "id": zod.int(),
+  "id": zod.number().int(),
   "username": zod.string(),
   "displayName": zod.string(),
   "bio": zod.string().nullish(),
@@ -2534,13 +2534,13 @@ export const CreatePostCommentResponse = zod.object({
  * @summary Get current user stats (messages sent, calls made, gifts)
  */
 export const GetMyStatsResponse = zod.object({
-  "messagesSent": zod.int(),
-  "callsMade": zod.int(),
-  "callDurationSeconds": zod.int(),
-  "giftsSent": zod.int(),
-  "giftsReceived": zod.int(),
-  "chatsCount": zod.int(),
-  "contactsCount": zod.int()
+  "messagesSent": zod.number().int(),
+  "callsMade": zod.number().int(),
+  "callDurationSeconds": zod.number().int(),
+  "giftsSent": zod.number().int(),
+  "giftsReceived": zod.number().int(),
+  "chatsCount": zod.number().int(),
+  "contactsCount": zod.number().int()
 })
 
 

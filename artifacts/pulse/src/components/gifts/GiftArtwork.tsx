@@ -34,6 +34,8 @@ export function GiftArtwork({ item, className = "" }: { item: GiftItem; classNam
       <img
         src={sources[sourceIndex]}
         alt={item.name}
+        loading="lazy"
+        decoding="async"
         onError={() => setSourceIndex(index => Math.min(index + 1, sources.length - 1))}
         className={`gift-art object-contain ${className}`}
         data-testid={`img-gift-art-${item.id}`}
