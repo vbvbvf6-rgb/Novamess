@@ -1,20 +1,16 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Gift, Loader2, Send, X, Sparkles } from "lucide-react";
+import { Gift, Loader2, Send, X, Sparkles, EyeOff } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { getGetMessagesQueryKey, getGetChatsQueryKey } from "@workspace/api-client-react";
-
-interface GiftCatalogItem {
-  id: number;
-  name: string;
-  emoji: string;
-  animationType: string;
-  rarity: string;
-  price: number;
-  description: string;
-  imageUrl?: string | null;
-}
+import {
+  getGetMessagesQueryKey,
+  getGetChatsQueryKey,
+  getGetGiftCatalogQueryKey,
+  useGetGiftCatalog,
+  type GiftItem,
+} from "@workspace/api-client-react";
+import { emojiToTwemojiUrl, GIFT_LOCAL_PNG } from "@/lib/twemoji";
 
 interface GiftPickerProps {
   recipientId: number;
@@ -28,7 +24,12 @@ const rarityLabel: Record<string, string> = {
   rare: "Редкий",
   epic: "Эпический",
   legendary: "Легендарный",
+  cosmic: "Космический",
 };
+
+function giftArt(item: GiftItem) {
+  return item.imageUrl || GIFT_LOCAL_PNG[item.name] || emojiToTwemojiUrl(item.emoji);
+}
 
 function authHeaders(json = false): Record<string, string> {
   const token = sessionStorage.getItem("pulse-token");
@@ -41,27 +42,13 @@ function authHeaders(json = false): Record<string, string> {
 export function GiftPicker({ recipientId, chatId, onClose, onSent }: GiftPickerProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [catalog, setCatalog] = useState<GiftCatalogItem[]>([]);
+  const { data: catalog = [], isLoading: loading, isError } = useGetGiftCatalog({
+    query: { queryKey: getGetGiftCatalogQueryKey(), refetchOnMount: "always" },
+  });
   const [selected, setSelected] = useState<number | null>(null);
   const [note, setNote] = useState("");
-  const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
-  const [loadError, setLoadError] = useState("");
-
-  useEffect(() => {
-    let active = true;
-    fetch("/api/gifts", { headers: authHeaders(), cache: "no-store" })
-      .then(async (response) => {
-        const body = await response.json().catch(() => []);
-        if (!response.ok) throw new Error(body.error || "Не удалось загрузить подарки");
-        if (active) setCatalog(Array.isArray(body) ? body : []);
-      })
-      .catch((error) => {
-        if (active) setLoadError(error instanceof Error ? error.message : "Не удалось загрузить подарки");
-      })
-      .finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
-  }, []);
+  const [isAnonymous, setIsAnonymous] = useState(false);
 
   const sendGift = async () => {
     if (!selected || sending) return;
@@ -87,6 +74,7 @@ export function GiftPicker({ recipientId, chatId, onClose, onSent }: GiftPickerP
           giftItemId: selected,
           chatId: targetChatId,
           message: note,
+          isAnonymous,
         }),
       });
       const body = await response.json().catch(() => ({}));
@@ -97,7 +85,10 @@ export function GiftPicker({ recipientId, chatId, onClose, onSent }: GiftPickerP
         queryClient.invalidateQueries({ queryKey: getGetMessagesQueryKey({ chatId: targetChatId }) }),
         queryClient.invalidateQueries({ queryKey: ["/api/users/me"] }),
       ]);
-      toast({ title: "Подарок отправлен", description: "Он уже появился в чате." });
+      toast({
+        title: "Подарок отправлен",
+        description: isAnonymous ? "Получатель увидит анонимный подарок в чате." : "Он уже появился в чате.",
+      });
       onSent?.(targetChatId);
       onClose();
     } catch (error) {
@@ -151,8 +142,8 @@ export function GiftPicker({ recipientId, chatId, onClose, onSent }: GiftPickerP
           <div className="max-h-[calc(92dvh-160px)] overflow-y-auto p-4">
             {loading ? (
               <div className="flex justify-center py-12"><Loader2 className="animate-spin text-primary" /></div>
-            ) : loadError ? (
-              <p className="py-10 text-center text-sm text-destructive" role="alert">{loadError}</p>
+            ) : isError ? (
+              <p className="py-10 text-center text-sm text-destructive" role="alert">Не удалось загрузить каталог. Попробуйте ещё раз.</p>
             ) : catalog.length === 0 ? (
               <p className="py-10 text-center text-sm text-muted-foreground">Подарки пока не добавлены.</p>
             ) : (
@@ -162,29 +153,38 @@ export function GiftPicker({ recipientId, chatId, onClose, onSent }: GiftPickerP
                     type="button"
                     key={item.id}
                     onClick={() => setSelected(item.id)}
-                    className={`group rounded-2xl border p-3 text-left transition-all ${
+                    className={`group relative overflow-hidden rounded-2xl border p-3 text-left transition-all ${
                       selected === item.id
                         ? "border-primary bg-primary/10 ring-2 ring-primary/20"
                         : "border-border bg-background/70 hover:border-primary/50 hover:bg-secondary/60"
                     }`}
                     data-testid={`button-select-gift-${item.id}`}
                   >
-                    <div className="gift-picker-art relative mx-auto mb-2 flex h-20 items-center justify-center">
-                      <div className="absolute inset-2 rounded-full bg-pink-500/10 blur-xl" />
-                      {item.imageUrl ? (
-                        <img
-                          src={item.imageUrl}
-                          alt={item.name}
-                          className="gift-art relative z-10 h-[72px] w-[72px] object-contain drop-shadow-lg"
-                        />
-                      ) : (
-                        <span className="gift-art relative z-10 text-5xl" role="img" aria-label={item.name}>{item.emoji}</span>
-                      )}
+                    <span className={`absolute -right-8 top-3 z-20 w-28 rotate-45 py-1 text-center text-[8px] font-black uppercase tracking-wider text-white shadow ${
+                      item.rarity === "cosmic" || item.rarity === "legendary" ? "bg-gradient-to-r from-fuchsia-600 to-violet-500" :
+                      item.rarity === "epic" ? "bg-gradient-to-r from-purple-600 to-indigo-500" :
+                      item.rarity === "rare" ? "bg-gradient-to-r from-sky-700 to-blue-500" :
+                      "bg-gradient-to-r from-slate-600 to-slate-500"
+                    }`}>
+                      {rarityLabel[item.rarity] || item.rarity}
+                    </span>
+                    <div className="gift-picker-art relative mx-auto mb-2 flex h-24 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-b from-white/[0.04] to-transparent">
+                      <div className="absolute inset-4 rounded-full bg-amber-400/10 blur-xl" />
+                      <img
+                        src={giftArt(item)}
+                        alt={item.name}
+                        className="gift-art relative z-10 h-[76px] w-[76px] object-contain drop-shadow-lg"
+                        onError={event => { event.currentTarget.src = emojiToTwemojiUrl(item.emoji); }}
+                      />
                     </div>
                     <p className="truncate text-xs font-black text-foreground" data-testid={`text-gift-name-${item.id}`}>{item.name}</p>
-                    <p className="mt-0.5 truncate text-[10px] text-muted-foreground">{rarityLabel[item.rarity] || item.rarity}</p>
-                    <p className="mt-2 flex items-center gap-1 text-xs font-black text-amber-400">
-                      <Sparkles size={12} /> {item.price} искр
+                    {item.isCollectible && (
+                      <p className="mt-0.5 truncate text-[9px] font-semibold text-amber-400">
+                        {item.availableCount === null ? "Коллекционный" : `Осталось ${item.availableCount} из ${item.maxSupply}`}
+                      </p>
+                    )}
+                    <p className="mt-2 flex items-center justify-center gap-1 rounded-full bg-amber-400/10 px-2 py-1.5 text-xs font-black text-amber-400">
+                      <Sparkles size={12} /> {item.price.toLocaleString("ru-RU")} ✦
                     </p>
                   </button>
                 ))}
@@ -203,18 +203,38 @@ export function GiftPicker({ recipientId, chatId, onClose, onSent }: GiftPickerP
                 data-testid="input-gift-note"
               />
             </label>
+            <label className="mt-3 flex cursor-pointer items-start gap-3 rounded-xl border border-border bg-background/70 p-3">
+              <input
+                type="checkbox"
+                checked={isAnonymous}
+                onChange={event => setIsAnonymous(event.target.checked)}
+                className="mt-0.5 accent-primary"
+                data-testid="checkbox-anonymous-gift"
+              />
+              <span className="flex min-w-0 items-start gap-2">
+                <EyeOff size={15} className="mt-0.5 shrink-0 text-muted-foreground" />
+                <span>
+                  <span className="block text-xs font-bold text-foreground">Отправить анонимно</span>
+                  <span className="mt-0.5 block text-[10px] leading-relaxed text-muted-foreground">Ваше имя не будет показано получателю рядом с подарком.</span>
+                </span>
+              </span>
+            </label>
           </div>
 
           <div className="border-t border-border bg-card/95 p-4">
             <button
               type="button"
               onClick={sendGift}
-              disabled={!selectedGift || sending || loading || !!loadError}
+              disabled={!selectedGift || sending || loading || isError || (selectedGift?.availableCount !== null && selectedGift?.availableCount === 0)}
               className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-3 text-sm font-black text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
               data-testid="button-send-gift"
             >
               {sending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
-              {selectedGift ? `Отправить за ${selectedGift.price} искр` : "Выберите подарок"}
+              {selectedGift
+                ? selectedGift.availableCount === 0
+                  ? "Подарок закончился"
+                  : `Отправить за ${selectedGift.price.toLocaleString("ru-RU")} искр`
+                : "Выберите подарок"}
             </button>
           </div>
         </motion.div>

@@ -6,11 +6,12 @@ import {
   PhoneCall, Crown, Megaphone, BarChart3, Activity, Star,
   Edit3, Save, ChevronDown, ChevronRight, ChevronLeft, Minus, Ban, FileText, Trophy, Image,
   ShieldAlert, Clock, CheckCircle2, Bug, Inbox, Send as SendIcon, Download,
-  Wrench, Mail, ToggleLeft, ToggleRight, Timer, Database, Gift, Swords, Lock, Sparkles, Rocket, Calendar,
+  Wrench, Mail, ToggleLeft, ToggleRight, Timer, Database, Swords, Lock, Sparkles, Rocket, Calendar,
   Code2, Bot, Play, Wifi
 } from "lucide-react";
 import { getSavedAccounts } from "@/lib/accounts";
 import { useAppConfirm } from "@/contexts/AppConfirmContext";
+import { AdminGiftsManager } from "@/components/admin/AdminGiftsManager";
 
 interface AdminUser {
   id: number;
@@ -475,20 +476,8 @@ export default function Admin() {
   const [creatorLoading, setCreatorLoading] = useState(false);
   const [creatorActionId, setCreatorActionId] = useState<number | null>(null);
 
-  interface AdminGiftCatalogItem {
-    id: number;
-    name: string;
-    emoji: string;
-    price: number;
-    description: string;
-    imageUrl?: string | null;
-  }
   const [halloweenEventEnabled, setHalloweenEventEnabled] = useState(true);
   const [halloweenEventLoading, setHalloweenEventLoading] = useState(true);
-  const [adminGiftCatalog, setAdminGiftCatalog] = useState<AdminGiftCatalogItem[]>([]);
-  const [giftPriceDrafts, setGiftPriceDrafts] = useState<Record<number, string>>({});
-  const [giftCatalogLoading, setGiftCatalogLoading] = useState(true);
-  const [savingGiftPriceId, setSavingGiftPriceId] = useState<number | null>(null);
   const EVENT_TYPES = [
     { emoji: "🎉", label: "Праздник", color: "#f59e0b" },
     { emoji: "🏆", label: "Турнир", color: "#eab308" },
@@ -1107,22 +1096,6 @@ export default function Admin() {
     }
   };
 
-  const fetchAdminGiftCatalog = async () => {
-    setGiftCatalogLoading(true);
-    try {
-      const response = await fetch("/api/admin/gifts", { headers: getHeader(), cache: "no-store" });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Не удалось загрузить каталог подарков");
-      const items: AdminGiftCatalogItem[] = Array.isArray(data) ? data : [];
-      setAdminGiftCatalog(items);
-      setGiftPriceDrafts(Object.fromEntries(items.map(item => [item.id, String(item.price)])));
-    } catch (error) {
-      showToast(error instanceof Error ? error.message : "Не удалось загрузить каталог подарков", "err");
-    } finally {
-      setGiftCatalogLoading(false);
-    }
-  };
-
   const toggleHalloweenEvent = async () => {
     if (halloweenEventLoading) return;
     const enabled = !halloweenEventEnabled;
@@ -1144,35 +1117,9 @@ export default function Admin() {
     }
   };
 
-  const saveGiftPrice = async (gift: AdminGiftCatalogItem) => {
-    const price = Number(giftPriceDrafts[gift.id]);
-    if (!Number.isInteger(price) || price < 0 || price > 1_000_000) {
-      showToast("Цена должна быть целым числом от 0 до 1 000 000", "err");
-      return;
-    }
-    setSavingGiftPriceId(gift.id);
-    try {
-      const response = await fetch(`/api/admin/gifts/${gift.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json", ...getHeader() },
-        body: JSON.stringify({ price }),
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Не удалось сохранить цену");
-      setAdminGiftCatalog(items => items.map(item => item.id === gift.id ? { ...item, price: Number(data.price) } : item));
-      setGiftPriceDrafts(drafts => ({ ...drafts, [gift.id]: String(data.price) }));
-      showToast(`Цена подарка «${gift.name}» сохранена`, "ok");
-    } catch (error) {
-      showToast(error instanceof Error ? error.message : "Не удалось сохранить цену", "err");
-    } finally {
-      setSavingGiftPriceId(null);
-    }
-  };
-
   useEffect(() => {
     if (!hasAccess) return;
     void fetchHalloweenEventState();
-    void fetchAdminGiftCatalog();
   }, [hasAccess]);
 
   const fetchUserStats = async (uid: number) => {
@@ -2518,75 +2465,7 @@ export default function Admin() {
           </div>
         </div>
 
-        <div className="bg-card border border-border rounded-2xl overflow-hidden">
-          <div className="p-4 border-b border-border/60 flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-pink-500/10 flex items-center justify-center">
-              <Gift size={18} className="text-pink-400" />
-            </div>
-            <div className="min-w-0">
-              <p className="font-semibold text-sm">Цены на подарки</p>
-              <p className="text-xs text-muted-foreground">Задайте стоимость в искрах для каталога</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => void fetchAdminGiftCatalog()}
-              disabled={giftCatalogLoading}
-              className="ml-auto rounded-lg border border-border p-2 text-muted-foreground hover:bg-secondary hover:text-foreground disabled:opacity-50"
-              aria-label="Обновить каталог подарков"
-              data-testid="button-refresh-gift-catalog"
-            >
-              <RefreshCw size={14} className={giftCatalogLoading ? "animate-spin" : ""} />
-            </button>
-          </div>
-          <div className="p-4">
-            {giftCatalogLoading ? (
-              <div className="flex justify-center py-5"><RefreshCw size={18} className="animate-spin text-muted-foreground" /></div>
-            ) : adminGiftCatalog.length === 0 ? (
-              <p className="py-5 text-center text-sm text-muted-foreground">Каталог подарков пуст</p>
-            ) : (
-              <div className="grid gap-2 sm:grid-cols-2">
-                {adminGiftCatalog.map(gift => (
-                  <div key={gift.id} className="flex items-center gap-3 rounded-xl border border-border bg-background p-3" data-testid={`card-admin-gift-${gift.id}`}>
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-pink-500/5">
-                      {gift.imageUrl
-                        ? <img src={gift.imageUrl} alt={gift.name} className="h-10 w-10 object-contain" />
-                        : <span className="text-2xl" role="img" aria-label={gift.name}>{gift.emoji}</span>}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-bold">{gift.name}</p>
-                      <p className="truncate text-[11px] text-muted-foreground">{gift.description}</p>
-                    </div>
-                    <label className="flex shrink-0 items-center gap-1.5 text-[10px] font-semibold text-muted-foreground">
-                      <input
-                        type="number"
-                        min={0}
-                        max={1_000_000}
-                        step={1}
-                        inputMode="numeric"
-                        value={giftPriceDrafts[gift.id] ?? String(gift.price)}
-                        onChange={event => setGiftPriceDrafts(drafts => ({ ...drafts, [gift.id]: event.target.value }))}
-                        className="w-20 rounded-lg border border-border bg-card px-2 py-2 text-right text-sm font-bold text-foreground outline-none focus:border-primary"
-                        aria-label={`Цена подарка ${gift.name} в искрах`}
-                        data-testid={`input-gift-price-${gift.id}`}
-                      />
-                      искр
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => void saveGiftPrice(gift)}
-                      disabled={savingGiftPriceId === gift.id || giftPriceDrafts[gift.id] === String(gift.price)}
-                      className="rounded-lg bg-primary/10 p-2 text-primary hover:bg-primary/20 disabled:cursor-not-allowed disabled:opacity-40"
-                      aria-label={`Сохранить цену подарка ${gift.name}`}
-                      data-testid={`button-save-gift-price-${gift.id}`}
-                    >
-                      {savingGiftPriceId === gift.id ? <RefreshCw size={14} className="animate-spin" /> : <Save size={14} />}
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
+        <AdminGiftsManager />
 
         {/* Tools row: Mass SPARK + Posts + Leaderboard */}
         <div className="grid md:grid-cols-2 gap-4">

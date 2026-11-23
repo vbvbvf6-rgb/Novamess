@@ -531,6 +531,19 @@ paths:
                 items:
                   $ref: "#/components/schemas/GiftItem"
 
+  /gifts/mine:
+    get:
+      operationId: getMyGifts
+      tags: [gifts]
+      summary: Get gifts received and sent by current user
+      responses:
+        "200":
+          description: Current user's gift collection
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GiftCollection"
+
   /gifts/sent:
     get:
       operationId: getSentGifts
@@ -544,7 +557,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/Gift"
+                  $ref: "#/components/schemas/GiftInstance"
 
   /gifts/received:
     get:
@@ -559,7 +572,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/Gift"
+                  $ref: "#/components/schemas/GiftInstance"
 
   /gifts/send:
     post:
@@ -578,7 +591,142 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Gift"
+                $ref: "#/components/schemas/GiftSendResult"
+
+  /gifts/{giftId}/open:
+    post:
+      operationId: openGift
+      tags: [gifts]
+      summary: Open and keep a received gift
+      parameters:
+        - name: giftId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Opened gift
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GiftInstance"
+
+  /gifts/{giftId}/upgrade:
+    post:
+      operationId: upgradeGift
+      tags: [gifts]
+      summary: Upgrade a collectible gift
+      parameters:
+        - name: giftId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Upgraded gift
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GiftInstance"
+
+  /gifts/{giftId}/exchange:
+    post:
+      operationId: exchangeGift
+      tags: [gifts]
+      summary: Exchange a gift for its listed value
+      parameters:
+        - name: giftId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Exchanged gift and updated balance
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GiftExchangeResult"
+
+  /admin/gifts:
+    get:
+      operationId: getAdminGiftCatalog
+      tags: [gifts]
+      summary: Get the gift catalog for administration
+      responses:
+        "200":
+          description: Complete gift catalog
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GiftItem"
+    post:
+      operationId: createAdminGift
+      tags: [gifts]
+      summary: Create a gift catalog item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminGiftInput"
+      responses:
+        "201":
+          description: Created gift catalog item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GiftItem"
+
+  /admin/gifts/{giftId}:
+    patch:
+      operationId: updateAdminGift
+      tags: [gifts]
+      summary: Update a gift catalog item
+      parameters:
+        - name: giftId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminGiftInput"
+      responses:
+        "200":
+          description: Updated gift catalog item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GiftItem"
+    delete:
+      operationId: archiveAdminGift
+      tags: [gifts]
+      summary: Hide a gift from the catalog without deleting gift history
+      parameters:
+        - name: giftId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Gift archived
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                required: [success]
 
   /stories:
     get:
@@ -1092,7 +1240,7 @@ components:
           $ref: "#/components/schemas/Message"
           nullable: true
         giftData:
-          $ref: "#/components/schemas/Gift"
+          $ref: "#/components/schemas/GiftInstance"
           nullable: true
         createdAt:
           type: string
@@ -1242,14 +1390,37 @@ components:
           type: string
         animationType:
           type: string
-          enum: [confetti, sparkle, hearts, fireworks, stars, balloons, roses, diamonds]
+          enum: [bounce, confetti, sparkle, hearts, fireworks, stars, balloons, roses, orbit, bloom, diamonds, flame, galaxy, lightning, magic, supernova, vortex]
         rarity:
           type: string
-          enum: [common, rare, epic, legendary]
+          enum: [common, rare, epic, legendary, cosmic]
         stars:
+          type: integer
+        price:
           type: integer
         description:
           type: string
+        primeOnly:
+          type: boolean
+        imageUrl:
+          type: string
+          nullable: true
+        isCollectible:
+          type: boolean
+        isActive:
+          type: boolean
+        maxSupply:
+          type: integer
+          nullable: true
+        exchangeValue:
+          type: integer
+        upgradePrice:
+          type: integer
+        soldCount:
+          type: integer
+        availableCount:
+          type: integer
+          nullable: true
       required:
         - id
         - name
@@ -1257,7 +1428,124 @@ components:
         - animationType
         - rarity
         - stars
+        - price
         - description
+        - primeOnly
+        - isCollectible
+        - isActive
+        - maxSupply
+        - exchangeValue
+        - upgradePrice
+        - soldCount
+        - availableCount
+
+    GiftInstance:
+      type: object
+      properties:
+        id:
+          type: integer
+        giftItemId:
+          type: integer
+        senderId:
+          type: integer
+          nullable: true
+        senderName:
+          type: string
+        receiverId:
+          type: integer
+        receiverName:
+          type: string
+        message:
+          type: string
+          nullable: true
+        isAnonymous:
+          type: boolean
+        chatId:
+          type: integer
+          nullable: true
+        createdAt:
+          type: string
+        inventoryStatus:
+          type: string
+          enum: [received, collected, exchanged]
+        isUpgraded:
+          type: boolean
+        serialNumber:
+          type: integer
+          nullable: true
+        giftItem:
+          $ref: "#/components/schemas/GiftItem"
+      required: [id, giftItemId, senderId, senderName, receiverId, receiverName, isAnonymous, chatId, createdAt, inventoryStatus, isUpgraded, serialNumber, giftItem]
+
+    GiftCollection:
+      type: object
+      properties:
+        received:
+          type: array
+          items:
+            $ref: "#/components/schemas/GiftInstance"
+        sent:
+          type: array
+          items:
+            $ref: "#/components/schemas/GiftInstance"
+      required: [received, sent]
+
+    GiftSendResult:
+      type: object
+      properties:
+        message:
+          $ref: "#/components/schemas/Message"
+        balance:
+          type: integer
+        chatId:
+          type: integer
+      required: [message, balance, chatId]
+
+    GiftExchangeResult:
+      type: object
+      properties:
+        gift:
+          $ref: "#/components/schemas/GiftInstance"
+        balance:
+          type: integer
+      required: [gift, balance]
+
+    AdminGiftInput:
+      type: object
+      properties:
+        name:
+          type: string
+        emoji:
+          type: string
+        animationType:
+          type: string
+          enum: [bounce, confetti, sparkle, hearts, fireworks, stars, balloons, roses, orbit, bloom, diamonds, flame, galaxy, lightning, magic, supernova, vortex]
+        rarity:
+          type: string
+          enum: [common, rare, epic, legendary, cosmic]
+        stars:
+          type: integer
+        price:
+          type: integer
+        description:
+          type: string
+        primeOnly:
+          type: boolean
+        imageUrl:
+          type: string
+          nullable: true
+        isCollectible:
+          type: boolean
+        isActive:
+          type: boolean
+        maxSupply:
+          type: integer
+          nullable: true
+        exchangeValue:
+          type: integer
+        upgradePrice:
+          type: integer
+      required: [name, emoji, animationType, rarity, stars, price, description, primeOnly, isCollectible, maxSupply, exchangeValue, upgradePrice]
 
     Gift:
       type: object

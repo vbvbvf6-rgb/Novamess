@@ -1,7 +1,7 @@
 import { db } from "@workspace/db";
 import { sql } from "drizzle-orm";
 
-const _REMOVED_GIFT_CATALOG = [
+const GIFT_CATALOG = [
   // ── COMMON (50–200 ⚡) ──────────────────────────────────────────────────
   { name: "Яблоко",            emoji: "🍎",  animationType: "bounce",    rarity: "common",    stars: 1,  price: 60,    description: "Спелое красное яблоко",                    primeOnly: false },
   { name: "Персик",            emoji: "🍑",  animationType: "bounce",    rarity: "common",    stars: 1,  price: 65,    description: "Сладкий летний персик",                    primeOnly: false },
@@ -166,6 +166,12 @@ const _REMOVED_GIFT_CATALOG = [
   { name: "Сапфировый Трон",   emoji: "💎",  animationType: "galaxy",    rarity: "cosmic",    stars: 85, price: 240000, description: "Трон из сапфира для истинных Prime-небожителей",       primeOnly: true },
 ];
 
+const FEATURED_GIFTS = [
+  { name: "Роза", emoji: "🌹", animationType: "roses", rarity: "common", stars: 1, price: 10, description: "Роза в мерцающем стеклянном колпаке", primeOnly: false, imageUrl: "/gifts/rose-in-glass.png" },
+  { name: "Подарок", emoji: "🎁", animationType: "confetti", rarity: "rare", stars: 2, price: 50, description: "Подарочная коробка с праздничной лентой", primeOnly: false, imageUrl: "/gifts/gift-box.svg" },
+  { name: "Сердце", emoji: "💖", animationType: "hearts", rarity: "legendary", stars: 4, price: 200, description: "Сияющее сердце с тёплым посланием", primeOnly: false, imageUrl: "/gifts/heart.svg" },
+];
+
 const SYSTEM_USERS: Array<{
   username: string;
   displayName: string;
@@ -201,6 +207,27 @@ const SYSTEM_USERS: Array<{
 ];
 
 export async function runSeed() {
+  const allGifts = [...GIFT_CATALOG, ...FEATURED_GIFTS];
+  await db.execute(sql`
+    INSERT INTO gift_items
+      (name, emoji, animation_type, rarity, stars, price, description, prime_only, image_url,
+       is_collectible, is_active, max_supply, exchange_value, upgrade_price)
+    VALUES ${sql.join(allGifts.map((gift) => {
+      const isCollectible = gift.rarity !== "common";
+      const maxSupply = gift.rarity === "cosmic" ? 100
+        : gift.rarity === "legendary" ? 500
+        : gift.rarity === "epic" ? 1_000
+        : gift.rarity === "rare" ? 5_000
+        : null;
+      return sql`(
+        ${gift.name}, ${gift.emoji}, ${gift.animationType}, ${gift.rarity}, ${gift.stars},
+        ${gift.price}, ${gift.description}, ${gift.primeOnly}, ${"imageUrl" in gift ? gift.imageUrl : null}, ${isCollectible},
+        TRUE, ${maxSupply}, ${Math.round(gift.price * 0.85)}, ${Math.round(gift.price * 0.5)}
+      )`;
+    }), sql`, `)}
+    ON CONFLICT (name) DO NOTHING
+  `);
+
   // Keep one system bot when upgrading older Nova/Aura databases.
   await db.execute(sql`
     UPDATE users SET username = 'nova_security', display_name = 'Nova Security'

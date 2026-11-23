@@ -93,30 +93,13 @@ if (Number.isNaN(port) || port <= 0) {
     )`);
     await db.execute(sql`ALTER TABLE gift_items ADD COLUMN IF NOT EXISTS image_url TEXT`);
     await db.execute(sql`ALTER TABLE gift_items ADD COLUMN IF NOT EXISTS is_collectible BOOLEAN NOT NULL DEFAULT FALSE`);
+    await db.execute(sql`ALTER TABLE gift_items ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT TRUE`);
     await db.execute(sql`ALTER TABLE gift_items ADD COLUMN IF NOT EXISTS max_supply INTEGER`);
     await db.execute(sql`ALTER TABLE gift_items ADD COLUMN IF NOT EXISTS exchange_value INTEGER NOT NULL DEFAULT 0`);
     await db.execute(sql`ALTER TABLE gift_items ADD COLUMN IF NOT EXISTS upgrade_price INTEGER NOT NULL DEFAULT 0`);
     await db.execute(sql`ALTER TABLE gifts ADD COLUMN IF NOT EXISTS inventory_status TEXT NOT NULL DEFAULT 'received'`);
     await db.execute(sql`ALTER TABLE gifts ADD COLUMN IF NOT EXISTS is_upgraded BOOLEAN NOT NULL DEFAULT FALSE`);
     await db.execute(sql`ALTER TABLE gifts ADD COLUMN IF NOT EXISTS serial_number INTEGER`);
-    await db.execute(sql`
-      INSERT INTO gift_items
-        (name, emoji, animation_type, rarity, stars, price, description, prime_only, image_url)
-      VALUES
-        ('Роза', '🌹', 'roses', 'common', 1, 10, 'Яркая роза с анимированным сиянием', FALSE, '/gifts/rose.svg'),
-        ('Подарок', '🎁', 'confetti', 'rare', 2, 10, 'Подарочная коробка с лентой', FALSE, '/gifts/gift-box.svg'),
-        ('Медвежонок', '🧸', 'hearts', 'epic', 3, 10, 'Мягкий медвежонок', FALSE, '/gifts/bear.svg'),
-        ('Сердце', '💖', 'hearts', 'legendary', 4, 10, 'Сияющее сердце с бантом', FALSE, '/gifts/heart.svg')
-      ON CONFLICT (name) DO UPDATE SET
-        emoji = EXCLUDED.emoji,
-        animation_type = EXCLUDED.animation_type,
-        rarity = EXCLUDED.rarity,
-        stars = EXCLUDED.stars,
-        description = EXCLUDED.description,
-        prime_only = EXCLUDED.prime_only,
-        image_url = EXCLUDED.image_url
-    `);
-
     // Cosmetic inventory and prize-code tables must exist after migrations and
     // before the API begins serving requests (route-module DDL can run too early
     // on a brand-new database).

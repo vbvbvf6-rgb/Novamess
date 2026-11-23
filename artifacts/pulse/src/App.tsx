@@ -43,6 +43,7 @@ const UserProfile = lazy(() => import("@/pages/UserProfile"));
 const Feed = lazy(() => import("@/pages/Feed"));
 const Wallet = lazy(() => import("@/pages/Wallet"));
 const Inventory = lazy(() => import("@/pages/Inventory"));
+const Gifts = lazy(() => import("@/pages/Gifts"));
 const Admin = lazy(() => import("@/pages/Admin"));
 const Prime = lazy(() => import("@/pages/Prime"));
 const Changelog = lazy(() => import("@/pages/Changelog"));
@@ -559,6 +560,7 @@ function MainAppInner({ onLogout, onSwitchAccount, onRemoveAccount, onOpenAddAcc
                 <Route path="/contacts" component={Contacts} />
                 <Route path="/stories" component={Stories} />
                 <Route path="/wallet" component={Wallet} />
+                <Route path="/gifts" component={Gifts} />
                 <Route path="/inventory" component={Inventory} />
                 <Route path="/admin" component={Admin} />
                 <Route path="/prime" component={Prime} />

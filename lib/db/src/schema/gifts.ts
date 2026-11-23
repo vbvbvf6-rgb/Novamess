@@ -18,6 +18,7 @@ export const giftItemsTable = pgTable("gift_items", {
   primeOnly: boolean("prime_only").notNull().default(false),
   imageUrl: text("image_url"),
   isCollectible: boolean("is_collectible").notNull().default(false),
+  isActive: boolean("is_active").notNull().default(true),
   maxSupply: integer("max_supply"),
   exchangeValue: integer("exchange_value").notNull().default(0),
   upgradePrice: integer("upgrade_price").notNull().default(0),

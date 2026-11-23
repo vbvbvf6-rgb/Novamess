@@ -25,6 +25,7 @@ import {
   Search,
   Newspaper,
   PhoneCall,
+  Gift,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAppContext } from "@/contexts/AppContext";
@@ -253,6 +254,7 @@ export function Sidebar({ mobileSidebarOpen, onMobileClose, onMobileOpen, onOpen
     { href: "/contacts",     icon: Users,          label: t("nav.contacts") },
     { href: "/stories",      icon: History,        label: t("nav.stories") },
     { href: "/wallet",       icon: Wallet,         label: t("nav.wallet") },
+    { href: "/gifts",        icon: Gift,           label: "Подарки" },
     { href: "/inventory",    icon: Package,        label: "Инвентарь" },
     { href: "/changelog",    icon: Newspaper,      label: t("nav.changelog") },
     { href: "/profile",      icon: UserCircle,     label: t("nav.profile") },

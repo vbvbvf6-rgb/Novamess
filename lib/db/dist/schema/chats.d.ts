@@ -350,6 +350,23 @@ export declare const chatMembersTable: import("drizzle-orm/pg-core").PgTableWith
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
+        isArchived: import("drizzle-orm/pg-core").PgColumn<{
+            name: "is_archived";
+            tableName: "chat_members";
+            dataType: "boolean";
+            columnType: "PgBoolean";
+            data: boolean;
+            driverParam: boolean;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
         lastReadAt: import("drizzle-orm/pg-core").PgColumn<{
             name: "last_read_at";
             tableName: "chat_members";
@@ -593,6 +610,7 @@ export declare const insertChatMemberSchema: z.ZodObject<{
     role: z.ZodOptional<z.ZodString>;
     isPinned: z.ZodOptional<z.ZodBoolean>;
     isMuted: z.ZodOptional<z.ZodBoolean>;
+    isArchived: z.ZodOptional<z.ZodBoolean>;
     lastReadAt: z.ZodOptional<z.ZodNullable<z.ZodDate>>;
     lastDeliveredAt: z.ZodOptional<z.ZodNullable<z.ZodDate>>;
 }, {

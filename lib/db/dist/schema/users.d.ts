@@ -105,6 +105,23 @@ export declare const usersTable: import("drizzle-orm/pg-core").PgTableWithColumn
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
+        avatarFrame: import("drizzle-orm/pg-core").PgColumn<{
+            name: "avatar_frame";
+            tableName: "users";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
         nicknameStyle: import("drizzle-orm/pg-core").PgColumn<{
             name: "nickname_style";
             tableName: "users";
@@ -649,6 +666,40 @@ export declare const usersTable: import("drizzle-orm/pg-core").PgTableWithColumn
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
+        loginCodeHash: import("drizzle-orm/pg-core").PgColumn<{
+            name: "login_code_hash";
+            tableName: "users";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        loginCodeExpiresAt: import("drizzle-orm/pg-core").PgColumn<{
+            name: "login_code_expires_at";
+            tableName: "users";
+            dataType: "date";
+            columnType: "PgTimestamp";
+            data: Date;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
         showOnlineStatus: import("drizzle-orm/pg-core").PgColumn<{
             name: "show_online_status";
             tableName: "users";
@@ -760,6 +811,7 @@ export declare const insertUserSchema: z.ZodObject<{
     bio: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     avatarUrl: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     avatarColor: z.ZodOptional<z.ZodString>;
+    avatarFrame: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     nicknameStyle: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     status: z.ZodOptional<z.ZodString>;
     statusText: z.ZodOptional<z.ZodNullable<z.ZodString>>;
@@ -792,6 +844,8 @@ export declare const insertUserSchema: z.ZodObject<{
     emailVerified: z.ZodOptional<z.ZodBoolean>;
     emailVerificationCode: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     emailVerificationExpiresAt: z.ZodOptional<z.ZodNullable<z.ZodDate>>;
+    loginCodeHash: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    loginCodeExpiresAt: z.ZodOptional<z.ZodNullable<z.ZodDate>>;
     showOnlineStatus: z.ZodOptional<z.ZodBoolean>;
     readReceiptsEnabled: z.ZodOptional<z.ZodBoolean>;
     referralCode: z.ZodOptional<z.ZodNullable<z.ZodString>>;
