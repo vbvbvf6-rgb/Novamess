@@ -15921,9 +15921,9 @@ var require_object_inspect = __commonJS({
       }
       var sepRegex = /[0-9](?=(?:[0-9]{3})+(?![0-9]))/g;
       if (typeof num === "number") {
-        var int3 = num < 0 ? -$floor(-num) : $floor(num);
-        if (int3 !== num) {
-          var intStr = String(int3);
+        var int2 = num < 0 ? -$floor(-num) : $floor(num);
+        if (int2 !== num) {
+          var intStr = String(int2);
           var dec = $slice.call(str, intStr.length + 1);
           return $replace.call(intStr, sepRegex, "$&_") + "." + $replace.call($replace.call(dec, /([0-9]{3})/g, "$&_"), /_$/, "");
         }
@@ -58247,7 +58247,7 @@ function stringFormat(format2, fnOrRegex, _params = {}) {
 function number2(params) {
   return _number(ZodNumber2, params);
 }
-function int2(params) {
+function int(params) {
   return _int(ZodNumberFormat, params);
 }
 function float32(params) {
@@ -58798,8 +58798,8 @@ var init_schemas2 = __esm({
       inst.lt = (value, params) => inst.check(_lt(value, params));
       inst.lte = (value, params) => inst.check(_lte(value, params));
       inst.max = (value, params) => inst.check(_lte(value, params));
-      inst.int = (params) => inst.check(int2(params));
-      inst.safe = (params) => inst.check(int2(params));
+      inst.int = (params) => inst.check(int(params));
+      inst.safe = (params) => inst.check(int(params));
       inst.positive = (params) => inst.check(_gt(0, params));
       inst.nonnegative = (params) => inst.check(_gte(0, params));
       inst.negative = (params) => inst.check(_lt(0, params));
@@ -59295,7 +59295,7 @@ __export(external_exports, {
   guid: () => guid2,
   includes: () => _includes,
   instanceof: () => _instanceof,
-  int: () => int2,
+  int: () => int,
   int32: () => int32,
   int64: () => int64,
   intersection: () => intersection,
@@ -141280,7 +141280,7 @@ var HealthCheckResponse = objectType({
   "status": stringType()
 });
 var GetMeResponse = objectType({
-  "id": (void 0)(),
+  "id": numberType().int(),
   "username": stringType(),
   "displayName": stringType(),
   "bio": stringType().nullish(),
@@ -141310,7 +141310,7 @@ var UpdateMeBody = objectType({
   "statusAnimation": stringType().optional()
 });
 var UpdateMeResponse = objectType({
-  "id": (void 0)(),
+  "id": numberType().int(),
   "username": stringType(),
   "displayName": stringType(),
   "bio": stringType().nullish(),
@@ -141332,7 +141332,7 @@ var SearchUsersQueryParams = objectType({
   "q": coerce.string()
 });
 var SearchUsersResponseItem = objectType({
-  "id": (void 0)(),
+  "id": numberType().int(),
   "username": stringType(),
   "displayName": stringType(),
   "bio": stringType().nullish(),
@@ -141355,7 +141355,7 @@ var GetUserByIdParams = objectType({
   "userId": coerce.number().int()
 });
 var GetUserByIdResponse = objectType({
-  "id": (void 0)(),
+  "id": numberType().int(),
   "username": stringType(),
   "displayName": stringType(),
   "bio": stringType().nullish(),
@@ -141374,7 +141374,7 @@ var GetUserByIdResponse = objectType({
   "createdAt": stringType()
 });
 var GetContactsResponseItem = objectType({
-  "id": (void 0)(),
+  "id": numberType().int(),
   "username": stringType(),
   "displayName": stringType(),
   "bio": stringType().nullish(),
@@ -141394,10 +141394,10 @@ var GetContactsResponseItem = objectType({
 });
 var GetContactsResponse = arrayType(GetContactsResponseItem);
 var AddContactBody = objectType({
-  "userId": (void 0)()
+  "userId": numberType().int()
 });
 var AddContactResponse = objectType({
-  "id": (void 0)(),
+  "id": numberType().int(),
   "username": stringType(),
   "displayName": stringType(),
   "bio": stringType().nullish(),
@@ -141420,7 +141420,7 @@ var RemoveContactParams = objectType({
 });
 var RemoveContactResponse = voidType();
 var GetChatsResponseItem = objectType({
-  "id": (void 0)(),
+  "id": numberType().int(),
   "type": enumType(["direct", "group", "channel"]),
   "name": stringType().nullish(),
   "description": stringType().nullish(),
@@ -141428,24 +141428,24 @@ var GetChatsResponseItem = objectType({
   "avatarColor": stringType(),
   "isPinned": booleanType(),
   "isMuted": booleanType(),
-  "unreadCount": (void 0)(),
+  "unreadCount": numberType().int(),
   "lastMessage": unionType([objectType({
-    "id": (void 0)(),
-    "chatId": (void 0)(),
-    "senderId": (void 0)(),
+    "id": numberType().int(),
+    "chatId": numberType().int(),
+    "senderId": numberType().int(),
     "text": stringType().nullish(),
     "type": enumType(["text", "image", "video", "audio", "file", "gift", "call", "sticker", "system"]),
     "mediaUrl": stringType().nullish(),
-    "replyToId": (void 0)().nullish(),
+    "replyToId": numberType().int().nullish(),
     "isEdited": booleanType(),
     "isRead": booleanType(),
     "reactions": arrayType(objectType({
-      "id": (void 0)(),
-      "messageId": (void 0)(),
-      "userId": (void 0)(),
+      "id": numberType().int(),
+      "messageId": numberType().int(),
+      "userId": numberType().int(),
       "emoji": stringType(),
       "user": unionType([objectType({
-        "id": (void 0)(),
+        "id": numberType().int(),
         "username": stringType(),
         "displayName": stringType(),
         "bio": stringType().nullish(),
@@ -141466,7 +141466,7 @@ var GetChatsResponseItem = objectType({
       "createdAt": stringType()
     })),
     "sender": unionType([objectType({
-      "id": (void 0)(),
+      "id": numberType().int(),
       "username": stringType(),
       "displayName": stringType(),
       "bio": stringType().nullish(),
@@ -141486,50 +141486,50 @@ var GetChatsResponseItem = objectType({
     }), nullType()]).optional(),
     "replyTo": unionType([unknownType(), nullType()]).optional(),
     "giftData": unionType([objectType({
-      "id": (void 0)(),
-      "giftItemId": (void 0)(),
-      "senderId": (void 0)().nullable(),
+      "id": numberType().int(),
+      "giftItemId": numberType().int(),
+      "senderId": numberType().int().nullable(),
       "senderName": stringType(),
-      "receiverId": (void 0)(),
+      "receiverId": numberType().int(),
       "receiverName": stringType(),
       "message": stringType().nullish(),
       "isAnonymous": booleanType(),
-      "chatId": (void 0)().nullable(),
+      "chatId": numberType().int().nullable(),
       "createdAt": stringType(),
       "inventoryStatus": enumType(["received", "collected", "exchanged"]),
       "isUpgraded": booleanType(),
-      "serialNumber": (void 0)().nullable(),
+      "serialNumber": numberType().int().nullable(),
       "giftItem": objectType({
-        "id": (void 0)(),
+        "id": numberType().int(),
         "name": stringType(),
         "emoji": stringType(),
         "animationType": enumType(["bounce", "confetti", "sparkle", "hearts", "fireworks", "stars", "balloons", "roses", "orbit", "bloom", "diamonds", "flame", "galaxy", "lightning", "magic", "supernova", "vortex"]),
         "rarity": enumType(["common", "rare", "epic", "legendary", "cosmic"]),
-        "stars": (void 0)(),
-        "price": (void 0)(),
+        "stars": numberType().int(),
+        "price": numberType().int(),
         "description": stringType(),
         "primeOnly": booleanType(),
         "imageUrl": stringType().nullish(),
         "isCollectible": booleanType(),
         "isActive": booleanType(),
-        "maxSupply": (void 0)().nullable(),
-        "exchangeValue": (void 0)(),
-        "upgradePrice": (void 0)(),
-        "soldCount": (void 0)(),
-        "availableCount": (void 0)().nullable()
+        "maxSupply": numberType().int().nullable(),
+        "exchangeValue": numberType().int(),
+        "upgradePrice": numberType().int(),
+        "soldCount": numberType().int(),
+        "availableCount": numberType().int().nullable()
       })
     }), nullType()]).optional(),
     "createdAt": stringType(),
     "updatedAt": stringType()
   }), nullType()]).optional(),
   "members": arrayType(objectType({
-    "id": (void 0)(),
-    "chatId": (void 0)(),
-    "userId": (void 0)(),
+    "id": numberType().int(),
+    "chatId": numberType().int(),
+    "userId": numberType().int(),
     "role": enumType(["owner", "admin", "member"]),
     "joinedAt": stringType(),
     "user": objectType({
-      "id": (void 0)(),
+      "id": numberType().int(),
       "username": stringType(),
       "displayName": stringType(),
       "bio": stringType().nullish(),
@@ -141549,7 +141549,7 @@ var GetChatsResponseItem = objectType({
     }).optional()
   })).optional(),
   "otherUser": unionType([objectType({
-    "id": (void 0)(),
+    "id": numberType().int(),
     "username": stringType(),
     "displayName": stringType(),
     "bio": stringType().nullish(),
@@ -141575,10 +141575,10 @@ var CreateChatBody = objectType({
   "type": enumType(["direct", "group", "channel"]),
   "name": stringType().optional(),
   "description": stringType().optional(),
-  "memberIds": arrayType((void 0)()).optional()
+  "memberIds": arrayType(numberType().int()).optional()
 });
 var CreateChatResponse = objectType({
-  "id": (void 0)(),
+  "id": numberType().int(),
   "type": enumType(["direct", "group", "channel"]),
   "name": stringType().nullish(),
   "description": stringType().nullish(),
@@ -141586,24 +141586,24 @@ var CreateChatResponse = objectType({
   "avatarColor": stringType(),
   "isPinned": booleanType(),
   "isMuted": booleanType(),
-  "unreadCount": (void 0)(),
+  "unreadCount": numberType().int(),
   "lastMessage": unionType([objectType({
-    "id": (void 0)(),
-    "chatId": (void 0)(),
-    "senderId": (void 0)(),
+    "id": numberType().int(),
+    "chatId": numberType().int(),
+    "senderId": numberType().int(),
     "text": stringType().nullish(),
     "type": enumType(["text", "image", "video", "audio", "file", "gift", "call", "sticker", "system"]),
     "mediaUrl": stringType().nullish(),
-    "replyToId": (void 0)().nullish(),
+    "replyToId": numberType().int().nullish(),
     "isEdited": booleanType(),
     "isRead": booleanType(),
     "reactions": arrayType(objectType({
-      "id": (void 0)(),
-      "messageId": (void 0)(),
-      "userId": (void 0)(),
+      "id": numberType().int(),
+      "messageId": numberType().int(),
+      "userId": numberType().int(),
       "emoji": stringType(),
       "user": unionType([objectType({
-        "id": (void 0)(),
+        "id": numberType().int(),
         "username": stringType(),
         "displayName": stringType(),
         "bio": stringType().nullish(),
@@ -141624,7 +141624,7 @@ var CreateChatResponse = objectType({
       "createdAt": stringType()
     })),
     "sender": unionType([objectType({
-      "id": (void 0)(),
+      "id": numberType().int(),
       "username": stringType(),
       "displayName": stringType(),
       "bio": stringType().nullish(),
@@ -141644,50 +141644,50 @@ var CreateChatResponse = objectType({
     }), nullType()]).optional(),
     "replyTo": unionType([unknownType(), nullType()]).optional(),
     "giftData": unionType([objectType({
-      "id": (void 0)(),
-      "giftItemId": (void 0)(),
-      "senderId": (void 0)().nullable(),
+      "id": numberType().int(),
+      "giftItemId": numberType().int(),
+      "senderId": numberType().int().nullable(),
       "senderName": stringType(),
-      "receiverId": (void 0)(),
+      "receiverId": numberType().int(),
       "receiverName": stringType(),
       "message": stringType().nullish(),
       "isAnonymous": booleanType(),
-      "chatId": (void 0)().nullable(),
+      "chatId": numberType().int().nullable(),
       "createdAt": stringType(),
       "inventoryStatus": enumType(["received", "collected", "exchanged"]),
       "isUpgraded": booleanType(),
-      "serialNumber": (void 0)().nullable(),
+      "serialNumber": numberType().int().nullable(),
       "giftItem": objectType({
-        "id": (void 0)(),
+        "id": numberType().int(),
         "name": stringType(),
         "emoji": stringType(),
         "animationType": enumType(["bounce", "confetti", "sparkle", "hearts", "fireworks", "stars", "balloons", "roses", "orbit", "bloom", "diamonds", "flame", "galaxy", "lightning", "magic", "supernova", "vortex"]),
         "rarity": enumType(["common", "rare", "epic", "legendary", "cosmic"]),
-        "stars": (void 0)(),
-        "price": (void 0)(),
+        "stars": numberType().int(),
+        "price": numberType().int(),
         "description": stringType(),
         "primeOnly": booleanType(),
         "imageUrl": stringType().nullish(),
         "isCollectible": booleanType(),
         "isActive": booleanType(),
-        "maxSupply": (void 0)().nullable(),
-        "exchangeValue": (void 0)(),
-        "upgradePrice": (void 0)(),
-        "soldCount": (void 0)(),
-        "availableCount": (void 0)().nullable()
+        "maxSupply": numberType().int().nullable(),
+        "exchangeValue": numberType().int(),
+        "upgradePrice": numberType().int(),
+        "soldCount": numberType().int(),
+        "availableCount": numberType().int().nullable()
       })
     }), nullType()]).optional(),
     "createdAt": stringType(),
     "updatedAt": stringType()
   }), nullType()]).optional(),
   "members": arrayType(objectType({
-    "id": (void 0)(),
-    "chatId": (void 0)(),
-    "userId": (void 0)(),
+    "id": numberType().int(),
+    "chatId": numberType().int(),
+    "userId": numberType().int(),
     "role": enumType(["owner", "admin", "member"]),
     "joinedAt": stringType(),
     "user": objectType({
-      "id": (void 0)(),
+      "id": numberType().int(),
       "username": stringType(),
       "displayName": stringType(),
       "bio": stringType().nullish(),
@@ -141707,7 +141707,7 @@ var CreateChatResponse = objectType({
     }).optional()
   })).optional(),
   "otherUser": unionType([objectType({
-    "id": (void 0)(),
+    "id": numberType().int(),
     "username": stringType(),
     "displayName": stringType(),
     "bio": stringType().nullish(),
@@ -141732,7 +141732,7 @@ var GetChatByIdParams = objectType({
   "chatId": coerce.number().int()
 });
 var GetChatByIdResponse = objectType({
-  "id": (void 0)(),
+  "id": numberType().int(),
   "type": enumType(["direct", "group", "channel"]),
   "name": stringType().nullish(),
   "description": stringType().nullish(),
@@ -141740,24 +141740,24 @@ var GetChatByIdResponse = objectType({
   "avatarColor": stringType(),
   "isPinned": booleanType(),
   "isMuted": booleanType(),
-  "unreadCount": (void 0)(),
+  "unreadCount": numberType().int(),
   "lastMessage": unionType([objectType({
-    "id": (void 0)(),
-    "chatId": (void 0)(),
-    "senderId": (void 0)(),
+    "id": numberType().int(),
+    "chatId": numberType().int(),
+    "senderId": numberType().int(),
     "text": stringType().nullish(),
     "type": enumType(["text", "image", "video", "audio", "file", "gift", "call", "sticker", "system"]),
     "mediaUrl": stringType().nullish(),
-    "replyToId": (void 0)().nullish(),
+    "replyToId": numberType().int().nullish(),
     "isEdited": booleanType(),
     "isRead": booleanType(),
     "reactions": arrayType(objectType({
-      "id": (void 0)(),
-      "messageId": (void 0)(),
-      "userId": (void 0)(),
+      "id": numberType().int(),
+      "messageId": numberType().int(),
+      "userId": numberType().int(),
       "emoji": stringType(),
       "user": unionType([objectType({
-        "id": (void 0)(),
+        "id": numberType().int(),
         "username": stringType(),
         "displayName": stringType(),
         "bio": stringType().nullish(),
@@ -141778,7 +141778,7 @@ var GetChatByIdResponse = objectType({
       "createdAt": stringType()
     })),
     "sender": unionType([objectType({
-      "id": (void 0)(),
+      "id": numberType().int(),
       "username": stringType(),
       "displayName": stringType(),
       "bio": stringType().nullish(),
@@ -141798,50 +141798,50 @@ var GetChatByIdResponse = objectType({
     }), nullType()]).optional(),
     "replyTo": unionType([unknownType(), nullType()]).optional(),
     "giftData": unionType([objectType({
-      "id": (void 0)(),
-      "giftItemId": (void 0)(),
-      "senderId": (void 0)().nullable(),
+      "id": numberType().int(),
+      "giftItemId": numberType().int(),
+      "senderId": numberType().int().nullable(),
       "senderName": stringType(),
-      "receiverId": (void 0)(),
+      "receiverId": numberType().int(),
       "receiverName": stringType(),
       "message": stringType().nullish(),
       "isAnonymous": booleanType(),
-      "chatId": (void 0)().nullable(),
+      "chatId": numberType().int().nullable(),
       "createdAt": stringType(),
       "inventoryStatus": enumType(["received", "collected", "exchanged"]),
       "isUpgraded": booleanType(),
-      "serialNumber": (void 0)().nullable(),
+      "serialNumber": numberType().int().nullable(),
       "giftItem": objectType({
-        "id": (void 0)(),
+        "id": numberType().int(),
         "name": stringType(),
         "emoji": stringType(),
         "animationType": enumType(["bounce", "confetti", "sparkle", "hearts", "fireworks", "stars", "balloons", "roses", "orbit", "bloom", "diamonds", "flame", "galaxy", "lightning", "magic", "supernova", "vortex"]),
         "rarity": enumType(["common", "rare", "epic", "legendary", "cosmic"]),
-        "stars": (void 0)(),
-        "price": (void 0)(),
+        "stars": numberType().int(),
+        "price": numberType().int(),
         "description": stringType(),
         "primeOnly": booleanType(),
         "imageUrl": stringType().nullish(),
         "isCollectible": booleanType(),
         "isActive": booleanType(),
-        "maxSupply": (void 0)().nullable(),
-        "exchangeValue": (void 0)(),
-        "upgradePrice": (void 0)(),
-        "soldCount": (void 0)(),
-        "availableCount": (void 0)().nullable()
+        "maxSupply": numberType().int().nullable(),
+        "exchangeValue": numberType().int(),
+        "upgradePrice": numberType().int(),
+        "soldCount": numberType().int(),
+        "availableCount": numberType().int().nullable()
       })
     }), nullType()]).optional(),
     "createdAt": stringType(),
     "updatedAt": stringType()
   }), nullType()]).optional(),
   "members": arrayType(objectType({
-    "id": (void 0)(),
-    "chatId": (void 0)(),
-    "userId": (void 0)(),
+    "id": numberType().int(),
+    "chatId": numberType().int(),
+    "userId": numberType().int(),
     "role": enumType(["owner", "admin", "member"]),
     "joinedAt": stringType(),
     "user": objectType({
-      "id": (void 0)(),
+      "id": numberType().int(),
       "username": stringType(),
       "displayName": stringType(),
       "bio": stringType().nullish(),
@@ -141861,7 +141861,7 @@ var GetChatByIdResponse = objectType({
     }).optional()
   })).optional(),
   "otherUser": unionType([objectType({
-    "id": (void 0)(),
+    "id": numberType().int(),
     "username": stringType(),
     "displayName": stringType(),
     "bio": stringType().nullish(),
@@ -141892,7 +141892,7 @@ var UpdateChatBody = objectType({
   "isMuted": booleanType().optional()
 });
 var UpdateChatResponse = objectType({
-  "id": (void 0)(),
+  "id": numberType().int(),
   "type": enumType(["direct", "group", "channel"]),
   "name": stringType().nullish(),
   "description": stringType().nullish(),
@@ -141900,24 +141900,24 @@ var UpdateChatResponse = objectType({
   "avatarColor": stringType(),
   "isPinned": booleanType(),
   "isMuted": booleanType(),
-  "unreadCount": (void 0)(),
+  "unreadCount": numberType().int(),
   "lastMessage": unionType([objectType({
-    "id": (void 0)(),
-    "chatId": (void 0)(),
-    "senderId": (void 0)(),
+    "id": numberType().int(),
+    "chatId": numberType().int(),
+    "senderId": numberType().int(),
     "text": stringType().nullish(),
     "type": enumType(["text", "image", "video", "audio", "file", "gift", "call", "sticker", "system"]),
     "mediaUrl": stringType().nullish(),
-    "replyToId": (void 0)().nullish(),
+    "replyToId": numberType().int().nullish(),
     "isEdited": booleanType(),
     "isRead": booleanType(),
     "reactions": arrayType(objectType({
-      "id": (void 0)(),
-      "messageId": (void 0)(),
-      "userId": (void 0)(),
+      "id": numberType().int(),
+      "messageId": numberType().int(),
+      "userId": numberType().int(),
       "emoji": stringType(),
       "user": unionType([objectType({
-        "id": (void 0)(),
+        "id": numberType().int(),
         "username": stringType(),
         "displayName": stringType(),
         "bio": stringType().nullish(),
@@ -141938,7 +141938,7 @@ var UpdateChatResponse = objectType({
       "createdAt": stringType()
     })),
     "sender": unionType([objectType({
-      "id": (void 0)(),
+      "id": numberType().int(),
       "username": stringType(),
       "displayName": stringType(),
       "bio": stringType().nullish(),
@@ -141958,50 +141958,50 @@ var UpdateChatResponse = objectType({
     }), nullType()]).optional(),
     "replyTo": unionType([unknownType(), nullType()]).optional(),
     "giftData": unionType([objectType({
-      "id": (void 0)(),
-      "giftItemId": (void 0)(),
-      "senderId": (void 0)().nullable(),
+      "id": numberType().int(),
+      "giftItemId": numberType().int(),
+      "senderId": numberType().int().nullable(),
       "senderName": stringType(),
-      "receiverId": (void 0)(),
+      "receiverId": numberType().int(),
       "receiverName": stringType(),
       "message": stringType().nullish(),
       "isAnonymous": booleanType(),
-      "chatId": (void 0)().nullable(),
+      "chatId": numberType().int().nullable(),
       "createdAt": stringType(),
       "inventoryStatus": enumType(["received", "collected", "exchanged"]),
       "isUpgraded": booleanType(),
-      "serialNumber": (void 0)().nullable(),
+      "serialNumber": numberType().int().nullable(),
       "giftItem": objectType({
-        "id": (void 0)(),
+        "id": numberType().int(),
         "name": stringType(),
         "emoji": stringType(),
         "animationType": enumType(["bounce", "confetti", "sparkle", "hearts", "fireworks", "stars", "balloons", "roses", "orbit", "bloom", "diamonds", "flame", "galaxy", "lightning", "magic", "supernova", "vortex"]),
         "rarity": enumType(["common", "rare", "epic", "legendary", "cosmic"]),
-        "stars": (void 0)(),
-        "price": (void 0)(),
+        "stars": numberType().int(),
+        "price": numberType().int(),
         "description": stringType(),
         "primeOnly": booleanType(),
         "imageUrl": stringType().nullish(),
         "isCollectible": booleanType(),
         "isActive": booleanType(),
-        "maxSupply": (void 0)().nullable(),
-        "exchangeValue": (void 0)(),
-        "upgradePrice": (void 0)(),
-        "soldCount": (void 0)(),
-        "availableCount": (void 0)().nullable()
+        "maxSupply": numberType().int().nullable(),
+        "exchangeValue": numberType().int(),
+        "upgradePrice": numberType().int(),
+        "soldCount": numberType().int(),
+        "availableCount": numberType().int().nullable()
       })
     }), nullType()]).optional(),
     "createdAt": stringType(),
     "updatedAt": stringType()
   }), nullType()]).optional(),
   "members": arrayType(objectType({
-    "id": (void 0)(),
-    "chatId": (void 0)(),
-    "userId": (void 0)(),
+    "id": numberType().int(),
+    "chatId": numberType().int(),
+    "userId": numberType().int(),
     "role": enumType(["owner", "admin", "member"]),
     "joinedAt": stringType(),
     "user": objectType({
-      "id": (void 0)(),
+      "id": numberType().int(),
       "username": stringType(),
       "displayName": stringType(),
       "bio": stringType().nullish(),
@@ -142021,7 +142021,7 @@ var UpdateChatResponse = objectType({
     }).optional()
   })).optional(),
   "otherUser": unionType([objectType({
-    "id": (void 0)(),
+    "id": numberType().int(),
     "username": stringType(),
     "displayName": stringType(),
     "bio": stringType().nullish(),
@@ -142050,13 +142050,13 @@ var GetChatMembersParams = objectType({
   "chatId": coerce.number().int()
 });
 var GetChatMembersResponseItem = objectType({
-  "id": (void 0)(),
-  "chatId": (void 0)(),
-  "userId": (void 0)(),
+  "id": numberType().int(),
+  "chatId": numberType().int(),
+  "userId": numberType().int(),
   "role": enumType(["owner", "admin", "member"]),
   "joinedAt": stringType(),
   "user": objectType({
-    "id": (void 0)(),
+    "id": numberType().int(),
     "username": stringType(),
     "displayName": stringType(),
     "bio": stringType().nullish(),
@@ -142081,17 +142081,17 @@ var AddChatMemberParams = objectType({
 });
 var addChatMemberBodyRoleDefault = `member`;
 var AddChatMemberBody = objectType({
-  "userId": (void 0)(),
+  "userId": numberType().int(),
   "role": enumType(["admin", "member"]).default(addChatMemberBodyRoleDefault)
 });
 var AddChatMemberResponse = objectType({
-  "id": (void 0)(),
-  "chatId": (void 0)(),
-  "userId": (void 0)(),
+  "id": numberType().int(),
+  "chatId": numberType().int(),
+  "userId": numberType().int(),
   "role": enumType(["owner", "admin", "member"]),
   "joinedAt": stringType(),
   "user": objectType({
-    "id": (void 0)(),
+    "id": numberType().int(),
     "username": stringType(),
     "displayName": stringType(),
     "bio": stringType().nullish(),
@@ -142119,7 +142119,7 @@ var PinChatParams = objectType({
   "chatId": coerce.number().int()
 });
 var PinChatResponse = objectType({
-  "id": (void 0)(),
+  "id": numberType().int(),
   "type": enumType(["direct", "group", "channel"]),
   "name": stringType().nullish(),
   "description": stringType().nullish(),
@@ -142127,24 +142127,24 @@ var PinChatResponse = objectType({
   "avatarColor": stringType(),
   "isPinned": booleanType(),
   "isMuted": booleanType(),
-  "unreadCount": (void 0)(),
+  "unreadCount": numberType().int(),
   "lastMessage": unionType([objectType({
-    "id": (void 0)(),
-    "chatId": (void 0)(),
-    "senderId": (void 0)(),
+    "id": numberType().int(),
+    "chatId": numberType().int(),
+    "senderId": numberType().int(),
     "text": stringType().nullish(),
     "type": enumType(["text", "image", "video", "audio", "file", "gift", "call", "sticker", "system"]),
     "mediaUrl": stringType().nullish(),
-    "replyToId": (void 0)().nullish(),
+    "replyToId": numberType().int().nullish(),
     "isEdited": booleanType(),
     "isRead": booleanType(),
     "reactions": arrayType(objectType({
-      "id": (void 0)(),
-      "messageId": (void 0)(),
-      "userId": (void 0)(),
+      "id": numberType().int(),
+      "messageId": numberType().int(),
+      "userId": numberType().int(),
       "emoji": stringType(),
       "user": unionType([objectType({
-        "id": (void 0)(),
+        "id": numberType().int(),
         "username": stringType(),
         "displayName": stringType(),
         "bio": stringType().nullish(),
@@ -142165,7 +142165,7 @@ var PinChatResponse = objectType({
       "createdAt": stringType()
     })),
     "sender": unionType([objectType({
-      "id": (void 0)(),
+      "id": numberType().int(),
       "username": stringType(),
       "displayName": stringType(),
       "bio": stringType().nullish(),
@@ -142185,50 +142185,50 @@ var PinChatResponse = objectType({
     }), nullType()]).optional(),
     "replyTo": unionType([unknownType(), nullType()]).optional(),
     "giftData": unionType([objectType({
-      "id": (void 0)(),
-      "giftItemId": (void 0)(),
-      "senderId": (void 0)().nullable(),
+      "id": numberType().int(),
+      "giftItemId": numberType().int(),
+      "senderId": numberType().int().nullable(),
       "senderName": stringType(),
-      "receiverId": (void 0)(),
+      "receiverId": numberType().int(),
       "receiverName": stringType(),
       "message": stringType().nullish(),
       "isAnonymous": booleanType(),
-      "chatId": (void 0)().nullable(),
+      "chatId": numberType().int().nullable(),
       "createdAt": stringType(),
       "inventoryStatus": enumType(["received", "collected", "exchanged"]),
       "isUpgraded": booleanType(),
-      "serialNumber": (void 0)().nullable(),
+      "serialNumber": numberType().int().nullable(),
       "giftItem": objectType({
-        "id": (void 0)(),
+        "id": numberType().int(),
         "name": stringType(),
         "emoji": stringType(),
         "animationType": enumType(["bounce", "confetti", "sparkle", "hearts", "fireworks", "stars", "balloons", "roses", "orbit", "bloom", "diamonds", "flame", "galaxy", "lightning", "magic", "supernova", "vortex"]),
         "rarity": enumType(["common", "rare", "epic", "legendary", "cosmic"]),
-        "stars": (void 0)(),
-        "price": (void 0)(),
+        "stars": numberType().int(),
+        "price": numberType().int(),
         "description": stringType(),
         "primeOnly": booleanType(),
         "imageUrl": stringType().nullish(),
         "isCollectible": booleanType(),
         "isActive": booleanType(),
-        "maxSupply": (void 0)().nullable(),
-        "exchangeValue": (void 0)(),
-        "upgradePrice": (void 0)(),
-        "soldCount": (void 0)(),
-        "availableCount": (void 0)().nullable()
+        "maxSupply": numberType().int().nullable(),
+        "exchangeValue": numberType().int(),
+        "upgradePrice": numberType().int(),
+        "soldCount": numberType().int(),
+        "availableCount": numberType().int().nullable()
       })
     }), nullType()]).optional(),
     "createdAt": stringType(),
     "updatedAt": stringType()
   }), nullType()]).optional(),
   "members": arrayType(objectType({
-    "id": (void 0)(),
-    "chatId": (void 0)(),
-    "userId": (void 0)(),
+    "id": numberType().int(),
+    "chatId": numberType().int(),
+    "userId": numberType().int(),
     "role": enumType(["owner", "admin", "member"]),
     "joinedAt": stringType(),
     "user": objectType({
-      "id": (void 0)(),
+      "id": numberType().int(),
       "username": stringType(),
       "displayName": stringType(),
       "bio": stringType().nullish(),
@@ -142248,7 +142248,7 @@ var PinChatResponse = objectType({
     }).optional()
   })).optional(),
   "otherUser": unionType([objectType({
-    "id": (void 0)(),
+    "id": numberType().int(),
     "username": stringType(),
     "displayName": stringType(),
     "bio": stringType().nullish(),
@@ -142276,22 +142276,22 @@ var GetMessagesQueryParams = objectType({
   "before": coerce.number().int().optional()
 });
 var GetMessagesResponseItem = objectType({
-  "id": (void 0)(),
-  "chatId": (void 0)(),
-  "senderId": (void 0)(),
+  "id": numberType().int(),
+  "chatId": numberType().int(),
+  "senderId": numberType().int(),
   "text": stringType().nullish(),
   "type": enumType(["text", "image", "video", "audio", "file", "gift", "call", "sticker", "system"]),
   "mediaUrl": stringType().nullish(),
-  "replyToId": (void 0)().nullish(),
+  "replyToId": numberType().int().nullish(),
   "isEdited": booleanType(),
   "isRead": booleanType(),
   "reactions": arrayType(objectType({
-    "id": (void 0)(),
-    "messageId": (void 0)(),
-    "userId": (void 0)(),
+    "id": numberType().int(),
+    "messageId": numberType().int(),
+    "userId": numberType().int(),
     "emoji": stringType(),
     "user": unionType([objectType({
-      "id": (void 0)(),
+      "id": numberType().int(),
       "username": stringType(),
       "displayName": stringType(),
       "bio": stringType().nullish(),
@@ -142312,7 +142312,7 @@ var GetMessagesResponseItem = objectType({
     "createdAt": stringType()
   })),
   "sender": unionType([objectType({
-    "id": (void 0)(),
+    "id": numberType().int(),
     "username": stringType(),
     "displayName": stringType(),
     "bio": stringType().nullish(),
@@ -142332,37 +142332,37 @@ var GetMessagesResponseItem = objectType({
   }), nullType()]).optional(),
   "replyTo": unionType([unknownType(), nullType()]).optional(),
   "giftData": unionType([objectType({
-    "id": (void 0)(),
-    "giftItemId": (void 0)(),
-    "senderId": (void 0)().nullable(),
+    "id": numberType().int(),
+    "giftItemId": numberType().int(),
+    "senderId": numberType().int().nullable(),
     "senderName": stringType(),
-    "receiverId": (void 0)(),
+    "receiverId": numberType().int(),
     "receiverName": stringType(),
     "message": stringType().nullish(),
     "isAnonymous": booleanType(),
-    "chatId": (void 0)().nullable(),
+    "chatId": numberType().int().nullable(),
     "createdAt": stringType(),
     "inventoryStatus": enumType(["received", "collected", "exchanged"]),
     "isUpgraded": booleanType(),
-    "serialNumber": (void 0)().nullable(),
+    "serialNumber": numberType().int().nullable(),
     "giftItem": objectType({
-      "id": (void 0)(),
+      "id": numberType().int(),
       "name": stringType(),
       "emoji": stringType(),
       "animationType": enumType(["bounce", "confetti", "sparkle", "hearts", "fireworks", "stars", "balloons", "roses", "orbit", "bloom", "diamonds", "flame", "galaxy", "lightning", "magic", "supernova", "vortex"]),
       "rarity": enumType(["common", "rare", "epic", "legendary", "cosmic"]),
-      "stars": (void 0)(),
-      "price": (void 0)(),
+      "stars": numberType().int(),
+      "price": numberType().int(),
       "description": stringType(),
       "primeOnly": booleanType(),
       "imageUrl": stringType().nullish(),
       "isCollectible": booleanType(),
       "isActive": booleanType(),
-      "maxSupply": (void 0)().nullable(),
-      "exchangeValue": (void 0)(),
-      "upgradePrice": (void 0)(),
-      "soldCount": (void 0)(),
-      "availableCount": (void 0)().nullable()
+      "maxSupply": numberType().int().nullable(),
+      "exchangeValue": numberType().int(),
+      "upgradePrice": numberType().int(),
+      "soldCount": numberType().int(),
+      "availableCount": numberType().int().nullable()
     })
   }), nullType()]).optional(),
   "createdAt": stringType(),
@@ -142371,29 +142371,29 @@ var GetMessagesResponseItem = objectType({
 var GetMessagesResponse = arrayType(GetMessagesResponseItem);
 var sendMessageBodyTypeDefault = `text`;
 var SendMessageBody = objectType({
-  "chatId": (void 0)(),
+  "chatId": numberType().int(),
   "text": stringType().optional(),
   "type": enumType(["text", "image", "video", "audio", "file", "sticker", "album", "document"]).default(sendMessageBodyTypeDefault),
   "mediaUrl": stringType().optional(),
-  "replyToId": (void 0)().optional()
+  "replyToId": numberType().int().optional()
 });
 var SendMessageResponse = objectType({
-  "id": (void 0)(),
-  "chatId": (void 0)(),
-  "senderId": (void 0)(),
+  "id": numberType().int(),
+  "chatId": numberType().int(),
+  "senderId": numberType().int(),
   "text": stringType().nullish(),
   "type": enumType(["text", "image", "video", "audio", "file", "gift", "call", "sticker", "system"]),
   "mediaUrl": stringType().nullish(),
-  "replyToId": (void 0)().nullish(),
+  "replyToId": numberType().int().nullish(),
   "isEdited": booleanType(),
   "isRead": booleanType(),
   "reactions": arrayType(objectType({
-    "id": (void 0)(),
-    "messageId": (void 0)(),
-    "userId": (void 0)(),
+    "id": numberType().int(),
+    "messageId": numberType().int(),
+    "userId": numberType().int(),
     "emoji": stringType(),
     "user": unionType([objectType({
-      "id": (void 0)(),
+      "id": numberType().int(),
       "username": stringType(),
       "displayName": stringType(),
       "bio": stringType().nullish(),
@@ -142414,7 +142414,7 @@ var SendMessageResponse = objectType({
     "createdAt": stringType()
   })),
   "sender": unionType([objectType({
-    "id": (void 0)(),
+    "id": numberType().int(),
     "username": stringType(),
     "displayName": stringType(),
     "bio": stringType().nullish(),
@@ -142434,37 +142434,37 @@ var SendMessageResponse = objectType({
   }), nullType()]).optional(),
   "replyTo": unionType([unknownType(), nullType()]).optional(),
   "giftData": unionType([objectType({
-    "id": (void 0)(),
-    "giftItemId": (void 0)(),
-    "senderId": (void 0)().nullable(),
+    "id": numberType().int(),
+    "giftItemId": numberType().int(),
+    "senderId": numberType().int().nullable(),
     "senderName": stringType(),
-    "receiverId": (void 0)(),
+    "receiverId": numberType().int(),
     "receiverName": stringType(),
     "message": stringType().nullish(),
     "isAnonymous": booleanType(),
-    "chatId": (void 0)().nullable(),
+    "chatId": numberType().int().nullable(),
     "createdAt": stringType(),
     "inventoryStatus": enumType(["received", "collected", "exchanged"]),
     "isUpgraded": booleanType(),
-    "serialNumber": (void 0)().nullable(),
+    "serialNumber": numberType().int().nullable(),
     "giftItem": objectType({
-      "id": (void 0)(),
+      "id": numberType().int(),
       "name": stringType(),
       "emoji": stringType(),
       "animationType": enumType(["bounce", "confetti", "sparkle", "hearts", "fireworks", "stars", "balloons", "roses", "orbit", "bloom", "diamonds", "flame", "galaxy", "lightning", "magic", "supernova", "vortex"]),
       "rarity": enumType(["common", "rare", "epic", "legendary", "cosmic"]),
-      "stars": (void 0)(),
-      "price": (void 0)(),
+      "stars": numberType().int(),
+      "price": numberType().int(),
       "description": stringType(),
       "primeOnly": booleanType(),
       "imageUrl": stringType().nullish(),
       "isCollectible": booleanType(),
       "isActive": booleanType(),
-      "maxSupply": (void 0)().nullable(),
-      "exchangeValue": (void 0)(),
-      "upgradePrice": (void 0)(),
-      "soldCount": (void 0)(),
-      "availableCount": (void 0)().nullable()
+      "maxSupply": numberType().int().nullable(),
+      "exchangeValue": numberType().int(),
+      "upgradePrice": numberType().int(),
+      "soldCount": numberType().int(),
+      "availableCount": numberType().int().nullable()
     })
   }), nullType()]).optional(),
   "createdAt": stringType(),
@@ -142477,22 +142477,22 @@ var EditMessageBody = objectType({
   "text": stringType()
 });
 var EditMessageResponse = objectType({
-  "id": (void 0)(),
-  "chatId": (void 0)(),
-  "senderId": (void 0)(),
+  "id": numberType().int(),
+  "chatId": numberType().int(),
+  "senderId": numberType().int(),
   "text": stringType().nullish(),
   "type": enumType(["text", "image", "video", "audio", "file", "gift", "call", "sticker", "system"]),
   "mediaUrl": stringType().nullish(),
-  "replyToId": (void 0)().nullish(),
+  "replyToId": numberType().int().nullish(),
   "isEdited": booleanType(),
   "isRead": booleanType(),
   "reactions": arrayType(objectType({
-    "id": (void 0)(),
-    "messageId": (void 0)(),
-    "userId": (void 0)(),
+    "id": numberType().int(),
+    "messageId": numberType().int(),
+    "userId": numberType().int(),
     "emoji": stringType(),
     "user": unionType([objectType({
-      "id": (void 0)(),
+      "id": numberType().int(),
       "username": stringType(),
       "displayName": stringType(),
       "bio": stringType().nullish(),
@@ -142513,7 +142513,7 @@ var EditMessageResponse = objectType({
     "createdAt": stringType()
   })),
   "sender": unionType([objectType({
-    "id": (void 0)(),
+    "id": numberType().int(),
     "username": stringType(),
     "displayName": stringType(),
     "bio": stringType().nullish(),
@@ -142533,37 +142533,37 @@ var EditMessageResponse = objectType({
   }), nullType()]).optional(),
   "replyTo": unionType([unknownType(), nullType()]).optional(),
   "giftData": unionType([objectType({
-    "id": (void 0)(),
-    "giftItemId": (void 0)(),
-    "senderId": (void 0)().nullable(),
+    "id": numberType().int(),
+    "giftItemId": numberType().int(),
+    "senderId": numberType().int().nullable(),
     "senderName": stringType(),
-    "receiverId": (void 0)(),
+    "receiverId": numberType().int(),
     "receiverName": stringType(),
     "message": stringType().nullish(),
     "isAnonymous": booleanType(),
-    "chatId": (void 0)().nullable(),
+    "chatId": numberType().int().nullable(),
     "createdAt": stringType(),
     "inventoryStatus": enumType(["received", "collected", "exchanged"]),
     "isUpgraded": booleanType(),
-    "serialNumber": (void 0)().nullable(),
+    "serialNumber": numberType().int().nullable(),
     "giftItem": objectType({
-      "id": (void 0)(),
+      "id": numberType().int(),
       "name": stringType(),
       "emoji": stringType(),
       "animationType": enumType(["bounce", "confetti", "sparkle", "hearts", "fireworks", "stars", "balloons", "roses", "orbit", "bloom", "diamonds", "flame", "galaxy", "lightning", "magic", "supernova", "vortex"]),
       "rarity": enumType(["common", "rare", "epic", "legendary", "cosmic"]),
-      "stars": (void 0)(),
-      "price": (void 0)(),
+      "stars": numberType().int(),
+      "price": numberType().int(),
       "description": stringType(),
       "primeOnly": booleanType(),
       "imageUrl": stringType().nullish(),
       "isCollectible": booleanType(),
       "isActive": booleanType(),
-      "maxSupply": (void 0)().nullable(),
-      "exchangeValue": (void 0)(),
-      "upgradePrice": (void 0)(),
-      "soldCount": (void 0)(),
-      "availableCount": (void 0)().nullable()
+      "maxSupply": numberType().int().nullable(),
+      "exchangeValue": numberType().int(),
+      "upgradePrice": numberType().int(),
+      "soldCount": numberType().int(),
+      "availableCount": numberType().int().nullable()
     })
   }), nullType()]).optional(),
   "createdAt": stringType(),
@@ -142580,12 +142580,12 @@ var AddReactionBody = objectType({
   "emoji": stringType()
 });
 var AddReactionResponse = objectType({
-  "id": (void 0)(),
-  "messageId": (void 0)(),
-  "userId": (void 0)(),
+  "id": numberType().int(),
+  "messageId": numberType().int(),
+  "userId": numberType().int(),
   "emoji": stringType(),
   "user": unionType([objectType({
-    "id": (void 0)(),
+    "id": numberType().int(),
     "username": stringType(),
     "displayName": stringType(),
     "bio": stringType().nullish(),
@@ -142613,17 +142613,17 @@ var RemoveReactionBody = objectType({
 });
 var RemoveReactionResponse = voidType();
 var GetCallHistoryResponseItem = objectType({
-  "id": (void 0)(),
-  "chatId": (void 0)().nullish(),
-  "callerId": (void 0)(),
-  "calleeId": (void 0)().nullish(),
+  "id": numberType().int(),
+  "chatId": numberType().int().nullish(),
+  "callerId": numberType().int(),
+  "calleeId": numberType().int().nullish(),
   "type": enumType(["audio", "video", "group"]),
   "status": enumType(["ringing", "active", "ended", "missed", "declined"]),
   "startedAt": stringType().nullish(),
   "endedAt": stringType().nullish(),
-  "durationSeconds": (void 0)().nullish(),
+  "durationSeconds": numberType().int().nullish(),
   "caller": unionType([objectType({
-    "id": (void 0)(),
+    "id": numberType().int(),
     "username": stringType(),
     "displayName": stringType(),
     "bio": stringType().nullish(),
@@ -142642,7 +142642,7 @@ var GetCallHistoryResponseItem = objectType({
     "createdAt": stringType()
   }), nullType()]).optional(),
   "callee": unionType([objectType({
-    "id": (void 0)(),
+    "id": numberType().int(),
     "username": stringType(),
     "displayName": stringType(),
     "bio": stringType().nullish(),
@@ -142664,22 +142664,22 @@ var GetCallHistoryResponseItem = objectType({
 });
 var GetCallHistoryResponse = arrayType(GetCallHistoryResponseItem);
 var InitiateCallBody = objectType({
-  "calleeId": (void 0)().optional(),
-  "chatId": (void 0)().optional(),
+  "calleeId": numberType().int().optional(),
+  "chatId": numberType().int().optional(),
   "type": enumType(["audio", "video", "group"])
 });
 var InitiateCallResponse = objectType({
-  "id": (void 0)(),
-  "chatId": (void 0)().nullish(),
-  "callerId": (void 0)(),
-  "calleeId": (void 0)().nullish(),
+  "id": numberType().int(),
+  "chatId": numberType().int().nullish(),
+  "callerId": numberType().int(),
+  "calleeId": numberType().int().nullish(),
   "type": enumType(["audio", "video", "group"]),
   "status": enumType(["ringing", "active", "ended", "missed", "declined"]),
   "startedAt": stringType().nullish(),
   "endedAt": stringType().nullish(),
-  "durationSeconds": (void 0)().nullish(),
+  "durationSeconds": numberType().int().nullish(),
   "caller": unionType([objectType({
-    "id": (void 0)(),
+    "id": numberType().int(),
     "username": stringType(),
     "displayName": stringType(),
     "bio": stringType().nullish(),
@@ -142698,7 +142698,7 @@ var InitiateCallResponse = objectType({
     "createdAt": stringType()
   }), nullType()]).optional(),
   "callee": unionType([objectType({
-    "id": (void 0)(),
+    "id": numberType().int(),
     "username": stringType(),
     "displayName": stringType(),
     "bio": stringType().nullish(),
@@ -142722,17 +142722,17 @@ var GetCallByIdParams = objectType({
   "callId": coerce.number().int()
 });
 var GetCallByIdResponse = objectType({
-  "id": (void 0)(),
-  "chatId": (void 0)().nullish(),
-  "callerId": (void 0)(),
-  "calleeId": (void 0)().nullish(),
+  "id": numberType().int(),
+  "chatId": numberType().int().nullish(),
+  "callerId": numberType().int(),
+  "calleeId": numberType().int().nullish(),
   "type": enumType(["audio", "video", "group"]),
   "status": enumType(["ringing", "active", "ended", "missed", "declined"]),
   "startedAt": stringType().nullish(),
   "endedAt": stringType().nullish(),
-  "durationSeconds": (void 0)().nullish(),
+  "durationSeconds": numberType().int().nullish(),
   "caller": unionType([objectType({
-    "id": (void 0)(),
+    "id": numberType().int(),
     "username": stringType(),
     "displayName": stringType(),
     "bio": stringType().nullish(),
@@ -142751,7 +142751,7 @@ var GetCallByIdResponse = objectType({
     "createdAt": stringType()
   }), nullType()]).optional(),
   "callee": unionType([objectType({
-    "id": (void 0)(),
+    "id": numberType().int(),
     "username": stringType(),
     "displayName": stringType(),
     "bio": stringType().nullish(),
@@ -142778,17 +142778,17 @@ var UpdateCallStatusBody = objectType({
   "status": enumType(["active", "ended", "declined", "missed"])
 });
 var UpdateCallStatusResponse = objectType({
-  "id": (void 0)(),
-  "chatId": (void 0)().nullish(),
-  "callerId": (void 0)(),
-  "calleeId": (void 0)().nullish(),
+  "id": numberType().int(),
+  "chatId": numberType().int().nullish(),
+  "callerId": numberType().int(),
+  "calleeId": numberType().int().nullish(),
   "type": enumType(["audio", "video", "group"]),
   "status": enumType(["ringing", "active", "ended", "missed", "declined"]),
   "startedAt": stringType().nullish(),
   "endedAt": stringType().nullish(),
-  "durationSeconds": (void 0)().nullish(),
+  "durationSeconds": numberType().int().nullish(),
   "caller": unionType([objectType({
-    "id": (void 0)(),
+    "id": numberType().int(),
     "username": stringType(),
     "displayName": stringType(),
     "bio": stringType().nullish(),
@@ -142807,7 +142807,7 @@ var UpdateCallStatusResponse = objectType({
     "createdAt": stringType()
   }), nullType()]).optional(),
   "callee": unionType([objectType({
-    "id": (void 0)(),
+    "id": numberType().int(),
     "username": stringType(),
     "displayName": stringType(),
     "bio": stringType().nullish(),
@@ -142828,191 +142828,225 @@ var UpdateCallStatusResponse = objectType({
   "createdAt": stringType()
 });
 var GetGiftCatalogResponseItem = objectType({
-  "id": (void 0)(),
+  "id": numberType().int(),
   "name": stringType(),
   "emoji": stringType(),
   "animationType": enumType(["bounce", "confetti", "sparkle", "hearts", "fireworks", "stars", "balloons", "roses", "orbit", "bloom", "diamonds", "flame", "galaxy", "lightning", "magic", "supernova", "vortex"]),
   "rarity": enumType(["common", "rare", "epic", "legendary", "cosmic"]),
-  "stars": (void 0)(),
-  "price": (void 0)(),
+  "stars": numberType().int(),
+  "price": numberType().int(),
   "description": stringType(),
   "primeOnly": booleanType(),
   "imageUrl": stringType().nullish(),
   "isCollectible": booleanType(),
   "isActive": booleanType(),
-  "maxSupply": (void 0)().nullable(),
-  "exchangeValue": (void 0)(),
-  "upgradePrice": (void 0)(),
-  "soldCount": (void 0)(),
-  "availableCount": (void 0)().nullable()
+  "maxSupply": numberType().int().nullable(),
+  "exchangeValue": numberType().int(),
+  "upgradePrice": numberType().int(),
+  "soldCount": numberType().int(),
+  "availableCount": numberType().int().nullable()
 });
 var GetGiftCatalogResponse = arrayType(GetGiftCatalogResponseItem);
 var GetMyGiftsResponse = objectType({
   "received": arrayType(objectType({
-    "id": (void 0)(),
-    "giftItemId": (void 0)(),
-    "senderId": (void 0)().nullable(),
+    "id": numberType().int(),
+    "giftItemId": numberType().int(),
+    "senderId": numberType().int().nullable(),
     "senderName": stringType(),
-    "receiverId": (void 0)(),
+    "receiverId": numberType().int(),
     "receiverName": stringType(),
     "message": stringType().nullish(),
     "isAnonymous": booleanType(),
-    "chatId": (void 0)().nullable(),
+    "chatId": numberType().int().nullable(),
     "createdAt": stringType(),
     "inventoryStatus": enumType(["received", "collected", "exchanged"]),
     "isUpgraded": booleanType(),
-    "serialNumber": (void 0)().nullable(),
+    "serialNumber": numberType().int().nullable(),
     "giftItem": objectType({
-      "id": (void 0)(),
+      "id": numberType().int(),
       "name": stringType(),
       "emoji": stringType(),
       "animationType": enumType(["bounce", "confetti", "sparkle", "hearts", "fireworks", "stars", "balloons", "roses", "orbit", "bloom", "diamonds", "flame", "galaxy", "lightning", "magic", "supernova", "vortex"]),
       "rarity": enumType(["common", "rare", "epic", "legendary", "cosmic"]),
-      "stars": (void 0)(),
-      "price": (void 0)(),
+      "stars": numberType().int(),
+      "price": numberType().int(),
       "description": stringType(),
       "primeOnly": booleanType(),
       "imageUrl": stringType().nullish(),
       "isCollectible": booleanType(),
       "isActive": booleanType(),
-      "maxSupply": (void 0)().nullable(),
-      "exchangeValue": (void 0)(),
-      "upgradePrice": (void 0)(),
-      "soldCount": (void 0)(),
-      "availableCount": (void 0)().nullable()
+      "maxSupply": numberType().int().nullable(),
+      "exchangeValue": numberType().int(),
+      "upgradePrice": numberType().int(),
+      "soldCount": numberType().int(),
+      "availableCount": numberType().int().nullable()
     })
   })),
   "sent": arrayType(objectType({
-    "id": (void 0)(),
-    "giftItemId": (void 0)(),
-    "senderId": (void 0)().nullable(),
+    "id": numberType().int(),
+    "giftItemId": numberType().int(),
+    "senderId": numberType().int().nullable(),
     "senderName": stringType(),
-    "receiverId": (void 0)(),
+    "receiverId": numberType().int(),
     "receiverName": stringType(),
     "message": stringType().nullish(),
     "isAnonymous": booleanType(),
-    "chatId": (void 0)().nullable(),
+    "chatId": numberType().int().nullable(),
     "createdAt": stringType(),
     "inventoryStatus": enumType(["received", "collected", "exchanged"]),
     "isUpgraded": booleanType(),
-    "serialNumber": (void 0)().nullable(),
+    "serialNumber": numberType().int().nullable(),
     "giftItem": objectType({
-      "id": (void 0)(),
+      "id": numberType().int(),
       "name": stringType(),
       "emoji": stringType(),
       "animationType": enumType(["bounce", "confetti", "sparkle", "hearts", "fireworks", "stars", "balloons", "roses", "orbit", "bloom", "diamonds", "flame", "galaxy", "lightning", "magic", "supernova", "vortex"]),
       "rarity": enumType(["common", "rare", "epic", "legendary", "cosmic"]),
-      "stars": (void 0)(),
-      "price": (void 0)(),
+      "stars": numberType().int(),
+      "price": numberType().int(),
       "description": stringType(),
       "primeOnly": booleanType(),
       "imageUrl": stringType().nullish(),
       "isCollectible": booleanType(),
       "isActive": booleanType(),
-      "maxSupply": (void 0)().nullable(),
-      "exchangeValue": (void 0)(),
-      "upgradePrice": (void 0)(),
-      "soldCount": (void 0)(),
-      "availableCount": (void 0)().nullable()
+      "maxSupply": numberType().int().nullable(),
+      "exchangeValue": numberType().int(),
+      "upgradePrice": numberType().int(),
+      "soldCount": numberType().int(),
+      "availableCount": numberType().int().nullable()
     })
   }))
 });
 var GetSentGiftsResponseItem = objectType({
-  "id": (void 0)(),
-  "giftItemId": (void 0)(),
-  "senderId": (void 0)().nullable(),
+  "id": numberType().int(),
+  "giftItemId": numberType().int(),
+  "senderId": numberType().int().nullable(),
   "senderName": stringType(),
-  "receiverId": (void 0)(),
+  "receiverId": numberType().int(),
   "receiverName": stringType(),
   "message": stringType().nullish(),
   "isAnonymous": booleanType(),
-  "chatId": (void 0)().nullable(),
+  "chatId": numberType().int().nullable(),
   "createdAt": stringType(),
   "inventoryStatus": enumType(["received", "collected", "exchanged"]),
   "isUpgraded": booleanType(),
-  "serialNumber": (void 0)().nullable(),
+  "serialNumber": numberType().int().nullable(),
   "giftItem": objectType({
-    "id": (void 0)(),
+    "id": numberType().int(),
     "name": stringType(),
     "emoji": stringType(),
     "animationType": enumType(["bounce", "confetti", "sparkle", "hearts", "fireworks", "stars", "balloons", "roses", "orbit", "bloom", "diamonds", "flame", "galaxy", "lightning", "magic", "supernova", "vortex"]),
     "rarity": enumType(["common", "rare", "epic", "legendary", "cosmic"]),
-    "stars": (void 0)(),
-    "price": (void 0)(),
+    "stars": numberType().int(),
+    "price": numberType().int(),
     "description": stringType(),
     "primeOnly": booleanType(),
     "imageUrl": stringType().nullish(),
     "isCollectible": booleanType(),
     "isActive": booleanType(),
-    "maxSupply": (void 0)().nullable(),
-    "exchangeValue": (void 0)(),
-    "upgradePrice": (void 0)(),
-    "soldCount": (void 0)(),
-    "availableCount": (void 0)().nullable()
+    "maxSupply": numberType().int().nullable(),
+    "exchangeValue": numberType().int(),
+    "upgradePrice": numberType().int(),
+    "soldCount": numberType().int(),
+    "availableCount": numberType().int().nullable()
   })
 });
 var GetSentGiftsResponse = arrayType(GetSentGiftsResponseItem);
 var GetReceivedGiftsResponseItem = objectType({
-  "id": (void 0)(),
-  "giftItemId": (void 0)(),
-  "senderId": (void 0)().nullable(),
+  "id": numberType().int(),
+  "giftItemId": numberType().int(),
+  "senderId": numberType().int().nullable(),
   "senderName": stringType(),
-  "receiverId": (void 0)(),
+  "receiverId": numberType().int(),
   "receiverName": stringType(),
   "message": stringType().nullish(),
   "isAnonymous": booleanType(),
-  "chatId": (void 0)().nullable(),
+  "chatId": numberType().int().nullable(),
   "createdAt": stringType(),
   "inventoryStatus": enumType(["received", "collected", "exchanged"]),
   "isUpgraded": booleanType(),
-  "serialNumber": (void 0)().nullable(),
+  "serialNumber": numberType().int().nullable(),
   "giftItem": objectType({
-    "id": (void 0)(),
+    "id": numberType().int(),
     "name": stringType(),
     "emoji": stringType(),
     "animationType": enumType(["bounce", "confetti", "sparkle", "hearts", "fireworks", "stars", "balloons", "roses", "orbit", "bloom", "diamonds", "flame", "galaxy", "lightning", "magic", "supernova", "vortex"]),
     "rarity": enumType(["common", "rare", "epic", "legendary", "cosmic"]),
-    "stars": (void 0)(),
-    "price": (void 0)(),
+    "stars": numberType().int(),
+    "price": numberType().int(),
     "description": stringType(),
     "primeOnly": booleanType(),
     "imageUrl": stringType().nullish(),
     "isCollectible": booleanType(),
     "isActive": booleanType(),
-    "maxSupply": (void 0)().nullable(),
-    "exchangeValue": (void 0)(),
-    "upgradePrice": (void 0)(),
-    "soldCount": (void 0)(),
-    "availableCount": (void 0)().nullable()
+    "maxSupply": numberType().int().nullable(),
+    "exchangeValue": numberType().int(),
+    "upgradePrice": numberType().int(),
+    "soldCount": numberType().int(),
+    "availableCount": numberType().int().nullable()
   })
 });
 var GetReceivedGiftsResponse = arrayType(GetReceivedGiftsResponseItem);
 var sendGiftBodyIsAnonymousDefault = false;
 var SendGiftBody = objectType({
-  "receiverId": (void 0)(),
-  "giftItemId": (void 0)(),
+  "receiverId": numberType().int(),
+  "giftItemId": numberType().int(),
   "message": stringType().optional(),
   "isAnonymous": booleanType().default(sendGiftBodyIsAnonymousDefault),
-  "chatId": (void 0)().optional()
+  "chatId": numberType().int().optional()
 });
 var SendGiftResponse = objectType({
-  "message": objectType({
-    "id": (void 0)(),
-    "chatId": (void 0)(),
-    "senderId": (void 0)(),
+  "gift": objectType({
+    "id": numberType().int(),
+    "giftItemId": numberType().int(),
+    "senderId": numberType().int().nullable(),
+    "senderName": stringType(),
+    "receiverId": numberType().int(),
+    "receiverName": stringType(),
+    "message": stringType().nullish(),
+    "isAnonymous": booleanType(),
+    "chatId": numberType().int().nullable(),
+    "createdAt": stringType(),
+    "inventoryStatus": enumType(["received", "collected", "exchanged"]),
+    "isUpgraded": booleanType(),
+    "serialNumber": numberType().int().nullable(),
+    "giftItem": objectType({
+      "id": numberType().int(),
+      "name": stringType(),
+      "emoji": stringType(),
+      "animationType": enumType(["bounce", "confetti", "sparkle", "hearts", "fireworks", "stars", "balloons", "roses", "orbit", "bloom", "diamonds", "flame", "galaxy", "lightning", "magic", "supernova", "vortex"]),
+      "rarity": enumType(["common", "rare", "epic", "legendary", "cosmic"]),
+      "stars": numberType().int(),
+      "price": numberType().int(),
+      "description": stringType(),
+      "primeOnly": booleanType(),
+      "imageUrl": stringType().nullish(),
+      "isCollectible": booleanType(),
+      "isActive": booleanType(),
+      "maxSupply": numberType().int().nullable(),
+      "exchangeValue": numberType().int(),
+      "upgradePrice": numberType().int(),
+      "soldCount": numberType().int(),
+      "availableCount": numberType().int().nullable()
+    })
+  }),
+  "message": unionType([objectType({
+    "id": numberType().int(),
+    "chatId": numberType().int(),
+    "senderId": numberType().int(),
     "text": stringType().nullish(),
     "type": enumType(["text", "image", "video", "audio", "file", "gift", "call", "sticker", "system"]),
     "mediaUrl": stringType().nullish(),
-    "replyToId": (void 0)().nullish(),
+    "replyToId": numberType().int().nullish(),
     "isEdited": booleanType(),
     "isRead": booleanType(),
     "reactions": arrayType(objectType({
-      "id": (void 0)(),
-      "messageId": (void 0)(),
-      "userId": (void 0)(),
+      "id": numberType().int(),
+      "messageId": numberType().int(),
+      "userId": numberType().int(),
       "emoji": stringType(),
       "user": unionType([objectType({
-        "id": (void 0)(),
+        "id": numberType().int(),
         "username": stringType(),
         "displayName": stringType(),
         "bio": stringType().nullish(),
@@ -143033,7 +143067,7 @@ var SendGiftResponse = objectType({
       "createdAt": stringType()
     })),
     "sender": unionType([objectType({
-      "id": (void 0)(),
+      "id": numberType().int(),
       "username": stringType(),
       "displayName": stringType(),
       "bio": stringType().nullish(),
@@ -143053,117 +143087,117 @@ var SendGiftResponse = objectType({
     }), nullType()]).optional(),
     "replyTo": unionType([unknownType(), nullType()]).optional(),
     "giftData": unionType([objectType({
-      "id": (void 0)(),
-      "giftItemId": (void 0)(),
-      "senderId": (void 0)().nullable(),
+      "id": numberType().int(),
+      "giftItemId": numberType().int(),
+      "senderId": numberType().int().nullable(),
       "senderName": stringType(),
-      "receiverId": (void 0)(),
+      "receiverId": numberType().int(),
       "receiverName": stringType(),
       "message": stringType().nullish(),
       "isAnonymous": booleanType(),
-      "chatId": (void 0)().nullable(),
+      "chatId": numberType().int().nullable(),
       "createdAt": stringType(),
       "inventoryStatus": enumType(["received", "collected", "exchanged"]),
       "isUpgraded": booleanType(),
-      "serialNumber": (void 0)().nullable(),
+      "serialNumber": numberType().int().nullable(),
       "giftItem": objectType({
-        "id": (void 0)(),
+        "id": numberType().int(),
         "name": stringType(),
         "emoji": stringType(),
         "animationType": enumType(["bounce", "confetti", "sparkle", "hearts", "fireworks", "stars", "balloons", "roses", "orbit", "bloom", "diamonds", "flame", "galaxy", "lightning", "magic", "supernova", "vortex"]),
         "rarity": enumType(["common", "rare", "epic", "legendary", "cosmic"]),
-        "stars": (void 0)(),
-        "price": (void 0)(),
+        "stars": numberType().int(),
+        "price": numberType().int(),
         "description": stringType(),
         "primeOnly": booleanType(),
         "imageUrl": stringType().nullish(),
         "isCollectible": booleanType(),
         "isActive": booleanType(),
-        "maxSupply": (void 0)().nullable(),
-        "exchangeValue": (void 0)(),
-        "upgradePrice": (void 0)(),
-        "soldCount": (void 0)(),
-        "availableCount": (void 0)().nullable()
+        "maxSupply": numberType().int().nullable(),
+        "exchangeValue": numberType().int(),
+        "upgradePrice": numberType().int(),
+        "soldCount": numberType().int(),
+        "availableCount": numberType().int().nullable()
       })
     }), nullType()]).optional(),
     "createdAt": stringType(),
     "updatedAt": stringType()
-  }),
-  "balance": (void 0)(),
-  "chatId": (void 0)()
+  }), nullType()]),
+  "balance": numberType().int(),
+  "chatId": numberType().int().nullable()
 });
 var OpenGiftParams = objectType({
   "giftId": coerce.number().int()
 });
 var OpenGiftResponse = objectType({
-  "id": (void 0)(),
-  "giftItemId": (void 0)(),
-  "senderId": (void 0)().nullable(),
+  "id": numberType().int(),
+  "giftItemId": numberType().int(),
+  "senderId": numberType().int().nullable(),
   "senderName": stringType(),
-  "receiverId": (void 0)(),
+  "receiverId": numberType().int(),
   "receiverName": stringType(),
   "message": stringType().nullish(),
   "isAnonymous": booleanType(),
-  "chatId": (void 0)().nullable(),
+  "chatId": numberType().int().nullable(),
   "createdAt": stringType(),
   "inventoryStatus": enumType(["received", "collected", "exchanged"]),
   "isUpgraded": booleanType(),
-  "serialNumber": (void 0)().nullable(),
+  "serialNumber": numberType().int().nullable(),
   "giftItem": objectType({
-    "id": (void 0)(),
+    "id": numberType().int(),
     "name": stringType(),
     "emoji": stringType(),
     "animationType": enumType(["bounce", "confetti", "sparkle", "hearts", "fireworks", "stars", "balloons", "roses", "orbit", "bloom", "diamonds", "flame", "galaxy", "lightning", "magic", "supernova", "vortex"]),
     "rarity": enumType(["common", "rare", "epic", "legendary", "cosmic"]),
-    "stars": (void 0)(),
-    "price": (void 0)(),
+    "stars": numberType().int(),
+    "price": numberType().int(),
     "description": stringType(),
     "primeOnly": booleanType(),
     "imageUrl": stringType().nullish(),
     "isCollectible": booleanType(),
     "isActive": booleanType(),
-    "maxSupply": (void 0)().nullable(),
-    "exchangeValue": (void 0)(),
-    "upgradePrice": (void 0)(),
-    "soldCount": (void 0)(),
-    "availableCount": (void 0)().nullable()
+    "maxSupply": numberType().int().nullable(),
+    "exchangeValue": numberType().int(),
+    "upgradePrice": numberType().int(),
+    "soldCount": numberType().int(),
+    "availableCount": numberType().int().nullable()
   })
 });
 var UpgradeGiftParams = objectType({
   "giftId": coerce.number().int()
 });
 var UpgradeGiftResponse = objectType({
-  "id": (void 0)(),
-  "giftItemId": (void 0)(),
-  "senderId": (void 0)().nullable(),
+  "id": numberType().int(),
+  "giftItemId": numberType().int(),
+  "senderId": numberType().int().nullable(),
   "senderName": stringType(),
-  "receiverId": (void 0)(),
+  "receiverId": numberType().int(),
   "receiverName": stringType(),
   "message": stringType().nullish(),
   "isAnonymous": booleanType(),
-  "chatId": (void 0)().nullable(),
+  "chatId": numberType().int().nullable(),
   "createdAt": stringType(),
   "inventoryStatus": enumType(["received", "collected", "exchanged"]),
   "isUpgraded": booleanType(),
-  "serialNumber": (void 0)().nullable(),
+  "serialNumber": numberType().int().nullable(),
   "giftItem": objectType({
-    "id": (void 0)(),
+    "id": numberType().int(),
     "name": stringType(),
     "emoji": stringType(),
     "animationType": enumType(["bounce", "confetti", "sparkle", "hearts", "fireworks", "stars", "balloons", "roses", "orbit", "bloom", "diamonds", "flame", "galaxy", "lightning", "magic", "supernova", "vortex"]),
     "rarity": enumType(["common", "rare", "epic", "legendary", "cosmic"]),
-    "stars": (void 0)(),
-    "price": (void 0)(),
+    "stars": numberType().int(),
+    "price": numberType().int(),
     "description": stringType(),
     "primeOnly": booleanType(),
     "imageUrl": stringType().nullish(),
     "isCollectible": booleanType(),
     "isActive": booleanType(),
-    "maxSupply": (void 0)().nullable(),
-    "exchangeValue": (void 0)(),
-    "upgradePrice": (void 0)(),
-    "soldCount": (void 0)(),
-    "availableCount": (void 0)().nullable()
+    "maxSupply": numberType().int().nullable(),
+    "exchangeValue": numberType().int(),
+    "upgradePrice": numberType().int(),
+    "soldCount": numberType().int(),
+    "availableCount": numberType().int().nullable()
   })
 });
 var ExchangeGiftParams = objectType({
@@ -143171,59 +143205,59 @@ var ExchangeGiftParams = objectType({
 });
 var ExchangeGiftResponse = objectType({
   "gift": objectType({
-    "id": (void 0)(),
-    "giftItemId": (void 0)(),
-    "senderId": (void 0)().nullable(),
+    "id": numberType().int(),
+    "giftItemId": numberType().int(),
+    "senderId": numberType().int().nullable(),
     "senderName": stringType(),
-    "receiverId": (void 0)(),
+    "receiverId": numberType().int(),
     "receiverName": stringType(),
     "message": stringType().nullish(),
     "isAnonymous": booleanType(),
-    "chatId": (void 0)().nullable(),
+    "chatId": numberType().int().nullable(),
     "createdAt": stringType(),
     "inventoryStatus": enumType(["received", "collected", "exchanged"]),
     "isUpgraded": booleanType(),
-    "serialNumber": (void 0)().nullable(),
+    "serialNumber": numberType().int().nullable(),
     "giftItem": objectType({
-      "id": (void 0)(),
+      "id": numberType().int(),
       "name": stringType(),
       "emoji": stringType(),
       "animationType": enumType(["bounce", "confetti", "sparkle", "hearts", "fireworks", "stars", "balloons", "roses", "orbit", "bloom", "diamonds", "flame", "galaxy", "lightning", "magic", "supernova", "vortex"]),
       "rarity": enumType(["common", "rare", "epic", "legendary", "cosmic"]),
-      "stars": (void 0)(),
-      "price": (void 0)(),
+      "stars": numberType().int(),
+      "price": numberType().int(),
       "description": stringType(),
       "primeOnly": booleanType(),
       "imageUrl": stringType().nullish(),
       "isCollectible": booleanType(),
       "isActive": booleanType(),
-      "maxSupply": (void 0)().nullable(),
-      "exchangeValue": (void 0)(),
-      "upgradePrice": (void 0)(),
-      "soldCount": (void 0)(),
-      "availableCount": (void 0)().nullable()
+      "maxSupply": numberType().int().nullable(),
+      "exchangeValue": numberType().int(),
+      "upgradePrice": numberType().int(),
+      "soldCount": numberType().int(),
+      "availableCount": numberType().int().nullable()
     })
   }),
-  "balance": (void 0)()
+  "balance": numberType().int()
 });
 var GetAdminGiftCatalogResponseItem = objectType({
-  "id": (void 0)(),
+  "id": numberType().int(),
   "name": stringType(),
   "emoji": stringType(),
   "animationType": enumType(["bounce", "confetti", "sparkle", "hearts", "fireworks", "stars", "balloons", "roses", "orbit", "bloom", "diamonds", "flame", "galaxy", "lightning", "magic", "supernova", "vortex"]),
   "rarity": enumType(["common", "rare", "epic", "legendary", "cosmic"]),
-  "stars": (void 0)(),
-  "price": (void 0)(),
+  "stars": numberType().int(),
+  "price": numberType().int(),
   "description": stringType(),
   "primeOnly": booleanType(),
   "imageUrl": stringType().nullish(),
   "isCollectible": booleanType(),
   "isActive": booleanType(),
-  "maxSupply": (void 0)().nullable(),
-  "exchangeValue": (void 0)(),
-  "upgradePrice": (void 0)(),
-  "soldCount": (void 0)(),
-  "availableCount": (void 0)().nullable()
+  "maxSupply": numberType().int().nullable(),
+  "exchangeValue": numberType().int(),
+  "upgradePrice": numberType().int(),
+  "soldCount": numberType().int(),
+  "availableCount": numberType().int().nullable()
 });
 var GetAdminGiftCatalogResponse = arrayType(GetAdminGiftCatalogResponseItem);
 var CreateAdminGiftBody = objectType({
@@ -143231,35 +143265,35 @@ var CreateAdminGiftBody = objectType({
   "emoji": stringType(),
   "animationType": enumType(["bounce", "confetti", "sparkle", "hearts", "fireworks", "stars", "balloons", "roses", "orbit", "bloom", "diamonds", "flame", "galaxy", "lightning", "magic", "supernova", "vortex"]),
   "rarity": enumType(["common", "rare", "epic", "legendary", "cosmic"]),
-  "stars": (void 0)(),
-  "price": (void 0)(),
+  "stars": numberType().int(),
+  "price": numberType().int(),
   "description": stringType(),
   "primeOnly": booleanType(),
   "imageUrl": stringType().nullish(),
   "isCollectible": booleanType(),
   "isActive": booleanType().optional(),
-  "maxSupply": (void 0)().nullable(),
-  "exchangeValue": (void 0)(),
-  "upgradePrice": (void 0)()
+  "maxSupply": numberType().int().nullable(),
+  "exchangeValue": numberType().int(),
+  "upgradePrice": numberType().int()
 });
 var CreateAdminGiftResponse = objectType({
-  "id": (void 0)(),
+  "id": numberType().int(),
   "name": stringType(),
   "emoji": stringType(),
   "animationType": enumType(["bounce", "confetti", "sparkle", "hearts", "fireworks", "stars", "balloons", "roses", "orbit", "bloom", "diamonds", "flame", "galaxy", "lightning", "magic", "supernova", "vortex"]),
   "rarity": enumType(["common", "rare", "epic", "legendary", "cosmic"]),
-  "stars": (void 0)(),
-  "price": (void 0)(),
+  "stars": numberType().int(),
+  "price": numberType().int(),
   "description": stringType(),
   "primeOnly": booleanType(),
   "imageUrl": stringType().nullish(),
   "isCollectible": booleanType(),
   "isActive": booleanType(),
-  "maxSupply": (void 0)().nullable(),
-  "exchangeValue": (void 0)(),
-  "upgradePrice": (void 0)(),
-  "soldCount": (void 0)(),
-  "availableCount": (void 0)().nullable()
+  "maxSupply": numberType().int().nullable(),
+  "exchangeValue": numberType().int(),
+  "upgradePrice": numberType().int(),
+  "soldCount": numberType().int(),
+  "availableCount": numberType().int().nullable()
 });
 var UpdateAdminGiftParams = objectType({
   "giftId": coerce.number().int()
@@ -143269,35 +143303,35 @@ var UpdateAdminGiftBody = objectType({
   "emoji": stringType(),
   "animationType": enumType(["bounce", "confetti", "sparkle", "hearts", "fireworks", "stars", "balloons", "roses", "orbit", "bloom", "diamonds", "flame", "galaxy", "lightning", "magic", "supernova", "vortex"]),
   "rarity": enumType(["common", "rare", "epic", "legendary", "cosmic"]),
-  "stars": (void 0)(),
-  "price": (void 0)(),
+  "stars": numberType().int(),
+  "price": numberType().int(),
   "description": stringType(),
   "primeOnly": booleanType(),
   "imageUrl": stringType().nullish(),
   "isCollectible": booleanType(),
   "isActive": booleanType().optional(),
-  "maxSupply": (void 0)().nullable(),
-  "exchangeValue": (void 0)(),
-  "upgradePrice": (void 0)()
+  "maxSupply": numberType().int().nullable(),
+  "exchangeValue": numberType().int(),
+  "upgradePrice": numberType().int()
 });
 var UpdateAdminGiftResponse = objectType({
-  "id": (void 0)(),
+  "id": numberType().int(),
   "name": stringType(),
   "emoji": stringType(),
   "animationType": enumType(["bounce", "confetti", "sparkle", "hearts", "fireworks", "stars", "balloons", "roses", "orbit", "bloom", "diamonds", "flame", "galaxy", "lightning", "magic", "supernova", "vortex"]),
   "rarity": enumType(["common", "rare", "epic", "legendary", "cosmic"]),
-  "stars": (void 0)(),
-  "price": (void 0)(),
+  "stars": numberType().int(),
+  "price": numberType().int(),
   "description": stringType(),
   "primeOnly": booleanType(),
   "imageUrl": stringType().nullish(),
   "isCollectible": booleanType(),
   "isActive": booleanType(),
-  "maxSupply": (void 0)().nullable(),
-  "exchangeValue": (void 0)(),
-  "upgradePrice": (void 0)(),
-  "soldCount": (void 0)(),
-  "availableCount": (void 0)().nullable()
+  "maxSupply": numberType().int().nullable(),
+  "exchangeValue": numberType().int(),
+  "upgradePrice": numberType().int(),
+  "soldCount": numberType().int(),
+  "availableCount": numberType().int().nullable()
 });
 var ArchiveAdminGiftParams = objectType({
   "giftId": coerce.number().int()
@@ -143307,7 +143341,7 @@ var ArchiveAdminGiftResponse = objectType({
 });
 var GetStoriesResponseItem = objectType({
   "user": objectType({
-    "id": (void 0)(),
+    "id": numberType().int(),
     "username": stringType(),
     "displayName": stringType(),
     "bio": stringType().nullish(),
@@ -143326,17 +143360,17 @@ var GetStoriesResponseItem = objectType({
     "createdAt": stringType()
   }),
   "stories": arrayType(objectType({
-    "id": (void 0)(),
-    "userId": (void 0)(),
+    "id": numberType().int(),
+    "userId": numberType().int(),
     "mediaUrl": stringType().optional(),
     "type": enumType(["image", "text"]),
     "text": stringType().nullish(),
     "backgroundColor": stringType().nullish(),
     "expiresAt": stringType(),
-    "viewCount": (void 0)(),
+    "viewCount": numberType().int(),
     "isViewed": booleanType(),
     "user": unionType([objectType({
-      "id": (void 0)(),
+      "id": numberType().int(),
       "username": stringType(),
       "displayName": stringType(),
       "bio": stringType().nullish(),
@@ -143366,17 +143400,17 @@ var CreateStoryBody = objectType({
   "backgroundColor": stringType().optional()
 });
 var CreateStoryResponse = objectType({
-  "id": (void 0)(),
-  "userId": (void 0)(),
+  "id": numberType().int(),
+  "userId": numberType().int(),
   "mediaUrl": stringType().optional(),
   "type": enumType(["image", "text"]),
   "text": stringType().nullish(),
   "backgroundColor": stringType().nullish(),
   "expiresAt": stringType(),
-  "viewCount": (void 0)(),
+  "viewCount": numberType().int(),
   "isViewed": booleanType(),
   "user": unionType([objectType({
-    "id": (void 0)(),
+    "id": numberType().int(),
     "username": stringType(),
     "displayName": stringType(),
     "bio": stringType().nullish(),
@@ -143405,15 +143439,15 @@ var MarkChatAsReadParams = objectType({
 });
 var MarkChatAsReadResponse = voidType();
 var GetPostsResponseItem = objectType({
-  "id": (void 0)(),
-  "userId": (void 0)(),
+  "id": numberType().int(),
+  "userId": numberType().int(),
   "text": stringType(),
   "imageUrl": stringType().nullish(),
-  "likesCount": (void 0)(),
-  "commentsCount": (void 0)(),
+  "likesCount": numberType().int(),
+  "commentsCount": numberType().int(),
   "isLiked": booleanType(),
   "author": unionType([objectType({
-    "id": (void 0)(),
+    "id": numberType().int(),
     "username": stringType(),
     "displayName": stringType(),
     "bio": stringType().nullish(),
@@ -143439,15 +143473,15 @@ var CreatePostBody = objectType({
   "imageUrl": stringType().optional()
 });
 var CreatePostResponse = objectType({
-  "id": (void 0)(),
-  "userId": (void 0)(),
+  "id": numberType().int(),
+  "userId": numberType().int(),
   "text": stringType(),
   "imageUrl": stringType().nullish(),
-  "likesCount": (void 0)(),
-  "commentsCount": (void 0)(),
+  "likesCount": numberType().int(),
+  "commentsCount": numberType().int(),
   "isLiked": booleanType(),
   "author": unionType([objectType({
-    "id": (void 0)(),
+    "id": numberType().int(),
     "username": stringType(),
     "displayName": stringType(),
     "bio": stringType().nullish(),
@@ -143475,15 +143509,15 @@ var LikePostParams = objectType({
   "postId": coerce.number().int()
 });
 var LikePostResponse = objectType({
-  "id": (void 0)(),
-  "userId": (void 0)(),
+  "id": numberType().int(),
+  "userId": numberType().int(),
   "text": stringType(),
   "imageUrl": stringType().nullish(),
-  "likesCount": (void 0)(),
-  "commentsCount": (void 0)(),
+  "likesCount": numberType().int(),
+  "commentsCount": numberType().int(),
   "isLiked": booleanType(),
   "author": unionType([objectType({
-    "id": (void 0)(),
+    "id": numberType().int(),
     "username": stringType(),
     "displayName": stringType(),
     "bio": stringType().nullish(),
@@ -143507,12 +143541,12 @@ var GetPostCommentsParams = objectType({
   "postId": coerce.number().int()
 });
 var GetPostCommentsResponseItem = objectType({
-  "id": (void 0)(),
-  "postId": (void 0)(),
-  "userId": (void 0)(),
+  "id": numberType().int(),
+  "postId": numberType().int(),
+  "userId": numberType().int(),
   "text": stringType(),
   "author": unionType([objectType({
-    "id": (void 0)(),
+    "id": numberType().int(),
     "username": stringType(),
     "displayName": stringType(),
     "bio": stringType().nullish(),
@@ -143540,12 +143574,12 @@ var CreatePostCommentBody = objectType({
   "text": stringType()
 });
 var CreatePostCommentResponse = objectType({
-  "id": (void 0)(),
-  "postId": (void 0)(),
-  "userId": (void 0)(),
+  "id": numberType().int(),
+  "postId": numberType().int(),
+  "userId": numberType().int(),
   "text": stringType(),
   "author": unionType([objectType({
-    "id": (void 0)(),
+    "id": numberType().int(),
     "username": stringType(),
     "displayName": stringType(),
     "bio": stringType().nullish(),
@@ -143566,13 +143600,13 @@ var CreatePostCommentResponse = objectType({
   "createdAt": stringType()
 });
 var GetMyStatsResponse = objectType({
-  "messagesSent": (void 0)(),
-  "callsMade": (void 0)(),
-  "callDurationSeconds": (void 0)(),
-  "giftsSent": (void 0)(),
-  "giftsReceived": (void 0)(),
-  "chatsCount": (void 0)(),
-  "contactsCount": (void 0)()
+  "messagesSent": numberType().int(),
+  "callsMade": numberType().int(),
+  "callDurationSeconds": numberType().int(),
+  "giftsSent": numberType().int(),
+  "giftsReceived": numberType().int(),
+  "chatsCount": numberType().int(),
+  "contactsCount": numberType().int()
 });
 var GetSecurityQuestionQueryParams = objectType({
   "username": coerce.string()
@@ -152921,6 +152955,7 @@ router15.post("/gifts/:giftId/exchange", async (req, res) => {
       const gift2 = rows.rows[0];
       if (!gift2) throw Object.assign(new Error("\u041F\u043E\u0434\u0430\u0440\u043E\u043A \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D \u0432 \u0432\u0430\u0448\u0435\u0439 \u043A\u043E\u043B\u043B\u0435\u043A\u0446\u0438\u0438"), { status: 404 });
       if (gift2.inventory_status === "exchanged") throw Object.assign(new Error("\u042D\u0442\u043E\u0442 \u043F\u043E\u0434\u0430\u0440\u043E\u043A \u0443\u0436\u0435 \u043E\u0431\u043C\u0435\u043D\u044F\u043D"), { status: 409 });
+      if (gift2.inventory_status !== "collected") throw Object.assign(new Error("\u0421\u043D\u0430\u0447\u0430\u043B\u0430 \u043E\u0442\u043A\u0440\u043E\u0439\u0442\u0435 \u043F\u043E\u0434\u0430\u0440\u043E\u043A"), { status: 409 });
       const value = Number(gift2.exchange_value ?? 0);
       if (value <= 0) throw Object.assign(new Error("\u042D\u0442\u043E\u0442 \u043F\u043E\u0434\u0430\u0440\u043E\u043A \u043D\u0435\u043B\u044C\u0437\u044F \u043E\u0431\u043C\u0435\u043D\u044F\u0442\u044C"), { status: 400 });
       const credited = await tx.execute(sql`
@@ -152930,7 +152965,12 @@ router15.post("/gifts/:giftId/exchange", async (req, res) => {
       `);
       if (!credited.rows.length) throw Object.assign(new Error("\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D"), { status: 404 });
       balance = Number(credited.rows[0].balance);
-      await tx.execute(sql`UPDATE gifts SET inventory_status = 'exchanged' WHERE id = ${giftId}`);
+      const exchanged = await tx.execute(sql`
+        UPDATE gifts SET inventory_status = 'exchanged'
+        WHERE id = ${giftId} AND receiver_id = ${userId} AND inventory_status = 'collected'
+        RETURNING id
+      `);
+      if (!exchanged.rows.length) throw Object.assign(new Error("\u041F\u043E\u0434\u0430\u0440\u043E\u043A \u0443\u0436\u0435 \u043E\u0431\u043C\u0435\u043D\u044F\u043D"), { status: 409 });
       await tx.execute(sql`
         INSERT INTO spark_activity (user_id, type, amount, description)
         VALUES (${userId}, 'earned', ${value}, ${`\u041E\u0431\u043C\u0435\u043D \u043F\u043E\u0434\u0430\u0440\u043A\u0430: ${gift2.name}`})
@@ -153017,7 +153057,8 @@ router15.post("/gifts/send", async (req, res) => {
     const senderId = req.currentUserId;
     const receiverId = Number(req.body?.receiverId);
     const giftItemId = Number(req.body?.giftItemId);
-    const chatId = Number(req.body?.chatId);
+    const rawChatId = req.body?.chatId;
+    const chatId = rawChatId === void 0 || rawChatId === null || rawChatId === "" ? null : Number(rawChatId);
     const note = typeof req.body?.message === "string" ? req.body.message.trim().slice(0, 280) : "";
     const isAnonymous = req.body?.isAnonymous === true;
     if (!Number.isInteger(receiverId) || receiverId <= 0 || receiverId === senderId) {
@@ -153026,20 +153067,22 @@ router15.post("/gifts/send", async (req, res) => {
     if (!Number.isInteger(giftItemId) || giftItemId <= 0) {
       return res.status(400).json({ error: "\u0412\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \u043F\u043E\u0434\u0430\u0440\u043E\u043A" });
     }
-    if (!Number.isInteger(chatId) || chatId <= 0) {
-      return res.status(400).json({ error: "\u0414\u043B\u044F \u043F\u043E\u0434\u0430\u0440\u043A\u0430 \u043D\u0443\u0436\u0435\u043D \u043E\u0431\u0449\u0438\u0439 \u0447\u0430\u0442" });
+    if (chatId !== null && (!Number.isInteger(chatId) || chatId <= 0)) {
+      return res.status(400).json({ error: "\u041D\u0435\u043A\u043E\u0440\u0440\u0435\u043A\u0442\u043D\u044B\u0439 \u0447\u0430\u0442" });
     }
-    const sharedChat = await db.execute(sql`
-      SELECT c.type
-      FROM chats c
-      JOIN chat_members cm ON cm.chat_id = c.id
-      WHERE c.id = ${chatId} AND cm.user_id IN (${senderId}, ${receiverId})
-      GROUP BY c.id, c.type
-      HAVING COUNT(DISTINCT cm.user_id) = 2
-      LIMIT 1
-    `);
-    if (!sharedChat.rows.length) {
-      return res.status(403).json({ error: "\u0423 \u0432\u0430\u0441 \u043D\u0435\u0442 \u043E\u0431\u0449\u0435\u0433\u043E \u0447\u0430\u0442\u0430 \u0441 \u043F\u043E\u043B\u0443\u0447\u0430\u0442\u0435\u043B\u0435\u043C" });
+    if (chatId !== null) {
+      const sharedChat = await db.execute(sql`
+        SELECT c.type
+        FROM chats c
+        JOIN chat_members cm ON cm.chat_id = c.id
+        WHERE c.id = ${chatId} AND cm.user_id IN (${senderId}, ${receiverId})
+        GROUP BY c.id, c.type
+        HAVING COUNT(DISTINCT cm.user_id) = 2
+        LIMIT 1
+      `);
+      if (!sharedChat.rows.length) {
+        return res.status(403).json({ error: "\u0423 \u0432\u0430\u0441 \u043D\u0435\u0442 \u043E\u0431\u0449\u0435\u0433\u043E \u0447\u0430\u0442\u0430 \u0441 \u043F\u043E\u043B\u0443\u0447\u0430\u0442\u0435\u043B\u0435\u043C" });
+      }
     }
     const result = await db.transaction(async (tx) => {
       const giftRows = await tx.execute(sql`
@@ -153070,7 +153113,7 @@ router15.post("/gifts/send", async (req, res) => {
           { status: 402 }
         );
       }
-      const [gift] = await tx.insert(giftsTable).values({
+      const [gift2] = await tx.insert(giftsTable).values({
         giftItemId,
         senderId,
         receiverId,
@@ -153079,15 +153122,15 @@ router15.post("/gifts/send", async (req, res) => {
         chatId,
         serialNumber: item.is_collectible ? soldCount + 1 : null
       }).returning();
-      const [message] = await tx.insert(messagesTable).values({
+      const [message] = chatId === null ? [null] : await tx.insert(messagesTable).values({
         chatId,
         senderId,
         text: note || null,
         type: "gift",
-        mediaUrl: `gift:${gift.id}`
+        mediaUrl: `gift:${gift2.id}`
       }).returning();
       return {
-        gift,
+        gift: gift2,
         message,
         item,
         soldCount: soldCount + 1,
@@ -153122,24 +153165,35 @@ router15.post("/gifts/send", async (req, res) => {
       sender: sender ?? null,
       receiver: receiver ?? null
     };
-    const builtMessage = {
+    const gift = await getGiftInstance(result.gift.id, senderId);
+    if (!gift) return res.status(404).json({ error: "\u041E\u0442\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u043D\u044B\u0439 \u043F\u043E\u0434\u0430\u0440\u043E\u043A \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D" });
+    const builtMessage = result.message ? {
       ...result.message,
       sender: sender ?? null,
       reactions: [],
       replyTo: null,
       giftData,
       pollData: null
-    };
-    res.status(201).json({ message: builtMessage, balance: result.balance, chatId });
-    broadcastToChat(chatId, "new-message", { messageId: result.message.id, chatId });
-    broadcastToUser(receiverId, "new-message", {
-      messageId: result.message.id,
-      chatId,
-      senderName: isAnonymous ? "\u0410\u043D\u043E\u043D\u0438\u043C\u043D\u044B\u0439 \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C" : sender?.displayName || sender?.username || "\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C",
-      body: `\u{1F381} \u041F\u043E\u0434\u0430\u0440\u043E\u043A: ${result.item.name}`,
-      senderAvatar: isAnonymous ? null : sender?.avatarUrl || null
-    });
-    broadcastToUser(senderId, "new-message", { messageId: result.message.id, chatId });
+    } : null;
+    res.status(201).json({ gift, message: builtMessage, balance: result.balance, chatId });
+    if (result.message && chatId !== null) {
+      broadcastToChat(chatId, "new-message", { messageId: result.message.id, chatId });
+      broadcastToUser(receiverId, "new-message", {
+        messageId: result.message.id,
+        chatId,
+        senderName: isAnonymous ? "\u0410\u043D\u043E\u043D\u0438\u043C\u043D\u044B\u0439 \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C" : sender?.displayName || sender?.username || "\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C",
+        body: `\u{1F381} \u041F\u043E\u0434\u0430\u0440\u043E\u043A: ${result.item.name}`,
+        senderAvatar: isAnonymous ? null : sender?.avatarUrl || null
+      });
+      broadcastToUser(senderId, "new-message", { messageId: result.message.id, chatId });
+    } else {
+      broadcastToUser(receiverId, "gift-received", {
+        giftId: result.gift.id,
+        giftName: result.item.name,
+        isAnonymous,
+        senderName: isAnonymous ? null : sender?.displayName || sender?.username || "\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C"
+      });
+    }
     db.execute(sql`
       INSERT INTO spark_activity (user_id, type, amount, description)
       VALUES (${senderId}, 'spent', ${-Number(result.item.price)}, ${`\u041F\u043E\u0434\u0430\u0440\u043E\u043A: ${result.item.name}`})
@@ -156992,10 +157046,20 @@ var GIFT_CATALOG = [
   { name: "\u0412\u0441\u0435\u043B\u0435\u043D\u0441\u043A\u0438\u0439 \u041E\u0433\u043E\u043D\u044C", emoji: "\u{1F525}", animationType: "flame", rarity: "cosmic", stars: 80, price: 6e5, description: "\u041E\u0433\u043E\u043D\u044C, \u0447\u0442\u043E \u0433\u043E\u0440\u0438\u0442 \u0432\u0435\u0447\u043D\u043E \u2014 \u043E\u0441\u043E\u0431\u044B\u0439 \u0434\u0430\u0440 Prime", primeOnly: true },
   { name: "\u0421\u0430\u043F\u0444\u0438\u0440\u043E\u0432\u044B\u0439 \u0422\u0440\u043E\u043D", emoji: "\u{1F48E}", animationType: "galaxy", rarity: "cosmic", stars: 85, price: 24e4, description: "\u0422\u0440\u043E\u043D \u0438\u0437 \u0441\u0430\u043F\u0444\u0438\u0440\u0430 \u0434\u043B\u044F \u0438\u0441\u0442\u0438\u043D\u043D\u044B\u0445 Prime-\u043D\u0435\u0431\u043E\u0436\u0438\u0442\u0435\u043B\u0435\u0439", primeOnly: true }
 ];
+var PREVIOUS_FEATURED_GIFT_NAMES = ["\u0420\u043E\u0437\u0430", "\u041F\u043E\u0434\u0430\u0440\u043E\u043A", "\u0421\u0435\u0440\u0434\u0446\u0435"];
 var FEATURED_GIFTS = [
-  { name: "\u0420\u043E\u0437\u0430", emoji: "\u{1F339}", animationType: "roses", rarity: "common", stars: 1, price: 10, description: "\u0420\u043E\u0437\u0430 \u0432 \u043C\u0435\u0440\u0446\u0430\u044E\u0449\u0435\u043C \u0441\u0442\u0435\u043A\u043B\u044F\u043D\u043D\u043E\u043C \u043A\u043E\u043B\u043F\u0430\u043A\u0435", primeOnly: false, imageUrl: "/gifts/rose-in-glass.png" },
-  { name: "\u041F\u043E\u0434\u0430\u0440\u043E\u043A", emoji: "\u{1F381}", animationType: "confetti", rarity: "rare", stars: 2, price: 50, description: "\u041F\u043E\u0434\u0430\u0440\u043E\u0447\u043D\u0430\u044F \u043A\u043E\u0440\u043E\u0431\u043A\u0430 \u0441 \u043F\u0440\u0430\u0437\u0434\u043D\u0438\u0447\u043D\u043E\u0439 \u043B\u0435\u043D\u0442\u043E\u0439", primeOnly: false, imageUrl: "/gifts/gift-box.svg" },
-  { name: "\u0421\u0435\u0440\u0434\u0446\u0435", emoji: "\u{1F496}", animationType: "hearts", rarity: "legendary", stars: 4, price: 200, description: "\u0421\u0438\u044F\u044E\u0449\u0435\u0435 \u0441\u0435\u0440\u0434\u0446\u0435 \u0441 \u0442\u0451\u043F\u043B\u044B\u043C \u043F\u043E\u0441\u043B\u0430\u043D\u0438\u0435\u043C", primeOnly: false, imageUrl: "/gifts/heart.svg" }
+  { name: "\u0420\u043E\u0437\u0430 \u0432 \u0441\u0442\u0435\u043A\u043B\u0435", emoji: "\u{1F339}", animationType: "roses", rarity: "rare", stars: 3, price: 80, description: "\u0416\u0438\u0432\u0430\u044F \u0440\u043E\u0437\u0430 \u043F\u043E\u0434 \u043F\u0440\u043E\u0437\u0440\u0430\u0447\u043D\u044B\u043C \u0441\u0442\u0435\u043A\u043B\u044F\u043D\u043D\u044B\u043C \u043A\u0443\u043F\u043E\u043B\u043E\u043C", primeOnly: false, imageUrl: "/gifts/rose-in-glass.png" },
+  { name: "\u0424\u0435\u043D \xABAurora\xBB", emoji: "\u{1F4A8}", animationType: "sparkle", rarity: "epic", stars: 5, price: 180, description: "\u041F\u0435\u0440\u043B\u0430\u043C\u0443\u0442\u0440\u043E\u0432\u044B\u0439 \u0444\u0435\u043D \u0441 \u0437\u043E\u043B\u043E\u0442\u044B\u043C\u0438 \u0434\u0435\u0442\u0430\u043B\u044F\u043C\u0438", primeOnly: false, imageUrl: "/gifts/hair-dryer.svg" },
+  { name: "\u041F\u0430\u0440\u0444\u044E\u043C \xAB\u041D\u043E\u0447\u043D\u043E\u0439 \u0441\u0430\u0434\xBB", emoji: "\u{1F9F4}", animationType: "hearts", rarity: "rare", stars: 4, price: 120, description: "\u0424\u043B\u0430\u043A\u043E\u043D \u043D\u0435\u0436\u043D\u043E\u0433\u043E \u0430\u0440\u043E\u043C\u0430\u0442\u0430 \u0441 \u0437\u043E\u043B\u043E\u0442\u043E\u0439 \u043A\u0440\u044B\u0448\u043A\u043E\u0439", primeOnly: false, imageUrl: "/gifts/perfume.svg" },
+  { name: "\u041D\u0430\u0443\u0448\u043D\u0438\u043A\u0438 Nova Air", emoji: "\u{1F3A7}", animationType: "orbit", rarity: "epic", stars: 5, price: 210, description: "\u041C\u044F\u0433\u043A\u0438\u0439 \u0437\u0432\u0443\u043A \u0432 \u043B\u0430\u0432\u0430\u043D\u0434\u043E\u0432\u044B\u0445 \u0431\u0435\u0441\u043F\u0440\u043E\u0432\u043E\u0434\u043D\u044B\u0445 \u043D\u0430\u0443\u0448\u043D\u0438\u043A\u0430\u0445", primeOnly: false, imageUrl: "/gifts/headphones.svg" },
+  { name: "\u0421\u0443\u043C\u043E\u0447\u043A\u0430 \xAB\u0411\u0430\u0440\u0445\u0430\u0442\xBB", emoji: "\u{1F45C}", animationType: "sparkle", rarity: "rare", stars: 4, price: 140, description: "\u0418\u0437\u044F\u0449\u043D\u0430\u044F \u0432\u0435\u0447\u0435\u0440\u043D\u044F\u044F \u0441\u0443\u043C\u043E\u0447\u043A\u0430 \u0441 \u0437\u043E\u043B\u043E\u0442\u043E\u0439 \u0437\u0430\u0441\u0442\u0451\u0436\u043A\u043E\u0439", primeOnly: false, imageUrl: "/gifts/handbag.svg" },
+  { name: "\u041B\u0443\u043D\u043D\u044B\u0439 \u0441\u0432\u0435\u0442\u0438\u043B\u044C\u043D\u0438\u043A", emoji: "\u{1F319}", animationType: "galaxy", rarity: "epic", stars: 6, price: 260, description: "\u0422\u0451\u043F\u043B\u044B\u0439 \u0441\u0432\u0435\u0442 \u043C\u0430\u043B\u0435\u043D\u044C\u043A\u043E\u0439 \u043B\u0443\u043D\u044B \u043D\u0430 \u044D\u043B\u0435\u0433\u0430\u043D\u0442\u043D\u043E\u0439 \u043F\u043E\u0434\u0441\u0442\u0430\u0432\u043A\u0435", primeOnly: false, imageUrl: "/gifts/moon-lamp.svg" },
+  { name: "\u0421\u0430\u043A\u0443\u0440\u0430 \u0432 \u0441\u0442\u0435\u043A\u043B\u0435", emoji: "\u{1F338}", animationType: "bloom", rarity: "legendary", stars: 8, price: 420, description: "\u0426\u0432\u0435\u0442\u0443\u0449\u0430\u044F \u0432\u0435\u0442\u043A\u0430 \u0441\u0430\u043A\u0443\u0440\u044B \u0432 \u0441\u0442\u0435\u043A\u043B\u044F\u043D\u043D\u043E\u043C \u043A\u043E\u043B\u043F\u0430\u043A\u0435", primeOnly: false, imageUrl: "/gifts/sakura.png" },
+  { name: "\u041A\u0440\u0438\u0441\u0442\u0430\u043B\u043B \u0436\u0435\u043B\u0430\u043D\u0438\u0439", emoji: "\u{1F52E}", animationType: "magic", rarity: "epic", stars: 6, price: 230, description: "\u0421\u0438\u044F\u044E\u0449\u0438\u0439 \u043A\u0440\u0438\u0441\u0442\u0430\u043B\u043B, \u0445\u0440\u0430\u043D\u044F\u0449\u0438\u0439 \u0434\u043E\u0431\u0440\u043E\u0435 \u043F\u043E\u0436\u0435\u043B\u0430\u043D\u0438\u0435", primeOnly: false, imageUrl: "/gifts/magic-crystal.png" },
+  { name: "\u0417\u043E\u043B\u043E\u0442\u0430\u044F \u043A\u043E\u0440\u043E\u043D\u0430", emoji: "\u{1F451}", animationType: "diamonds", rarity: "legendary", stars: 8, price: 460, description: "\u042E\u0432\u0435\u043B\u0438\u0440\u043D\u0430\u044F \u043A\u043E\u0440\u043E\u043D\u0430 \u0441 \u0441\u0438\u044F\u044E\u0449\u0438\u043C\u0438 \u043A\u0430\u043C\u043D\u044F\u043C\u0438", primeOnly: false, imageUrl: "/gifts/crown.png" },
+  { name: "\u041C\u0438\u0448\u043A\u0430 \u0441 \u0431\u0430\u043D\u0442\u043E\u043C", emoji: "\u{1F9F8}", animationType: "hearts", rarity: "rare", stars: 4, price: 130, description: "\u041F\u043B\u044E\u0448\u0435\u0432\u044B\u0439 \u043C\u0435\u0434\u0432\u0435\u0436\u043E\u043D\u043E\u043A \u0441 \u0430\u0442\u043B\u0430\u0441\u043D\u044B\u043C \u0431\u0430\u043D\u0442\u043E\u043C", primeOnly: false, imageUrl: "/gifts/teddy-bear.png" },
+  { name: "\u041A\u043E\u043D\u0441\u043E\u043B\u044C Nova Play", emoji: "\u{1F3AE}", animationType: "lightning", rarity: "epic", stars: 7, price: 340, description: "\u0418\u0433\u0440\u043E\u0432\u0430\u044F \u043A\u043E\u043D\u0441\u043E\u043B\u044C \u0434\u043B\u044F \u043D\u043E\u0432\u044B\u0445 \u043F\u0440\u0438\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u0439", primeOnly: false, imageUrl: "/gifts/gaming-console.png" },
+  { name: "\u0410\u043B\u043C\u0430\u0437\u043D\u043E\u0435 \u0441\u0435\u0440\u0434\u0446\u0435", emoji: "\u{1F48E}", animationType: "diamonds", rarity: "legendary", stars: 9, price: 520, description: "\u0421\u0435\u0440\u0434\u0446\u0435 \u0438\u0437 \u043F\u0440\u043E\u0437\u0440\u0430\u0447\u043D\u043E\u0433\u043E \u0441\u0438\u044F\u044E\u0449\u0435\u0433\u043E \u043A\u0440\u0438\u0441\u0442\u0430\u043B\u043B\u0430", primeOnly: false, imageUrl: "/gifts/diamond-heart.png" }
 ];
 var SYSTEM_USERS = [
   {
@@ -157021,7 +157085,18 @@ var SYSTEM_USERS = [
   }
 ];
 async function runSeed() {
-  const allGifts = [...GIFT_CATALOG, ...FEATURED_GIFTS];
+  const allGifts = FEATURED_GIFTS;
+  const activeGiftNames = new Set(allGifts.map((gift) => gift.name));
+  const retiredGiftNames = [.../* @__PURE__ */ new Set([
+    ...GIFT_CATALOG.map((gift) => gift.name),
+    ...PREVIOUS_FEATURED_GIFT_NAMES
+  ])].filter((name2) => !activeGiftNames.has(name2));
+  if (retiredGiftNames.length > 0) {
+    await db.execute(sql`
+      UPDATE gift_items SET is_active = FALSE
+      WHERE name IN (${sql.join(retiredGiftNames.map((name2) => sql`${name2}`), sql`, `)})
+    `);
+  }
   await db.execute(sql`
     INSERT INTO gift_items
       (name, emoji, animation_type, rarity, stars, price, description, prime_only, image_url,
@@ -157035,7 +157110,20 @@ async function runSeed() {
         TRUE, ${maxSupply}, ${Math.round(gift.price * 0.85)}, ${Math.round(gift.price * 0.5)}
       )`;
   }), sql`, `)}
-    ON CONFLICT (name) DO NOTHING
+    ON CONFLICT (name) DO UPDATE SET
+      emoji = EXCLUDED.emoji,
+      animation_type = EXCLUDED.animation_type,
+      rarity = EXCLUDED.rarity,
+      stars = EXCLUDED.stars,
+      price = EXCLUDED.price,
+      description = EXCLUDED.description,
+      prime_only = EXCLUDED.prime_only,
+      image_url = EXCLUDED.image_url,
+      is_collectible = EXCLUDED.is_collectible,
+      is_active = TRUE,
+      max_supply = EXCLUDED.max_supply,
+      exchange_value = EXCLUDED.exchange_value,
+      upgrade_price = EXCLUDED.upgrade_price
   `);
   await db.execute(sql`
     UPDATE users SET username = 'nova_security', display_name = 'Nova Security'
