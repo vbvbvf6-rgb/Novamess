@@ -9,11 +9,14 @@ import { useToast } from "@/hooks/use-toast";
 import { NetworkStatus } from "@/components/NetworkStatus";
 import { MultiChatWindows } from "@/components/chat/MultiChatWindows";
 import { MediaMiniPlayer } from "@/components/chat/MediaMiniPlayer";
+import { useQueryClient } from "@tanstack/react-query";
+import { getGetChatsQueryKey, getGetMeQueryKey, getGetUserByIdQueryKey } from "@workspace/api-client-react";
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const { activeCall } = useAppContext();
   const { selectedChatId, openChatWindow } = useAppContext();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
@@ -58,6 +61,27 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     window.addEventListener("pulse:call-error", handler);
     return () => window.removeEventListener("pulse:call-error", handler);
   }, [toast]);
+
+  useEffect(() => {
+    const refreshPrime = (event: Event) => {
+      const detail = (event as CustomEvent).detail as { userId?: number; primeTier?: string; primeExpiresAt?: string };
+      const userId = Number(detail?.userId);
+      queryClient.invalidateQueries({ queryKey: getGetMeQueryKey() });
+      queryClient.invalidateQueries({ queryKey: getGetChatsQueryKey() });
+      if (Number.isInteger(userId) && userId > 0) {
+        queryClient.invalidateQueries({ queryKey: getGetUserByIdQueryKey(userId) });
+      }
+      const expiryLabel = detail?.primeExpiresAt
+        ? `Подписка действует до ${new Date(detail.primeExpiresAt).toLocaleDateString("ru-RU")}.`
+        : "Подписка активирована.";
+      toast({
+        title: `Вам подарили Nova ${detail?.primeTier === "prime_plus" ? "Prime+" : "Prime"}!`,
+        description: expiryLabel,
+      });
+    };
+    window.addEventListener("pulse:prime-update", refreshPrime);
+    return () => window.removeEventListener("pulse:prime-update", refreshPrime);
+  }, [queryClient, toast]);
 
   useEffect(() => {
     const handler = () => setMobileSidebarOpen(true);

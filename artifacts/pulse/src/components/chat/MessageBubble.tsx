@@ -12,6 +12,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { BOT_AVATAR_URL } from "@/lib/botAvatar";
 import { decryptMessage, isEncryptedMessage } from "@/lib/e2e";
 import { emojiToTwemojiUrl } from "@/lib/twemoji";
+import { VideoPlayer } from "@/components/media/VideoPlayer";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -1220,12 +1221,11 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
         }
         return (
           <div className="overflow-hidden -mx-1 -mt-1 mb-1 relative group rounded-xl">
-            <video
+            <VideoPlayer
               src={message.mediaUrl || ""}
-              controls
-              playsInline
-              className="max-w-[280px] w-full block object-cover max-h-[320px] rounded-xl"
-              preload="metadata"
+              fit="cover"
+              className="max-w-[280px] w-full rounded-xl"
+              videoClassName="h-auto max-h-[320px] aspect-video"
             />
             <div className="flex items-center gap-1 px-2 pb-1 pt-1">
               <p className="text-[11px] text-muted-foreground truncate flex-1">{videoName}</p>
@@ -1286,13 +1286,11 @@ export function MessageBubble({ message, onReply, onEdit, ownBubbleStyle, onPin,
         if (isVideoFile && message.mediaUrl) {
           return (
             <div className="rounded-xl overflow-hidden -mx-1 -mt-1 mb-1">
-              <video
+              <VideoPlayer
                 src={message.mediaUrl}
-                controls
-                playsInline
-                preload="metadata"
-                className="max-w-[280px] max-h-[320px] w-full block rounded-xl"
-                onClick={e => e.stopPropagation()}
+                className="max-w-[280px] max-h-[320px] w-full rounded-xl"
+                videoClassName="h-auto max-h-[320px] aspect-video"
+                fit="cover"
                 onPlay={() => window.dispatchEvent(new CustomEvent("pulse:play-media", { detail: { url: message.mediaUrl, type: "video", title: docMeta.name } }))}
               />
               <div className={`flex items-center gap-2 px-2 pb-1 pt-1 text-[11px] ${isMine ? "text-primary-foreground/60" : "text-muted-foreground"}`}>

@@ -43,3 +43,4 @@
 - [Startup DDL ordering](startup-ddl-race.md) — module-level schema fixes can run before fresh-db migrations; critical DDL must also run after migrations and before serving requests.
 - [Login OTP security](login-otp-security.md) — pending codes are bound to the account and current email; create sessions only after OTP and any configured TOTP.
 - [Vite package firewall retry](vite-package-firewall.md) — if a pinned Vite tarball is blocked, try the latest patch in the same major, refresh the lockfile, then verify frozen install.
+- [Prime gift pricing](prime-gifting.md) — charge the selected tier's configured plan amount and extend Prime atomically; plan IDs alone do not determine price across tiers.

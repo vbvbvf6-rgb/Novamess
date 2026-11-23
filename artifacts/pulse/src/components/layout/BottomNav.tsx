@@ -126,16 +126,17 @@ export function BottomNav({ onOpenPalette, onOpenSidebar }: BottomNavProps) {
           style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
         >
           <div
-            className="mx-3 mb-3 flex-1 pointer-events-auto"
+            className="relative mx-3 mb-3 flex-1 pointer-events-auto"
             style={{
-              background: "hsl(var(--card) / 0.88)",
-              backdropFilter: "blur(40px) saturate(200%)",
-              WebkitBackdropFilter: "blur(40px) saturate(200%)",
-              border: "1px solid hsl(var(--foreground) / 0.07)",
+              background: "linear-gradient(135deg, hsl(var(--card) / 0.74), hsl(var(--card) / 0.58))",
+              backdropFilter: "blur(34px) saturate(190%)",
+              WebkitBackdropFilter: "blur(34px) saturate(190%)",
+              border: "1px solid hsl(var(--foreground) / 0.13)",
               borderRadius: "24px",
-              boxShadow: "0 12px 48px hsl(0 0% 0% / 0.18), 0 2px 8px hsl(0 0% 0% / 0.08), inset 0 1px 0 hsl(var(--foreground) / 0.05)",
+              boxShadow: "0 14px 42px hsl(0 0% 0% / 0.22), 0 3px 10px hsl(0 0% 0% / 0.08), inset 0 1px 0 hsl(var(--foreground) / 0.16), inset 0 -1px 0 hsl(var(--foreground) / 0.04)",
             }}
           >
+            <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-white/50 to-transparent" />
             <div className="flex items-stretch justify-around px-1 py-1">
               {NAV_ITEMS.map((item) => {
                 const isActive = item.href === "/"

@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
 import { sql } from "drizzle-orm";
+import { broadcastToUser } from "../lib/sse";
 
 const router = Router();
 
@@ -195,52 +196,77 @@ router.post("/prime/gift", async (req, res) => {
   try {
     const senderId = req.currentUserId;
     const { planId, recipientId, tier } = req.body;
+    if (tier !== "prime" && tier !== "prime_plus") {
+      return res.status(400).json({ error: "Выберите Prime или Prime+" });
+    }
     const isPlus = tier === "prime_plus";
     const plans = isPlus ? PLUS_PLANS : PRIME_PLANS;
     const plan = plans[planId];
     if (!plan) return res.status(400).json({ error: "Неверный план подписки" });
-    if (!recipientId || typeof recipientId !== "number") return res.status(400).json({ error: "Укажите получателя" });
-    if (recipientId === senderId) return res.status(400).json({ error: "Нельзя подарить подписку самому себе" });
-
-    const PLAN_STARS: Record<string, number> = { monthly: 1000, halfyear: 1500, yearly: 2500 };
-    const cost = PLAN_STARS[planId] ?? plan.spark;
-
-    const senderRows = await db.execute(sql`SELECT balance FROM users WHERE id = ${senderId}`);
-    const sender = senderRows.rows[0] as any;
-    if (!sender) return res.status(404).json({ error: "Пользователь не найден" });
-
-    const senderBalance = Number(sender.balance ?? 0);
-    if (senderBalance < cost) {
-      return res.status(400).json({ error: `Недостаточно Монет. Нужно ${cost}, у вас ${senderBalance}`, balance: senderBalance });
-    }
-
-    const recipientRows = await db.execute(sql`SELECT id, has_prime, prime_expires_at FROM users WHERE id = ${recipientId}`);
-    const recipient = recipientRows.rows[0] as any;
-    if (!recipient) return res.status(404).json({ error: "Получатель не найден" });
-
-    const now = new Date();
-    const currentExpiry = recipient.prime_expires_at ? new Date(recipient.prime_expires_at) : now;
-    const base = currentExpiry > now ? currentExpiry : now;
-    const newExpiry = new Date(base);
-    newExpiry.setMonth(newExpiry.getMonth() + plan.months);
+    const targetId = Number(recipientId);
+    if (!Number.isInteger(targetId) || targetId <= 0) return res.status(400).json({ error: "Укажите получателя" });
+    if (targetId === senderId) return res.status(400).json({ error: "Нельзя подарить подписку самому себе" });
 
     const tierValue = isPlus ? "prime_plus" : "prime";
+    const cost = plan.spark;
+    const result = await db.transaction(async tx => {
+      const accountRows = await tx.execute(sql`
+        SELECT id, balance, has_prime, prime_tier, prime_expires_at
+        FROM users
+        WHERE id IN (${senderId}, ${targetId})
+        ORDER BY id
+        FOR UPDATE
+      `);
+      const accounts = accountRows.rows as any[];
+      const sender = accounts.find(account => Number(account.id) === senderId);
+      const recipient = accounts.find(account => Number(account.id) === targetId);
+      if (!sender) throw Object.assign(new Error("Пользователь не найден"), { status: 404 });
+      if (!recipient) throw Object.assign(new Error("Получатель не найден"), { status: 404 });
 
-    await db.execute(sql`UPDATE users SET balance = balance - ${cost} WHERE id = ${senderId}`);
-    await db.execute(sql`UPDATE users SET has_prime = true, prime_tier = ${tierValue}, prime_expires_at = ${newExpiry.toISOString()} WHERE id = ${recipientId}`);
+      const senderBalance = Number(sender.balance ?? 0);
+      if (senderBalance < cost) {
+        throw Object.assign(new Error(`Недостаточно Nova ✦. Нужно ${cost}, у вас ${senderBalance} ✦`), { status: 402 });
+      }
+
+      const now = new Date();
+      const currentExpiry = recipient.prime_expires_at ? new Date(recipient.prime_expires_at) : now;
+      const hasActivePrime = currentExpiry > now;
+      const base = hasActivePrime ? currentExpiry : now;
+      const newExpiry = new Date(base);
+      newExpiry.setMonth(newExpiry.getMonth() + plan.months);
+      const recipientTier = hasActivePrime && recipient.prime_tier === "prime_plus" && !isPlus
+        ? "prime_plus"
+        : tierValue;
+
+      await tx.execute(sql`UPDATE users SET balance = balance - ${cost} WHERE id = ${senderId}`);
+      await tx.execute(sql`
+        UPDATE users
+        SET has_prime = true, prime_tier = ${recipientTier}, prime_expires_at = ${newExpiry.toISOString()}
+        WHERE id = ${targetId}
+      `);
+      await tx.execute(sql`
+        INSERT INTO spark_activity (user_id, type, amount, description)
+        VALUES (${senderId}, 'spent', ${-cost}, ${`Подарок подписки ${recipientTier}: ${planId}`})
+      `);
+
+      return {
+        balance: senderBalance - cost,
+        primeExpiresAt: newExpiry.toISOString(),
+        primeTier: recipientTier,
+      };
+    });
 
     // If gifting Prime+, add recipient to lounge
-    if (isPlus) {
-      await ensurePrimePlusLounge(recipientId);
+    if (result.primeTier === "prime_plus") {
+      await ensurePrimePlusLounge(targetId);
     }
 
-    const updated = await db.execute(sql`SELECT balance FROM users WHERE id = ${senderId}`);
-    const newBalance = Number((updated.rows[0] as any)?.balance ?? 0);
-
-    res.json({ success: true, balance: newBalance, primeExpiresAt: newExpiry.toISOString(), primeTier: tierValue });
-  } catch (err) {
+    res.json({ success: true, balance: result.balance, primeExpiresAt: result.primeExpiresAt, primeTier: result.primeTier });
+    broadcastToUser(targetId, "prime-update", { userId: targetId, hasPrime: true, primeTier: result.primeTier, primeExpiresAt: result.primeExpiresAt });
+  } catch (err: any) {
     req.log.error(err);
-    res.status(500).json({ error: "Ошибка сервера" });
+    const status = Number(err?.status) || 500;
+    res.status(status).json({ error: status < 500 ? err.message : "Ошибка сервера" });
   }
 });
 

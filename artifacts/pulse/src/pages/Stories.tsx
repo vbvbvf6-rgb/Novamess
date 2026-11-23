@@ -9,6 +9,7 @@ import { useAppContext } from "@/contexts/AppContext";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { prepareVideoForUpload } from "@/lib/mediaCompression";
+import { VideoPlayer } from "@/components/media/VideoPlayer";
 
 const STORY_DURATION = 5000;
 
@@ -120,6 +121,7 @@ export default function Stories() {
 
   useEffect(() => {
     if (!viewingGroup) return;
+    setStoryPaused(false);
     const story = viewingGroup.stories[viewingIndex];
     if (!story) return;
     markStoryViewed(story.id);
@@ -418,16 +420,10 @@ export default function Stories() {
                   )}
                 </div>
               ) : storyType === "video" && storyVideoUrl ? (
-                <video
+                <VideoPlayer
                   src={storyVideoPreviewUrl || storyVideoUrl}
-                  controls
-                  muted
-                  playsInline
-                  preload="metadata"
-                  className="w-full h-48 object-contain rounded-xl bg-black/20"
-                  onError={(e) => {
-                    e.currentTarget.poster = "";
-                  }}
+                  className="aspect-video w-full rounded-xl bg-black/20"
+                  videoClassName="h-full w-full object-contain"
                 />
               ) : (
                 <p className="text-white/40 text-sm">{storyType === "text" ? "Предпросмотр текста" : storyType === "video" ? "Предпросмотр видео" : "Предпросмотр изображения"}</p>
@@ -589,13 +585,14 @@ export default function Stories() {
                       />
                     )}
                     {story?.type === "video" && story.mediaUrl && (
-                      <video
+                      <VideoPlayer
                         src={story.mediaUrl}
                         autoPlay
-                        controls
-                        playsInline
-                        className="w-full h-full object-contain bg-black"
-                        onPlay={resumeStory}
+                        className="h-full w-full bg-black"
+                        videoClassName="h-full w-full object-contain"
+                        onPlay={pauseStory}
+                        onPause={pauseStory}
+                        onEnded={goNext}
                       />
                     )}
                     {story?.musicUrl && (

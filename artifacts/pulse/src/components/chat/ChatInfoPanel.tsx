@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   X, Camera, UserPlus, Trash2, Search, Users, Radio, Copy, Check,
   RefreshCw, Shield, ShieldOff, LogOut, Bell, BellOff, Globe, Lock,
-  Clock, MessageSquare, ChevronDown, Link, Crown, Settings, Info
+  Clock, MessageSquare, ChevronDown, Link, Crown, Settings, Info, Image as ImageIcon
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQueryClient } from "@tanstack/react-query";
@@ -10,6 +10,7 @@ import { getGetChatsQueryKey } from "@workspace/api-client-react";
 import { useAppContext } from "@/contexts/AppContext";
 import { useLastSeen } from "@/hooks/useLastSeen";
 import { useLocation } from "wouter";
+import { MediaGallery } from "@/components/media/MediaGallery";
 
 function compressAvatar(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -123,7 +124,7 @@ function MemberStatus({ status, lastSeen }: { status?: string | null; lastSeen?:
   );
 }
 
-type Tab = "basic" | "permissions" | "members";
+type Tab = "basic" | "permissions" | "members" | "media";
 
 export function ChatInfoPanel({
   chatId, chatType, displayName, avatarUrl, avatarColor, description,
@@ -347,6 +348,7 @@ export function ChatInfoPanel({
     { id: "basic", label: "Основное", icon: <Info size={13} /> },
     { id: "permissions", label: "Права", icon: <Shield size={13} /> },
     { id: "members", label: `Участники${members.length ? ` · ${members.length}` : ""}`, icon: <Users size={13} /> },
+    { id: "media", label: "Медиа", icon: <ImageIcon size={13} /> },
   ];
 
   return (
@@ -808,6 +810,18 @@ export function ChatInfoPanel({
                     })}
                 </div>
               )}
+            </motion.div>
+          )}
+          {tab === "media" && (
+            <motion.div
+              key="media"
+              initial={{ opacity: 0, x: 12 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -12 }}
+              transition={{ duration: 0.15 }}
+              className="p-3"
+            >
+              <MediaGallery chatId={chatId} />
             </motion.div>
           )}
         </AnimatePresence>

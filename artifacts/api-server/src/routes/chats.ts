@@ -571,6 +571,76 @@ router.get("/chats/:chatId", async (req, res) => {
   }
 });
 
+router.get("/chats/:chatId/media", async (req, res) => {
+  try {
+    const chatId = Number(req.params.chatId);
+    const userId = req.currentUserId;
+    if (!Number.isInteger(chatId) || chatId <= 0) {
+      return res.status(400).json({ error: "Некорректный чат" });
+    }
+
+    const membership = await db.execute(sql`
+      SELECT 1 FROM chat_members WHERE chat_id = ${chatId} AND user_id = ${userId} LIMIT 1
+    `);
+    if (!membership.rows.length) return res.status(403).json({ error: "Нет доступа к этому чату" });
+
+    const rows = await db.execute(sql`
+      SELECT m.id, m.sender_id, m.type, m.media_url, m.text, m.created_at,
+             u.display_name
+      FROM messages m
+      LEFT JOIN users u ON u.id = m.sender_id
+      WHERE m.chat_id = ${chatId}
+        AND m.is_deleted = false
+        AND m.type IN ('image', 'video', 'document')
+        AND m.media_url IS NOT NULL
+      ORDER BY m.created_at DESC
+      LIMIT 300
+    `);
+
+    const media: Array<Record<string, unknown>> = [];
+    for (const row of rows.rows as any[]) {
+      const messageType = String(row.type);
+      let type: "image" | "video" | null = messageType === "image" ? "image" : messageType === "video" ? "video" : null;
+      let fileName: string | null = null;
+      if (messageType === "document") {
+        let metadata: any = {};
+        try { metadata = JSON.parse(String(row.text || "{}")); } catch {}
+        fileName = typeof metadata.name === "string" ? metadata.name : null;
+        const mime = String(metadata.mime || "").toLowerCase();
+        const extension = (fileName || "").split(".").pop()?.toLowerCase() || "";
+        if (mime.startsWith("video/") || ["mp4", "webm", "mkv", "avi", "mov", "m4v"].includes(extension)) type = "video";
+      }
+      if (!type) continue;
+
+      let urls: string[] = [String(row.media_url)];
+      if (type === "image") {
+        try {
+          const parsed = JSON.parse(String(row.media_url));
+          const candidates = Array.isArray(parsed) ? parsed : parsed?.urls;
+          if (Array.isArray(candidates)) urls = candidates.filter((url): url is string => typeof url === "string" && url.length > 0);
+        } catch {}
+      }
+
+      urls.forEach((mediaUrl, index) => {
+        media.push({
+          id: `${row.id}-${index}`,
+          messageId: Number(row.id),
+          senderId: Number(row.sender_id),
+          senderName: row.display_name || "Пользователь",
+          type,
+          mediaUrl,
+          fileName,
+          createdAt: row.created_at,
+        });
+      });
+    }
+    res.json(media);
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Не удалось загрузить медиа чата" });
+  }
+});
+
 router.put("/chats/:chatId", async (req, res) => {
   try {
     const uid = req.currentUserId;

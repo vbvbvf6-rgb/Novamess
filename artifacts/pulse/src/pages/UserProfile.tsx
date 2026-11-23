@@ -8,6 +8,7 @@ import {
   useRemoveContact,
   getGetContactsQueryKey,
   getGetChatsQueryKey,
+  getGetUserByIdQueryKey,
 } from "@workspace/api-client-react";
 import {
   ArrowLeft,
@@ -43,6 +44,9 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { PublicPlaylistWidget } from "@/pages/PowerFeatures";
 import { GiftPicker } from "@/components/gifts/GiftPicker";
+import { ProfileGifts } from "@/components/gifts/ProfileGifts";
+import { PrimeGiftDialog } from "@/components/gifts/PrimeGiftDialog";
+import { MediaGallery } from "@/components/media/MediaGallery";
 
 const getToken = () => sessionStorage.getItem("pulse-token");
 
@@ -252,10 +256,11 @@ export default function UserProfile() {
   const params = useParams<{ userId: string }>();
   const userId = Number(params.userId);
   const [, setLocation] = useLocation();
-  const { setSelectedChatId } = useAppContext();
+  const { currentUserId, setSelectedChatId } = useAppContext();
   const queryClient = useQueryClient();
   const [isStartingChat, setIsStartingChat] = useState(false);
   const [showGiftPicker, setShowGiftPicker] = useState(false);
+  const [showPrimeGift, setShowPrimeGift] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
   const [blockLoading, setBlockLoading] = useState(false);
 
@@ -282,20 +287,23 @@ export default function UserProfile() {
     setBlockLoading(false);
   };
 
-  const { data: user, isLoading } = useGetUserById(userId, { query: { enabled: !!userId } as any });
+  const { data: user, isLoading } = useGetUserById(userId, {
+    query: { enabled: !!userId, queryKey: getGetUserByIdQueryKey(userId) } as any,
+  });
   const { data: contacts } = useGetContacts();
   const { data: chats } = useGetChats();
   const addContact = useAddContact();
   const removeContact = useRemoveContact();
 
   const isContact = contacts?.some((c: { id: number }) => c.id === userId) ?? false;
-  const isMe = userId === 1;
+  const isMe = userId === currentUserId;
   const isBot = Boolean((user as any)?.isBot ?? (user as any)?.is_bot);
 
   const commonChats = chats?.filter((chat: { type: string; otherUser?: { id: number } | null; members?: { userId: number }[] }) => {
     if (chat.type === "direct") return chat.otherUser?.id === userId;
     return chat.members?.some((m: { userId: number }) => m.userId === userId);
   }) ?? [];
+  const directChatId = commonChats.find((chat: { id: number; type: string }) => chat.type === "direct")?.id;
 
   const handleAddContact = () => {
     addContact.mutate(
@@ -528,6 +536,18 @@ export default function UserProfile() {
                         <Gift size={18} />
                       </motion.button>
                     )}
+                    {!isBot && (
+                      <motion.button
+                        whileHover={{ scale: 1.08 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => setShowPrimeGift(true)}
+                        className="w-11 h-11 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-400 hover:bg-amber-500/20 transition-colors"
+                        title="Подарить подписку Prime"
+                        data-testid="button-gift-prime-user"
+                      >
+                        <Crown size={18} />
+                      </motion.button>
+                    )}
                     {!isBot && isContact ? (
                       <motion.button
                         whileHover={{ scale: 1.08 }}
@@ -683,6 +703,8 @@ export default function UserProfile() {
             </motion.div>
           )}
 
+          <ProfileGifts userId={userId} editable={isMe} />
+          {!isMe && directChatId && <MediaGallery chatId={directChatId} />}
 
         </div>
       </div>
@@ -696,6 +718,15 @@ export default function UserProfile() {
           }}
         />
       )}
+      <AnimatePresence>
+        {showPrimeGift && user && !isMe && !isBot && (
+          <PrimeGiftDialog
+            recipientId={Number(user.id)}
+            recipientName={user.displayName}
+            onClose={() => setShowPrimeGift(false)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

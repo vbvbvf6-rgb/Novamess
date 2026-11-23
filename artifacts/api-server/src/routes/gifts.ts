@@ -11,6 +11,46 @@ import { broadcastToChat, broadcastToUser } from "../lib/sse";
 
 const router = Router();
 const ADMIN_USER_IDS = [1, 4];
+let profileGiftTableReady: Promise<void> | null = null;
+
+function ensureProfileGiftTable() {
+  if (!profileGiftTableReady) {
+    profileGiftTableReady = db.execute(sql`
+      CREATE TABLE IF NOT EXISTS profile_pinned_gifts (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        gift_id INTEGER NOT NULL REFERENCES gifts(id) ON DELETE CASCADE,
+        pinned_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE (user_id, gift_id)
+      )
+    `).then(() => undefined);
+  }
+  return profileGiftTableReady;
+}
+
+const profileGiftSelect = sql`
+  SELECT g.id, g.sender_id, g.receiver_id, g.message, g.is_anonymous, g.created_at,
+         gi.name AS gift_name, gi.emoji AS gift_emoji, gi.image_url AS gift_image_url,
+         gi.description AS gift_description, u.display_name AS sender_name
+  FROM gifts g
+  JOIN gift_items gi ON gi.id = g.gift_item_id
+  LEFT JOIN users u ON u.id = g.sender_id
+`;
+
+function formatProfileGift(row: any, isPinned = false) {
+  return {
+    id: Number(row.id),
+    senderId: row.is_anonymous ? null : Number(row.sender_id),
+    senderName: row.is_anonymous ? "Анонимно" : row.sender_name || "Пользователь",
+    message: row.message,
+    createdAt: row.created_at,
+    name: row.gift_name,
+    emoji: row.gift_emoji,
+    imageUrl: row.gift_image_url,
+    description: row.gift_description,
+    isPinned,
+  };
+}
 
 async function isAdmin(userId: number): Promise<boolean> {
   if (ADMIN_USER_IDS.includes(userId)) return true;
@@ -26,6 +66,80 @@ router.get("/gifts", async (req, res) => {
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Не удалось загрузить подарки" });
+  }
+});
+
+router.get("/users/:userId/profile-gifts", async (req, res) => {
+  try {
+    const userId = Number(req.params.userId);
+    if (!Number.isInteger(userId) || userId <= 0) return res.status(400).json({ error: "Некорректный профиль" });
+    await ensureProfileGiftTable();
+
+    const pinnedRows = await db.execute(sql`
+      ${profileGiftSelect}
+      JOIN profile_pinned_gifts pg ON pg.gift_id = g.id
+      WHERE pg.user_id = ${userId} AND g.receiver_id = ${userId}
+      ORDER BY pg.pinned_at DESC
+      LIMIT 12
+    `);
+    const pinned = (pinnedRows.rows as any[]).map(row => formatProfileGift(row, true));
+    const received = userId === req.currentUserId
+      ? await db.execute(sql`
+          ${profileGiftSelect}
+          WHERE g.receiver_id = ${userId}
+          ORDER BY g.created_at DESC
+          LIMIT 100
+        `)
+      : null;
+
+    res.json({
+      pinned,
+      received: (received?.rows as any[] | undefined)?.map(row => formatProfileGift(row, pinned.some(item => item.id === Number(row.id)))) ?? [],
+    });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Не удалось загрузить подарки профиля" });
+  }
+});
+
+router.post("/users/me/profile-gifts/:giftId/pin", async (req, res) => {
+  try {
+    const userId = req.currentUserId;
+    const giftId = Number(req.params.giftId);
+    if (!Number.isInteger(giftId) || giftId <= 0) return res.status(400).json({ error: "Некорректный подарок" });
+    await ensureProfileGiftTable();
+    const owned = await db.execute(sql`SELECT 1 FROM gifts WHERE id = ${giftId} AND receiver_id = ${userId} LIMIT 1`);
+    if (!owned.rows.length) return res.status(404).json({ error: "Полученный подарок не найден" });
+
+    const countRows = await db.execute(sql`SELECT COUNT(*)::int AS count FROM profile_pinned_gifts WHERE user_id = ${userId}`);
+    if (Number((countRows.rows[0] as any)?.count ?? 0) >= 12) {
+      const existing = await db.execute(sql`SELECT 1 FROM profile_pinned_gifts WHERE user_id = ${userId} AND gift_id = ${giftId} LIMIT 1`);
+      if (!existing.rows.length) return res.status(400).json({ error: "Можно закрепить не больше 12 подарков" });
+    }
+
+    await db.execute(sql`
+      INSERT INTO profile_pinned_gifts (user_id, gift_id)
+      VALUES (${userId}, ${giftId})
+      ON CONFLICT (user_id, gift_id) DO NOTHING
+    `);
+    res.json({ success: true });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Не удалось закрепить подарок" });
+  }
+});
+
+router.delete("/users/me/profile-gifts/:giftId/pin", async (req, res) => {
+  try {
+    const userId = req.currentUserId;
+    const giftId = Number(req.params.giftId);
+    if (!Number.isInteger(giftId) || giftId <= 0) return res.status(400).json({ error: "Некорректный подарок" });
+    await ensureProfileGiftTable();
+    await db.execute(sql`DELETE FROM profile_pinned_gifts WHERE user_id = ${userId} AND gift_id = ${giftId}`);
+    res.json({ success: true });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Не удалось убрать подарок из профиля" });
   }
 });
 
