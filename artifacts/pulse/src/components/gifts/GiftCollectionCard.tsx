@@ -1,15 +1,7 @@
-import { ArrowUpRight, LockKeyhole, Sparkles } from "lucide-react";
+import { ArrowUpRight, LockKeyhole } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
 import type { GiftInstance } from "@workspace/api-client-react";
 import { GiftArtwork } from "./GiftArtwork";
-
-const rarityNames: Record<string, string> = {
-  common: "Обычный",
-  rare: "Редкий",
-  epic: "Эпический",
-  legendary: "Легендарный",
-  cosmic: "Космический",
-};
 
 const rarityClasses: Record<string, string> = {
   common: "gift-rarity-common",
@@ -50,9 +42,6 @@ export function GiftCollectionCard({
       data-testid={`card-gift-${gift.id}`}
       aria-label={`Подробнее: ${item.name}`}
     >
-      <span className="gift-rarity-ribbon" data-testid={`status-gift-rarity-${gift.id}`}>
-        {rarityNames[item.rarity] || item.rarity}
-      </span>
       <div className="absolute inset-x-0 top-0 h-32 bg-[radial-gradient(ellipse_at_50%_10%,rgba(244,174,111,0.15),transparent_70%)]" aria-hidden="true" />
       <div className="relative flex items-center justify-between gap-2">
         <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold tracking-wide ${gift.inventoryStatus === "received" ? "bg-amber-400/12 text-amber-300" : gift.inventoryStatus === "collected" ? "bg-emerald-400/10 text-emerald-300" : "bg-secondary/80 text-muted-foreground"}`} data-testid={`status-gift-${gift.id}`}>
@@ -71,8 +60,8 @@ export function GiftCollectionCard({
             {direction === "received" ? `От ${gift.isAnonymous ? gift.senderName : gift.senderName}` : `Для ${gift.receiverName}`}
           </p>
         </div>
-        <span className="gift-star-pill shrink-0" data-testid={`text-gift-price-${gift.id}`}>
-          <Sparkles size={12} aria-hidden="true" /> {item.stars}
+        <span className="gift-price-pill shrink-0" data-testid={`text-gift-price-${gift.id}`}>
+          {item.price.toLocaleString("ru-RU")} <span className="text-[9px]">Nova</span>
         </span>
       </div>
       <div className="relative mt-3 flex items-center justify-between border-t border-white/8 pt-2.5 text-[10px] text-muted-foreground">

@@ -266,7 +266,7 @@ export function AdminGiftsManager() {
 
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
                 <label className="space-y-1.5 text-xs font-semibold text-muted-foreground">
-                  Цена, искры
+                  Цена, Nova
                   <input type="number" min={0} max={10_000_000} step={1} {...form.register("price", { valueAsNumber: true })} className="w-full rounded-xl border border-border bg-card px-3 py-2.5 text-sm text-foreground outline-none focus:border-primary" data-testid="input-admin-gift-price" />
                 </label>
                 <label className="space-y-1.5 text-xs font-semibold text-muted-foreground">
@@ -274,11 +274,11 @@ export function AdminGiftsManager() {
                   <input type="number" min={1} max={1_000_000} step={1} {...form.register("stars", { valueAsNumber: true })} className="w-full rounded-xl border border-border bg-card px-3 py-2.5 text-sm text-foreground outline-none focus:border-primary" data-testid="input-admin-gift-stars" />
                 </label>
                 <label className="space-y-1.5 text-xs font-semibold text-muted-foreground">
-                  Обмен на искры
+                  Обмен, Nova
                   <input type="number" min={0} max={10_000_000} step={1} {...form.register("exchangeValue", { valueAsNumber: true })} className="w-full rounded-xl border border-border bg-card px-3 py-2.5 text-sm text-foreground outline-none focus:border-primary" data-testid="input-admin-gift-exchange" />
                 </label>
                 <label className="space-y-1.5 text-xs font-semibold text-muted-foreground">
-                  Улучшение, искры
+                  Улучшение, Nova
                   <input type="number" min={0} max={10_000_000} step={1} {...form.register("upgradePrice", { valueAsNumber: true })} className="w-full rounded-xl border border-border bg-card px-3 py-2.5 text-sm text-foreground outline-none focus:border-primary" data-testid="input-admin-gift-upgrade-price" />
                 </label>
                 <label className="space-y-1.5 text-xs font-semibold text-muted-foreground">
@@ -366,7 +366,7 @@ export function AdminGiftsManager() {
                   </div>
                 </div>
                 <div className="mt-3 grid grid-cols-3 gap-2 border-t border-border/60 pt-2.5 text-[10px]">
-                  <div><span className="block text-muted-foreground">Цена</span><b className="mt-0.5 block text-amber-400">{item.price.toLocaleString("ru-RU")} ✦</b></div>
+                  <div><span className="block text-muted-foreground">Цена</span><b className="mt-0.5 block text-amber-400">{item.price.toLocaleString("ru-RU")} Nova</b></div>
                   <div><span className="block text-muted-foreground">Получено</span><b className="mt-0.5 block">{item.soldCount.toLocaleString("ru-RU")}</b></div>
                   <div><span className="block text-muted-foreground">Тираж</span><b className="mt-0.5 block">{item.maxSupply?.toLocaleString("ru-RU") ?? "∞"}</b></div>
                 </div>

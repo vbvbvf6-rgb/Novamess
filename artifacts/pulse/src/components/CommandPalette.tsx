@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, MessageCircle, Phone, Users, History, Settings, Rss, UserCircle, Crown, Zap, Hash, X, Accessibility } from "lucide-react";
+import { Search, MessageCircle, Phone, Users, History, Settings, Rss, UserCircle, Crown, Zap, Hash, X, Accessibility, Gift } from "lucide-react";
 import { useGetChats, useGetContacts } from "@workspace/api-client-react";
 import { useAppContext } from "@/contexts/AppContext";
 import { cn } from "@/lib/utils";
@@ -21,6 +21,7 @@ const NAV_PAGES = [
   { href: "/",           label: "Чаты",      icon: <MessageCircle size={16} /> },
   { href: "/calls",      label: "Звонки",    icon: <Phone size={16} /> },
   { href: "/contacts",   label: "Контакты",  icon: <Users size={16} /> },
+  { href: "/gifts",      label: "Подарки",   icon: <Gift size={16} /> },
   { href: "/stories",    label: "Истории",   icon: <History size={16} /> },
   { href: "/feed",       label: "Лента",     icon: <Rss size={16} /> },
   { href: "/profile",    label: "Профиль",   icon: <UserCircle size={16} /> },

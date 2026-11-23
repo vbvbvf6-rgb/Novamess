@@ -11305,7 +11305,143 @@ export declare const SendGiftBody: zod.ZodObject<{
     isAnonymous?: boolean | undefined;
 }>;
 export declare const SendGiftResponse: zod.ZodObject<{
-    message: zod.ZodObject<{
+    gift: zod.ZodObject<{
+        id: zod.ZodNumber;
+        giftItemId: zod.ZodNumber;
+        senderId: zod.ZodNullable<zod.ZodNumber>;
+        senderName: zod.ZodString;
+        receiverId: zod.ZodNumber;
+        receiverName: zod.ZodString;
+        message: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        isAnonymous: zod.ZodBoolean;
+        chatId: zod.ZodNullable<zod.ZodNumber>;
+        createdAt: zod.ZodString;
+        inventoryStatus: zod.ZodEnum<["received", "collected", "exchanged"]>;
+        isUpgraded: zod.ZodBoolean;
+        serialNumber: zod.ZodNullable<zod.ZodNumber>;
+        giftItem: zod.ZodObject<{
+            id: zod.ZodNumber;
+            name: zod.ZodString;
+            emoji: zod.ZodString;
+            animationType: zod.ZodEnum<["bounce", "confetti", "sparkle", "hearts", "fireworks", "stars", "balloons", "roses", "orbit", "bloom", "diamonds", "flame", "galaxy", "lightning", "magic", "supernova", "vortex"]>;
+            rarity: zod.ZodEnum<["common", "rare", "epic", "legendary", "cosmic"]>;
+            stars: zod.ZodNumber;
+            price: zod.ZodNumber;
+            description: zod.ZodString;
+            primeOnly: zod.ZodBoolean;
+            imageUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+            isCollectible: zod.ZodBoolean;
+            isActive: zod.ZodBoolean;
+            maxSupply: zod.ZodNullable<zod.ZodNumber>;
+            exchangeValue: zod.ZodNumber;
+            upgradePrice: zod.ZodNumber;
+            soldCount: zod.ZodNumber;
+            availableCount: zod.ZodNullable<zod.ZodNumber>;
+        }, "strip", zod.ZodTypeAny, {
+            id: number;
+            name: string;
+            description: string;
+            emoji: string;
+            animationType: "bounce" | "confetti" | "sparkle" | "hearts" | "fireworks" | "stars" | "balloons" | "roses" | "orbit" | "bloom" | "diamonds" | "flame" | "galaxy" | "lightning" | "magic" | "supernova" | "vortex";
+            stars: number;
+            rarity: "common" | "rare" | "epic" | "legendary" | "cosmic";
+            price: number;
+            primeOnly: boolean;
+            isCollectible: boolean;
+            isActive: boolean;
+            maxSupply: number | null;
+            exchangeValue: number;
+            upgradePrice: number;
+            soldCount: number;
+            availableCount: number | null;
+            imageUrl?: string | null | undefined;
+        }, {
+            id: number;
+            name: string;
+            description: string;
+            emoji: string;
+            animationType: "bounce" | "confetti" | "sparkle" | "hearts" | "fireworks" | "stars" | "balloons" | "roses" | "orbit" | "bloom" | "diamonds" | "flame" | "galaxy" | "lightning" | "magic" | "supernova" | "vortex";
+            stars: number;
+            rarity: "common" | "rare" | "epic" | "legendary" | "cosmic";
+            price: number;
+            primeOnly: boolean;
+            isCollectible: boolean;
+            isActive: boolean;
+            maxSupply: number | null;
+            exchangeValue: number;
+            upgradePrice: number;
+            soldCount: number;
+            availableCount: number | null;
+            imageUrl?: string | null | undefined;
+        }>;
+    }, "strip", zod.ZodTypeAny, {
+        id: number;
+        createdAt: string;
+        chatId: number | null;
+        senderId: number | null;
+        giftItemId: number;
+        senderName: string;
+        receiverId: number;
+        receiverName: string;
+        isAnonymous: boolean;
+        inventoryStatus: "received" | "collected" | "exchanged";
+        isUpgraded: boolean;
+        serialNumber: number | null;
+        giftItem: {
+            id: number;
+            name: string;
+            description: string;
+            emoji: string;
+            animationType: "bounce" | "confetti" | "sparkle" | "hearts" | "fireworks" | "stars" | "balloons" | "roses" | "orbit" | "bloom" | "diamonds" | "flame" | "galaxy" | "lightning" | "magic" | "supernova" | "vortex";
+            stars: number;
+            rarity: "common" | "rare" | "epic" | "legendary" | "cosmic";
+            price: number;
+            primeOnly: boolean;
+            isCollectible: boolean;
+            isActive: boolean;
+            maxSupply: number | null;
+            exchangeValue: number;
+            upgradePrice: number;
+            soldCount: number;
+            availableCount: number | null;
+            imageUrl?: string | null | undefined;
+        };
+        message?: string | null | undefined;
+    }, {
+        id: number;
+        createdAt: string;
+        chatId: number | null;
+        senderId: number | null;
+        giftItemId: number;
+        senderName: string;
+        receiverId: number;
+        receiverName: string;
+        isAnonymous: boolean;
+        inventoryStatus: "received" | "collected" | "exchanged";
+        isUpgraded: boolean;
+        serialNumber: number | null;
+        giftItem: {
+            id: number;
+            name: string;
+            description: string;
+            emoji: string;
+            animationType: "bounce" | "confetti" | "sparkle" | "hearts" | "fireworks" | "stars" | "balloons" | "roses" | "orbit" | "bloom" | "diamonds" | "flame" | "galaxy" | "lightning" | "magic" | "supernova" | "vortex";
+            stars: number;
+            rarity: "common" | "rare" | "epic" | "legendary" | "cosmic";
+            price: number;
+            primeOnly: boolean;
+            isCollectible: boolean;
+            isActive: boolean;
+            maxSupply: number | null;
+            exchangeValue: number;
+            upgradePrice: number;
+            soldCount: number;
+            availableCount: number | null;
+            imageUrl?: string | null | undefined;
+        };
+        message?: string | null | undefined;
+    }>;
+    message: zod.ZodUnion<[zod.ZodObject<{
         id: zod.ZodNumber;
         chatId: zod.ZodNumber;
         senderId: zod.ZodNumber;
@@ -11805,9 +11941,9 @@ export declare const SendGiftResponse: zod.ZodObject<{
             };
             message?: string | null | undefined;
         } | null | undefined;
-    }>;
+    }>, zod.ZodNull]>;
     balance: zod.ZodNumber;
-    chatId: zod.ZodNumber;
+    chatId: zod.ZodNullable<zod.ZodNumber>;
 }, "strip", zod.ZodTypeAny, {
     message: {
         type: "text" | "image" | "video" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
@@ -11901,8 +12037,42 @@ export declare const SendGiftResponse: zod.ZodObject<{
             };
             message?: string | null | undefined;
         } | null | undefined;
+    } | null;
+    chatId: number | null;
+    gift: {
+        id: number;
+        createdAt: string;
+        chatId: number | null;
+        senderId: number | null;
+        giftItemId: number;
+        senderName: string;
+        receiverId: number;
+        receiverName: string;
+        isAnonymous: boolean;
+        inventoryStatus: "received" | "collected" | "exchanged";
+        isUpgraded: boolean;
+        serialNumber: number | null;
+        giftItem: {
+            id: number;
+            name: string;
+            description: string;
+            emoji: string;
+            animationType: "bounce" | "confetti" | "sparkle" | "hearts" | "fireworks" | "stars" | "balloons" | "roses" | "orbit" | "bloom" | "diamonds" | "flame" | "galaxy" | "lightning" | "magic" | "supernova" | "vortex";
+            stars: number;
+            rarity: "common" | "rare" | "epic" | "legendary" | "cosmic";
+            price: number;
+            primeOnly: boolean;
+            isCollectible: boolean;
+            isActive: boolean;
+            maxSupply: number | null;
+            exchangeValue: number;
+            upgradePrice: number;
+            soldCount: number;
+            availableCount: number | null;
+            imageUrl?: string | null | undefined;
+        };
+        message?: string | null | undefined;
     };
-    chatId: number;
     balance: number;
 }, {
     message: {
@@ -11997,8 +12167,42 @@ export declare const SendGiftResponse: zod.ZodObject<{
             };
             message?: string | null | undefined;
         } | null | undefined;
+    } | null;
+    chatId: number | null;
+    gift: {
+        id: number;
+        createdAt: string;
+        chatId: number | null;
+        senderId: number | null;
+        giftItemId: number;
+        senderName: string;
+        receiverId: number;
+        receiverName: string;
+        isAnonymous: boolean;
+        inventoryStatus: "received" | "collected" | "exchanged";
+        isUpgraded: boolean;
+        serialNumber: number | null;
+        giftItem: {
+            id: number;
+            name: string;
+            description: string;
+            emoji: string;
+            animationType: "bounce" | "confetti" | "sparkle" | "hearts" | "fireworks" | "stars" | "balloons" | "roses" | "orbit" | "bloom" | "diamonds" | "flame" | "galaxy" | "lightning" | "magic" | "supernova" | "vortex";
+            stars: number;
+            rarity: "common" | "rare" | "epic" | "legendary" | "cosmic";
+            price: number;
+            primeOnly: boolean;
+            isCollectible: boolean;
+            isActive: boolean;
+            maxSupply: number | null;
+            exchangeValue: number;
+            upgradePrice: number;
+            soldCount: number;
+            availableCount: number | null;
+            imageUrl?: string | null | undefined;
+        };
+        message?: string | null | undefined;
     };
-    chatId: number;
     balance: number;
 }>;
 /**

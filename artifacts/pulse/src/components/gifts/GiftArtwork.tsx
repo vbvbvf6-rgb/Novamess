@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { GiftItem } from "@workspace/api-client-react";
-import { GIFT_LOCAL_PNG, emojiToTwemojiUrl } from "@/lib/twemoji";
+import { GIFT_LOCAL_PNG } from "@/lib/twemoji";
 
 const animationClassByType: Record<string, string> = {
   bounce: "gift-art-motion--bounce",
@@ -23,7 +23,9 @@ const animationClassByType: Record<string, string> = {
 };
 
 export function GiftArtwork({ item, className = "" }: { item: GiftItem; className?: string }) {
-  const sources = [item.imageUrl, GIFT_LOCAL_PNG[item.name], emojiToTwemojiUrl(item.emoji)].filter(Boolean) as string[];
+  const localArtwork = GIFT_LOCAL_PNG[item.name];
+  const isStickerArtwork = localArtwork?.startsWith("/gifts/emoji/") || localArtwork?.startsWith("/gifts/gen/");
+  const sources = [item.imageUrl, isStickerArtwork ? null : localArtwork, "/gifts/gift-box.svg"].filter(Boolean) as string[];
   const [sourceIndex, setSourceIndex] = useState(0);
 
   return (

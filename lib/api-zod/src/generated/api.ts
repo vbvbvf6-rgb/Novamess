@@ -1873,7 +1873,41 @@ export const SendGiftBody = zod.object({
 })
 
 export const SendGiftResponse = zod.object({
-  "message": zod.object({
+  "gift": zod.object({
+  "id": zod.number().int(),
+  "giftItemId": zod.number().int(),
+  "senderId": zod.number().int().nullable(),
+  "senderName": zod.string(),
+  "receiverId": zod.number().int(),
+  "receiverName": zod.string(),
+  "message": zod.string().nullish(),
+  "isAnonymous": zod.boolean(),
+  "chatId": zod.number().int().nullable(),
+  "createdAt": zod.string(),
+  "inventoryStatus": zod.enum(['received', 'collected', 'exchanged']),
+  "isUpgraded": zod.boolean(),
+  "serialNumber": zod.number().int().nullable(),
+  "giftItem": zod.object({
+  "id": zod.number().int(),
+  "name": zod.string(),
+  "emoji": zod.string(),
+  "animationType": zod.enum(['bounce', 'confetti', 'sparkle', 'hearts', 'fireworks', 'stars', 'balloons', 'roses', 'orbit', 'bloom', 'diamonds', 'flame', 'galaxy', 'lightning', 'magic', 'supernova', 'vortex']),
+  "rarity": zod.enum(['common', 'rare', 'epic', 'legendary', 'cosmic']),
+  "stars": zod.number().int(),
+  "price": zod.number().int(),
+  "description": zod.string(),
+  "primeOnly": zod.boolean(),
+  "imageUrl": zod.string().nullish(),
+  "isCollectible": zod.boolean(),
+  "isActive": zod.boolean(),
+  "maxSupply": zod.number().int().nullable(),
+  "exchangeValue": zod.number().int(),
+  "upgradePrice": zod.number().int(),
+  "soldCount": zod.number().int(),
+  "availableCount": zod.number().int().nullable()
+})
+}),
+  "message": zod.union([zod.object({
   "id": zod.number().int(),
   "chatId": zod.number().int(),
   "senderId": zod.number().int(),
@@ -1965,9 +1999,9 @@ export const SendGiftResponse = zod.object({
 }),zod.null()]).optional(),
   "createdAt": zod.string(),
   "updatedAt": zod.string()
-}),
+}),zod.null()]),
   "balance": zod.number().int(),
-  "chatId": zod.number().int()
+  "chatId": zod.number().int().nullable()
 })
 
 

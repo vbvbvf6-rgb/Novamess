@@ -428,6 +428,7 @@ router.post("/gifts/:giftId/exchange", async (req, res) => {
       const gift = rows.rows[0] as any;
       if (!gift) throw Object.assign(new Error("Подарок не найден в вашей коллекции"), { status: 404 });
       if (gift.inventory_status === "exchanged") throw Object.assign(new Error("Этот подарок уже обменян"), { status: 409 });
+      if (gift.inventory_status !== "collected") throw Object.assign(new Error("Сначала откройте подарок"), { status: 409 });
       const value = Number(gift.exchange_value ?? 0);
       if (value <= 0) throw Object.assign(new Error("Этот подарок нельзя обменять"), { status: 400 });
       const credited = await tx.execute(sql`
@@ -437,7 +438,12 @@ router.post("/gifts/:giftId/exchange", async (req, res) => {
       `);
       if (!credited.rows.length) throw Object.assign(new Error("Пользователь не найден"), { status: 404 });
       balance = Number((credited.rows[0] as any).balance);
-      await tx.execute(sql`UPDATE gifts SET inventory_status = 'exchanged' WHERE id = ${giftId}`);
+      const exchanged = await tx.execute(sql`
+        UPDATE gifts SET inventory_status = 'exchanged'
+        WHERE id = ${giftId} AND receiver_id = ${userId} AND inventory_status = 'collected'
+        RETURNING id
+      `);
+      if (!exchanged.rows.length) throw Object.assign(new Error("Подарок уже обменян"), { status: 409 });
       await tx.execute(sql`
         INSERT INTO spark_activity (user_id, type, amount, description)
         VALUES (${userId}, 'earned', ${value}, ${`Обмен подарка: ${gift.name}`})
@@ -534,7 +540,8 @@ router.post("/gifts/send", async (req, res) => {
     const senderId = req.currentUserId;
     const receiverId = Number(req.body?.receiverId);
     const giftItemId = Number(req.body?.giftItemId);
-    const chatId = Number(req.body?.chatId);
+    const rawChatId = req.body?.chatId;
+    const chatId = rawChatId === undefined || rawChatId === null || rawChatId === "" ? null : Number(rawChatId);
     const note = typeof req.body?.message === "string" ? req.body.message.trim().slice(0, 280) : "";
     const isAnonymous = req.body?.isAnonymous === true;
 
@@ -544,21 +551,23 @@ router.post("/gifts/send", async (req, res) => {
     if (!Number.isInteger(giftItemId) || giftItemId <= 0) {
       return res.status(400).json({ error: "Выберите подарок" });
     }
-    if (!Number.isInteger(chatId) || chatId <= 0) {
-      return res.status(400).json({ error: "Для подарка нужен общий чат" });
+    if (chatId !== null && (!Number.isInteger(chatId) || chatId <= 0)) {
+      return res.status(400).json({ error: "Некорректный чат" });
     }
 
-    const sharedChat = await db.execute(sql`
-      SELECT c.type
-      FROM chats c
-      JOIN chat_members cm ON cm.chat_id = c.id
-      WHERE c.id = ${chatId} AND cm.user_id IN (${senderId}, ${receiverId})
-      GROUP BY c.id, c.type
-      HAVING COUNT(DISTINCT cm.user_id) = 2
-      LIMIT 1
-    `);
-    if (!sharedChat.rows.length) {
-      return res.status(403).json({ error: "У вас нет общего чата с получателем" });
+    if (chatId !== null) {
+      const sharedChat = await db.execute(sql`
+        SELECT c.type
+        FROM chats c
+        JOIN chat_members cm ON cm.chat_id = c.id
+        WHERE c.id = ${chatId} AND cm.user_id IN (${senderId}, ${receiverId})
+        GROUP BY c.id, c.type
+        HAVING COUNT(DISTINCT cm.user_id) = 2
+        LIMIT 1
+      `);
+      if (!sharedChat.rows.length) {
+        return res.status(403).json({ error: "У вас нет общего чата с получателем" });
+      }
     }
 
     const result = await db.transaction(async (tx) => {
@@ -603,7 +612,7 @@ router.post("/gifts/send", async (req, res) => {
         serialNumber: item.is_collectible ? soldCount + 1 : null,
       }).returning();
 
-      const [message] = await tx.insert(messagesTable).values({
+      const [message] = chatId === null ? [null] : await tx.insert(messagesTable).values({
         chatId,
         senderId,
         text: note || null,
@@ -648,25 +657,36 @@ router.post("/gifts/send", async (req, res) => {
       sender: sender ?? null,
       receiver: receiver ?? null,
     };
-    const builtMessage = {
+    const gift = await getGiftInstance(result.gift.id, senderId);
+    if (!gift) return res.status(404).json({ error: "Отправленный подарок не найден" });
+    const builtMessage = result.message ? {
       ...result.message,
       sender: sender ?? null,
       reactions: [],
       replyTo: null,
       giftData,
       pollData: null,
-    };
+    } : null;
 
-    res.status(201).json({ message: builtMessage, balance: result.balance, chatId });
-    broadcastToChat(chatId, "new-message", { messageId: result.message.id, chatId });
-    broadcastToUser(receiverId, "new-message", {
-      messageId: result.message.id,
-      chatId,
-      senderName: isAnonymous ? "Анонимный пользователь" : sender?.displayName || sender?.username || "Пользователь",
-      body: `🎁 Подарок: ${result.item.name}`,
-      senderAvatar: isAnonymous ? null : sender?.avatarUrl || null,
-    });
-    broadcastToUser(senderId, "new-message", { messageId: result.message.id, chatId });
+    res.status(201).json({ gift, message: builtMessage, balance: result.balance, chatId });
+    if (result.message && chatId !== null) {
+      broadcastToChat(chatId, "new-message", { messageId: result.message.id, chatId });
+      broadcastToUser(receiverId, "new-message", {
+        messageId: result.message.id,
+        chatId,
+        senderName: isAnonymous ? "Анонимный пользователь" : sender?.displayName || sender?.username || "Пользователь",
+        body: `🎁 Подарок: ${result.item.name}`,
+        senderAvatar: isAnonymous ? null : sender?.avatarUrl || null,
+      });
+      broadcastToUser(senderId, "new-message", { messageId: result.message.id, chatId });
+    } else {
+      broadcastToUser(receiverId, "gift-received", {
+        giftId: result.gift.id,
+        giftName: result.item.name,
+        isAnonymous,
+        senderName: isAnonymous ? null : sender?.displayName || sender?.username || "Пользователь",
+      });
+    }
     db.execute(sql`
       INSERT INTO spark_activity (user_id, type, amount, description)
       VALUES (${senderId}, 'spent', ${-Number(result.item.price)}, ${`Подарок: ${result.item.name}`})

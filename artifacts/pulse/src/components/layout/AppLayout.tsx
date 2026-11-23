@@ -10,7 +10,7 @@ import { NetworkStatus } from "@/components/NetworkStatus";
 import { MultiChatWindows } from "@/components/chat/MultiChatWindows";
 import { MediaMiniPlayer } from "@/components/chat/MediaMiniPlayer";
 import { useQueryClient } from "@tanstack/react-query";
-import { getGetChatsQueryKey, getGetMeQueryKey, getGetUserByIdQueryKey } from "@workspace/api-client-react";
+import { getGetChatsQueryKey, getGetMeQueryKey, getGetMyGiftsQueryKey, getGetUserByIdQueryKey } from "@workspace/api-client-react";
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const { activeCall } = useAppContext();
@@ -81,6 +81,23 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     };
     window.addEventListener("pulse:prime-update", refreshPrime);
     return () => window.removeEventListener("pulse:prime-update", refreshPrime);
+  }, [queryClient, toast]);
+
+  useEffect(() => {
+    const onGiftReceived = (event: Event) => {
+      const gift = (event as CustomEvent).detail as {
+        giftName?: string;
+        isAnonymous?: boolean;
+        senderName?: string | null;
+      };
+      void queryClient.invalidateQueries({ queryKey: getGetMyGiftsQueryKey() });
+      toast({
+        title: gift?.isAnonymous ? "Вам отправили анонимный подарок" : `${gift?.senderName || "Пользователь"} отправил подарок`,
+        description: gift?.giftName ? `«${gift.giftName}» появится в коллекции.` : "Он появится в вашей коллекции.",
+      });
+    };
+    window.addEventListener("pulse:gift-received", onGiftReceived);
+    return () => window.removeEventListener("pulse:gift-received", onGiftReceived);
   }, [queryClient, toast]);
 
   useEffect(() => {

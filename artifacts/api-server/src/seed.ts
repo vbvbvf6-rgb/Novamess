@@ -166,10 +166,21 @@ const GIFT_CATALOG = [
   { name: "Сапфировый Трон",   emoji: "💎",  animationType: "galaxy",    rarity: "cosmic",    stars: 85, price: 240000, description: "Трон из сапфира для истинных Prime-небожителей",       primeOnly: true },
 ];
 
+const PREVIOUS_FEATURED_GIFT_NAMES = ["Роза", "Подарок", "Сердце"];
+
 const FEATURED_GIFTS = [
-  { name: "Роза", emoji: "🌹", animationType: "roses", rarity: "common", stars: 1, price: 10, description: "Роза в мерцающем стеклянном колпаке", primeOnly: false, imageUrl: "/gifts/rose-in-glass.png" },
-  { name: "Подарок", emoji: "🎁", animationType: "confetti", rarity: "rare", stars: 2, price: 50, description: "Подарочная коробка с праздничной лентой", primeOnly: false, imageUrl: "/gifts/gift-box.svg" },
-  { name: "Сердце", emoji: "💖", animationType: "hearts", rarity: "legendary", stars: 4, price: 200, description: "Сияющее сердце с тёплым посланием", primeOnly: false, imageUrl: "/gifts/heart.svg" },
+  { name: "Роза в стекле", emoji: "🌹", animationType: "roses", rarity: "rare", stars: 3, price: 80, description: "Живая роза под прозрачным стеклянным куполом", primeOnly: false, imageUrl: "/gifts/rose-in-glass.png" },
+  { name: "Фен «Aurora»", emoji: "💨", animationType: "sparkle", rarity: "epic", stars: 5, price: 180, description: "Перламутровый фен с золотыми деталями", primeOnly: false, imageUrl: "/gifts/hair-dryer.svg" },
+  { name: "Парфюм «Ночной сад»", emoji: "🧴", animationType: "hearts", rarity: "rare", stars: 4, price: 120, description: "Флакон нежного аромата с золотой крышкой", primeOnly: false, imageUrl: "/gifts/perfume.svg" },
+  { name: "Наушники Nova Air", emoji: "🎧", animationType: "orbit", rarity: "epic", stars: 5, price: 210, description: "Мягкий звук в лавандовых беспроводных наушниках", primeOnly: false, imageUrl: "/gifts/headphones.svg" },
+  { name: "Сумочка «Бархат»", emoji: "👜", animationType: "sparkle", rarity: "rare", stars: 4, price: 140, description: "Изящная вечерняя сумочка с золотой застёжкой", primeOnly: false, imageUrl: "/gifts/handbag.svg" },
+  { name: "Лунный светильник", emoji: "🌙", animationType: "galaxy", rarity: "epic", stars: 6, price: 260, description: "Тёплый свет маленькой луны на элегантной подставке", primeOnly: false, imageUrl: "/gifts/moon-lamp.svg" },
+  { name: "Сакура в стекле", emoji: "🌸", animationType: "bloom", rarity: "legendary", stars: 8, price: 420, description: "Цветущая ветка сакуры в стеклянном колпаке", primeOnly: false, imageUrl: "/gifts/sakura.png" },
+  { name: "Кристалл желаний", emoji: "🔮", animationType: "magic", rarity: "epic", stars: 6, price: 230, description: "Сияющий кристалл, хранящий доброе пожелание", primeOnly: false, imageUrl: "/gifts/magic-crystal.png" },
+  { name: "Золотая корона", emoji: "👑", animationType: "diamonds", rarity: "legendary", stars: 8, price: 460, description: "Ювелирная корона с сияющими камнями", primeOnly: false, imageUrl: "/gifts/crown.png" },
+  { name: "Мишка с бантом", emoji: "🧸", animationType: "hearts", rarity: "rare", stars: 4, price: 130, description: "Плюшевый медвежонок с атласным бантом", primeOnly: false, imageUrl: "/gifts/teddy-bear.png" },
+  { name: "Консоль Nova Play", emoji: "🎮", animationType: "lightning", rarity: "epic", stars: 7, price: 340, description: "Игровая консоль для новых приключений", primeOnly: false, imageUrl: "/gifts/gaming-console.png" },
+  { name: "Алмазное сердце", emoji: "💎", animationType: "diamonds", rarity: "legendary", stars: 9, price: 520, description: "Сердце из прозрачного сияющего кристалла", primeOnly: false, imageUrl: "/gifts/diamond-heart.png" },
 ];
 
 const SYSTEM_USERS: Array<{
@@ -207,7 +218,19 @@ const SYSTEM_USERS: Array<{
 ];
 
 export async function runSeed() {
-  const allGifts = [...GIFT_CATALOG, ...FEATURED_GIFTS];
+  const allGifts = FEATURED_GIFTS;
+  const activeGiftNames = new Set(allGifts.map(gift => gift.name));
+  const retiredGiftNames = [...new Set([
+    ...GIFT_CATALOG.map(gift => gift.name),
+    ...PREVIOUS_FEATURED_GIFT_NAMES,
+  ])].filter(name => !activeGiftNames.has(name));
+  if (retiredGiftNames.length > 0) {
+    await db.execute(sql`
+      UPDATE gift_items SET is_active = FALSE
+      WHERE name IN (${sql.join(retiredGiftNames.map(name => sql`${name}`), sql`, `)})
+    `);
+  }
+
   await db.execute(sql`
     INSERT INTO gift_items
       (name, emoji, animation_type, rarity, stars, price, description, prime_only, image_url,
@@ -225,7 +248,20 @@ export async function runSeed() {
         TRUE, ${maxSupply}, ${Math.round(gift.price * 0.85)}, ${Math.round(gift.price * 0.5)}
       )`;
     }), sql`, `)}
-    ON CONFLICT (name) DO NOTHING
+    ON CONFLICT (name) DO UPDATE SET
+      emoji = EXCLUDED.emoji,
+      animation_type = EXCLUDED.animation_type,
+      rarity = EXCLUDED.rarity,
+      stars = EXCLUDED.stars,
+      price = EXCLUDED.price,
+      description = EXCLUDED.description,
+      prime_only = EXCLUDED.prime_only,
+      image_url = EXCLUDED.image_url,
+      is_collectible = EXCLUDED.is_collectible,
+      is_active = TRUE,
+      max_supply = EXCLUDED.max_supply,
+      exchange_value = EXCLUDED.exchange_value,
+      upgrade_price = EXCLUDED.upgrade_price
   `);
 
   // Keep one system bot when upgrading older Nova/Aura databases.

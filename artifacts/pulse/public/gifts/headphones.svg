@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" fill="none">
+  <defs>
+    <linearGradient id="band" x1="68" y1="46" x2="173" y2="148" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F8E5FF"/>
+      <stop offset=".45" stop-color="#BCA0FA"/>
+      <stop offset="1" stop-color="#6252B8"/>
+    </linearGradient>
+    <linearGradient id="cup" x1="54" y1="114" x2="105" y2="190" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F3E9FF"/>
+      <stop offset=".38" stop-color="#A995EE"/>
+      <stop offset="1" stop-color="#514492"/>
+    </linearGradient>
+    <linearGradient id="cushion" x1="66" y1="132" x2="94" y2="175" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#352B5D"/>
+      <stop offset="1" stop-color="#171529"/>
+    </linearGradient>
+    <linearGradient id="cup2" x1="137" y1="114" x2="188" y2="190" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F9E6FF"/>
+      <stop offset=".38" stop-color="#A995EE"/>
+      <stop offset="1" stop-color="#514492"/>
+    </linearGradient>
+    <filter id="shadow" x="23" y="27" width="195" height="198" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse">
+      <feGaussianBlur stdDeviation="10"/>
+    </filter>
+  </defs>
+  <ellipse cx="120" cy="201" rx="68" ry="13" fill="#1D153B" fill-opacity=".32" filter="url(#shadow)"/>
+  <path d="M53 126V105c0-39 30-70 67-70s67 31 67 70v21" stroke="#30264D" stroke-width="18" stroke-linecap="round"/>
+  <path d="M53 122v-17c0-38 30-69 67-69s67 31 67 69v17" stroke="url(#band)" stroke-width="12" stroke-linecap="round"/>
+  <path d="M47 112h24c8 0 15 7 15 15v43c0 9-7 16-16 16h-7c-11 0-20-9-20-20v-38c0-9 2-14 4-16Z" fill="url(#cup)" stroke="#F6ECFF" stroke-width="4"/>
+  <path d="M61 124h10c5 0 9 4 9 9v32c0 6-4 10-10 10h-7c-7 0-12-5-12-12v-27c0-7 4-12 10-12Z" fill="url(#cushion)"/>
+  <path d="M193 112h-24c-8 0-15 7-15 15v43c0 9 7 16 16 16h7c11 0 20-9 20-20v-38c0-9-2-14-4-16Z" fill="url(#cup2)" stroke="#F6ECFF" stroke-width="4"/>
+  <path d="M179 124h-10c-5 0-9 4-9 9v32c0 6 4 10 10 10h7c7 0 12-5 12-12v-27c0-7-4-12-10-12Z" fill="url(#cushion)"/>
+  <path d="M65 119v-12c0-29 24-53 55-53s55 24 55 53v12" stroke="#FFF" stroke-opacity=".58" stroke-width="3" stroke-linecap="round"/>
+  <path d="M56 140v23" stroke="#FFF" stroke-opacity=".8" stroke-width="3" stroke-linecap="round"/>
+  <path d="M184 140v23" stroke="#FFF" stroke-opacity=".8" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="120" cy="57" r="4" fill="#FFE7A5"/>
+  <path d="m128 28 2.5 6 6 2.5-6 2.5-2.5 6-2.5-6-6-2.5 6-2.5 2.5-6Z" fill="#FFE7A5"/>
+</svg>

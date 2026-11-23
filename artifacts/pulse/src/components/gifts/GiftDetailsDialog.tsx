@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ArrowLeftRight, Check, ChevronRight, LockKeyhole, MessageCircle, Sparkles, Star, WandSparkles, X } from "lucide-react";
+import { ArrowLeftRight, Check, ChevronRight, LockKeyhole, MessageCircle, Sparkles, WandSparkles, X } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   getGetGiftCatalogQueryKey,
@@ -16,14 +16,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useAppContext } from "@/contexts/AppContext";
 import { useLocation } from "wouter";
 import { GiftArtwork } from "./GiftArtwork";
-
-const rarityLabels: Record<string, string> = {
-  common: "Обычный",
-  rare: "Редкий",
-  epic: "Эпический",
-  legendary: "Легендарный",
-  cosmic: "Космический",
-};
 
 type GiftDirection = "received" | "sent";
 
@@ -50,6 +42,7 @@ export function GiftDetailsDialog({
   const [gift, setGift] = useState(initialGift);
   const [revealed, setRevealed] = useState(initialGift.inventoryStatus !== "received");
   const [showDetails, setShowDetails] = useState(initialGift.inventoryStatus !== "received");
+  const [showExchangeConfirmation, setShowExchangeConfirmation] = useState(false);
   const [busyAction, setBusyAction] = useState<"open" | "upgrade" | "exchange" | null>(null);
   const reducedMotion = useReducedMotion();
   const queryClient = useQueryClient();
@@ -116,7 +109,13 @@ export function GiftDetailsDialog({
   };
 
   const exchange = () => {
-    if (busyAction) return;
+    if (busyAction || !canManage) return;
+    setShowExchangeConfirmation(true);
+  };
+
+  const confirmExchange = () => {
+    if (busyAction || !canManage) return;
+    setShowExchangeConfirmation(false);
     setBusyAction("exchange");
     exchangeGift.mutate({ giftId: gift.id }, {
       onSuccess: async result => {
@@ -194,7 +193,6 @@ export function GiftDetailsDialog({
                 </motion.div>
               )}
             </AnimatePresence>
-            <span className="gift-rarity-ribbon absolute left-0 top-5 z-10" data-testid="text-gift-rarity">{rarityLabels[item.rarity] || item.rarity}</span>
             {revealed && <motion.span initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="absolute bottom-4 right-5 z-10 rounded-full bg-black/25 px-3 py-1 text-[11px] font-bold text-white/80" data-testid="text-gift-serial">
               {gift.serialNumber ? `№ ${gift.serialNumber}` : item.isCollectible ? "Коллекционный экземпляр" : "Память из чата"}
             </motion.span>}
@@ -223,7 +221,7 @@ export function GiftDetailsDialog({
                   </div>
                   <div className="rounded-2xl border border-border/70 bg-background/55 p-3" data-testid="text-gift-original-price">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Стоимость</span>
-                    <p className="mt-1 flex items-center gap-1.5 text-sm font-extrabold text-amber-300"><Star size={14} /> {item.stars} Nova</p>
+                    <p className="mt-1 text-sm font-extrabold text-amber-300">{item.price.toLocaleString("ru-RU")} Nova</p>
                   </div>
                   <div className="rounded-2xl border border-border/70 bg-background/55 p-3" data-testid="text-gift-supply">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Тираж</span>
@@ -258,11 +256,21 @@ export function GiftDetailsDialog({
                     ) : (
                       <>
                         {item.isCollectible && !gift.isUpgraded && <button type="button" onClick={upgrade} disabled={!!busyAction || item.upgradePrice <= 0} className="gift-primary-action" data-testid="button-upgrade-gift">
-                          <WandSparkles size={16} /> {busyAction === "upgrade" ? "Улучшаем…" : <>Улучшить <span className="ml-auto inline-flex items-center gap-1"><Star size={12} /> {item.upgradePrice}</span></>}
+                          <WandSparkles size={16} /> {busyAction === "upgrade" ? "Улучшаем…" : <>Улучшить <span className="ml-auto">{item.upgradePrice.toLocaleString("ru-RU")} Nova</span></>}
                         </button>}
-                        {item.exchangeValue > 0 && <button type="button" onClick={exchange} disabled={!!busyAction} className="gift-secondary-action" data-testid="button-exchange-gift">
-                          <ArrowLeftRight size={16} /> {busyAction === "exchange" ? "Обмениваем…" : <>Обменять на <span className="ml-auto inline-flex items-center gap-1"><Star size={12} /> {item.exchangeValue}</span></>}
-                        </button>}
+                        {item.exchangeValue > 0 && (showExchangeConfirmation ? (
+                          <div className="rounded-2xl border border-amber-400/20 bg-amber-400/[.06] p-3" data-testid="panel-confirm-gift-exchange">
+                            <p className="text-xs font-semibold leading-relaxed text-foreground">Подарок исчезнет из коллекции. На баланс поступит {item.exchangeValue.toLocaleString("ru-RU")} Nova.</p>
+                            <div className="mt-3 flex gap-2">
+                              <button type="button" onClick={() => setShowExchangeConfirmation(false)} disabled={!!busyAction} className="flex-1 rounded-xl border border-border px-3 py-2 text-xs font-bold text-muted-foreground hover:bg-secondary disabled:opacity-50" data-testid="button-cancel-gift-exchange">Оставить подарок</button>
+                              <button type="button" onClick={confirmExchange} disabled={!!busyAction} className="flex-1 rounded-xl bg-amber-400 px-3 py-2 text-xs font-black text-black hover:bg-amber-300 disabled:opacity-50" data-testid="button-confirm-gift-exchange">
+                                {busyAction === "exchange" ? "Обмениваем…" : "Подтвердить обмен"}
+                              </button>
+                            </div>
+                          </div>
+                        ) : <button type="button" onClick={exchange} disabled={!!busyAction} className="gift-secondary-action" data-testid="button-exchange-gift">
+                          <ArrowLeftRight size={16} /> Обменять на <span className="ml-auto">{item.exchangeValue.toLocaleString("ru-RU")} Nova</span>
+                        </button>)}
                         {!item.isCollectible && item.exchangeValue <= 0 && <p className="rounded-xl bg-secondary/50 p-3 text-center text-xs text-muted-foreground" data-testid="text-gift-no-actions"><Check className="mr-1 inline" size={14} /> Подарок сохранён как памятный предмет</p>}
                       </>
                     )}

@@ -300,9 +300,10 @@ export interface GiftCollection {
     sent: GiftInstance[];
 }
 export interface GiftSendResult {
-    message: Message;
+    gift: GiftInstance;
+    message: Message | null;
     balance: number;
-    chatId: number;
+    chatId: number | null;
 }
 export interface GiftExchangeResult {
     gift: GiftInstance;

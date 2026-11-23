@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ArrowDownLeft, ArrowUpRight, Gift, RefreshCw, Search, Sparkles, X } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Gift, RefreshCw, Search, Send, Sparkles, X } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   getGetGiftCatalogQueryKey,
@@ -11,13 +11,15 @@ import {
 import type { GiftInstance } from "@workspace/api-client-react";
 import { GiftCollectionCard } from "@/components/gifts/GiftCollectionCard";
 import { GiftDetailsDialog } from "@/components/gifts/GiftDetailsDialog";
+import { GiftSendPanel } from "@/components/gifts/GiftSendPanel";
 import "@/components/gifts/gifts.css";
 
 type CollectionTab = "received" | "sent";
+type GiftsView = CollectionTab | "send";
 type SelectedGift = { gift: GiftInstance; direction: CollectionTab };
 
 export default function Gifts() {
-  const [tab, setTab] = useState<CollectionTab>("received");
+  const [view, setView] = useState<GiftsView>("received");
   const [search, setSearch] = useState("");
   const [selectedGift, setSelectedGift] = useState<SelectedGift | null>(null);
   const queryClient = useQueryClient();
@@ -27,6 +29,7 @@ export default function Gifts() {
 
   const received = giftsQuery.data?.received ?? [];
   const sent = giftsQuery.data?.sent ?? [];
+  const tab: CollectionTab = view === "sent" ? "sent" : "received";
   const source = tab === "received" ? received : sent;
   const filtered = useMemo(() => source.filter(gift => {
     const term = search.trim().toLocaleLowerCase("ru");
@@ -78,22 +81,27 @@ export default function Gifts() {
         </motion.section>
 
         <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex w-fit rounded-2xl border border-border/70 bg-secondary/45 p-1" role="tablist" aria-label="Подарки полученные или отправленные">
-            <button type="button" onClick={() => setTab("received")} role="tab" aria-selected={tab === "received"} className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition ${tab === "received" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`} data-testid="tab-received-gifts">
+          <div className="flex w-fit max-w-full flex-wrap rounded-2xl border border-border/70 bg-secondary/45 p-1" role="tablist" aria-label="Коллекция и отправка подарков">
+            <button type="button" onClick={() => setView("received")} role="tab" aria-selected={view === "received"} className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition ${view === "received" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`} data-testid="tab-received-gifts">
               <ArrowDownLeft size={14} /> Полученные <span className="rounded-full bg-secondary px-1.5 py-0.5 text-[10px]">{received.length}</span>
             </button>
-            <button type="button" onClick={() => setTab("sent")} role="tab" aria-selected={tab === "sent"} className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition ${tab === "sent" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`} data-testid="tab-sent-gifts">
+            <button type="button" onClick={() => setView("sent")} role="tab" aria-selected={view === "sent"} className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition ${view === "sent" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`} data-testid="tab-sent-gifts">
               <ArrowUpRight size={14} /> Отправленные <span className="rounded-full bg-secondary px-1.5 py-0.5 text-[10px]">{sent.length}</span>
             </button>
           </div>
-          <label className="flex h-10 w-full items-center gap-2.5 rounded-xl border border-border/70 bg-card/70 px-3 text-muted-foreground focus-within:border-primary/40 sm:max-w-[260px]">
+          <button type="button" onClick={() => setView("send")} aria-pressed={view === "send"} className={`flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition ${view === "send" ? "bg-primary text-primary-foreground" : "border border-primary/20 bg-primary/5 text-primary hover:bg-primary/10"}`} data-testid="tab-send-gift">
+            <Send size={14} /> Подарить анонимно
+          </button>
+          {view !== "send" && <label className="flex h-10 w-full items-center gap-2.5 rounded-xl border border-border/70 bg-card/70 px-3 text-muted-foreground focus-within:border-primary/40 sm:max-w-[260px]">
             <Search size={15} />
             <input value={search} onChange={event => setSearch(event.target.value)} placeholder="Найти подарок" className="min-w-0 flex-1 bg-transparent text-xs text-foreground outline-none placeholder:text-muted-foreground/70" data-testid="input-search-gifts" />
             {search && <button type="button" onClick={() => setSearch("")} aria-label="Очистить поиск" className="rounded-md p-1 hover:text-foreground" data-testid="button-clear-gift-search"><X size={13} /></button>}
-          </label>
+          </label>}
         </div>
 
-        {giftsQuery.isLoading ? (
+        {view === "send" ? (
+          <GiftSendPanel onSent={() => setView("sent")} />
+        ) : giftsQuery.isLoading ? (
           <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5" aria-label="Загрузка подарков" data-testid="state-gifts-loading">
             {Array.from({ length: 8 }, (_, index) => <div key={index} className="h-[246px] animate-pulse rounded-[24px] border border-border/60 bg-card/70"><div className="mx-auto mt-12 h-24 w-24 rounded-full bg-secondary/75" /><div className="mx-4 mt-8 h-3 rounded bg-secondary/75" /><div className="mx-4 mt-3 h-2 w-2/3 rounded bg-secondary/55" /></div>)}
           </section>

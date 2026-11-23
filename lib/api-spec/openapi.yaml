@@ -1493,13 +1493,17 @@ components:
     GiftSendResult:
       type: object
       properties:
+        gift:
+          $ref: "#/components/schemas/GiftInstance"
         message:
           $ref: "#/components/schemas/Message"
+          nullable: true
         balance:
           type: integer
         chatId:
           type: integer
-      required: [message, balance, chatId]
+          nullable: true
+      required: [gift, message, balance, chatId]
 
     GiftExchangeResult:
       type: object

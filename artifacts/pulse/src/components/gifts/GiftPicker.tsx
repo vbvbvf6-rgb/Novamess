@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Gift, Loader2, Send, X, Sparkles, EyeOff } from "lucide-react";
+import { Gift, Loader2, Send, X, EyeOff } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -17,14 +17,6 @@ interface GiftPickerProps {
   onClose: () => void;
   onSent?: (chatId: number) => void;
 }
-
-const rarityLabel: Record<string, string> = {
-  common: "Обычный",
-  rare: "Редкий",
-  epic: "Эпический",
-  legendary: "Легендарный",
-  cosmic: "Космический",
-};
 
 function authHeaders(json = false): Record<string, string> {
   const token = sessionStorage.getItem("pulse-token");
@@ -96,7 +88,10 @@ export function GiftPicker({ recipientId, chatId, onClose, onSent }: GiftPickerP
     }
   };
 
-  const selectedGift = catalog.find((item) => item.id === selected);
+  const visibleCatalog = [...new Map(
+    catalog.map((item) => [item.name.trim().toLocaleLowerCase("ru"), item] as const),
+  ).values()];
+  const selectedGift = visibleCatalog.find((item) => item.id === selected);
 
   return (
     <AnimatePresence>
@@ -143,7 +138,7 @@ export function GiftPicker({ recipientId, chatId, onClose, onSent }: GiftPickerP
               <p className="py-10 text-center text-sm text-muted-foreground">Подарки пока не добавлены.</p>
             ) : (
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                {catalog.map((item) => (
+                {visibleCatalog.map((item) => (
                   <button
                     type="button"
                     key={item.id}
@@ -155,14 +150,6 @@ export function GiftPicker({ recipientId, chatId, onClose, onSent }: GiftPickerP
                     }`}
                     data-testid={`button-select-gift-${item.id}`}
                   >
-                    <span className={`absolute -right-8 top-3 z-20 w-28 rotate-45 py-1 text-center text-[8px] font-black uppercase tracking-wider text-white shadow ${
-                      item.rarity === "cosmic" || item.rarity === "legendary" ? "bg-gradient-to-r from-fuchsia-600 to-violet-500" :
-                      item.rarity === "epic" ? "bg-gradient-to-r from-purple-600 to-indigo-500" :
-                      item.rarity === "rare" ? "bg-gradient-to-r from-sky-700 to-blue-500" :
-                      "bg-gradient-to-r from-slate-600 to-slate-500"
-                    }`}>
-                      {rarityLabel[item.rarity] || item.rarity}
-                    </span>
                     <div className="gift-picker-art relative mx-auto mb-2 flex h-24 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-b from-white/[0.04] to-transparent">
                       <div className="absolute inset-4 rounded-full bg-amber-400/10 blur-xl" />
                       <GiftArtwork item={item} className="relative z-10 h-[76px] w-[76px] drop-shadow-lg" />
@@ -174,7 +161,7 @@ export function GiftPicker({ recipientId, chatId, onClose, onSent }: GiftPickerP
                       </p>
                     )}
                     <p className="mt-2 flex items-center justify-center gap-1 rounded-full bg-amber-400/10 px-2 py-1.5 text-xs font-black text-amber-400">
-                      <Sparkles size={12} /> {item.price.toLocaleString("ru-RU")} ✦
+                      {item.price.toLocaleString("ru-RU")} Nova
                     </p>
                   </button>
                 ))}
@@ -223,7 +210,7 @@ export function GiftPicker({ recipientId, chatId, onClose, onSent }: GiftPickerP
               {selectedGift
                 ? selectedGift.availableCount === 0
                   ? "Подарок закончился"
-                  : `Отправить за ${selectedGift.price.toLocaleString("ru-RU")} искр`
+                  : `Отправить за ${selectedGift.price.toLocaleString("ru-RU")} Nova`
                 : "Выберите подарок"}
             </button>
           </div>

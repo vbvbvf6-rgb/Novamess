@@ -365,9 +365,10 @@ export interface GiftCollection {
 }
 
 export interface GiftSendResult {
-  message: Message;
+  gift: GiftInstance;
+  message: Message | null;
   balance: number;
-  chatId: number;
+  chatId: number | null;
 }
 
 export interface GiftExchangeResult {
