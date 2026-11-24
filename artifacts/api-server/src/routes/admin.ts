@@ -1795,6 +1795,90 @@ router.post("/admin/halloween-event", requireAdmin, async (req, res) => {
   }
 });
 
+router.get("/gta6-event", async (req, res) => {
+  try {
+    const rows = await db.execute(sql`SELECT value FROM app_settings WHERE key = 'gta6_event' LIMIT 1`);
+    const row = rows.rows[0] as { value?: string } | undefined;
+    const settings = row?.value ? JSON.parse(row.value) : { enabled: false };
+    res.setHeader("Cache-Control", "no-store");
+    res.json({ enabled: settings.enabled === true });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Не удалось загрузить состояние события" });
+  }
+});
+
+router.get("/admin/gta6-event", requireAdmin, async (req, res) => {
+  try {
+    const rows = await db.execute(sql`SELECT value FROM app_settings WHERE key = 'gta6_event' LIMIT 1`);
+    const row = rows.rows[0] as { value?: string } | undefined;
+    const settings = row?.value ? JSON.parse(row.value) : { enabled: false };
+    res.json({ enabled: settings.enabled === true });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Не удалось загрузить состояние события" });
+  }
+});
+
+router.post("/admin/gta6-event", requireAdmin, async (req, res) => {
+  try {
+    if (typeof req.body?.enabled !== "boolean") {
+      return res.status(400).json({ error: "Укажите состояние события" });
+    }
+    const settings = { enabled: req.body.enabled };
+    const value = JSON.stringify(settings);
+    await db.execute(sql`
+      INSERT INTO app_settings (key, value, updated_at)
+      VALUES ('gta6_event', ${value}, NOW())
+      ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()
+    `);
+    broadcastToAll("gta6-event", settings);
+    res.json(settings);
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Не удалось сохранить состояние события" });
+  }
+});
+
+router.get("/gift-feature", async (req, res) => {
+  try {
+    res.setHeader("Cache-Control", "no-store");
+    res.json({ enabled: await isGiftSendingEnabled() });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Не удалось загрузить состояние подарков" });
+  }
+});
+
+router.get("/admin/gift-feature", requireAdmin, async (req, res) => {
+  try {
+    res.json({ enabled: await isGiftSendingEnabled() });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Не удалось загрузить состояние подарков" });
+  }
+});
+
+router.post("/admin/gift-feature", requireAdmin, async (req, res) => {
+  try {
+    if (typeof req.body?.enabled !== "boolean") {
+      return res.status(400).json({ error: "Укажите состояние подарков" });
+    }
+    const settings = { enabled: req.body.enabled };
+    const value = JSON.stringify(settings);
+    await db.execute(sql`
+      INSERT INTO app_settings (key, value, updated_at)
+      VALUES ('gift_sending_enabled', ${value}, NOW())
+      ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()
+    `);
+    broadcastToAll("gift-feature", settings);
+    res.json(settings);
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Не удалось изменить доступность подарков" });
+  }
+});
+
 router.get("/admin/maintenance", requireAdmin, async (req, res) => {
   try {
     const rows = await db.execute(sql`SELECT value FROM app_settings WHERE key = 'maintenance' LIMIT 1`);

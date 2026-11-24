@@ -20,6 +20,7 @@ import { setupNativeNotifications, unregisterNativePush } from "@/lib/nativeNoti
 import { playNotificationSound } from "@/lib/ringtones";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { useHalloweenEvent } from "@/hooks/useHalloweenEvent";
+import { useGta6Event } from "@/hooks/useGta6Event";
 import { APP_THEMES, applyAppTheme } from "@/lib/appThemes";
 import { PwaInstallPrompt } from "@/components/PwaInstallPrompt";
 import { useServiceWorkerUpdate } from "@/hooks/useServiceWorkerUpdate";
@@ -530,6 +531,27 @@ function HalloweenEventController() {
   return null;
 }
 
+function Gta6EventController() {
+  const gta6Enabled = useGta6Event();
+
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.toggle("gta6-event-disabled", !gta6Enabled);
+    if (gta6Enabled || localStorage.getItem("pulse-app-theme") !== "gta6") return;
+
+    const previous = localStorage.getItem("pulse-pre-gta6-theme");
+    const restore = previous && previous !== "gta6" && APP_THEMES.some(theme => theme.id === previous)
+      ? previous
+      : "light";
+    localStorage.removeItem("pulse-pre-gta6-theme");
+    localStorage.setItem("pulse-app-theme", restore);
+    applyAppTheme(restore);
+    window.dispatchEvent(new CustomEvent("pulse:app-theme", { detail: restore }));
+  }, [gta6Enabled]);
+
+  return null;
+}
+
 function MainAppInner({ onLogout, onSwitchAccount, onRemoveAccount, onOpenAddAccount }: MainAppProps) {
   useDocumentTitle();
 
@@ -544,6 +566,7 @@ function MainAppInner({ onLogout, onSwitchAccount, onRemoveAccount, onOpenAddAcc
       <TooltipProvider>
         <MainAppEffects />
         <HalloweenEventController />
+        <Gta6EventController />
         <HalloweenEffects />
         <GlobalNotificationListener />
         <InAppMessageBanner />
@@ -784,6 +807,26 @@ function App() {
       } catch {}
     };
     es.addEventListener("halloween-event", handleHalloweenEvent);
+    const handleGta6Event = (event: MessageEvent) => {
+      try {
+        const settings = JSON.parse(event.data) as { enabled?: boolean };
+        if (typeof settings.enabled === "boolean") {
+          localStorage.setItem("pulse-gta6-event-enabled", String(settings.enabled));
+          window.dispatchEvent(new Event("pulse:gta6-event-updated"));
+        }
+      } catch {}
+    };
+    const handleGiftFeature = (event: MessageEvent) => {
+      try {
+        const settings = JSON.parse(event.data) as { enabled?: boolean };
+        if (typeof settings.enabled === "boolean") {
+          localStorage.setItem("pulse-gifts-enabled", String(settings.enabled));
+          window.dispatchEvent(new Event("pulse:gift-feature-updated"));
+        }
+      } catch {}
+    };
+    es.addEventListener("gta6-event", handleGta6Event);
+    es.addEventListener("gift-feature", handleGiftFeature);
     const handleSessionsRevoked = (e: MessageEvent) => {
       // The current device is deliberately kept by the server. All other
       // open tabs/devices receive this event and clear themselves immediately.
@@ -831,6 +874,8 @@ function App() {
       es.removeEventListener("maintenance", handleMaintenance);
       es.removeEventListener("banned", handleBanned);
       es.removeEventListener("halloween-event", handleHalloweenEvent);
+      es.removeEventListener("gta6-event", handleGta6Event);
+      es.removeEventListener("gift-feature", handleGiftFeature);
       es.removeEventListener("sessions-revoked", handleSessionsRevoked);
       channel?.removeEventListener("message", handleLocalSessionsRevoked);
       channel?.close();

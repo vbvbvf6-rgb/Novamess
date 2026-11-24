@@ -170,17 +170,21 @@ const PREVIOUS_FEATURED_GIFT_NAMES = ["Роза", "Подарок", "Сердц�
 
 const FEATURED_GIFTS = [
   { name: "Роза в стекле", emoji: "🌹", animationType: "roses", rarity: "rare", stars: 3, price: 80, description: "Живая роза под прозрачным стеклянным куполом", primeOnly: false, imageUrl: "/gifts/rose-in-glass.png" },
-  { name: "Фен «Aurora»", emoji: "💨", animationType: "sparkle", rarity: "epic", stars: 5, price: 180, description: "Перламутровый фен с золотыми деталями", primeOnly: false, imageUrl: "/gifts/hair-dryer.svg" },
-  { name: "Парфюм «Ночной сад»", emoji: "🧴", animationType: "hearts", rarity: "rare", stars: 4, price: 120, description: "Флакон нежного аромата с золотой крышкой", primeOnly: false, imageUrl: "/gifts/perfume.svg" },
-  { name: "Наушники Nova Air", emoji: "🎧", animationType: "orbit", rarity: "epic", stars: 5, price: 210, description: "Мягкий звук в лавандовых беспроводных наушниках", primeOnly: false, imageUrl: "/gifts/headphones.svg" },
-  { name: "Сумочка «Бархат»", emoji: "👜", animationType: "sparkle", rarity: "rare", stars: 4, price: 140, description: "Изящная вечерняя сумочка с золотой застёжкой", primeOnly: false, imageUrl: "/gifts/handbag.svg" },
-  { name: "Лунный светильник", emoji: "🌙", animationType: "galaxy", rarity: "epic", stars: 6, price: 260, description: "Тёплый свет маленькой луны на элегантной подставке", primeOnly: false, imageUrl: "/gifts/moon-lamp.svg" },
+  { name: "Фен «Aurora»", emoji: "💨", animationType: "sparkle", rarity: "epic", stars: 5, price: 180, description: "Перламутровый фен с золотыми деталями", primeOnly: false, imageUrl: "/gifts/photo-crystal.png" },
+  { name: "Парфюм «Ночной сад»", emoji: "🧴", animationType: "hearts", rarity: "rare", stars: 4, price: 120, description: "Флакон нежного аромата с золотой крышкой", primeOnly: false, imageUrl: "/gifts/photo-perfume.png" },
+  { name: "Наушники Nova Air", emoji: "🎧", animationType: "orbit", rarity: "epic", stars: 5, price: 210, description: "Мягкий звук в лавандовых беспроводных наушниках", primeOnly: false, imageUrl: "/gifts/photo-headphones.png" },
+  { name: "Сумочка «Бархат»", emoji: "👜", animationType: "sparkle", rarity: "rare", stars: 4, price: 140, description: "Изящная вечерняя сумочка с золотой застёжкой", primeOnly: false, imageUrl: "/gifts/photo-handbag.png" },
+  { name: "Лунный светильник", emoji: "🌙", animationType: "galaxy", rarity: "epic", stars: 6, price: 260, description: "Тёплый свет маленькой луны на элегантной подставке", primeOnly: false, imageUrl: "/gifts/photo-moon-lamp.png" },
   { name: "Сакура в стекле", emoji: "🌸", animationType: "bloom", rarity: "legendary", stars: 8, price: 420, description: "Цветущая ветка сакуры в стеклянном колпаке", primeOnly: false, imageUrl: "/gifts/sakura.png" },
   { name: "Кристалл желаний", emoji: "🔮", animationType: "magic", rarity: "epic", stars: 6, price: 230, description: "Сияющий кристалл, хранящий доброе пожелание", primeOnly: false, imageUrl: "/gifts/magic-crystal.png" },
   { name: "Золотая корона", emoji: "👑", animationType: "diamonds", rarity: "legendary", stars: 8, price: 460, description: "Ювелирная корона с сияющими камнями", primeOnly: false, imageUrl: "/gifts/crown.png" },
   { name: "Мишка с бантом", emoji: "🧸", animationType: "hearts", rarity: "rare", stars: 4, price: 130, description: "Плюшевый медвежонок с атласным бантом", primeOnly: false, imageUrl: "/gifts/teddy-bear.png" },
   { name: "Консоль Nova Play", emoji: "🎮", animationType: "lightning", rarity: "epic", stars: 7, price: 340, description: "Игровая консоль для новых приключений", primeOnly: false, imageUrl: "/gifts/gaming-console.png" },
   { name: "Алмазное сердце", emoji: "💎", animationType: "diamonds", rarity: "legendary", stars: 9, price: 520, description: "Сердце из прозрачного сияющего кристалла", primeOnly: false, imageUrl: "/gifts/diamond-heart.png" },
+  { name: "Сапфир в стекле", emoji: "💠", animationType: "magic", rarity: "epic", stars: 6, price: 280, description: "Бирюзовый сапфир под стеклянным куполом", primeOnly: false, imageUrl: "/gifts/photo-sapphire.png" },
+  { name: "Корона «Аврора»", emoji: "👑", animationType: "diamonds", rarity: "legendary", stars: 8, price: 460, description: "Золотая корона с драгоценными камнями", primeOnly: false, imageUrl: "/gifts/photo-crown.png" },
+  { name: "Кулон «Лунный свет»", emoji: "🌙", animationType: "galaxy", rarity: "rare", stars: 4, price: 160, description: "Серебряный кулон в форме полумесяца", primeOnly: false, imageUrl: "/gifts/photo-pendant.png" },
+  { name: "Кристалл «Рассвет»", emoji: "🔮", animationType: "magic", rarity: "epic", stars: 6, price: 250, description: "Розово-фиолетовая друза в стеклянном куполе", primeOnly: false, imageUrl: "/gifts/photo-crystal.png" },
 ];
 
 const SYSTEM_USERS: Array<{
@@ -248,20 +252,24 @@ export async function runSeed() {
         TRUE, ${maxSupply}, ${Math.round(gift.price * 0.85)}, ${Math.round(gift.price * 0.5)}
       )`;
     }), sql`, `)}
-    ON CONFLICT (name) DO UPDATE SET
-      emoji = EXCLUDED.emoji,
-      animation_type = EXCLUDED.animation_type,
-      rarity = EXCLUDED.rarity,
-      stars = EXCLUDED.stars,
-      price = EXCLUDED.price,
-      description = EXCLUDED.description,
-      prime_only = EXCLUDED.prime_only,
-      image_url = EXCLUDED.image_url,
-      is_collectible = EXCLUDED.is_collectible,
-      is_active = TRUE,
-      max_supply = EXCLUDED.max_supply,
-      exchange_value = EXCLUDED.exchange_value,
-      upgrade_price = EXCLUDED.upgrade_price
+    ON CONFLICT (name) DO NOTHING
+  `);
+
+  // Move the old hand-drawn SVG catalog art to the new raster product renders
+  // without replacing any image URL an administrator has customized.
+  await db.execute(sql`
+    UPDATE gift_items SET image_url = CASE image_url
+      WHEN '/gifts/perfume.svg' THEN '/gifts/photo-perfume.png'
+      WHEN '/gifts/headphones.svg' THEN '/gifts/photo-headphones.png'
+      WHEN '/gifts/handbag.svg' THEN '/gifts/photo-handbag.png'
+      WHEN '/gifts/moon-lamp.svg' THEN '/gifts/photo-moon-lamp.png'
+      WHEN '/gifts/hair-dryer.svg' THEN '/gifts/photo-crystal.png'
+      ELSE image_url
+    END
+    WHERE image_url IN (
+      '/gifts/perfume.svg', '/gifts/headphones.svg', '/gifts/handbag.svg',
+      '/gifts/moon-lamp.svg', '/gifts/hair-dryer.svg'
+    )
   `);
 
   // Keep one system bot when upgrading older Nova/Aura databases.

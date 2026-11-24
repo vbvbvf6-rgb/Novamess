@@ -37,8 +37,10 @@ import {
 import type { Lang } from "@/i18n/translations";
 import { APP_THEMES, applyAppTheme } from "@/lib/appThemes";
 import { useHalloweenEvent } from "@/hooks/useHalloweenEvent";
+import { useGta6Event } from "@/hooks/useGta6Event";
 import { disableBiometric, isBiometricSupported, registerBiometric } from "@/lib/biometric";
 import { isAndroidNativeApp, NetworkProxy, type NetworkProxyType } from "@/lib/nativeNetworkProxy";
+import { setNativeLauncherIcon } from "@/lib/nativeLauncherIcon";
 import { localStoragePersister } from "@/lib/queryClient";
 import Plugins from "@/pages/Plugins";
 
@@ -1369,6 +1371,7 @@ export default function Settings() {
   const { t, lang, setLang } = useLanguage();
   const { data: user } = useGetMe();
   const halloweenEnabled = useHalloweenEvent();
+  const gta6Enabled = useGta6Event();
   const updateMe = useUpdateMe();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -1410,6 +1413,7 @@ export default function Settings() {
   const [pageZoom, setPageZoom] = useState(() => ls("pulse-page-zoom", "100"));
   const [appIcon, setAppIcon] = useState(() => localStorage.getItem("nova-app-icon") || "");
   const [appIconPreset, setAppIconPreset] = useState(() => localStorage.getItem("nova-app-icon-preset") || "orange");
+  const appIconInputRef = useRef<HTMLInputElement>(null);
 
   const selectAppIconPreset = (preset: string) => {
     localStorage.removeItem("nova-app-icon");
@@ -1417,7 +1421,19 @@ export default function Settings() {
     setAppIcon("");
     setAppIconPreset(preset);
     window.dispatchEvent(new Event("pulse:app-icon"));
-    toast({ title: lang === "ru" ? "Иконка Nova изменена" : "Nova icon changed" });
+    void setNativeLauncherIcon(preset).then(isAndroid => {
+      toast({
+        title: lang === "ru" ? "Иконка Nova изменена" : "Nova icon changed",
+        description: isAndroid
+          ? (lang === "ru" ? "Иконка ярлыка обновится после возврата на главный экран." : "The launcher icon will refresh when you return to the home screen.")
+          : undefined,
+      });
+    }).catch(() => {
+      toast({
+        title: lang === "ru" ? "Иконка внутри приложения изменена" : "The in-app icon changed",
+        description: lang === "ru" ? "Не удалось обновить значок Android на этом устройстве." : "Android could not refresh the launcher icon on this device.",
+      });
+    });
   };
 
   // Notifications
@@ -1461,7 +1477,10 @@ export default function Settings() {
       localStorage.setItem("nova-app-icon", value);
       setAppIcon(value);
       window.dispatchEvent(new Event("pulse:app-icon"));
-      toast({ title: lang === "ru" ? "Иконка Nova изменена" : "Nova icon changed" });
+      toast({
+        title: lang === "ru" ? "Иконка внутри Nova изменена" : "The in-app icon changed",
+        description: lang === "ru" ? "Свой файл нельзя установить как системный значок Android." : "A custom file cannot be installed as the Android system icon.",
+      });
     };
     reader.readAsDataURL(file);
     e.target.value = "";
@@ -1503,8 +1522,15 @@ export default function Settings() {
       toast({ title: lang === "ru" ? "Хэллоуинское событие отключено" : "Halloween event is disabled" });
       return;
     }
+    if (themeId === "gta6" && !gta6Enabled) {
+      toast({ title: lang === "ru" ? "Событие GTA VI отключено" : "The GTA VI event is disabled" });
+      return;
+    }
     if (themeId === "halloween" && appTheme !== "halloween") {
       localStorage.setItem("pulse-pre-halloween-theme", appTheme);
+    }
+    if (themeId === "gta6" && appTheme !== "gta6") {
+      localStorage.setItem("pulse-pre-gta6-theme", appTheme);
     }
     setAppTheme(themeId);
     localStorage.setItem("pulse-app-theme", themeId);
@@ -1513,9 +1539,13 @@ export default function Settings() {
     toast({
       title: themeId === "halloween"
         ? (lang === "ru" ? "Хэллоуинская тема включена" : "Halloween theme enabled")
+        : themeId === "gta6"
+          ? (lang === "ru" ? "Мятная тема GTA VI включена" : "GTA VI mint theme enabled")
         : (lang === "ru" ? "Тема применена" : "Theme applied"),
       description: themeId === "halloween"
         ? (lang === "ru" ? "Парящие тыквы и летучие мыши можно отключить здесь же." : "Floating pumpkins and bats can be turned off here.")
+        : themeId === "gta6"
+          ? (lang === "ru" ? "Стиль события применяется только на этом устройстве." : "The event style is applied on this device only.")
         : undefined,
     });
   };
@@ -1532,6 +1562,20 @@ export default function Settings() {
       ? previousTheme
       : fallbackTheme;
     localStorage.removeItem("pulse-pre-halloween-theme");
+    handleAppThemeSelect(restoreTheme);
+  };
+
+  const toggleGta6Theme = (enabled: boolean) => {
+    if (enabled) {
+      handleAppThemeSelect("gta6");
+      return;
+    }
+    const previousTheme = localStorage.getItem("pulse-pre-gta6-theme");
+    const fallbackTheme = isDark ? "dark" : "light";
+    const restoreTheme = previousTheme && previousTheme !== "gta6" && APP_THEMES.some(theme => theme.id === previousTheme)
+      ? previousTheme
+      : fallbackTheme;
+    localStorage.removeItem("pulse-pre-gta6-theme");
     handleAppThemeSelect(restoreTheme);
   };
 
@@ -2471,12 +2515,24 @@ export default function Settings() {
                     right={<Switch checked={appTheme === "halloween"} onCheckedChange={toggleHalloweenTheme} />}
                   />
                 )}
+                {gta6Enabled && (
+                  <Row
+                    icon={<span className="text-lg leading-none">🌴</span>}
+                    color="bg-emerald-500/10 text-emerald-400"
+                    label={lang === "ru" ? "Событие GTA VI · Мятная ночь" : "GTA VI · Mint night event"}
+                    desc={lang === "ru" ? "Мятно-бирюзовая палитра и летний неоновый стиль. Событие можно отключить в любое время." : "Mint and teal colors with a summer neon style. Turn the event off anytime."}
+                    right={<Switch checked={appTheme === "gta6"} onCheckedChange={toggleGta6Theme} />}
+                  />
+                )}
                 <div className="p-4">
                   <p className="text-xs text-muted-foreground mb-3">
                     {lang === "ru" ? "Выберите цветовую палитру Nova для этого устройства." : "Choose a Nova color palette for this device."}
                   </p>
                   <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-                    {APP_THEMES.filter(theme => halloweenEnabled || theme.id !== "halloween").map(theme => (
+                    {APP_THEMES
+                      .filter(theme => halloweenEnabled || theme.id !== "halloween")
+                      .filter(theme => gta6Enabled || theme.id !== "gta6")
+                      .map(theme => (
                       <button
                         key={theme.id}
                         onClick={() => handleAppThemeSelect(theme.id)}
@@ -2498,9 +2554,9 @@ export default function Settings() {
 
               <Section title={lang === "ru" ? "Иконка Nova" : "Nova icon"} icon={<Smartphone size={13}/>}>
                 <div className="p-4">
-                  <p className="text-sm font-medium">{lang === "ru" ? "Выберите один из пяти цветов" : "Choose one of five colors"}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{lang === "ru" ? "Иконка сохраняется на этом устройстве. Загрузка своих файлов отключена." : "The icon is saved on this device. Custom uploads are disabled."}</p>
-                  <div className="grid grid-cols-5 gap-2 mt-4">
+                  <p className="text-sm font-medium">{lang === "ru" ? "Выберите иконку приложения" : "Choose an app icon"}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{lang === "ru" ? "Встроенные варианты меняют иконку Android-ярлыка без переустановки. Своя картинка меняет логотип внутри приложения." : "Built-in choices change the Android launcher icon without reinstalling. A custom image changes the logo inside the app."}</p>
+                  <div className="grid grid-cols-3 gap-2 mt-4 sm:grid-cols-6">
                     {NOVA_ICON_PRESETS.map(preset => (
                       <button key={preset.id} onClick={() => selectAppIconPreset(preset.id)} title={preset.label}
                         className={`h-12 rounded-2xl border-2 transition-all ${appIconPreset === preset.id && !appIcon ? "border-foreground scale-105 shadow-lg" : "border-transparent hover:border-border"}`}
@@ -2508,8 +2564,44 @@ export default function Settings() {
                         <span className="text-white text-xl font-black">✦</span>
                       </button>
                     ))}
+                    <button
+                      type="button"
+                      onClick={() => selectAppIconPreset("gta6")}
+                      title="GTA VI · Мятная ночь"
+                      className={`h-12 overflow-hidden rounded-2xl border-2 transition-all ${appIconPreset === "gta6" && !appIcon ? "border-foreground scale-105 shadow-lg" : "border-transparent hover:border-border"}`}
+                      data-testid="button-select-gta6-app-icon"
+                    >
+                      <img src="/gta6-icon-512.png" alt="GTA VI" className="h-full w-full object-cover" />
+                    </button>
                   </div>
-                  {appIcon && <button onClick={() => { resetAppIcon(); selectAppIconPreset("orange"); }} className="mt-3 px-3 py-1.5 rounded-lg border border-border text-xs text-muted-foreground hover:bg-secondary">{lang === "ru" ? "Сбросить свою иконку" : "Reset custom icon"}</button>}
+                  <input
+                    ref={appIconInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    className="hidden"
+                    onChange={handleAppIconFile}
+                    data-testid="input-custom-app-icon"
+                  />
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => appIconInputRef.current?.click()}
+                      className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-xs font-semibold text-muted-foreground hover:bg-secondary hover:text-foreground"
+                      data-testid="button-upload-app-icon"
+                    >
+                      <Upload size={14} /> {lang === "ru" ? "Загрузить свою картинку" : "Upload a custom image"}
+                    </button>
+                    {appIcon && (
+                      <button
+                        type="button"
+                        onClick={() => { resetAppIcon(); selectAppIconPreset("orange"); }}
+                        className="rounded-lg border border-border px-3 py-2 text-xs text-muted-foreground hover:bg-secondary"
+                        data-testid="button-reset-app-icon"
+                      >
+                        {lang === "ru" ? "Сбросить свою иконку" : "Reset custom icon"}
+                      </button>
+                    )}
+                  </div>
                 </div>
               </Section>
 

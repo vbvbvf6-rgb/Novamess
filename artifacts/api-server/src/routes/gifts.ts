@@ -8,6 +8,7 @@ import {
 } from "@workspace/db";
 import { eq, sql } from "drizzle-orm";
 import { broadcastToChat, broadcastToUser } from "../lib/sse";
+import { isGiftSendingEnabled } from "../lib/giftFeature";
 
 const router = Router();
 const ADMIN_USER_IDS = [1, 4];
@@ -241,6 +242,7 @@ async function isAdmin(userId: number): Promise<boolean> {
 
 router.get("/gifts", async (req, res) => {
   try {
+    if (!(await isGiftSendingEnabled())) return res.json([]);
     res.json(await listGiftCatalog());
   } catch (err) {
     req.log.error(err);
@@ -537,6 +539,9 @@ router.delete("/users/me/profile-gifts/:giftId/pin", async (req, res) => {
 
 router.post("/gifts/send", async (req, res) => {
   try {
+    if (!(await isGiftSendingEnabled())) {
+      return res.status(403).json({ error: "Отправка подарков временно отключена администрацией" });
+    }
     const senderId = req.currentUserId;
     const receiverId = Number(req.body?.receiverId);
     const giftItemId = Number(req.body?.giftItemId);

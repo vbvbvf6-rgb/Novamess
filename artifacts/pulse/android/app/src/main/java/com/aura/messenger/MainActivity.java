@@ -9,6 +9,7 @@ public class MainActivity extends BridgeActivity {
     public void onCreate(Bundle savedInstanceState) {
         NetworkProxyPlugin.applySavedProxy(getApplicationContext());
         registerPlugin(NetworkProxyPlugin.class);
+        registerPlugin(LauncherIconPlugin.class);
         super.onCreate(savedInstanceState);
     }
 }

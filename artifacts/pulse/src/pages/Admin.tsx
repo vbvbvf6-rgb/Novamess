@@ -478,6 +478,10 @@ export default function Admin() {
 
   const [halloweenEventEnabled, setHalloweenEventEnabled] = useState(true);
   const [halloweenEventLoading, setHalloweenEventLoading] = useState(true);
+  const [gta6EventEnabled, setGta6EventEnabled] = useState(false);
+  const [gta6EventLoading, setGta6EventLoading] = useState(true);
+  const [giftFeatureEnabled, setGiftFeatureEnabled] = useState(true);
+  const [giftFeatureLoading, setGiftFeatureLoading] = useState(true);
   const EVENT_TYPES = [
     { emoji: "🎉", label: "Праздник", color: "#f59e0b" },
     { emoji: "🏆", label: "Турнир", color: "#eab308" },
@@ -1117,9 +1121,81 @@ export default function Admin() {
     }
   };
 
+  const fetchGta6EventState = async () => {
+    setGta6EventLoading(true);
+    try {
+      const response = await fetch("/api/admin/gta6-event", { headers: getHeader(), cache: "no-store" });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Не удалось загрузить состояние события");
+      setGta6EventEnabled(data.enabled === true);
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Не удалось загрузить состояние события", "err");
+    } finally {
+      setGta6EventLoading(false);
+    }
+  };
+
+  const toggleGta6Event = async () => {
+    if (gta6EventLoading) return;
+    const enabled = !gta6EventEnabled;
+    setGta6EventLoading(true);
+    try {
+      const response = await fetch("/api/admin/gta6-event", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...getHeader() },
+        body: JSON.stringify({ enabled }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Не удалось изменить событие");
+      setGta6EventEnabled(data.enabled === true);
+      showToast(enabled ? "Мятное событие GTA VI включено" : "Событие GTA VI отключено", "ok");
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Не удалось изменить событие", "err");
+    } finally {
+      setGta6EventLoading(false);
+    }
+  };
+
+  const fetchGiftFeatureState = async () => {
+    setGiftFeatureLoading(true);
+    try {
+      const response = await fetch("/api/admin/gift-feature", { headers: getHeader(), cache: "no-store" });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Не удалось загрузить состояние подарков");
+      setGiftFeatureEnabled(data.enabled !== false);
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Не удалось загрузить состояние подарков", "err");
+    } finally {
+      setGiftFeatureLoading(false);
+    }
+  };
+
+  const toggleGiftFeature = async () => {
+    if (giftFeatureLoading) return;
+    const enabled = !giftFeatureEnabled;
+    setGiftFeatureLoading(true);
+    try {
+      const response = await fetch("/api/admin/gift-feature", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...getHeader() },
+        body: JSON.stringify({ enabled }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Не удалось изменить доступность подарков");
+      setGiftFeatureEnabled(data.enabled !== false);
+      showToast(enabled ? "Отправка подарков включена" : "Окно отправки подарков закрыто для всех", "ok");
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Не удалось изменить доступность подарков", "err");
+    } finally {
+      setGiftFeatureLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (!hasAccess) return;
     void fetchHalloweenEventState();
+    void fetchGta6EventState();
+    void fetchGiftFeatureState();
   }, [hasAccess]);
 
   const fetchUserStats = async (uid: number) => {
@@ -2461,6 +2537,62 @@ export default function Admin() {
           <div className="border-t border-border px-4 py-3">
             <p className={`text-xs font-semibold ${halloweenEventEnabled ? "text-orange-400" : "text-muted-foreground"}`} data-testid="status-halloween-event">
               {halloweenEventEnabled ? "Ивент включён для всех пользователей" : "Ивент полностью отключён"}
+            </p>
+          </div>
+        </div>
+
+        <div className="bg-card border border-border rounded-2xl overflow-hidden">
+          <div className="p-4 flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-emerald-500/10 flex items-center justify-center text-lg">🌴</div>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-sm">Событие GTA VI · «Мятная ночь»</p>
+              <p className="text-xs text-muted-foreground">Показывает событие и открывает мятную тему в настройках</p>
+            </div>
+            <button
+              type="button"
+              onClick={toggleGta6Event}
+              disabled={gta6EventLoading}
+              className={`shrink-0 rounded-xl border px-3 py-2 text-xs font-bold transition-colors disabled:opacity-50 ${
+                gta6EventEnabled
+                  ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20"
+                  : "border-border bg-secondary/50 text-muted-foreground hover:bg-secondary"
+              }`}
+              data-testid="button-toggle-gta6-event"
+            >
+              {gta6EventLoading ? <RefreshCw size={14} className="animate-spin" /> : gta6EventEnabled ? "Отключить" : "Включить"}
+            </button>
+          </div>
+          <div className="border-t border-border px-4 py-3">
+            <p className={`text-xs font-semibold ${gta6EventEnabled ? "text-emerald-400" : "text-muted-foreground"}`} data-testid="status-gta6-event">
+              {gta6EventEnabled ? "Событие включено для всех пользователей" : "Событие выключено"}
+            </p>
+          </div>
+        </div>
+
+        <div className="bg-card border border-border rounded-2xl overflow-hidden">
+          <div className="p-4 flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-pink-500/10 flex items-center justify-center text-lg">🎁</div>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-sm">Окно отправки подарков</p>
+              <p className="text-xs text-muted-foreground">Скрывает отправку подарков и запрещает новые отправки до повторного включения</p>
+            </div>
+            <button
+              type="button"
+              onClick={toggleGiftFeature}
+              disabled={giftFeatureLoading}
+              className={`shrink-0 rounded-xl border px-3 py-2 text-xs font-bold transition-colors disabled:opacity-50 ${
+                giftFeatureEnabled
+                  ? "border-pink-500/30 bg-pink-500/10 text-pink-400 hover:bg-pink-500/20"
+                  : "border-border bg-secondary/50 text-muted-foreground hover:bg-secondary"
+              }`}
+              data-testid="button-toggle-gift-feature"
+            >
+              {giftFeatureLoading ? <RefreshCw size={14} className="animate-spin" /> : giftFeatureEnabled ? "Закрыть окно" : "Открыть окно"}
+            </button>
+          </div>
+          <div className="border-t border-border px-4 py-3">
+            <p className={`text-xs font-semibold ${giftFeatureEnabled ? "text-pink-400" : "text-muted-foreground"}`} data-testid="status-gift-feature">
+              {giftFeatureEnabled ? "Отправка подарков доступна" : "Окно отправки подарков закрыто"}
             </p>
           </div>
         </div>

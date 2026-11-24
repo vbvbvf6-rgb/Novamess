@@ -93,17 +93,17 @@ export function AdminGiftsManager() {
   const [editingGift, setEditingGift] = useState<GiftItem | null>(null);
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
   const form = useForm<AdminGiftInput>({ defaultValues: blankGift });
   const isCollectible = form.watch("isCollectible");
   const saving = createGift.isPending || updateGift.isPending;
 
   const filteredGifts = useMemo(() => {
     const needle = search.trim().toLocaleLowerCase("ru-RU");
-    if (!needle) return gifts;
-    return gifts.filter(item =>
-      `${item.name} ${item.description} ${item.rarity}`.toLocaleLowerCase("ru-RU").includes(needle),
-    );
-  }, [gifts, search]);
+    return gifts
+      .filter(item => showArchived || item.isActive)
+      .filter(item => !needle || `${item.name} ${item.description} ${item.rarity}`.toLocaleLowerCase("ru-RU").includes(needle));
+  }, [gifts, search, showArchived]);
 
   const resetForm = () => {
     setEditingGift(null);
@@ -323,6 +323,19 @@ export function AdminGiftsManager() {
       )}
 
       <div className="flex flex-col gap-3 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-xs text-muted-foreground">
+            {showArchived ? "Все подарки каталога" : "Показываются только подарки, доступные пользователям"}
+          </p>
+          <button
+            type="button"
+            onClick={() => setShowArchived(value => !value)}
+            className={`rounded-lg border px-3 py-2 text-xs font-bold transition ${showArchived ? "border-primary/40 bg-primary/10 text-primary" : "border-border text-muted-foreground hover:bg-secondary hover:text-foreground"}`}
+            data-testid="button-toggle-archived-gifts"
+          >
+            {showArchived ? "Скрыть архив" : `Показать скрытые (${gifts.filter(item => !item.isActive).length})`}
+          </button>
+        </div>
         <label className="sr-only" htmlFor="admin-gifts-search">Поиск по каталогу</label>
         <input
           id="admin-gifts-search"

@@ -17,10 +17,12 @@ function iconDataUrl(presetId: string): string {
 
 function syncBrowserIcon(customIcon: string | null, presetId: string) {
   if (typeof document === "undefined") return;
-  const href = customIcon || iconDataUrl(presetId);
+  const href = customIcon || (presetId === "gta6" ? "/gta6-icon-512.png" : iconDataUrl(presetId));
   document.querySelectorAll<HTMLLinkElement>('link[rel~="icon"], link[rel="apple-touch-icon"]').forEach(link => {
     link.href = href;
   });
+  const tile = document.querySelector<HTMLMetaElement>('meta[name="msapplication-TileImage"]');
+  if (tile) tile.content = href;
 }
 
 export default function PulseLogo({ size = 40 }: { size?: number }) {
@@ -48,6 +50,9 @@ export default function PulseLogo({ size = 40 }: { size?: number }) {
   }, []);
   if (customIcon) {
     return <img src={customIcon} alt="Nova" width={size} height={size} className="rounded-[24%] object-cover" onError={() => { localStorage.removeItem("nova-app-icon"); setCustomIcon(null); }} />;
+  }
+  if (preset === "gta6") {
+    return <img src="/gta6-icon-512.png" alt="Nova GTA VI" width={size} height={size} className="rounded-[24%] object-cover" />;
   }
   const id = `nl_${Math.round(size)}_${Math.random().toString(36).slice(2, 6)}`;
   const presetColors = NOVA_ICON_PRESETS.find(item => item.id === preset)?.colors || NOVA_ICON_PRESETS[0].colors;

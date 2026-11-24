@@ -14,6 +14,8 @@ import { useGetMe } from "@workspace/api-client-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
 import { useHalloweenEvent } from "@/hooks/useHalloweenEvent";
+import { useGta6Event } from "@/hooks/useGta6Event";
+import { applyAppTheme } from "@/lib/appThemes";
 
 /* ─── Types ─────────────────────────────────────────────────────────── */
 type Tab = "quests" | "events" | "leaderboard";
@@ -125,6 +127,7 @@ export default function Events() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const halloweenEnabled = useHalloweenEvent();
+  const gta6Enabled = useGta6Event();
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<Tab>("quests");
   const [completed, setCompleted] = useState<Set<string>>(loadCompleted);
@@ -164,6 +167,15 @@ export default function Events() {
     refetchInterval: 60000,
     enabled: tab === "leaderboard",
   });
+
+  const activateGta6Theme = () => {
+    const currentTheme = localStorage.getItem("pulse-app-theme") || "light";
+    if (currentTheme !== "gta6") localStorage.setItem("pulse-pre-gta6-theme", currentTheme);
+    localStorage.setItem("pulse-app-theme", "gta6");
+    applyAppTheme("gta6");
+    window.dispatchEvent(new CustomEvent("pulse:app-theme", { detail: "gta6" }));
+    toast({ title: en ? "GTA VI mint theme enabled" : "Мятная тема GTA VI включена" });
+  };
 
   /* On mount: reset expired daily/weekly quests */
   useEffect(() => {
@@ -742,6 +754,37 @@ export default function Events() {
             {/* ══════════ EVENTS TAB ══════════ */}
             {tab === "events" && (
               <motion.div key="events" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="space-y-3">
+
+                {gta6Enabled && (
+                  <section
+                    className="relative isolate min-h-[260px] overflow-hidden rounded-[26px] border border-emerald-200/20 bg-[#101d25] shadow-xl shadow-fuchsia-950/20"
+                    aria-labelledby="gta6-event-title"
+                    data-testid="card-gta6-event"
+                  >
+                    <img src="/gta6-event-cover.jpg" alt="" className="absolute inset-0 -z-20 h-full w-full object-cover" />
+                    <div className="absolute inset-0 -z-10 bg-gradient-to-r from-[#071217]/95 via-[#10131b]/65 to-transparent" />
+                    <div className="absolute inset-0 -z-10 bg-gradient-to-t from-[#071217]/80 via-transparent to-transparent" />
+                    <div className="relative flex min-h-[260px] max-w-lg flex-col items-start justify-end p-5 sm:p-7">
+                      <span className="rounded-full border border-emerald-200/30 bg-emerald-300/10 px-3 py-1 text-[10px] font-black uppercase tracking-[.18em] text-emerald-200">
+                        {en ? "Nova seasonal event" : "Событие Nova"}
+                      </span>
+                      <h2 id="gta6-event-title" className="mt-3 text-2xl font-black leading-tight text-white sm:text-3xl">
+                        {en ? "GTA VI · Mint night" : "GTA VI · Мятная ночь"}
+                      </h2>
+                      <p className="mt-2 max-w-sm text-xs leading-relaxed text-white/80 sm:text-sm">
+                        {en ? "Neon coast, warm sunset, and a fresh mint palette for Nova." : "Неоновый берег, розовый закат и свежая мятная палитра для Nova."}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={activateGta6Theme}
+                        className="mt-4 rounded-xl border border-emerald-100/30 bg-emerald-200 px-4 py-2.5 text-xs font-black text-[#08221e] shadow-lg shadow-emerald-950/30 transition hover:bg-emerald-100"
+                        data-testid="button-activate-gta6-theme"
+                      >
+                        {en ? "Use mint theme" : "Включить мятную тему"}
+                      </button>
+                    </div>
+                  </section>
+                )}
 
                 {(me as any)?.isAdmin && (
                   <div className="flex items-center justify-between bg-violet-500/10 border border-violet-500/25 rounded-2xl px-4 py-3">

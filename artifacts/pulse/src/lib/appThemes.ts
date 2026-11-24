@@ -127,6 +127,23 @@ export const APP_THEMES: AppTheme[] = [
     },
   },
   {
+    id: "gta6",
+    name: "GTA VI · Мятная ночь",
+    emoji: "🌴",
+    mode: "dark",
+    preview: "linear-gradient(135deg, #102b2e 0%, #286b68 45%, #86efac 100%)",
+    vars: {
+      "--background": "178 32% 8%", "--foreground": "150 38% 95%",
+      "--card": "178 28% 12%", "--card-foreground": "150 38% 95%", "--card-border": "174 27% 22%",
+      "--popover": "178 28% 12%", "--popover-foreground": "150 38% 95%", "--popover-border": "174 27% 22%",
+      "--primary": "155 72% 58%", "--primary-foreground": "173 42% 10%",
+      "--secondary": "177 27% 19%", "--secondary-foreground": "150 38% 95%",
+      "--muted": "177 25% 18%", "--muted-foreground": "158 20% 67%",
+      "--accent": "154 72% 58%", "--accent-foreground": "173 42% 10%",
+      "--border": "174 27% 22%", "--input": "174 27% 22%", "--ring": "155 72% 58%",
+    },
+  },
+  {
     id: "sapphire",
     name: "Сапфир",
     emoji: "💠",
