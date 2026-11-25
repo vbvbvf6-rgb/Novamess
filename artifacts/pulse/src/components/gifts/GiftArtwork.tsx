@@ -23,9 +23,10 @@ const animationClassByType: Record<string, string> = {
 };
 
 export function GiftArtwork({ item, className = "" }: { item: GiftItem; className?: string }) {
+  const videoUrl = (item as GiftItem & { videoUrl?: string | null }).videoUrl;
   const localArtwork = GIFT_LOCAL_PNG[item.name];
   const isStickerArtwork = localArtwork?.startsWith("/gifts/emoji/") || localArtwork?.startsWith("/gifts/gen/");
-  const sources = [item.imageUrl, isStickerArtwork ? null : localArtwork, "/gifts/gift-box.svg"].filter(Boolean) as string[];
+  const sources = [videoUrl, item.imageUrl, isStickerArtwork ? null : localArtwork, "/gifts/gift-box.svg"].filter(Boolean) as string[];
   const [sourceIndex, setSourceIndex] = useState(0);
 
   return (
@@ -33,15 +34,30 @@ export function GiftArtwork({ item, className = "" }: { item: GiftItem; classNam
       className={`gift-art-motion ${animationClassByType[item.animationType] || ""}`}
       data-gift-animation={item.animationType}
     >
-      <img
-        src={sources[sourceIndex]}
-        alt={item.name}
-        loading="lazy"
-        decoding="async"
-        onError={() => setSourceIndex(index => Math.min(index + 1, sources.length - 1))}
-        className={`gift-art object-contain ${className}`}
-        data-testid={`img-gift-art-${item.id}`}
-      />
+      {sourceIndex === 0 && videoUrl ? (
+        <video
+          src={videoUrl}
+          aria-label={item.name}
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="metadata"
+          onError={() => setSourceIndex(index => Math.min(index + 1, sources.length - 1))}
+          className={`gift-art object-contain ${className}`}
+          data-testid={`img-gift-art-${item.id}`}
+        />
+      ) : (
+        <img
+          src={sources[sourceIndex]}
+          alt={item.name}
+          loading="lazy"
+          decoding="async"
+          onError={() => setSourceIndex(index => Math.min(index + 1, sources.length - 1))}
+          className={`gift-art object-contain ${className}`}
+          data-testid={`img-gift-art-${item.id}`}
+        />
+      )}
     </span>
   );
 }

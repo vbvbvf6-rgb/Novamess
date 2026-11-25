@@ -3,6 +3,7 @@ import { db, usersTable } from "@workspace/db";
 import { eq, like, or, sql } from "drizzle-orm";
 import { UpdateMeBody } from "@workspace/api-zod";
 import { offloadDataUrl } from "../lib/objectStorage";
+import { includeActivePhoto, isAllowedPhotoUrl, MAX_PROFILE_PHOTOS, parsePhotoUrls } from "../lib/photoGallery";
 import { sendVerificationEmail, isMailerConfigured } from "../lib/mailer";
 import { getActiveUserModeration } from "../lib/userModeration";
 import { isHalloweenEventEnabled } from "../lib/halloweenEvent";
@@ -45,6 +46,7 @@ router.get("/users/me", async (req, res) => {
     const popularity = 0;
     res.json({
       ...user,
+      photoUrls: includeActivePhoto(parsePhotoUrls((user as any).photoUrls), user.avatarUrl),
       nicknameStyle: row?.nickname_style ?? null,
       balance,
       hasPrime,
@@ -64,6 +66,68 @@ router.get("/users/me", async (req, res) => {
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.get("/users/:userId/photos", async (req, res) => {
+  try {
+    const userId = Number(req.params.userId);
+    if (!Number.isInteger(userId) || userId <= 0) return res.status(400).json({ error: "Некорректный профиль" });
+    const rows = await db.execute(sql`SELECT avatar_url, photo_urls FROM users WHERE id = ${userId} LIMIT 1`);
+    const user = rows.rows[0] as any;
+    if (!user) return res.status(404).json({ error: "Профиль не найден" });
+    res.json({
+      photos: includeActivePhoto(parsePhotoUrls(user.photo_urls), user.avatar_url),
+      activeUrl: user.avatar_url ?? null,
+    });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Не удалось загрузить фотографии профиля" });
+  }
+});
+
+router.post("/users/me/photos", async (req, res) => {
+  try {
+    const userId = req.currentUserId;
+    const action = String(req.body?.action || "add");
+    const photoUrl = req.body?.photoUrl;
+    if (!["add", "activate", "remove"].includes(action) || !isAllowedPhotoUrl(photoUrl)) {
+      return res.status(400).json({ error: "Выберите корректную фотографию" });
+    }
+    const storedUrl = action === "add" ? await offloadDataUrl(photoUrl, "avatars") : photoUrl;
+    const result = await db.transaction(async tx => {
+      const rows = await tx.execute(sql`SELECT avatar_url, photo_urls FROM users WHERE id = ${userId} FOR UPDATE`);
+      const user = rows.rows[0] as any;
+      if (!user) throw Object.assign(new Error("Пользователь не найден"), { status: 404 });
+      let photos = includeActivePhoto(parsePhotoUrls(user.photo_urls), user.avatar_url);
+      let activeUrl: string | null = user.avatar_url ?? null;
+
+      if (action === "add") {
+        if (!photos.includes(storedUrl)) {
+          if (photos.length >= MAX_PROFILE_PHOTOS) throw Object.assign(new Error(`Можно сохранить не больше ${MAX_PROFILE_PHOTOS} фото`), { status: 400 });
+          photos = [...photos, storedUrl];
+        }
+        if (req.body?.activate === true || !activeUrl) activeUrl = storedUrl;
+      } else if (action === "activate") {
+        if (!photos.includes(photoUrl)) throw Object.assign(new Error("Этой фотографии нет в профиле"), { status: 404 });
+        activeUrl = photoUrl;
+      } else {
+        photos = photos.filter(url => url !== photoUrl);
+        if (activeUrl === photoUrl) activeUrl = photos[0] ?? null;
+      }
+
+      await tx.execute(sql`
+        UPDATE users SET photo_urls = ${JSON.stringify(photos)}, avatar_url = ${activeUrl}
+        WHERE id = ${userId}
+      `);
+      return { photos, activeUrl };
+    });
+    res.json(result);
+  } catch (err: any) {
+    const status = Number(err?.status) || 500;
+    if (status < 500) return res.status(status).json({ error: err.message });
+    req.log.error(err);
+    res.status(500).json({ error: "Не удалось обновить фотографии профиля" });
   }
 });
 

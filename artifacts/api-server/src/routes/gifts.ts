@@ -33,6 +33,7 @@ function catalogGift(row: any) {
     description: row.description ?? "",
     primeOnly: Boolean(row.prime_only),
     imageUrl: row.image_url ?? null,
+    videoUrl: row.video_url ?? null,
     isCollectible: Boolean(row.is_collectible),
     isActive: row.is_active === undefined ? true : Boolean(row.is_active),
     maxSupply,
@@ -167,7 +168,7 @@ async function getGiftInstance(giftId: number, viewerId: number) {
     SELECT g.id, g.gift_item_id, g.sender_id, g.receiver_id, g.message, g.is_anonymous, g.chat_id,
            g.created_at, g.inventory_status, g.is_upgraded, g.serial_number,
            gi.name, gi.emoji, gi.animation_type, gi.rarity, gi.stars, gi.price, gi.description,
-           gi.prime_only, gi.image_url, gi.is_collectible, gi.is_active, gi.max_supply,
+           gi.prime_only, gi.image_url, gi.video_url, gi.is_collectible, gi.is_active, gi.max_supply,
            gi.exchange_value, gi.upgrade_price,
            COUNT(all_gifts.id)::int AS sold_count,
            sender.display_name AS sender_name,
@@ -195,7 +196,10 @@ function ensureProfileGiftTable() {
         pinned_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         UNIQUE (user_id, gift_id)
       )
-    `).then(() => undefined);
+    `).then(() => undefined).catch(error => {
+      profileGiftTableReady = null;
+      throw error;
+    });
   }
   return profileGiftTableReady;
 }
@@ -203,7 +207,7 @@ function ensureProfileGiftTable() {
 const profileGiftSelect = sql`
   SELECT g.id, g.sender_id, g.receiver_id, g.message, g.is_anonymous, g.created_at,
          g.inventory_status, g.is_upgraded, g.serial_number,
-         gi.name AS gift_name, gi.emoji AS gift_emoji, gi.image_url AS gift_image_url,
+         gi.name AS gift_name, gi.emoji AS gift_emoji, gi.image_url AS gift_image_url, gi.video_url AS gift_video_url,
          gi.description AS gift_description, gi.is_collectible, gi.max_supply,
          gi.exchange_value, gi.upgrade_price, u.display_name AS sender_name
   FROM gifts g
@@ -221,6 +225,7 @@ function formatProfileGift(row: any, isPinned = false) {
     name: row.gift_name,
     emoji: row.gift_emoji,
     imageUrl: row.gift_image_url,
+    videoUrl: row.gift_video_url,
     description: row.gift_description,
     isPinned,
     isCollectible: Boolean(row.is_collectible),
@@ -257,7 +262,7 @@ router.get("/gifts/mine", async (req, res) => {
       SELECT g.id, g.gift_item_id, g.sender_id, g.receiver_id, g.message, g.is_anonymous, g.chat_id,
              g.created_at, g.inventory_status, g.is_upgraded, g.serial_number,
              gi.name, gi.emoji, gi.animation_type, gi.rarity, gi.stars, gi.price, gi.description,
-             gi.prime_only, gi.image_url, gi.is_collectible, gi.is_active, gi.max_supply, gi.exchange_value, gi.upgrade_price,
+             gi.prime_only, gi.image_url, gi.video_url, gi.is_collectible, gi.is_active, gi.max_supply, gi.exchange_value, gi.upgrade_price,
              COUNT(all_gifts.id)::int AS sold_count,
              sender.display_name AS sender_name,
              receiver.display_name AS receiver_name

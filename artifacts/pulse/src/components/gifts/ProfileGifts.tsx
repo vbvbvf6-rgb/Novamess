@@ -12,8 +12,10 @@ interface ProfileGift {
   name: string;
   emoji: string;
   imageUrl?: string | null;
+  videoUrl?: string | null;
   description?: string | null;
   isPinned: boolean;
+  inventoryStatus?: string | null;
 }
 
 function authHeaders(json = false): Record<string, string> {
@@ -48,6 +50,16 @@ export function ProfileGifts({ userId, editable }: { userId: number; editable: b
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Не удалось обновить подарок");
+      queryClient.setQueryData<{ pinned: ProfileGift[]; received: ProfileGift[] }>(queryKey, current => {
+        if (!current) return current;
+        const isPinned = !gift.isPinned;
+        return {
+          pinned: isPinned
+            ? [gift, ...current.pinned.filter(item => item.id !== gift.id)]
+            : current.pinned.filter(item => item.id !== gift.id),
+          received: current.received.map(item => item.id === gift.id ? { ...item, isPinned } : item),
+        };
+      });
       await queryClient.invalidateQueries({ queryKey });
       toast({ title: gift.isPinned ? "Подарок убран из профиля" : "Подарок закреплён в профиле" });
     } catch (error) {
@@ -108,7 +120,18 @@ export function ProfileGifts({ userId, editable }: { userId: number; editable: b
                 </span>
               )}
               <div className="mx-auto mb-2 flex h-14 w-14 items-center justify-center">
-                {gift.imageUrl ? (
+                {gift.videoUrl ? (
+                  <video
+                    src={gift.videoUrl}
+                    aria-label={gift.name}
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    preload="metadata"
+                    className="h-full w-full object-contain"
+                  />
+                ) : gift.imageUrl ? (
                   <img src={gift.imageUrl} alt={gift.name} className="h-full w-full object-contain" />
                 ) : (
                   <span className="text-4xl" role="img" aria-label={gift.name}>{gift.emoji || "🎁"}</span>
@@ -121,14 +144,14 @@ export function ProfileGifts({ userId, editable }: { userId: number; editable: b
                 <button
                   type="button"
                   onClick={() => void togglePin(gift)}
-                  disabled={busyGiftId === gift.id || (!gift.isPinned && (data?.pinned.length ?? 0) >= 12)}
+                  disabled={busyGiftId === gift.id || (!gift.isPinned && gift.inventoryStatus === "exchanged") || (!gift.isPinned && (data?.pinned.length ?? 0) >= 12)}
                   className={`mt-2 inline-flex items-center justify-center gap-1 rounded-xl px-2.5 py-1.5 text-[10px] font-bold transition disabled:cursor-not-allowed disabled:opacity-40 ${
                     gift.isPinned ? "bg-secondary text-muted-foreground hover:text-foreground" : "bg-primary/10 text-primary hover:bg-primary/20"
                   }`}
                   data-testid={`${gift.isPinned ? "button-unpin-gift" : "button-pin-gift"}-${gift.id}`}
                 >
                   {gift.isPinned ? <PinOff size={11} /> : <Pin size={11} />}
-                  {busyGiftId === gift.id ? "Сохраняем…" : gift.isPinned ? "Открепить" : "Закрепить"}
+                  {busyGiftId === gift.id ? "Сохраняем…" : gift.inventoryStatus === "exchanged" && !gift.isPinned ? "Обменян" : gift.isPinned ? "Открепить" : "Закрепить"}
                 </button>
               )}
             </article>

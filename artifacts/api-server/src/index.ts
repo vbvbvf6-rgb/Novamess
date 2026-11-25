@@ -75,6 +75,8 @@ if (Number.isNaN(port) || port <= 0) {
     // Keep essential read-path columns here so a new DB is usable immediately.
     await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS nickname_style TEXT`);
     await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_frame TEXT`);
+    await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS photo_urls TEXT NOT NULL DEFAULT '[]'`);
+    await db.execute(sql`ALTER TABLE chats ADD COLUMN IF NOT EXISTS photo_urls TEXT NOT NULL DEFAULT '[]'`);
     await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS login_code_hash TEXT`);
     await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS login_code_expires_at TIMESTAMP WITH TIME ZONE`);
     // The Drizzle user schema includes these flags, but the imported baseline
@@ -92,6 +94,7 @@ if (Number.isNaN(port) || port <= 0) {
       updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
     )`);
     await db.execute(sql`ALTER TABLE gift_items ADD COLUMN IF NOT EXISTS image_url TEXT`);
+    await db.execute(sql`ALTER TABLE gift_items ADD COLUMN IF NOT EXISTS video_url TEXT`);
     await db.execute(sql`ALTER TABLE gift_items ADD COLUMN IF NOT EXISTS is_collectible BOOLEAN NOT NULL DEFAULT FALSE`);
     await db.execute(sql`ALTER TABLE gift_items ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT TRUE`);
     await db.execute(sql`ALTER TABLE gift_items ADD COLUMN IF NOT EXISTS max_supply INTEGER`);
@@ -100,6 +103,24 @@ if (Number.isNaN(port) || port <= 0) {
     await db.execute(sql`ALTER TABLE gifts ADD COLUMN IF NOT EXISTS inventory_status TEXT NOT NULL DEFAULT 'received'`);
     await db.execute(sql`ALTER TABLE gifts ADD COLUMN IF NOT EXISTS is_upgraded BOOLEAN NOT NULL DEFAULT FALSE`);
     await db.execute(sql`ALTER TABLE gifts ADD COLUMN IF NOT EXISTS serial_number INTEGER`);
+    await db.execute(sql`CREATE TABLE IF NOT EXISTS profile_pinned_gifts (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      gift_id INTEGER NOT NULL REFERENCES gifts(id) ON DELETE CASCADE,
+      pinned_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+      UNIQUE (user_id, gift_id)
+    )`);
+    await db.execute(sql`CREATE TABLE IF NOT EXISTS channel_votes (
+      id SERIAL PRIMARY KEY,
+      chat_id INTEGER NOT NULL REFERENCES chats(id) ON DELETE CASCADE,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      request_id TEXT NOT NULL,
+      vote_count INTEGER NOT NULL CHECK (vote_count > 0),
+      currency_spent INTEGER NOT NULL CHECK (currency_spent > 0),
+      created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+      UNIQUE (user_id, request_id)
+    )`);
+    await db.execute(sql`CREATE INDEX IF NOT EXISTS channel_votes_chat_id_idx ON channel_votes(chat_id)`);
     // Cosmetic inventory and prize-code tables must exist after migrations and
     // before the API begins serving requests (route-module DDL can run too early
     // on a brand-new database).

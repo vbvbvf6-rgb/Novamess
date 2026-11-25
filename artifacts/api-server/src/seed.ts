@@ -169,22 +169,10 @@ const GIFT_CATALOG = [
 const PREVIOUS_FEATURED_GIFT_NAMES = ["Роза", "Подарок", "Сердце"];
 
 const FEATURED_GIFTS = [
-  { name: "Роза в стекле", emoji: "🌹", animationType: "roses", rarity: "rare", stars: 3, price: 80, description: "Живая роза под прозрачным стеклянным куполом", primeOnly: false, imageUrl: "/gifts/rose-in-glass.png" },
-  { name: "Фен «Aurora»", emoji: "💨", animationType: "sparkle", rarity: "epic", stars: 5, price: 180, description: "Перламутровый фен с золотыми деталями", primeOnly: false, imageUrl: "/gifts/photo-crystal.png" },
-  { name: "Парфюм «Ночной сад»", emoji: "🧴", animationType: "hearts", rarity: "rare", stars: 4, price: 120, description: "Флакон нежного аромата с золотой крышкой", primeOnly: false, imageUrl: "/gifts/photo-perfume.png" },
-  { name: "Наушники Nova Air", emoji: "🎧", animationType: "orbit", rarity: "epic", stars: 5, price: 210, description: "Мягкий звук в лавандовых беспроводных наушниках", primeOnly: false, imageUrl: "/gifts/photo-headphones.png" },
-  { name: "Сумочка «Бархат»", emoji: "👜", animationType: "sparkle", rarity: "rare", stars: 4, price: 140, description: "Изящная вечерняя сумочка с золотой застёжкой", primeOnly: false, imageUrl: "/gifts/photo-handbag.png" },
-  { name: "Лунный светильник", emoji: "🌙", animationType: "galaxy", rarity: "epic", stars: 6, price: 260, description: "Тёплый свет маленькой луны на элегантной подставке", primeOnly: false, imageUrl: "/gifts/photo-moon-lamp.png" },
-  { name: "Сакура в стекле", emoji: "🌸", animationType: "bloom", rarity: "legendary", stars: 8, price: 420, description: "Цветущая ветка сакуры в стеклянном колпаке", primeOnly: false, imageUrl: "/gifts/sakura.png" },
-  { name: "Кристалл желаний", emoji: "🔮", animationType: "magic", rarity: "epic", stars: 6, price: 230, description: "Сияющий кристалл, хранящий доброе пожелание", primeOnly: false, imageUrl: "/gifts/magic-crystal.png" },
-  { name: "Золотая корона", emoji: "👑", animationType: "diamonds", rarity: "legendary", stars: 8, price: 460, description: "Ювелирная корона с сияющими камнями", primeOnly: false, imageUrl: "/gifts/crown.png" },
-  { name: "Мишка с бантом", emoji: "🧸", animationType: "hearts", rarity: "rare", stars: 4, price: 130, description: "Плюшевый медвежонок с атласным бантом", primeOnly: false, imageUrl: "/gifts/teddy-bear.png" },
-  { name: "Консоль Nova Play", emoji: "🎮", animationType: "lightning", rarity: "epic", stars: 7, price: 340, description: "Игровая консоль для новых приключений", primeOnly: false, imageUrl: "/gifts/gaming-console.png" },
-  { name: "Алмазное сердце", emoji: "💎", animationType: "diamonds", rarity: "legendary", stars: 9, price: 520, description: "Сердце из прозрачного сияющего кристалла", primeOnly: false, imageUrl: "/gifts/diamond-heart.png" },
-  { name: "Сапфир в стекле", emoji: "💠", animationType: "magic", rarity: "epic", stars: 6, price: 280, description: "Бирюзовый сапфир под стеклянным куполом", primeOnly: false, imageUrl: "/gifts/photo-sapphire.png" },
-  { name: "Корона «Аврора»", emoji: "👑", animationType: "diamonds", rarity: "legendary", stars: 8, price: 460, description: "Золотая корона с драгоценными камнями", primeOnly: false, imageUrl: "/gifts/photo-crown.png" },
-  { name: "Кулон «Лунный свет»", emoji: "🌙", animationType: "galaxy", rarity: "rare", stars: 4, price: 160, description: "Серебряный кулон в форме полумесяца", primeOnly: false, imageUrl: "/gifts/photo-pendant.png" },
-  { name: "Кристалл «Рассвет»", emoji: "🔮", animationType: "magic", rarity: "epic", stars: 6, price: 250, description: "Розово-фиолетовая друза в стеклянном куполе", primeOnly: false, imageUrl: "/gifts/photo-crystal.png" },
+  { name: "Подарок", emoji: "🎁", animationType: "confetti", rarity: "common", stars: 1, price: 80, description: "Подарочная коробка с красным бантом", primeOnly: false, videoUrl: "/gifts/video-gift-box.mp4" },
+  { name: "Сердце", emoji: "❤️", animationType: "hearts", rarity: "common", stars: 1, price: 80, description: "Розовое сердце", primeOnly: false, videoUrl: "/gifts/video-pink-heart.mp4" },
+  { name: "Медвежонок", emoji: "🧸", animationType: "hearts", rarity: "rare", stars: 2, price: 130, description: "Плюшевый медвежонок", primeOnly: false, videoUrl: "/gifts/video-teddy-bear.mp4" },
+  { name: "Лягушонок с сердцем", emoji: "💚", animationType: "hearts", rarity: "rare", stars: 2, price: 150, description: "Лягушонок с розовым сердцем", primeOnly: false, videoUrl: "/gifts/video-frog-heart.mp4" },
 ];
 
 const SYSTEM_USERS: Array<{
@@ -224,20 +212,14 @@ const SYSTEM_USERS: Array<{
 export async function runSeed() {
   const allGifts = FEATURED_GIFTS;
   const activeGiftNames = new Set(allGifts.map(gift => gift.name));
-  const retiredGiftNames = [...new Set([
-    ...GIFT_CATALOG.map(gift => gift.name),
-    ...PREVIOUS_FEATURED_GIFT_NAMES,
-  ])].filter(name => !activeGiftNames.has(name));
-  if (retiredGiftNames.length > 0) {
-    await db.execute(sql`
-      UPDATE gift_items SET is_active = FALSE
-      WHERE name IN (${sql.join(retiredGiftNames.map(name => sql`${name}`), sql`, `)})
-    `);
-  }
+  await db.execute(sql`
+    UPDATE gift_items SET is_active = FALSE
+    WHERE name NOT IN (${sql.join([...activeGiftNames].map(name => sql`${name}`), sql`, `)})
+  `);
 
   await db.execute(sql`
     INSERT INTO gift_items
-      (name, emoji, animation_type, rarity, stars, price, description, prime_only, image_url,
+      (name, emoji, animation_type, rarity, stars, price, description, prime_only, image_url, video_url,
        is_collectible, is_active, max_supply, exchange_value, upgrade_price)
     VALUES ${sql.join(allGifts.map((gift) => {
       const isCollectible = gift.rarity !== "common";
@@ -248,11 +230,25 @@ export async function runSeed() {
         : null;
       return sql`(
         ${gift.name}, ${gift.emoji}, ${gift.animationType}, ${gift.rarity}, ${gift.stars},
-        ${gift.price}, ${gift.description}, ${gift.primeOnly}, ${"imageUrl" in gift ? gift.imageUrl : null}, ${isCollectible},
+        ${gift.price}, ${gift.description}, ${gift.primeOnly}, ${null}, ${"videoUrl" in gift ? gift.videoUrl : null}, ${isCollectible},
         TRUE, ${maxSupply}, ${Math.round(gift.price * 0.85)}, ${Math.round(gift.price * 0.5)}
       )`;
     }), sql`, `)}
-    ON CONFLICT (name) DO NOTHING
+    ON CONFLICT (name) DO UPDATE SET
+      emoji = EXCLUDED.emoji,
+      animation_type = EXCLUDED.animation_type,
+      rarity = EXCLUDED.rarity,
+      stars = EXCLUDED.stars,
+      price = EXCLUDED.price,
+      description = EXCLUDED.description,
+      prime_only = EXCLUDED.prime_only,
+      image_url = EXCLUDED.image_url,
+      video_url = EXCLUDED.video_url,
+      is_collectible = EXCLUDED.is_collectible,
+      is_active = TRUE,
+      max_supply = EXCLUDED.max_supply,
+      exchange_value = EXCLUDED.exchange_value,
+      upgrade_price = EXCLUDED.upgrade_price
   `);
 
   // Move the old hand-drawn SVG catalog art to the new raster product renders

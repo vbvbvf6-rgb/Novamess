@@ -3,14 +3,15 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search, X, MessageSquare, ChevronRight, Hash, Users, Radio,
-  UserPlus, Check, Loader2, User, ArrowLeft, Lock
+  UserPlus, Check, Loader2, User, ArrowLeft, Lock, Zap
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAppContext } from "@/contexts/AppContext";
 import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
-import { getGetChatsQueryKey, useGetChats, Chat } from "@workspace/api-client-react";
+import { getGetChatsQueryKey, useGetChats, useGetMe, Chat } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 
 interface MessageResult {
   id: number;
@@ -35,6 +36,7 @@ interface PublicChat {
   description?: string;
   member_count: number;
   is_member: boolean;
+  popularity_votes?: number;
 }
 
 interface UserResult {
@@ -110,6 +112,8 @@ export function GlobalSearch({ onClose, initialQuery = "" }: GlobalSearchProps) 
   const { setSelectedChatId, currentUserId } = useAppContext();
   const queryClient = useQueryClient();
   const { data: myChats } = useGetChats();
+  const { data: me } = useGetMe();
+  const { toast } = useToast();
 
   const [query, setQuery] = useState(initialQuery);
   const [globalChats, setGlobalChats] = useState<PublicChat[]>([]);
@@ -118,6 +122,8 @@ export function GlobalSearch({ onClose, initialQuery = "" }: GlobalSearchProps) 
   const [loading, setLoading] = useState(false);
   const [joiningId, setJoiningId] = useState<number | null>(null);
   const [openingDmId, setOpeningDmId] = useState<number | null>(null);
+  const [votingId, setVotingId] = useState<number | null>(null);
+  const [voteAmount, setVoteAmount] = useState(1);
   const [previewChat, setPreviewChat] = useState<PublicChat | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -166,6 +172,11 @@ export function GlobalSearch({ onClose, initialQuery = "" }: GlobalSearchProps) 
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [query, runSearch]);
 
+  useEffect(() => {
+    const refresh = setInterval(() => void runSearch(query), 30_000);
+    return () => clearInterval(refresh);
+  }, [query, runSearch]);
+
   const doJoin = async (chat: PublicChat) => {
     const isMember = chat.is_member === true || (chat.is_member as any) === "true" || (chat.is_member as any) === 1;
     if (isMember) {
@@ -202,6 +213,40 @@ export function GlobalSearch({ onClose, initialQuery = "" }: GlobalSearchProps) 
     }
     // Show preview modal centered in viewport
     setPreviewChat(chat);
+  };
+
+  const sendChannelVotes = async (chat: PublicChat) => {
+    if (chat.type !== "channel" || votingId === chat.id) return;
+    setVotingId(chat.id);
+    try {
+      const response = await fetch(`/api/chats/${chat.id}/votes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+        body: JSON.stringify({ voteCount: voteAmount, requestId: crypto.randomUUID() }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || "Не удалось отправить голоса");
+      setPreviewChat(current => current?.id === chat.id
+        ? { ...current, popularity_votes: result.popularityVotes }
+        : current);
+      setGlobalChats(current => current.map(item => item.id === chat.id
+        ? { ...item, popularity_votes: result.popularityVotes }
+        : item));
+      await queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
+      void runSearch(query);
+      toast({
+        title: "Голоса отправлены",
+        description: `Канал получил ${voteAmount} ${voteAmount === 1 ? "голос" : "голоса"}; потрачено ${result.currencySpent} Nova.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Не удалось отправить голоса",
+        description: error instanceof Error ? error.message : undefined,
+        variant: "destructive",
+      });
+    } finally {
+      setVotingId(null);
+    }
   };
 
   const handleOpenDm = async (user: UserResult) => {
@@ -500,12 +545,46 @@ export function GlobalSearch({ onClose, initialQuery = "" }: GlobalSearchProps) 
                       <p className="text-sm text-muted-foreground font-medium mt-0.5">
                         {previewChat.type === "channel" ? "Канал" : "Группа"} · <MemberCount count={previewChat.member_count} />
                       </p>
+                      {previewChat.type === "channel" && (
+                        <p className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-primary">
+                          <Zap size={13} /> Популярность: {previewChat.popularity_votes ?? 0}
+                        </p>
+                      )}
                       {previewChat.description && (
                         <p className="text-sm text-foreground/70 mt-2 leading-snug">{previewChat.description}</p>
                       )}
                     </div>
                   </div>
                   <div className="px-5 pb-6 flex flex-col gap-2">
+                    {previewChat.type === "channel" && (
+                      <div className="rounded-2xl border border-primary/20 bg-primary/5 p-3">
+                        <label className="mb-2 flex items-center justify-between gap-3 text-xs text-muted-foreground">
+                          <span>Количество голосов</span>
+                          <input
+                            type="number"
+                            min={1}
+                            max={100}
+                            value={voteAmount}
+                            onChange={event => setVoteAmount(Math.min(100, Math.max(1, Number(event.target.value) || 1)))}
+                            className="w-16 rounded-lg border border-border bg-background px-2 py-1 text-center font-bold text-foreground"
+                            aria-label="Количество голосов"
+                          />
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => void sendChannelVotes(previewChat)}
+                          disabled={votingId === previewChat.id}
+                          className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary/10 px-3 py-2.5 text-sm font-bold text-primary transition hover:bg-primary/20 disabled:opacity-60"
+                          data-testid={`button-vote-channel-${previewChat.id}`}
+                        >
+                          {votingId === previewChat.id ? <Loader2 size={16} className="animate-spin" /> : <Zap size={16} />}
+                          Поддержать · {voteAmount * 100} Nova
+                        </button>
+                        <p className="mt-2 text-center text-[10px] text-muted-foreground">
+                          Баланс: {Number((me as any)?.balance ?? 0).toLocaleString("ru-RU")} Nova · 100 за голос
+                        </p>
+                      </div>
+                    )}
                     <button
                       onClick={() => doJoin(previewChat)}
                       disabled={joiningId === previewChat.id}
@@ -513,6 +592,8 @@ export function GlobalSearch({ onClose, initialQuery = "" }: GlobalSearchProps) 
                     >
                       {joiningId === previewChat.id ? (
                         <Loader2 size={18} className="animate-spin" />
+                      ) : previewChat.is_member ? (
+                        <><Check size={18} /> Открыть {previewChat.type === "channel" ? "канал" : "группу"}</>
                       ) : (
                         <><UserPlus size={18} /> Вступить в {previewChat.type === "channel" ? "канал" : "группу"}</>
                       )}
@@ -581,6 +662,11 @@ function GlobalChatRow({
         )}
         <p className="text-[11px] text-muted-foreground/60 mt-0.5">
           <MemberCount count={chat.member_count} />
+          {chat.type === "channel" && (chat.popularity_votes ?? 0) > 0 && (
+            <span className="ml-2 inline-flex items-center gap-0.5 text-primary">
+              <Zap size={10} /> {chat.popularity_votes}
+            </span>
+          )}
         </p>
       </div>
 

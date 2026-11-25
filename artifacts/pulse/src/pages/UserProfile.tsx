@@ -47,6 +47,7 @@ import { GiftPicker } from "@/components/gifts/GiftPicker";
 import { ProfileGifts } from "@/components/gifts/ProfileGifts";
 import { PrimeGiftDialog } from "@/components/gifts/PrimeGiftDialog";
 import { MediaGallery } from "@/components/media/MediaGallery";
+import { PhotoAlbum } from "@/components/PhotoAlbum";
 
 const getToken = () => sessionStorage.getItem("pulse-token");
 
@@ -703,6 +704,7 @@ export default function UserProfile() {
             </motion.div>
           )}
 
+          <PhotoAlbum scope="user" entityId={Number(user.id)} editable={isMe} />
           <ProfileGifts userId={userId} editable={isMe} />
           {!isMe && directChatId && <MediaGallery chatId={directChatId} />}
 

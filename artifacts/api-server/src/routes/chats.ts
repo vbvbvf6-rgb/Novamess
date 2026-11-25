@@ -4,9 +4,15 @@ import { eq, and, desc, inArray, count, gt, isNull, ne, lte, sql } from "drizzle
 import { CreateChatBody, UpdateChatBody, AddChatMemberBody } from "@workspace/api-zod";
 import { broadcastToChat, setTyping, stopTyping } from "../lib/sse";
 import { offloadDataUrl } from "../lib/objectStorage";
+import { includeActivePhoto, isAllowedPhotoUrl, MAX_PROFILE_PHOTOS, parsePhotoUrls } from "../lib/photoGallery";
 import { getActiveUserModeration, moderationBlocksStartingDirectChat } from "../lib/userModeration";
 
 const router = Router();
+const CHANNEL_VOTE_PRICE = 100;
+
+function canManageChat(role: unknown) {
+  return role === "owner" || role === "admin";
+}
 
 function anonymousChatSender() {
   return {
@@ -210,6 +216,7 @@ async function buildChat(chatId: number, currentUserId: number) {
 
   return {
     ...chat,
+    photoUrls: includeActivePhoto(parsePhotoUrls((chat as any).photoUrls), (chat as any).avatarUrl),
     isPinned: myMember?.member.isPinned ?? false,
     isMuted: myMember?.member.isMuted ?? false,
     isArchived: (myMember?.member as any)?.isArchived ?? false,
@@ -430,6 +437,7 @@ async function buildChatsForUser(uid: number) {
       ...chat,
       avatarUrl: chat.avatar_url,
       avatarColor: chat.avatar_color,
+      photoUrls: includeActivePhoto(parsePhotoUrls(chat.photo_urls), chat.avatar_url),
       isPinned: mem.is_pinned ?? false,
       isMuted: mem.is_muted ?? false,
       isArchived: mem.is_archived ?? false,
@@ -605,10 +613,15 @@ router.get("/chats/discover", async (req, res) => {
     const rows = await db.execute(sql`
       SELECT
         c.id, c.name, c.type, c.avatar_url, c.avatar_color, c.description,
+        COALESCE(votes.popularity_votes, 0)::int AS popularity_votes,
         COUNT(DISTINCT cm.user_id)::int AS member_count,
         EXISTS(SELECT 1 FROM chat_members WHERE chat_id = c.id AND user_id = ${uid}) AS is_member
       FROM chats c
       LEFT JOIN chat_members cm ON cm.chat_id = c.id
+      LEFT JOIN (
+        SELECT chat_id, SUM(vote_count)::int AS popularity_votes
+        FROM channel_votes GROUP BY chat_id
+      ) votes ON votes.chat_id = c.id
       WHERE c.type IN ('group','channel')
         AND (
           c.type = 'channel'
@@ -616,14 +629,147 @@ router.get("/chats/discover", async (req, res) => {
           OR EXISTS(SELECT 1 FROM chat_members WHERE chat_id = c.id AND user_id = ${uid})
         )
         AND (${q} = '' OR c.name ILIKE ${'%' + q + '%'} OR COALESCE(c.description,'') ILIKE ${'%' + q + '%'})
-      GROUP BY c.id
-      ORDER BY member_count DESC, c.created_at DESC
+      GROUP BY c.id, votes.popularity_votes
+      ORDER BY popularity_votes DESC, member_count DESC, c.created_at DESC
       LIMIT 40
     `);
     res.json(rows.rows);
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.post("/chats/:chatId/votes", async (req, res) => {
+  try {
+    const userId = req.currentUserId;
+    const chatId = Number(req.params.chatId);
+    const voteCount = Number(req.body?.voteCount ?? 1);
+    const requestId = String(req.body?.requestId ?? "");
+    if (!Number.isInteger(chatId) || chatId <= 0 ||
+        !Number.isInteger(voteCount) || voteCount < 1 || voteCount > 100 ||
+        !/^[0-9a-f-]{36}$/i.test(requestId)) {
+      return res.status(400).json({ error: "Некорректные данные голосования" });
+    }
+
+    const cost = voteCount * CHANNEL_VOTE_PRICE;
+    const result = await db.transaction(async tx => {
+      const chatRows = await tx.execute(sql`SELECT type FROM chats WHERE id = ${chatId} LIMIT 1`);
+      if ((chatRows.rows[0] as any)?.type !== "channel") {
+        throw Object.assign(new Error("Голосовать можно только за канал"), { status: 404 });
+      }
+      const balanceRows = await tx.execute(sql`SELECT balance FROM users WHERE id = ${userId} FOR UPDATE`);
+      if (!balanceRows.rows.length) throw Object.assign(new Error("Пользователь не найден"), { status: 404 });
+      const existingRows = await tx.execute(sql`
+        SELECT chat_id, vote_count FROM channel_votes
+        WHERE user_id = ${userId} AND request_id = ${requestId} LIMIT 1
+      `);
+      const existing = existingRows.rows[0] as any;
+      if (existing) {
+        if (Number(existing.chat_id) !== chatId || Number(existing.vote_count) !== voteCount) {
+          throw Object.assign(new Error("Идентификатор запроса уже использован"), { status: 409 });
+        }
+      } else {
+        const chargeRows = await tx.execute(sql`
+          UPDATE users SET balance = balance - ${cost}
+          WHERE id = ${userId} AND balance >= ${cost}
+          RETURNING balance
+        `);
+        if (!chargeRows.rows.length) {
+          throw Object.assign(new Error("Недостаточно Nova для голосования"), { status: 402 });
+        }
+        await tx.execute(sql`
+          INSERT INTO channel_votes (chat_id, user_id, request_id, vote_count, currency_spent)
+          VALUES (${chatId}, ${userId}, ${requestId}, ${voteCount}, ${cost})
+        `);
+      }
+      const [balance, totals] = await Promise.all([
+        tx.execute(sql`SELECT balance FROM users WHERE id = ${userId}`),
+        tx.execute(sql`SELECT COALESCE(SUM(vote_count), 0)::int AS popularity_votes FROM channel_votes WHERE chat_id = ${chatId}`),
+      ]);
+      return {
+        balance: Number((balance.rows[0] as any)?.balance ?? 0),
+        popularityVotes: Number((totals.rows[0] as any)?.popularity_votes ?? 0),
+        voteCount,
+        currencySpent: existing ? 0 : cost,
+        alreadyProcessed: Boolean(existing),
+      };
+    });
+    res.json({ success: true, ...result });
+  } catch (err: any) {
+    const status = Number(err?.status) || 500;
+    if (status < 500) return res.status(status).json({ error: err.message });
+    req.log.error(err);
+    res.status(500).json({ error: "Не удалось отправить голос" });
+  }
+});
+
+router.get("/chats/:chatId/photos", async (req, res) => {
+  try {
+    const chatId = Number(req.params.chatId);
+    const membership = await db.execute(sql`
+      SELECT 1 FROM chat_members WHERE chat_id = ${chatId} AND user_id = ${req.currentUserId} LIMIT 1
+    `);
+    if (!membership.rows.length) return res.status(403).json({ error: "Нет доступа к фотографиям этого чата" });
+    const rows = await db.execute(sql`SELECT avatar_url, photo_urls FROM chats WHERE id = ${chatId} LIMIT 1`);
+    const chat = rows.rows[0] as any;
+    if (!chat) return res.status(404).json({ error: "Чат не найден" });
+    res.json({
+      photos: includeActivePhoto(parsePhotoUrls(chat.photo_urls), chat.avatar_url),
+      activeUrl: chat.avatar_url ?? null,
+    });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Не удалось загрузить фотографии чата" });
+  }
+});
+
+router.post("/chats/:chatId/photos", async (req, res) => {
+  try {
+    const chatId = Number(req.params.chatId);
+    const roleRows = await db.execute(sql`
+      SELECT role FROM chat_members WHERE chat_id = ${chatId} AND user_id = ${req.currentUserId} LIMIT 1
+    `);
+    const role = (roleRows.rows[0] as any)?.role;
+    if (!canManageChat(role)) return res.status(403).json({ error: "Менять фотографии могут только администраторы чата" });
+
+    const action = String(req.body?.action || "add");
+    const photoUrl = req.body?.photoUrl;
+    if (!["add", "activate", "remove"].includes(action) || !isAllowedPhotoUrl(photoUrl)) {
+      return res.status(400).json({ error: "Выберите корректную фотографию" });
+    }
+    const storedUrl = action === "add" ? await offloadDataUrl(photoUrl, "chat-avatars") : photoUrl;
+    const result = await db.transaction(async tx => {
+      const rows = await tx.execute(sql`SELECT avatar_url, photo_urls FROM chats WHERE id = ${chatId} FOR UPDATE`);
+      const chat = rows.rows[0] as any;
+      if (!chat) throw Object.assign(new Error("Чат не найден"), { status: 404 });
+      let photos = includeActivePhoto(parsePhotoUrls(chat.photo_urls), chat.avatar_url);
+      let activeUrl: string | null = chat.avatar_url ?? null;
+      if (action === "add") {
+        if (!photos.includes(storedUrl)) {
+          if (photos.length >= MAX_PROFILE_PHOTOS) throw Object.assign(new Error(`Можно сохранить не больше ${MAX_PROFILE_PHOTOS} фото`), { status: 400 });
+          photos = [...photos, storedUrl];
+        }
+        if (req.body?.activate === true || !activeUrl) activeUrl = storedUrl;
+      } else if (action === "activate") {
+        if (!photos.includes(photoUrl)) throw Object.assign(new Error("Этой фотографии нет в альбоме чата"), { status: 404 });
+        activeUrl = photoUrl;
+      } else {
+        photos = photos.filter(url => url !== photoUrl);
+        if (activeUrl === photoUrl) activeUrl = photos[0] ?? null;
+      }
+      await tx.execute(sql`
+        UPDATE chats SET photo_urls = ${JSON.stringify(photos)}, avatar_url = ${activeUrl}
+        WHERE id = ${chatId}
+      `);
+      return { photos, activeUrl };
+    });
+    res.json(result);
+  } catch (err: any) {
+    const status = Number(err?.status) || 500;
+    if (status < 500) return res.status(status).json({ error: err.message });
+    req.log.error(err);
+    res.status(500).json({ error: "Не удалось обновить фотографии чата" });
   }
 });
 

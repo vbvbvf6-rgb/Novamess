@@ -43,6 +43,7 @@ import { isAndroidNativeApp, NetworkProxy, type NetworkProxyType } from "@/lib/n
 import { setNativeLauncherIcon } from "@/lib/nativeLauncherIcon";
 import { localStoragePersister } from "@/lib/queryClient";
 import Plugins from "@/pages/Plugins";
+import { PhotoAlbum } from "@/components/PhotoAlbum";
 
 const AVATAR_COLORS = [
   "#000000","#3B82F6","#EC4899","#10B981","#F59E0B","#8B5CF6",
@@ -1597,10 +1598,10 @@ export default function Settings() {
     setAvatarUrl(compressed);
     const token = sessionStorage.getItem("pulse-token");
     try {
-      const res = await fetch("/api/users/me", {
-        method: "PUT",
+      const res = await fetch("/api/users/me/photos", {
+        method: "POST",
         headers: { "Content-Type": "application/json", ...(token ? { "Authorization": `Bearer ${token}` } : {}) },
-        body: JSON.stringify({ avatarUrl: compressed }),
+        body: JSON.stringify({ action: "add", photoUrl: compressed, activate: true }),
       });
       if (!res.ok) {
         // Cold-start / transient failures (server waking up, gateway timeout) — retry a couple of times
@@ -1612,6 +1613,7 @@ export default function Settings() {
       }
       await res.json();
       queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
+      queryClient.invalidateQueries({ queryKey: ["photo-album", "user", Number(user?.id)] });
       toast({ title: lang === "ru" ? "Фото обновлено" : "Photo updated" });
     } catch (err) {
       // Network error (e.g. server still waking up) — also worth a couple retries
@@ -2416,6 +2418,9 @@ export default function Settings() {
                     <input ref={avatarFileRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarFile}/>
                     <input ref={videoAvatarRef} type="file" accept="video/*" className="hidden" onChange={handleVideoAvatarFile}/>
                   </div>
+                  {user?.id && (
+                    <PhotoAlbum scope="user" entityId={Number(user.id)} editable />
+                  )}
 
                   <div>
                     <Label className="text-xs text-muted-foreground mb-1.5 block">{t("settings.avatarColor")}</Label>

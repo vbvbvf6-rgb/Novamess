@@ -11,6 +11,7 @@ import { useAppContext } from "@/contexts/AppContext";
 import { useLastSeen } from "@/hooks/useLastSeen";
 import { useLocation } from "wouter";
 import { MediaGallery } from "@/components/media/MediaGallery";
+import { PhotoAlbum } from "@/components/PhotoAlbum";
 
 function compressAvatar(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -206,8 +207,15 @@ export function ChatInfoPanel({
     if (!file) return;
     try {
       const compressed = await compressAvatar(file);
-      setAvatarPreview(compressed);
-      await patchChat({ avatarUrl: compressed });
+      const response = await fetch(`/api/chats/${chatId}/photos`, {
+        method: "POST",
+        headers: getAuthHeaders(true),
+        body: JSON.stringify({ action: "add", photoUrl: compressed, activate: true }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || "Не удалось обновить фото");
+      setAvatarPreview(result.activeUrl ?? compressed);
+      queryClient.invalidateQueries({ queryKey: getGetChatsQueryKey() });
     } catch {}
     e.target.value = "";
   };
@@ -431,6 +439,12 @@ export function ChatInfoPanel({
                   <p className="text-xs text-muted-foreground mt-2">Нажмите для смены фото</p>
                 </div>
               )}
+              <PhotoAlbum
+                scope="chat"
+                entityId={chatId}
+                editable={isAdmin}
+                onActiveChange={setAvatarPreview}
+              />
 
               {/* Name */}
               {isAdmin && (

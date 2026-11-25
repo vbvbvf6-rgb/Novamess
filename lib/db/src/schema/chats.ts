@@ -9,6 +9,7 @@ export const chatsTable = pgTable("chats", {
   name: text("name"),
   description: text("description"),
   avatarUrl: text("avatar_url"),
+  photoUrls: text("photo_urls").notNull().default("[]"),
   avatarColor: text("avatar_color").notNull().default("#3B82F6"),
   autoDeleteTimer: integer("auto_delete_timer"),
   pinnedMessageId: integer("pinned_message_id"),
