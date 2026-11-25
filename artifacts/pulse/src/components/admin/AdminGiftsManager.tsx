@@ -133,6 +133,10 @@ export function AdminGiftsManager() {
   };
 
   const onSubmit = form.handleSubmit(async values => {
+    const rawMaxSupply: unknown = values.maxSupply;
+    const maxSupply = !values.isCollectible || rawMaxSupply === null || rawMaxSupply === undefined || rawMaxSupply === ""
+      ? null
+      : Number(rawMaxSupply);
     const payload: AdminGiftInput = {
       ...values,
       name: values.name.trim(),
@@ -141,7 +145,7 @@ export function AdminGiftsManager() {
       imageUrl: typeof values.imageUrl === "string" && values.imageUrl.trim() ? values.imageUrl.trim() : null,
       stars: numericValue(values.stars, 1),
       price: numericValue(values.price, 0),
-      maxSupply: values.maxSupply === null || values.maxSupply === undefined ? null : numericValue(values.maxSupply, 1),
+      maxSupply,
       exchangeValue: numericValue(values.exchangeValue, 0),
       upgradePrice: numericValue(values.upgradePrice, 0),
     };
@@ -149,8 +153,8 @@ export function AdminGiftsManager() {
       toast({ title: "Заполните название и символ подарка", variant: "destructive" });
       return;
     }
-    if (payload.isCollectible && payload.maxSupply !== null && payload.maxSupply < 1) {
-      toast({ title: "Тираж должен быть не меньше 1", variant: "destructive" });
+    if (payload.maxSupply !== null && (!Number.isSafeInteger(payload.maxSupply) || payload.maxSupply < 1 || payload.maxSupply > 10_000_000)) {
+      toast({ title: "Тираж должен быть целым числом от 1 до 10 000 000", variant: "destructive" });
       return;
     }
 

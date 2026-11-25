@@ -1830,7 +1830,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
                   onFocus={() => { setShowEmoji(false); }}
                 />
 
-                {!editMessage && !text.trim() && imagePreviews.length === 0 && (
+                {!editMessage && (
                   <>
                     <button type="button" onClick={() => fileInputRef.current?.click()}
                       className="hidden md:flex w-12 h-12 items-center justify-center rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors shrink-0 mb-[2px]">
@@ -1841,6 +1841,8 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
                       title="Сделать фото">
                       <Camera size={20} />
                     </button>
+                    {!text.trim() && imagePreviews.length === 0 && (
+                      <>
                     <button type="button" onClick={handleShareLocation}
                       className="hidden md:flex w-12 h-12 items-center justify-center rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors shrink-0 mb-[2px]"
                       title="Отправить геопозицию">
@@ -1866,10 +1868,13 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
                       className={`hidden md:flex w-12 h-12 items-center justify-center rounded-full transition-colors shrink-0 mb-[2px] ${showPollCreator ? "bg-primary/15 text-primary" : "text-muted-foreground hover:bg-secondary hover:text-foreground"}`}>
                       <BarChart2 size={20} />
                     </button>
+                      </>
+                    )}
                     <button
                       type="button"
                       onClick={() => setShowMobileActions(v => !v)}
                       className={`flex md:hidden w-10 h-10 items-center justify-center rounded-full transition-all shrink-0 mb-[2px] ${showMobileActions ? "bg-primary/15 text-primary rotate-45" : "text-muted-foreground hover:bg-secondary hover:text-foreground"}`}
+                      aria-label={showMobileActions ? "Скрыть вложения" : "Добавить вложение"}
                     >
                       <Plus size={18} />
                     </button>

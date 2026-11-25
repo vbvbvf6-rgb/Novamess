@@ -48,9 +48,8 @@ export function initSocketIO(server: HttpServer): SocketIOServer {
     db.execute(sql`UPDATE users SET status = 'online' WHERE id = ${userId}`).catch(() => {});
     io?.emit("user-status", { userId, status: "online" });
 
-    socket.on("join-call", ({ callId }: { callId: number }) => {
-      if (!callId) return;
-
+    const enterCallRoom = (callId: number) => {
+      if (!Number.isSafeInteger(callId) || callId <= 0) return;
       // Get current members before joining so we can notify them
       const room = io?.sockets.adapter.rooms.get(`call:${callId}`);
       const existingUserIds: number[] = [];
@@ -97,6 +96,44 @@ export function initSocketIO(server: HttpServer): SocketIOServer {
         // Also tell the new joiner who's already there
         socket.emit("peers-present", { userIds: existingUserIds, callId });
       }
+    };
+
+    socket.on("join-call", ({ callId }: { callId: number }) => {
+      enterCallRoom(Number(callId));
+    });
+
+    socket.on("join-audio-room", async ({ roomId }: { roomId: number }) => {
+      if (!Number.isSafeInteger(Number(roomId)) || Number(roomId) <= 0) return;
+      try {
+        const rows = await db.execute(sql`
+          SELECT ar.call_id, c.chat_id
+          FROM audio_rooms ar
+          JOIN calls c ON c.id = ar.call_id
+          WHERE ar.id = ${Number(roomId)}
+            AND ar.status = 'active'
+            AND c.status = 'active'
+          LIMIT 1
+        `);
+        const audioRoom = rows.rows[0] as { call_id: number; chat_id: number | null } | undefined;
+        if (!audioRoom) {
+          socket.emit("audio-room-error", { message: "Голосовой чат уже завершён" });
+          return;
+        }
+        if (audioRoom.chat_id !== null) {
+          const memberships = await db.execute(sql`
+            SELECT 1 FROM chat_members
+            WHERE chat_id = ${audioRoom.chat_id} AND user_id = ${userId}
+            LIMIT 1
+          `);
+          if (!memberships.rows.length) {
+            socket.emit("audio-room-error", { message: "Войти могут только участники канала" });
+            return;
+          }
+        }
+        enterCallRoom(Number(audioRoom.call_id));
+      } catch {
+        socket.emit("audio-room-error", { message: "Не удалось подключиться к голосовому чату" });
+      }
     });
 
     socket.on(
@@ -110,7 +147,12 @@ export function initSocketIO(server: HttpServer): SocketIOServer {
         signal: unknown;
         targetUserId?: number;
       }) => {
-        if (!callId || signal === undefined) return;
+        if (
+          !Number.isSafeInteger(callId) ||
+          signal === undefined ||
+          socket.data.callId !== callId ||
+          !socket.rooms.has(`call:${callId}`)
+        ) return;
 
         if (targetUserId) {
           // Directed signal — find the target user's socket in this room
@@ -164,10 +206,32 @@ export function initSocketIO(server: HttpServer): SocketIOServer {
       socket.to(`call:${callId}`).emit("peer-left", { userId, callId });
     });
 
-    socket.on("end-call", ({ callId }: { callId: number }) => {
+    socket.on("end-call", async ({ callId }: { callId: number }) => {
       const roomName = `call:${callId}`;
       // Only an authenticated socket that joined this call can end it for peers.
       if (!Number.isSafeInteger(callId) || socket.data.callId !== callId || !socket.rooms.has(roomName)) return;
+      try {
+        const rooms = await db.execute(sql`
+          SELECT ar.host_id, c.chat_id
+          FROM audio_rooms ar
+          JOIN calls c ON c.id = ar.call_id
+          WHERE ar.call_id = ${callId} AND ar.status = 'active'
+          LIMIT 1
+        `);
+        const audioRoom = rooms.rows[0] as { host_id: number; chat_id: number | null } | undefined;
+        if (audioRoom && Number(audioRoom.host_id) !== userId) {
+          if (audioRoom.chat_id === null) return;
+          const roles = await db.execute(sql`
+            SELECT role FROM chat_members
+            WHERE chat_id = ${audioRoom.chat_id} AND user_id = ${userId}
+            LIMIT 1
+          `);
+          const role = (roles.rows[0] as { role?: string } | undefined)?.role;
+          if (role !== "owner" && role !== "admin") return;
+        }
+      } catch {
+        return;
+      }
       socket.to(roomName).emit("call-ended", { callId, userId });
     });
 

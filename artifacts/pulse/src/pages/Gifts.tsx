@@ -122,7 +122,7 @@ export default function Gifts() {
         ) : (
           <AnimatePresence mode="wait">
             <motion.section key={tab} initial={reducedMotion ? false : { opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5" aria-label={tab === "received" ? "Полученные подарки" : "Отправленные подарки"} data-testid={`grid-gifts-${tab}`}>
-              {filtered.map((gift, index) => <GiftCollectionCard key={gift.id} gift={gift} direction={tab} index={index} onSelect={(entry, direction) => setSelectedGift({ gift: entry, direction })} />)}
+              {filtered.map(gift => <GiftCollectionCard key={gift.id} gift={gift} direction={tab} onSelect={(entry, direction) => setSelectedGift({ gift: entry, direction })} />)}
             </motion.section>
           </AnimatePresence>
         )}

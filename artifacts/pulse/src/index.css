@@ -78,28 +78,6 @@ html.halloween-event-disabled .avatar-frame-halloween::after {
   display: none !important;
 }
 
-.gift-art {
-  transform-origin: center;
-  animation: gift-art-float 3.2s ease-in-out infinite;
-}
-
-.gift-art-motion {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transform-origin: center;
-}
-
-.gift-art-motion--bounce { animation: gift-motion-bounce 2.1s ease-in-out infinite; }
-.gift-art-motion--sparkle { animation: gift-motion-sparkle 2.6s ease-in-out infinite; }
-.gift-art-motion--hearts { animation: gift-motion-hearts 1.65s ease-in-out infinite; }
-.gift-art-motion--confetti { animation: gift-motion-confetti 2.4s ease-in-out infinite; }
-.gift-art-motion--bloom { animation: gift-motion-bloom 2.5s ease-in-out infinite; }
-.gift-art-motion--burst { animation: gift-motion-burst 2.9s ease-in-out infinite; }
-.gift-art-motion--orbit { animation: gift-motion-orbit 4.5s ease-in-out infinite; }
-.gift-art-motion--flame { animation: gift-motion-flame 1.25s ease-in-out infinite; }
-.gift-art-motion--magic { animation: gift-motion-magic 3.4s ease-in-out infinite; }
-
 .gift-message-shimmer::before {
   content: "";
   position: absolute;
@@ -109,68 +87,12 @@ html.halloween-event-disabled .avatar-frame-halloween::after {
   animation: gift-message-shine 4.5s ease-in-out infinite;
 }
 
-@keyframes gift-art-float {
-  0%, 100% { transform: translateY(0) rotate(-2deg); }
-  50% { transform: translateY(-5px) rotate(2deg); }
-}
-
-@keyframes gift-motion-bounce {
-  0%, 100% { transform: translateY(0) rotate(0); }
-  50% { transform: translateY(-7px) rotate(3deg); }
-}
-
-@keyframes gift-motion-sparkle {
-  0%, 100% { filter: brightness(1) drop-shadow(0 0 0 transparent); }
-  50% { filter: brightness(1.18) drop-shadow(0 0 12px rgba(255, 214, 128, .45)); }
-}
-
-@keyframes gift-motion-hearts {
-  0%, 100% { transform: scale(1); }
-  35% { transform: scale(1.08); }
-  52% { transform: scale(.98); }
-  68% { transform: scale(1.05); }
-}
-
-@keyframes gift-motion-confetti {
-  0%, 100% { transform: translateY(0) rotate(0); }
-  30% { transform: translateY(-5px) rotate(-3deg); }
-  65% { transform: translateY(-2px) rotate(3deg); }
-}
-
-@keyframes gift-motion-bloom {
-  0%, 100% { transform: scale(.96) rotate(-2deg); }
-  50% { transform: scale(1.06) rotate(2deg); }
-}
-
-@keyframes gift-motion-burst {
-  0%, 82%, 100% { transform: scale(1) rotate(0); filter: brightness(1); }
-  87% { transform: scale(1.12) rotate(-4deg); filter: brightness(1.35); }
-  93% { transform: scale(.98) rotate(3deg); filter: brightness(1.12); }
-}
-
-@keyframes gift-motion-orbit {
-  0%, 100% { transform: translateY(0) rotate(-2deg); }
-  50% { transform: translateY(-4px) rotate(3deg); }
-}
-
-@keyframes gift-motion-flame {
-  0%, 100% { transform: translateY(0) scale(1); }
-  50% { transform: translateY(-3px) scale(1.04, 1.07); }
-}
-
-@keyframes gift-motion-magic {
-  0%, 100% { transform: translateY(0) rotate(-2deg); filter: brightness(1); }
-  50% { transform: translateY(-4px) rotate(2deg); filter: brightness(1.14); }
-}
-
 @keyframes gift-message-shine {
   0%, 55% { transform: translateX(-70%); }
   100% { transform: translateX(70%); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .gift-art,
-  .gift-art-motion,
   .gift-message-shimmer::before {
     animation: none !important;
   }

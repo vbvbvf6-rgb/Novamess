@@ -76,6 +76,7 @@ function parseGiftInput(body: any, partial = false) {
   ) => {
     if (partial && !has(key)) return;
     const raw = body?.[key];
+    if (raw === undefined && partial) return;
     if (!partial && raw === undefined && defaultValue !== undefined) {
       value[column] = defaultValue;
       return;

@@ -88,6 +88,23 @@ export declare const chatsTable: import("drizzle-orm/pg-core").PgTableWithColumn
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
+        photoUrls: import("drizzle-orm/pg-core").PgColumn<{
+            name: "photo_urls";
+            tableName: "chats";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
         avatarColor: import("drizzle-orm/pg-core").PgColumn<{
             name: "avatar_color";
             tableName: "chats";
@@ -591,6 +608,7 @@ export declare const chatFolderChatsTable: import("drizzle-orm/pg-core").PgTable
 export declare const insertChatSchema: z.ZodObject<{
     name: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     avatarUrl: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    photoUrls: z.ZodOptional<z.ZodString>;
     avatarColor: z.ZodOptional<z.ZodString>;
     type: z.ZodOptional<z.ZodString>;
     description: z.ZodOptional<z.ZodNullable<z.ZodString>>;

@@ -173,6 +173,23 @@ export declare const giftItemsTable: import("drizzle-orm/pg-core").PgTableWithCo
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
+        videoUrl: import("drizzle-orm/pg-core").PgColumn<{
+            name: "video_url";
+            tableName: "gift_items";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
         isCollectible: import("drizzle-orm/pg-core").PgColumn<{
             name: "is_collectible";
             tableName: "gift_items";
@@ -272,6 +289,7 @@ export declare const insertGiftItemSchema: z.ZodObject<{
     stars: z.ZodOptional<z.ZodInt>;
     price: z.ZodOptional<z.ZodInt>;
     primeOnly: z.ZodOptional<z.ZodBoolean>;
+    videoUrl: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     isCollectible: z.ZodOptional<z.ZodBoolean>;
     maxSupply: z.ZodOptional<z.ZodNullable<z.ZodInt>>;
     exchangeValue: z.ZodOptional<z.ZodInt>;

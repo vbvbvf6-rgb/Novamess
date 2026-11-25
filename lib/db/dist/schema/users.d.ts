@@ -88,6 +88,23 @@ export declare const usersTable: import("drizzle-orm/pg-core").PgTableWithColumn
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
+        photoUrls: import("drizzle-orm/pg-core").PgColumn<{
+            name: "photo_urls";
+            tableName: "users";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
         avatarColor: import("drizzle-orm/pg-core").PgColumn<{
             name: "avatar_color";
             tableName: "users";
@@ -810,6 +827,7 @@ export declare const insertUserSchema: z.ZodObject<{
     displayName: z.ZodString;
     bio: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     avatarUrl: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    photoUrls: z.ZodOptional<z.ZodString>;
     avatarColor: z.ZodOptional<z.ZodString>;
     avatarFrame: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     nicknameStyle: z.ZodOptional<z.ZodNullable<z.ZodString>>;

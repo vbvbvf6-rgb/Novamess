@@ -1,5 +1,4 @@
 import { ArrowUpRight, LockKeyhole } from "lucide-react";
-import { motion, useReducedMotion } from "framer-motion";
 import type { GiftInstance } from "@workspace/api-client-react";
 import { GiftArtwork } from "./GiftArtwork";
 
@@ -20,23 +19,17 @@ function statusLabel(status: GiftInstance["inventoryStatus"]) {
 export function GiftCollectionCard({
   gift,
   direction,
-  index,
   onSelect,
 }: {
   gift: GiftInstance;
   direction: "received" | "sent";
-  index: number;
   onSelect: (gift: GiftInstance, direction: "received" | "sent") => void;
 }) {
-  const reducedMotion = useReducedMotion();
   const item = gift.giftItem;
 
   return (
-    <motion.button
+    <button
       type="button"
-      initial={reducedMotion ? false : { opacity: 0, y: 14 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.28, delay: Math.min(index * 0.035, 0.24) }}
       onClick={() => onSelect(gift, direction)}
       className={`gift-collection-tile group relative flex min-h-[246px] w-full flex-col overflow-hidden rounded-[24px] border p-4 text-left transition-colors ${rarityClasses[item.rarity] || rarityClasses.common}`}
       data-testid={`card-gift-${gift.id}`}
@@ -51,7 +44,7 @@ export function GiftCollectionCard({
       </div>
       <div className="relative mx-auto flex h-[132px] w-full items-center justify-center">
         <span className="absolute h-20 w-20 rounded-full bg-amber-300/10 blur-2xl" aria-hidden="true" />
-        <GiftArtwork item={item} className="gift-art relative z-10 h-[112px] w-[112px] drop-shadow-[0_14px_16px_rgba(0,0,0,.32)] transition-transform duration-300 group-hover:scale-105" />
+        <GiftArtwork item={item} className="relative z-10 h-[112px] w-[112px] drop-shadow-[0_14px_16px_rgba(0,0,0,.32)]" />
       </div>
       <div className="relative mt-auto flex w-full items-end justify-between gap-2">
         <div className="min-w-0">
@@ -70,6 +63,6 @@ export function GiftCollectionCard({
         </span>
         <span className="inline-flex items-center gap-1 text-foreground/70 group-hover:text-foreground"><span>Детали</span><ArrowUpRight size={12} /></span>
       </div>
-    </motion.button>
+    </button>
   );
 }

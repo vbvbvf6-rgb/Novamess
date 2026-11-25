@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ArrowLeftRight, Check, ChevronRight, LockKeyhole, MessageCircle, Sparkles, WandSparkles, X } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -40,7 +40,6 @@ export function GiftDetailsDialog({
   onGiftChanged?: (gift: GiftInstance) => void;
 }) {
   const [gift, setGift] = useState(initialGift);
-  const [revealed, setRevealed] = useState(initialGift.inventoryStatus !== "received");
   const [showDetails, setShowDetails] = useState(initialGift.inventoryStatus !== "received");
   const [showExchangeConfirmation, setShowExchangeConfirmation] = useState(false);
   const [busyAction, setBusyAction] = useState<"open" | "upgrade" | "exchange" | null>(null);
@@ -53,12 +52,6 @@ export function GiftDetailsDialog({
   const upgradeGift = useUpgradeGift();
   const exchangeGift = useExchangeGift();
   const item = gift.giftItem;
-
-  useEffect(() => {
-    if (!revealed || showDetails) return;
-    const timer = window.setTimeout(() => setShowDetails(true), reducedMotion ? 0 : 1050);
-    return () => window.clearTimeout(timer);
-  }, [revealed, showDetails, reducedMotion]);
 
   const refreshGiftQueries = async () => {
     await Promise.all([
@@ -79,7 +72,7 @@ export function GiftDetailsDialog({
         setGift(updated);
         onGiftChanged?.(updated);
         await refreshGiftQueries();
-        setRevealed(true);
+        setShowDetails(true);
         toast({ title: "Подарок теперь в вашей коллекции", description: updated.giftItem.name });
         setBusyAction(null);
       },
@@ -163,39 +156,12 @@ export function GiftDetailsDialog({
             data-testid="button-close-gift-details"><X size={17} /></button>
           <div className={`gift-dialog-hero relative flex h-[250px] items-center justify-center overflow-hidden ${`gift-rarity-${item.rarity}`}`}>
             <div className="gift-dialog-halo absolute h-48 w-48 rounded-full" aria-hidden="true" />
-            {!showDetails && (
-              <motion.div
-                className="absolute inset-0 z-10"
-                initial={{ opacity: 0 }} animate={{ opacity: revealed ? 1 : 0 }} transition={{ duration: .3 }}
-                aria-hidden="true"
-              >
-                <div className="gift-reveal-sparks absolute inset-0" />
-              </motion.div>
-            )}
-            <AnimatePresence mode="wait">
-              {showDetails ? (
-                <motion.div key="art"
-                  initial={reducedMotion ? false : { opacity: 0, scale: .5, rotate: -16 }}
-                  animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                  transition={{ type: "spring", stiffness: 200, damping: 15 }}
-                  className="relative z-10 flex h-40 w-40 items-center justify-center"
-                >
-                  <GiftArtwork item={item} className="gift-art h-36 w-36 drop-shadow-[0_20px_24px_rgba(0,0,0,.4)]" />
-                </motion.div>
-              ) : (
-                <motion.div key="sealed"
-                  initial={reducedMotion ? false : { scale: .9, opacity: .65 }}
-                  animate={revealed ? { scale: [1, 1.12, .92, 1.22], opacity: 1, rotate: [0, -5, 5, 0] } : { scale: 1, opacity: 1 }}
-                  transition={revealed ? { duration: reducedMotion ? 0 : .9, ease: "easeInOut" } : { duration: .3 }}
-                  className="relative z-10 flex h-36 w-36 items-center justify-center rounded-[34px] border border-white/20 bg-card/70 shadow-2xl"
-                >
-                  <GiftArtwork item={item} className="h-28 w-28 object-contain opacity-90" />
-                </motion.div>
-              )}
-            </AnimatePresence>
-            {revealed && <motion.span initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="absolute bottom-4 right-5 z-10 rounded-full bg-black/25 px-3 py-1 text-[11px] font-bold text-white/80" data-testid="text-gift-serial">
+            <div className="relative z-10 flex h-40 w-40 items-center justify-center">
+              <GiftArtwork item={item} className="h-36 w-36 drop-shadow-[0_20px_24px_rgba(0,0,0,.4)]" />
+            </div>
+            {showDetails && <span className="absolute bottom-4 right-5 z-10 rounded-full bg-black/25 px-3 py-1 text-[11px] font-bold text-white/80" data-testid="text-gift-serial">
               {gift.serialNumber ? `№ ${gift.serialNumber}` : item.isCollectible ? "Коллекционный экземпляр" : "Память из чата"}
-            </motion.span>}
+            </span>}
           </div>
 
           <AnimatePresence mode="wait">

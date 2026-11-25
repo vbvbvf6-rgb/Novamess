@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Gift, Pin, PinOff, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { GiftArtwork } from "./GiftArtwork";
 
 interface ProfileGift {
   id: number;
@@ -120,22 +121,10 @@ export function ProfileGifts({ userId, editable }: { userId: number; editable: b
                 </span>
               )}
               <div className="mx-auto mb-2 flex h-14 w-14 items-center justify-center">
-                {gift.videoUrl ? (
-                  <video
-                    src={gift.videoUrl}
-                    aria-label={gift.name}
-                    autoPlay
-                    loop
-                    muted
-                    playsInline
-                    preload="metadata"
-                    className="h-full w-full object-contain"
-                  />
-                ) : gift.imageUrl ? (
-                  <img src={gift.imageUrl} alt={gift.name} className="h-full w-full object-contain" />
-                ) : (
-                  <span className="text-4xl" role="img" aria-label={gift.name}>{gift.emoji || "🎁"}</span>
-                )}
+                <GiftArtwork
+                  item={{ id: gift.id, name: gift.name, emoji: gift.emoji, imageUrl: gift.imageUrl }}
+                  className="h-full w-full"
+                />
               </div>
               <p className="truncate text-xs font-black">{gift.name}</p>
               <p className="mt-1 truncate text-[10px] text-muted-foreground">от {gift.senderName}</p>

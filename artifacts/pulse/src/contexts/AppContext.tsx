@@ -69,6 +69,8 @@ export interface AppState {
   openAddAccount: () => void;
   canAddAccount: boolean;
   startCall: (calleeId: number | null, chatId: number | null, type: "audio" | "video" | "group", roomName?: string) => Promise<void>;
+  joinAudioRoom: (roomId: number) => Promise<void>;
+  endAudioRoom: (roomId: number) => Promise<void>;
   acceptCall: () => Promise<void>;
   declineCall: () => Promise<void>;
   hangUp: () => Promise<void>;
@@ -229,6 +231,7 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
       socketRef.current.off("peers-present");
       socketRef.current.off("peer-left");
       socketRef.current.off("call-ended");
+      socketRef.current.off("audio-room-error");
     }
     groupRoomIdRef.current = null;
 
@@ -485,6 +488,7 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
     sock.off("peers-present");
     sock.off("peer-left");
     sock.off("call-ended");
+    sock.off("audio-room-error");
 
     sock.on("webrtc-signal", async ({ signal, fromUserId }: { signal: { type: string; sdp?: string; candidate?: RTCIceCandidateInit }; fromUserId: number }) => {
       await applySignal(fromUserId, signal, roomId);
@@ -547,9 +551,21 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
       });
     });
 
-    sock.on("call-ended", () => {
-      if (!activeCallRef.current) return;
-      toast({ title: "Звонок завершён", description: "Собеседник завершил звонок" });
+    sock.on("call-ended", ({ userId: endedBy }: { userId?: number } = {}) => {
+      const endedCall = activeCallRef.current;
+      if (!endedCall) return;
+      if (endedBy && endedBy !== currentUserIdRef.current) {
+        const isAudioRoom = endedCall.type === "group" && Number((endedCall as any).roomId) > 0;
+        toast(isAudioRoom
+          ? { title: "Голосовой чат завершён", description: "Администратор канала закрыл комнату" }
+          : { title: "Звонок завершён", description: "Собеседник завершил звонок" });
+      }
+      cleanupCall();
+    });
+    sock.on("audio-room-error", ({ message }: { message?: string } = {}) => {
+      window.dispatchEvent(new CustomEvent("pulse:call-error", {
+        detail: { message: message || "Не удалось подключиться к голосовому чату" },
+      }));
       cleanupCall();
     });
   }, [applySignal, createPeer, cleanupCall, toast]);
@@ -609,9 +625,14 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
       const res = await fetch(isAudioRoom ? "/api/audio-rooms" : "/api/calls", {
         method: "POST",
         headers: getUserHeaders(),
-        body: JSON.stringify(isAudioRoom ? { name: roomName?.trim() || "Открытая аудиокомната" } : { ...(calleeId != null ? { calleeId } : {}), ...(chatId != null ? { chatId } : {}), type }),
+        body: JSON.stringify(isAudioRoom
+          ? { name: roomName?.trim() || "Открытая аудиокомната", ...(chatId != null ? { chatId } : {}) }
+          : { ...(calleeId != null ? { calleeId } : {}), ...(chatId != null ? { chatId } : {}), type }),
       });
-      if (!res.ok) throw new Error("Failed to create call");
+      if (!res.ok) {
+        const result = await res.json().catch(() => ({}));
+        throw new Error(result.error || "Не удалось создать звонок");
+      }
       call = await res.json();
       import("@/utils/questTracker").then(({ trackQuestAction }) => trackQuestAction("call_made"));
     } catch (err) {
@@ -654,11 +675,61 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
       // the offer before the callee is ready, and the peer-joined guard
       // (peersRef.has(calleeId)) would block the re-offer, leaving the call
       // in a broken state if the buffer is missed.
-      sock.emit("join-call", { callId: call.id });
+      if (type === "group" && Number((call as any).roomId) > 0) {
+        sock.emit("join-audio-room", { roomId: Number((call as any).roomId) });
+      } else {
+        sock.emit("join-call", { callId: call.id });
+      }
     } catch (rtcErr) {
       console.warn("startCall: WebRTC setup failed (call UI still active):", rtcErr);
     }
   }, [getUserHeaders, createPeer, cleanupCall, getSocket, setupCallSocket]);
+
+  const joinAudioRoom = useCallback(async (roomId: number) => {
+    if (!Number.isSafeInteger(roomId) || roomId <= 0) throw new Error("Некорректная комната");
+    if (activeCallRef.current) throw new Error("Сначала завершите текущий звонок");
+
+    const response = await fetch(`/api/audio-rooms/${roomId}/join`, {
+      method: "POST",
+      headers: getUserHeaders(),
+    });
+    const roomCall = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(roomCall.error || "Не удалось подключиться к голосовому чату");
+
+    if (!navigator.mediaDevices?.getUserMedia) {
+      throw new Error("Микрофон недоступен в этом браузере");
+    }
+    let stream: MediaStream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+        video: false,
+      });
+    } catch {
+      throw new Error("Разрешите доступ к микрофону и попробуйте ещё раз");
+    }
+
+    const call = roomCall as Call & { roomId: number };
+    localStreamRef.current = stream;
+    cameraVideoTrackRef.current = null;
+    setLocalStream(stream);
+    activeCallRef.current = call;
+    setActiveCall(call);
+    setIsCallMinimized(false);
+    groupRoomIdRef.current = call.id;
+
+    try {
+      iceServersRef.current = await fetchIceServers(getUserHeaders());
+      const sock = getSocket();
+      setupCallSocket(sock, call.id);
+      sock.emit("join-audio-room", { roomId });
+    } catch (error) {
+      console.warn("joinAudioRoom: WebRTC setup failed:", error);
+      window.dispatchEvent(new CustomEvent("pulse:call-error", {
+        detail: { message: "Не удалось подключить аудио. Проверьте соединение и повторите попытку." },
+      }));
+    }
+  }, [getUserHeaders, getSocket, setupCallSocket]);
 
   // ── acceptCall ────────────────────────────────────────────────────────────
   const acceptCall = useCallback(async () => {
@@ -834,19 +905,44 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
     if (!call) return;
     const roomId = groupRoomIdRef.current ?? call.id;
     const audioRoomId = call.type === "group" ? Number((call as any).roomId) : 0;
-    // Socket.IO ends the live session for everyone; the API updates call
-    // history, or closes a hosted audio-room record.
-    if (roomId) socketRef.current?.emit("end-call", { callId: roomId });
-    try {
-      await fetch(audioRoomId
-        ? `/api/audio-rooms/${audioRoomId}`
-        : `/api/calls/${call.id}`, {
-        method: audioRoomId ? "DELETE" : "PUT",
-        headers: audioRoomId ? getUserHeaders() : { ...getUserHeaders(), "Content-Type": "application/json" },
-        ...(!audioRoomId ? { body: JSON.stringify({ status: "ended" }) } : {}),
-      });
-    } catch {}
+    if (audioRoomId) {
+      if (call.callerId === currentUserIdRef.current) {
+        try {
+          const response = await fetch(`/api/audio-rooms/${audioRoomId}`, {
+            method: "DELETE",
+            headers: getUserHeaders(),
+          });
+          if (!response.ok) {
+            const result = await response.json().catch(() => ({}));
+            window.dispatchEvent(new CustomEvent("pulse:call-error", {
+              detail: { message: result.error || "Не удалось завершить голосовой чат" },
+            }));
+          }
+        } catch {}
+      }
+    } else {
+      if (roomId) socketRef.current?.emit("end-call", { callId: roomId });
+      try {
+        await fetch(`/api/calls/${call.id}`, {
+          method: "PUT",
+          headers: { ...getUserHeaders(), "Content-Type": "application/json" },
+          body: JSON.stringify({ status: "ended" }),
+        });
+      } catch {}
+    }
     cleanupCall();
+  }, [getUserHeaders, cleanupCall]);
+
+  const endAudioRoom = useCallback(async (roomId: number) => {
+    const response = await fetch(`/api/audio-rooms/${roomId}`, {
+      method: "DELETE",
+      headers: getUserHeaders(),
+    });
+    if (!response.ok) {
+      const result = await response.json().catch(() => ({}));
+      throw new Error(result.error || "Не удалось завершить голосовой чат");
+    }
+    if (Number((activeCallRef.current as any)?.roomId) === roomId) cleanupCall();
   }, [getUserHeaders, cleanupCall]);
 
   // ── inviteToCall ──────────────────────────────────────────────────────────
@@ -1313,6 +1409,8 @@ export function AppProvider({ children, onLogout, onSwitchAccount, onRemoveAccou
     openAddAccount,
     canAddAccount,
     startCall,
+    joinAudioRoom,
+    endAudioRoom,
     acceptCall,
     declineCall,
     hangUp,

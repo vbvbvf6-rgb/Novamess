@@ -192,7 +192,7 @@ export function GiftSendPanel({ onSent }: { onSent: () => void }) {
                     data-testid={`button-send-gift-item-${item.id}`}
                   >
                     <span className="flex h-24 items-center justify-center rounded-xl bg-gradient-to-b from-white/[.05] to-transparent">
-                      <GiftArtwork item={item} className="h-[76px] w-[76px] drop-shadow-lg transition-transform group-hover:scale-105" />
+                      <GiftArtwork item={item} className="h-[76px] w-[76px] drop-shadow-lg" />
                     </span>
                     <span className="mt-2 block truncate text-xs font-extrabold">{item.name}</span>
                     <span className="mt-1 block truncate text-[10px] font-semibold text-amber-300">{item.price.toLocaleString("ru-RU")} Nova</span>

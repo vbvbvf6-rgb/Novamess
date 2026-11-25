@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { MessageBubble } from "./MessageBubble";
 import { ChatInput } from "./ChatInput";
 import { ChannelThread } from "./ChannelThread";
+import { ChannelVoiceControl } from "./ChannelVoiceControl";
 import { useLocation } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -1327,6 +1328,13 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
                 <Video size={22} />
               </button>
             </>
+          )}
+          {isChannel && (
+            <ChannelVoiceControl
+              chatId={chatId}
+              chatName={chat.name || "Канал"}
+              canManage={isChannelAdmin}
+            />
           )}
 
           <button
