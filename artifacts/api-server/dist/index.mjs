@@ -137384,7 +137384,7 @@ var rateLimit = (passedOptions) => {
 var rate_limit_default = rateLimit;
 
 // src/app.ts
-var import_jsonwebtoken4 = __toESM(require_jsonwebtoken(), 1);
+var import_jsonwebtoken5 = __toESM(require_jsonwebtoken(), 1);
 
 // src/routes/index.ts
 var import_express31 = __toESM(require_express2(), 1);
@@ -152953,6 +152953,7 @@ function parseGiftInput(body, partial2 = false) {
   const integerField = (key, column, min2, max2, nullable2 = false, defaultValue) => {
     if (partial2 && !has(key)) return;
     const raw = body?.[key];
+    if (raw === void 0 && partial2) return;
     if (!partial2 && raw === void 0 && defaultValue !== void 0) {
       value[column] = defaultValue;
       return;
@@ -156210,45 +156211,370 @@ var drafts_default = router28;
 var import_express29 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
+init_drizzle_orm();
+
+// ../../node_modules/socket.io/wrapper.mjs
+var import_dist = __toESM(require_dist6(), 1);
+var { Server, Namespace, Socket } = import_dist.default;
+
+// src/lib/socket.ts
+var import_jsonwebtoken4 = __toESM(require_jsonwebtoken(), 1);
+init_src();
+init_drizzle_orm();
+var io2 = null;
+var signalBuffer = /* @__PURE__ */ new Map();
+var SIGNAL_TTL = 6e4;
+function initSocketIO(server) {
+  io2 = new Server(server, {
+    cors: { origin: true, credentials: true },
+    path: "/socket.io",
+    transports: ["websocket", "polling"]
+  });
+  io2.use((socket, next) => {
+    const token = socket.handshake.auth?.token || socket.handshake.query?.token;
+    if (!token) return next(new Error("Unauthorized"));
+    try {
+      const payload = import_jsonwebtoken4.default.verify(token, EFFECTIVE_JWT_SECRET);
+      if (!payload.pending2fa && Number.isFinite(payload.userId) && payload.userId > 0) {
+        socket.data.userId = payload.userId;
+        return next();
+      }
+      next(new Error("Unauthorized"));
+    } catch {
+      next(new Error("Unauthorized"));
+    }
+  });
+  io2.on("connection", (socket) => {
+    const userId = socket.data.userId;
+    db.execute(sql`UPDATE users SET status = 'online' WHERE id = ${userId}`).catch(() => {
+    });
+    io2?.emit("user-status", { userId, status: "online" });
+    const enterCallRoom = (callId) => {
+      if (!Number.isSafeInteger(callId) || callId <= 0) return;
+      const room = io2?.sockets.adapter.rooms.get(`call:${callId}`);
+      const existingUserIds = [];
+      if (room) {
+        for (const socketId of room) {
+          const s = io2?.sockets.sockets.get(socketId);
+          if (s && s.data.userId !== userId) {
+            existingUserIds.push(s.data.userId);
+          }
+        }
+      }
+      socket.join(`call:${callId}`);
+      socket.data.callId = callId;
+      const buf = signalBuffer.get(callId);
+      if (buf && buf.length > 0) {
+        const now = Date.now();
+        const toSend = buf.filter(
+          (e5) => now - e5.ts < SIGNAL_TTL && e5.fromUserId !== userId && (e5.targetUserId === void 0 || e5.targetUserId === userId)
+        );
+        for (const entry of toSend) {
+          socket.emit("webrtc-signal", { signal: entry.signal, fromUserId: entry.fromUserId });
+        }
+        signalBuffer.set(
+          callId,
+          buf.filter(
+            (e5) => e5.fromUserId === userId || e5.targetUserId !== void 0 && e5.targetUserId !== userId || now - e5.ts >= SIGNAL_TTL
+          )
+        );
+      }
+      if (existingUserIds.length > 0) {
+        socket.to(`call:${callId}`).emit("peer-joined", { userId, callId });
+        socket.emit("peers-present", { userIds: existingUserIds, callId });
+      }
+    };
+    socket.on("join-call", ({ callId }) => {
+      enterCallRoom(Number(callId));
+    });
+    socket.on("join-audio-room", async ({ roomId }) => {
+      if (!Number.isSafeInteger(Number(roomId)) || Number(roomId) <= 0) return;
+      try {
+        const rows = await db.execute(sql`
+          SELECT ar.call_id, c.chat_id
+          FROM audio_rooms ar
+          JOIN calls c ON c.id = ar.call_id
+          WHERE ar.id = ${Number(roomId)}
+            AND ar.status = 'active'
+            AND c.status = 'active'
+          LIMIT 1
+        `);
+        const audioRoom = rows.rows[0];
+        if (!audioRoom) {
+          socket.emit("audio-room-error", { message: "\u0413\u043E\u043B\u043E\u0441\u043E\u0432\u043E\u0439 \u0447\u0430\u0442 \u0443\u0436\u0435 \u0437\u0430\u0432\u0435\u0440\u0448\u0451\u043D" });
+          return;
+        }
+        if (audioRoom.chat_id !== null) {
+          const memberships = await db.execute(sql`
+            SELECT 1 FROM chat_members
+            WHERE chat_id = ${audioRoom.chat_id} AND user_id = ${userId}
+            LIMIT 1
+          `);
+          if (!memberships.rows.length) {
+            socket.emit("audio-room-error", { message: "\u0412\u043E\u0439\u0442\u0438 \u043C\u043E\u0433\u0443\u0442 \u0442\u043E\u043B\u044C\u043A\u043E \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u0438 \u043A\u0430\u043D\u0430\u043B\u0430" });
+            return;
+          }
+        }
+        enterCallRoom(Number(audioRoom.call_id));
+      } catch {
+        socket.emit("audio-room-error", { message: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u043F\u043E\u0434\u043A\u043B\u044E\u0447\u0438\u0442\u044C\u0441\u044F \u043A \u0433\u043E\u043B\u043E\u0441\u043E\u0432\u043E\u043C\u0443 \u0447\u0430\u0442\u0443" });
+      }
+    });
+    socket.on(
+      "webrtc-signal",
+      ({
+        callId,
+        signal,
+        targetUserId
+      }) => {
+        if (!Number.isSafeInteger(callId) || signal === void 0 || socket.data.callId !== callId || !socket.rooms.has(`call:${callId}`)) return;
+        if (targetUserId) {
+          const room = io2?.sockets.adapter.rooms.get(`call:${callId}`);
+          let delivered = false;
+          if (room) {
+            for (const socketId of room) {
+              const s = io2?.sockets.sockets.get(socketId);
+              if (s && s.data.userId === targetUserId) {
+                s.emit("webrtc-signal", { signal, fromUserId: userId });
+                delivered = true;
+                break;
+              }
+            }
+          }
+          if (!delivered) {
+            if (!signalBuffer.has(callId)) signalBuffer.set(callId, []);
+            const buf = signalBuffer.get(callId);
+            buf.push({ signal, fromUserId: userId, targetUserId, ts: Date.now() });
+            if (buf.length > 100) buf.splice(0, buf.length - 100);
+          }
+        } else {
+          const room = io2?.sockets.adapter.rooms.get(`call:${callId}`);
+          let delivered = false;
+          if (room) {
+            for (const socketId of room) {
+              const s = io2?.sockets.sockets.get(socketId);
+              if (s && s.data.userId !== userId) {
+                s.emit("webrtc-signal", { signal, fromUserId: userId });
+                delivered = true;
+              }
+            }
+          }
+          if (!delivered) {
+            if (!signalBuffer.has(callId)) signalBuffer.set(callId, []);
+            const buf = signalBuffer.get(callId);
+            buf.push({ signal, fromUserId: userId, ts: Date.now() });
+            if (buf.length > 100) buf.splice(0, buf.length - 100);
+          }
+        }
+      }
+    );
+    socket.on("leave-call", ({ callId }) => {
+      if (!callId) return;
+      socket.leave(`call:${callId}`);
+      if (socket.data.callId === callId) socket.data.callId = void 0;
+      socket.to(`call:${callId}`).emit("peer-left", { userId, callId });
+    });
+    socket.on("end-call", async ({ callId }) => {
+      const roomName = `call:${callId}`;
+      if (!Number.isSafeInteger(callId) || socket.data.callId !== callId || !socket.rooms.has(roomName)) return;
+      try {
+        const rooms = await db.execute(sql`
+          SELECT ar.host_id, c.chat_id
+          FROM audio_rooms ar
+          JOIN calls c ON c.id = ar.call_id
+          WHERE ar.call_id = ${callId} AND ar.status = 'active'
+          LIMIT 1
+        `);
+        const audioRoom = rooms.rows[0];
+        if (audioRoom && Number(audioRoom.host_id) !== userId) {
+          if (audioRoom.chat_id === null) return;
+          const roles = await db.execute(sql`
+            SELECT role FROM chat_members
+            WHERE chat_id = ${audioRoom.chat_id} AND user_id = ${userId}
+            LIMIT 1
+          `);
+          const role = roles.rows[0]?.role;
+          if (role !== "owner" && role !== "admin") return;
+        }
+      } catch {
+        return;
+      }
+      socket.to(roomName).emit("call-ended", { callId, userId });
+    });
+    socket.on("disconnect", () => {
+      const callId = socket.data.callId;
+      if (callId) {
+        socket.to(`call:${callId}`).emit("peer-left", { userId, callId });
+        setTimeout(() => {
+          const room = io2?.sockets.adapter.rooms.get(`call:${callId}`);
+          if (!room || room.size === 0) signalBuffer.delete(callId);
+        }, 1e4);
+      }
+      const userSockets = [...io2?.sockets.sockets.values() ?? []].filter(
+        (s) => s.id !== socket.id && s.data.userId === userId
+      );
+      if (userSockets.length === 0) {
+        db.execute(sql`UPDATE users SET status = 'offline' WHERE id = ${userId}`).catch(() => {
+        });
+        io2?.emit("user-status", { userId, status: "offline" });
+      }
+    });
+  });
+  return io2;
+}
+function getIO() {
+  return io2;
+}
+
+// src/routes/audio-rooms.ts
 var router29 = (0, import_express29.Router)();
-router29.get("/audio-rooms", async (_req, res) => {
+router29.get("/audio-rooms", async (req, res) => {
   try {
+    if (req.query.chatId !== void 0) {
+      const chatId = Number(req.query.chatId);
+      if (!Number.isSafeInteger(chatId) || chatId <= 0) {
+        return res.status(400).json({ error: "\u041D\u0435\u043A\u043E\u0440\u0440\u0435\u043A\u0442\u043D\u044B\u0439 \u043A\u0430\u043D\u0430\u043B" });
+      }
+      const membership = await db.execute(sql`
+        SELECT 1 FROM chat_members WHERE chat_id = ${chatId} AND user_id = ${req.currentUserId} LIMIT 1
+      `);
+      if (!membership.rows.length) return res.status(403).json({ error: "\u041D\u0435\u0442 \u0434\u043E\u0441\u0442\u0443\u043F\u0430 \u043A \u044D\u0442\u043E\u043C\u0443 \u043A\u0430\u043D\u0430\u043B\u0443" });
+      const [room] = await db.select({
+        id: audioRoomsTable.id,
+        callId: audioRoomsTable.callId,
+        hostId: audioRoomsTable.hostId,
+        name: audioRoomsTable.name,
+        status: audioRoomsTable.status,
+        createdAt: audioRoomsTable.createdAt,
+        chatId: callsTable.chatId,
+        callerId: callsTable.callerId
+      }).from(audioRoomsTable).innerJoin(callsTable, eq(audioRoomsTable.callId, callsTable.id)).where(and(
+        eq(audioRoomsTable.status, "active"),
+        eq(callsTable.chatId, chatId),
+        eq(callsTable.status, "active")
+      )).orderBy(desc(audioRoomsTable.createdAt)).limit(1);
+      return res.json(room ?? null);
+    }
     const rooms = await db.select().from(audioRoomsTable).where(eq(audioRoomsTable.status, "active")).orderBy(desc(audioRoomsTable.createdAt));
     res.json(rooms);
   } catch (err2) {
-    _req.log.error(err2);
+    req.log.error(err2);
     res.status(500).json({ error: "Internal server error" });
   }
 });
 router29.post("/audio-rooms", async (req, res) => {
   try {
+    let chatId = null;
+    if (req.body?.chatId !== void 0 && req.body?.chatId !== null) {
+      chatId = Number(req.body.chatId);
+      if (!Number.isSafeInteger(chatId) || chatId <= 0) {
+        return res.status(400).json({ error: "\u041D\u0435\u043A\u043E\u0440\u0440\u0435\u043A\u0442\u043D\u044B\u0439 \u043A\u0430\u043D\u0430\u043B" });
+      }
+      const rows = await db.execute(sql`
+        SELECT c.type, cm.role
+        FROM chats c
+        JOIN chat_members cm ON cm.chat_id = c.id AND cm.user_id = ${req.currentUserId}
+        WHERE c.id = ${chatId}
+        LIMIT 1
+      `);
+      const membership = rows.rows[0];
+      if (!membership) return res.status(403).json({ error: "\u041D\u0435\u0442 \u0434\u043E\u0441\u0442\u0443\u043F\u0430 \u043A \u044D\u0442\u043E\u043C\u0443 \u043A\u0430\u043D\u0430\u043B\u0443" });
+      if (membership.type !== "channel" && membership.type !== "group") {
+        return res.status(400).json({ error: "\u0413\u043E\u043B\u043E\u0441\u043E\u0432\u043E\u0439 \u0447\u0430\u0442 \u0434\u043E\u0441\u0442\u0443\u043F\u0435\u043D \u0442\u043E\u043B\u044C\u043A\u043E \u0432 \u043A\u0430\u043D\u0430\u043B\u0435 \u0438\u043B\u0438 \u0433\u0440\u0443\u043F\u043F\u0435" });
+      }
+      if (membership.type === "channel" && membership.role !== "owner" && membership.role !== "admin") {
+        return res.status(403).json({ error: "\u041D\u0430\u0447\u0430\u0442\u044C \u0433\u043E\u043B\u043E\u0441\u043E\u0432\u043E\u0439 \u0447\u0430\u0442 \u043C\u043E\u0436\u0435\u0442 \u0442\u043E\u043B\u044C\u043A\u043E \u0430\u0434\u043C\u0438\u043D\u0438\u0441\u0442\u0440\u0430\u0442\u043E\u0440 \u043A\u0430\u043D\u0430\u043B\u0430" });
+      }
+      const [activeRoom] = await db.select({ id: audioRoomsTable.id }).from(audioRoomsTable).innerJoin(callsTable, eq(audioRoomsTable.callId, callsTable.id)).where(and(
+        eq(audioRoomsTable.status, "active"),
+        eq(callsTable.chatId, chatId),
+        eq(callsTable.status, "active")
+      )).limit(1);
+      if (activeRoom) return res.status(409).json({ error: "\u0412 \u044D\u0442\u043E\u043C \u043A\u0430\u043D\u0430\u043B\u0435 \u0443\u0436\u0435 \u0438\u0434\u0451\u0442 \u0433\u043E\u043B\u043E\u0441\u043E\u0432\u043E\u0439 \u0447\u0430\u0442" });
+    }
     const name2 = typeof req.body?.name === "string" && req.body.name.trim() ? req.body.name.trim().slice(0, 80) : "\u0410\u0443\u0434\u0438\u043E\u043A\u043E\u043C\u043D\u0430\u0442\u0430";
-    const [call] = await db.insert(callsTable).values({
-      callerId: req.currentUserId,
-      type: "group",
-      status: "active",
-      startedAt: /* @__PURE__ */ new Date()
-    }).returning();
-    const [room] = await db.insert(audioRoomsTable).values({
-      callId: call.id,
-      hostId: req.currentUserId,
-      name: name2
-    }).returning();
+    const { call, room } = await db.transaction(async (tx) => {
+      const [call2] = await tx.insert(callsTable).values({
+        callerId: req.currentUserId,
+        chatId,
+        type: "group",
+        status: "active",
+        startedAt: /* @__PURE__ */ new Date()
+      }).returning();
+      const [room2] = await tx.insert(audioRoomsTable).values({
+        callId: call2.id,
+        hostId: req.currentUserId,
+        name: name2
+      }).returning();
+      return { call: call2, room: room2 };
+    });
     const host = await db.query.usersTable.findFirst({ where: eq(usersTable.id, req.currentUserId) });
-    res.status(201).json({ ...call, caller: host, callee: null, roomName: room.name, roomId: room.id });
+    res.status(201).json({
+      ...call,
+      caller: host,
+      callee: null,
+      roomName: room.name,
+      roomId: room.id,
+      hostId: room.hostId
+    });
   } catch (err2) {
     req.log.error(err2);
     res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0441\u043E\u0437\u0434\u0430\u0442\u044C \u0430\u0443\u0434\u0438\u043E\u043A\u043E\u043C\u043D\u0430\u0442\u0443" });
   }
 });
+router29.post("/audio-rooms/:roomId/join", async (req, res) => {
+  try {
+    const roomId = Number(req.params.roomId);
+    if (!Number.isSafeInteger(roomId) || roomId <= 0) return res.status(400).json({ error: "\u041D\u0435\u043A\u043E\u0440\u0440\u0435\u043A\u0442\u043D\u0430\u044F \u043A\u043E\u043C\u043D\u0430\u0442\u0430" });
+    const room = await db.query.audioRoomsTable.findFirst({ where: eq(audioRoomsTable.id, roomId) });
+    if (!room || room.status !== "active") return res.status(404).json({ error: "\u0413\u043E\u043B\u043E\u0441\u043E\u0432\u043E\u0439 \u0447\u0430\u0442 \u0443\u0436\u0435 \u0437\u0430\u0432\u0435\u0440\u0448\u0451\u043D" });
+    const call = await db.query.callsTable.findFirst({ where: eq(callsTable.id, room.callId) });
+    if (!call || call.status !== "active") return res.status(404).json({ error: "\u0413\u043E\u043B\u043E\u0441\u043E\u0432\u043E\u0439 \u0447\u0430\u0442 \u0443\u0436\u0435 \u0437\u0430\u0432\u0435\u0440\u0448\u0451\u043D" });
+    if (call.chatId !== null) {
+      const membership = await db.execute(sql`
+        SELECT 1 FROM chat_members WHERE chat_id = ${call.chatId} AND user_id = ${req.currentUserId} LIMIT 1
+      `);
+      if (!membership.rows.length) return res.status(403).json({ error: "\u0412\u043E\u0439\u0442\u0438 \u043C\u043E\u0433\u0443\u0442 \u0442\u043E\u043B\u044C\u043A\u043E \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u0438 \u043A\u0430\u043D\u0430\u043B\u0430" });
+    }
+    const host = await db.query.usersTable.findFirst({ where: eq(usersTable.id, room.hostId) });
+    res.json({
+      ...call,
+      caller: host,
+      callee: null,
+      roomName: room.name,
+      roomId: room.id,
+      hostId: room.hostId
+    });
+  } catch (err2) {
+    req.log.error(err2);
+    res.status(500).json({ error: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u043F\u043E\u0434\u043A\u043B\u044E\u0447\u0438\u0442\u044C\u0441\u044F \u043A \u0433\u043E\u043B\u043E\u0441\u043E\u0432\u043E\u043C\u0443 \u0447\u0430\u0442\u0443" });
+  }
+});
 router29.delete("/audio-rooms/:roomId", async (req, res) => {
   try {
     const roomId = Number(req.params.roomId);
+    if (!Number.isSafeInteger(roomId) || roomId <= 0) return res.status(400).json({ error: "\u041D\u0435\u043A\u043E\u0440\u0440\u0435\u043A\u0442\u043D\u0430\u044F \u043A\u043E\u043C\u043D\u0430\u0442\u0430" });
     const room = await db.query.audioRoomsTable.findFirst({ where: eq(audioRoomsTable.id, roomId) });
     if (!room) return res.status(404).json({ error: "\u041A\u043E\u043C\u043D\u0430\u0442\u0430 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u0430" });
-    if (room.hostId !== req.currentUserId) return res.status(403).json({ error: "\u0422\u043E\u043B\u044C\u043A\u043E \u0441\u043E\u0437\u0434\u0430\u0442\u0435\u043B\u044C \u043C\u043E\u0436\u0435\u0442 \u0437\u0430\u043A\u0440\u044B\u0442\u044C \u043A\u043E\u043C\u043D\u0430\u0442\u0443" });
-    await db.update(audioRoomsTable).set({ status: "ended" }).where(eq(audioRoomsTable.id, roomId));
-    await db.update(callsTable).set({ status: "ended", endedAt: /* @__PURE__ */ new Date() }).where(eq(callsTable.id, room.callId));
+    let canEnd = room.hostId === req.currentUserId;
+    const call = await db.query.callsTable.findFirst({ where: eq(callsTable.id, room.callId) });
+    if (!call) return res.status(404).json({ error: "\u041A\u043E\u043C\u043D\u0430\u0442\u0430 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u0430" });
+    if (!canEnd && call.chatId !== null) {
+      const membership = await db.execute(sql`
+        SELECT role FROM chat_members WHERE chat_id = ${call.chatId} AND user_id = ${req.currentUserId} LIMIT 1
+      `);
+      const role = membership.rows[0]?.role;
+      canEnd = role === "owner" || role === "admin";
+    }
+    if (!canEnd) return res.status(403).json({ error: "\u0417\u0430\u0432\u0435\u0440\u0448\u0438\u0442\u044C \u0433\u043E\u043B\u043E\u0441\u043E\u0432\u043E\u0439 \u0447\u0430\u0442 \u043C\u043E\u0436\u0435\u0442 \u0442\u043E\u043B\u044C\u043A\u043E \u0430\u0434\u043C\u0438\u043D\u0438\u0441\u0442\u0440\u0430\u0442\u043E\u0440" });
+    await db.transaction(async (tx) => {
+      await tx.update(audioRoomsTable).set({ status: "ended" }).where(eq(audioRoomsTable.id, roomId));
+      await tx.update(callsTable).set({ status: "ended", endedAt: /* @__PURE__ */ new Date() }).where(eq(callsTable.id, room.callId));
+    });
+    getIO()?.to(`call:${room.callId}`).emit("call-ended", {
+      callId: room.callId,
+      userId: req.currentUserId
+    });
     res.status(204).send();
   } catch (err2) {
     req.log.error(err2);
@@ -156888,7 +157214,7 @@ app.use(async (req, _res, next) => {
   if (authHeader?.startsWith("Bearer ")) {
     const token = authHeader.slice(7);
     try {
-      const payload = import_jsonwebtoken4.default.verify(token, EFFECTIVE_JWT_SECRET);
+      const payload = import_jsonwebtoken5.default.verify(token, EFFECTIVE_JWT_SECRET);
       if (!payload.pending2fa && Number.isFinite(payload.userId) && payload.userId > 0) {
         if (payload.sid) {
           const valid = await isSessionValid(payload.sid);
@@ -156906,7 +157232,7 @@ app.use(async (req, _res, next) => {
   const queryToken = req.query._token || req.query.token;
   if (queryToken) {
     try {
-      const payload = import_jsonwebtoken4.default.verify(queryToken, EFFECTIVE_JWT_SECRET);
+      const payload = import_jsonwebtoken5.default.verify(queryToken, EFFECTIVE_JWT_SECRET);
       if (!payload.pending2fa && Number.isFinite(payload.userId) && payload.userId > 0) {
         if (payload.sid) {
           const valid = await isSessionValid(payload.sid);
@@ -157074,158 +157400,6 @@ if (process.env.NODE_ENV === "production") {
   });
 }
 var app_default = app;
-
-// ../../node_modules/socket.io/wrapper.mjs
-var import_dist = __toESM(require_dist6(), 1);
-var { Server, Namespace, Socket } = import_dist.default;
-
-// src/lib/socket.ts
-var import_jsonwebtoken5 = __toESM(require_jsonwebtoken(), 1);
-init_src();
-init_drizzle_orm();
-var io2 = null;
-var signalBuffer = /* @__PURE__ */ new Map();
-var SIGNAL_TTL = 6e4;
-function initSocketIO(server) {
-  io2 = new Server(server, {
-    cors: { origin: true, credentials: true },
-    path: "/socket.io",
-    transports: ["websocket", "polling"]
-  });
-  io2.use((socket, next) => {
-    const token = socket.handshake.auth?.token || socket.handshake.query?.token;
-    if (!token) return next(new Error("Unauthorized"));
-    try {
-      const payload = import_jsonwebtoken5.default.verify(token, EFFECTIVE_JWT_SECRET);
-      if (!payload.pending2fa && Number.isFinite(payload.userId) && payload.userId > 0) {
-        socket.data.userId = payload.userId;
-        return next();
-      }
-      next(new Error("Unauthorized"));
-    } catch {
-      next(new Error("Unauthorized"));
-    }
-  });
-  io2.on("connection", (socket) => {
-    const userId = socket.data.userId;
-    db.execute(sql`UPDATE users SET status = 'online' WHERE id = ${userId}`).catch(() => {
-    });
-    io2?.emit("user-status", { userId, status: "online" });
-    socket.on("join-call", ({ callId }) => {
-      if (!callId) return;
-      const room = io2?.sockets.adapter.rooms.get(`call:${callId}`);
-      const existingUserIds = [];
-      if (room) {
-        for (const socketId of room) {
-          const s = io2?.sockets.sockets.get(socketId);
-          if (s && s.data.userId !== userId) {
-            existingUserIds.push(s.data.userId);
-          }
-        }
-      }
-      socket.join(`call:${callId}`);
-      socket.data.callId = callId;
-      const buf = signalBuffer.get(callId);
-      if (buf && buf.length > 0) {
-        const now = Date.now();
-        const toSend = buf.filter(
-          (e5) => now - e5.ts < SIGNAL_TTL && e5.fromUserId !== userId && (e5.targetUserId === void 0 || e5.targetUserId === userId)
-        );
-        for (const entry of toSend) {
-          socket.emit("webrtc-signal", { signal: entry.signal, fromUserId: entry.fromUserId });
-        }
-        signalBuffer.set(
-          callId,
-          buf.filter(
-            (e5) => e5.fromUserId === userId || e5.targetUserId !== void 0 && e5.targetUserId !== userId || now - e5.ts >= SIGNAL_TTL
-          )
-        );
-      }
-      if (existingUserIds.length > 0) {
-        socket.to(`call:${callId}`).emit("peer-joined", { userId, callId });
-        socket.emit("peers-present", { userIds: existingUserIds, callId });
-      }
-    });
-    socket.on(
-      "webrtc-signal",
-      ({
-        callId,
-        signal,
-        targetUserId
-      }) => {
-        if (!callId || signal === void 0) return;
-        if (targetUserId) {
-          const room = io2?.sockets.adapter.rooms.get(`call:${callId}`);
-          let delivered = false;
-          if (room) {
-            for (const socketId of room) {
-              const s = io2?.sockets.sockets.get(socketId);
-              if (s && s.data.userId === targetUserId) {
-                s.emit("webrtc-signal", { signal, fromUserId: userId });
-                delivered = true;
-                break;
-              }
-            }
-          }
-          if (!delivered) {
-            if (!signalBuffer.has(callId)) signalBuffer.set(callId, []);
-            const buf = signalBuffer.get(callId);
-            buf.push({ signal, fromUserId: userId, targetUserId, ts: Date.now() });
-            if (buf.length > 100) buf.splice(0, buf.length - 100);
-          }
-        } else {
-          const room = io2?.sockets.adapter.rooms.get(`call:${callId}`);
-          let delivered = false;
-          if (room) {
-            for (const socketId of room) {
-              const s = io2?.sockets.sockets.get(socketId);
-              if (s && s.data.userId !== userId) {
-                s.emit("webrtc-signal", { signal, fromUserId: userId });
-                delivered = true;
-              }
-            }
-          }
-          if (!delivered) {
-            if (!signalBuffer.has(callId)) signalBuffer.set(callId, []);
-            const buf = signalBuffer.get(callId);
-            buf.push({ signal, fromUserId: userId, ts: Date.now() });
-            if (buf.length > 100) buf.splice(0, buf.length - 100);
-          }
-        }
-      }
-    );
-    socket.on("leave-call", ({ callId }) => {
-      if (!callId) return;
-      socket.leave(`call:${callId}`);
-      if (socket.data.callId === callId) socket.data.callId = void 0;
-      socket.to(`call:${callId}`).emit("peer-left", { userId, callId });
-    });
-    socket.on("end-call", ({ callId }) => {
-      const roomName = `call:${callId}`;
-      if (!Number.isSafeInteger(callId) || socket.data.callId !== callId || !socket.rooms.has(roomName)) return;
-      socket.to(roomName).emit("call-ended", { callId, userId });
-    });
-    socket.on("disconnect", () => {
-      const callId = socket.data.callId;
-      if (callId) {
-        socket.to(`call:${callId}`).emit("peer-left", { userId, callId });
-        setTimeout(() => {
-          const room = io2?.sockets.adapter.rooms.get(`call:${callId}`);
-          if (!room || room.size === 0) signalBuffer.delete(callId);
-        }, 1e4);
-      }
-      const userSockets = [...io2?.sockets.sockets.values() ?? []].filter(
-        (s) => s.id !== socket.id && s.data.userId === userId
-      );
-      if (userSockets.length === 0) {
-        db.execute(sql`UPDATE users SET status = 'offline' WHERE id = ${userId}`).catch(() => {
-        });
-        io2?.emit("user-status", { userId, status: "offline" });
-      }
-    });
-  });
-  return io2;
-}
 
 // src/seed.ts
 init_src();
