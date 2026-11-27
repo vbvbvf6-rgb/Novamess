@@ -142,6 +142,7 @@ async function compressImage(file: File, maxPx = 960, quality = 0.75): Promise<s
 
 export interface ChatInputProps {
   chatId: number;
+  selectedTheme?: { bg: React.CSSProperties; bubble: React.CSSProperties } | null;
   onMessageSent?: () => void;
   replyTo?: Message | null;
   editMessage?: Message | null;
@@ -154,7 +155,7 @@ export interface ChatInputProps {
   isChannelAdmin?: boolean;
 }
 
-export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCancelReply, onCancelEdit, isBot, recipientUserId, p2p, isChannel, isChannelAdmin }: ChatInputProps) {
+export function ChatInput({ chatId, selectedTheme, onMessageSent, replyTo, editMessage, onCancelReply, onCancelEdit, isBot, recipientUserId, p2p, isChannel, isChannelAdmin }: ChatInputProps) {
   const { data: me } = useGetMe();
   const { toast } = useToast();
 
@@ -212,6 +213,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
   const queryClient = useQueryClient();
   const sendMessage = useSendMessage();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -511,7 +513,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
     // Always reset input so the same file can be selected again
-    if (fileInputRef.current) fileInputRef.current.value = "";
+    e.currentTarget.value = "";
     const images: File[] = [];
     const docs: File[] = [];
     const oversized: File[] = [];
@@ -525,7 +527,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
     }
     try {
       if (images.length > 0) {
-        const results = await Promise.all(images.map(f => compressImage(f)));
+        const results = await Promise.all(images.map(f => f.type === "image/gif" ? readFileAsDataUrl(f) : compressImage(f)));
         setImagePreviews(prev => [...prev, ...results]);
         sendTypingEvent("photo");
       }
@@ -1123,7 +1125,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
     const images = usable.filter(f => f.type.startsWith("image/") && !f.type.includes("svg"));
     const docs = usable.filter(f => !f.type.startsWith("image/") || f.type.includes("svg"));
     if (images.length) {
-      const compressed = await Promise.all(images.map(f => compressImage(f)));
+      const compressed = await Promise.all(images.map(f => f.type === "image/gif" ? readFileAsDataUrl(f) : compressImage(f)));
       setImagePreviews(prev => [...prev, ...compressed]);
     }
     for (const file of docs) {
@@ -1522,8 +1524,15 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
                   )}
                 </motion.div>
               ))}
+              {imagePreviews.length > 1 && (
+                <p className="w-full text-xs text-muted-foreground" aria-live="polite" data-testid="text-photo-album-count">
+                  Выбрано {imagePreviews.length} фото — они отправятся одним альбомом
+                </p>
+              )}
               {!isSending && (
-                <button onClick={() => fileInputRef.current?.click()}
+                <button onClick={() => photoInputRef.current?.click()}
+                  aria-label="Добавить фотографии в альбом"
+                  data-testid="button-add-album-photos"
                   className="h-28 w-28 rounded-2xl border-2 border-dashed border-border hover:border-primary hover:bg-primary/5 flex items-center justify-center text-muted-foreground hover:text-primary transition-all shrink-0">
                   <Images size={28} />
                 </button>
@@ -1587,7 +1596,18 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
               transition={{ type: "spring", damping: 28, stiffness: 340 }}
               className="md:hidden mb-2 bg-card border border-border rounded-[22px] shadow-2xl overflow-hidden"
             >
-               <div className={cn("grid gap-0 divide-x divide-border", recipientUserId && !isBot && !isChannel ? "grid-cols-6" : "grid-cols-5")}>
+               <div className={cn("grid gap-0 divide-x divide-border", recipientUserId && !isBot && !isChannel ? "grid-cols-7" : "grid-cols-6")}>
+                <button
+                  type="button"
+                  onClick={() => { photoInputRef.current?.click(); setShowMobileActions(false); }}
+                  className="flex flex-col items-center gap-1.5 py-4 px-2 hover:bg-secondary/60 transition-colors text-muted-foreground hover:text-foreground active:bg-secondary"
+                  data-testid="button-select-chat-photos"
+                >
+                  <div className="w-10 h-10 rounded-2xl bg-violet-500/15 flex items-center justify-center">
+                    <Images size={19} className="text-violet-400" />
+                  </div>
+                  <span className="text-[10px] font-bold leading-none">Фото</span>
+                </button>
                 <button
                   type="button"
                   onClick={() => { fileInputRef.current?.click(); setShowMobileActions(false); }}
@@ -1750,7 +1770,10 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
             </div>
           </motion.div>
         ) : (
-        <div className={`p-1.5 bg-card border rounded-[28px] transition-all flex items-center gap-1.5 shadow-sm focus-within:shadow-md focus-within:border-primary/50 ${editMessage ? "border-primary/50 bg-primary/5" : "border-border"}`}>
+        <div
+          className={`p-1.5 bg-card border rounded-[28px] transition-all flex items-center gap-1.5 shadow-sm focus-within:shadow-md focus-within:border-primary/50 ${editMessage ? "border-primary/50 bg-primary/5" : "border-border"} ${selectedTheme ? "chat-composer-theme" : ""}`}
+          style={selectedTheme ? { ...selectedTheme.bg, color: "#172033", borderColor: "rgba(31,41,55,0.2)" } : undefined}
+        >
           
           <AnimatePresence mode="wait">
             {isRecording ? (
@@ -1803,6 +1826,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
                 onSubmit={handleSend}
                 className="flex-1 flex items-center gap-1"
               >
+                <input ref={photoInputRef} type="file" accept="image/*" multiple onChange={handleFileChange} className="hidden" data-testid="input-chat-photos" />
                 <input ref={fileInputRef} type="file" accept="*/*" multiple onChange={handleFileChange} className="hidden" />
                 <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" onChange={handleFileChange} className="hidden" />
                 
@@ -1913,6 +1937,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
                   onClick={() => handleSend()}
                   disabled={isSending}
                   className="w-12 h-12 flex items-center justify-center bg-primary text-primary-foreground rounded-[20px] hover:bg-primary/90 transition-all disabled:opacity-50 shadow-[0_4px_14px_rgba(234,88,12,0.3)] hover:scale-105 active:scale-95"
+                  style={selectedTheme ? { ...selectedTheme.bubble, color: "#fff" } : undefined}
                 >
                   <SendHorizontal size={20} className={isSending ? "animate-pulse" : "translate-x-[-1px]"} />
                 </button>
@@ -1920,6 +1945,7 @@ export function ChatInput({ chatId, onMessageSent, replyTo, editMessage, onCance
                 <button
                   onClick={() => startRecording()}
                   className="w-12 h-12 flex items-center justify-center bg-secondary text-foreground rounded-[20px] hover:bg-secondary/80 transition-all hover:scale-105 active:scale-95"
+                  style={selectedTheme ? { background: "rgba(15,23,42,0.08)", color: "#334155" } : undefined}
                 >
                   <Mic size={20} />
                 </button>

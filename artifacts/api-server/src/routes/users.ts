@@ -94,7 +94,7 @@ router.post("/users/me/photos", async (req, res) => {
     if (!["add", "activate", "remove"].includes(action) || !isAllowedPhotoUrl(photoUrl)) {
       return res.status(400).json({ error: "Выберите корректную фотографию" });
     }
-    const storedUrl = action === "add" ? await offloadDataUrl(photoUrl, "avatars") : photoUrl;
+    const storedUrl = action === "add" ? (await offloadDataUrl(photoUrl, "avatars")) ?? photoUrl : photoUrl;
     const result = await db.transaction(async tx => {
       const rows = await tx.execute(sql`SELECT avatar_url, photo_urls FROM users WHERE id = ${userId} FOR UPDATE`);
       const user = rows.rows[0] as any;
@@ -485,8 +485,33 @@ router.put("/users/me", async (req, res) => {
       : typeof raw.status_text === "string"
         ? raw.status_text
         : body.statusText;
-    const offloadedAvatarUrl = avatarUrl !== undefined ? await offloadDataUrl(avatarUrl, "avatars") : undefined;
+    const profileCoverUrl = body.profileCoverUrl;
+    const profileCoverType = body.profileCoverType;
     const updateData: Record<string, unknown> = { ...body };
+    if (profileCoverUrl === null) {
+      if (profileCoverType != null) {
+        return res.status(400).json({ error: "Тип фона нужно удалить вместе с файлом" });
+      }
+      updateData.profileCoverType = null;
+    } else if (profileCoverUrl !== undefined) {
+      const coverMatch = /^data:(image\/(?:jpeg|png|webp|gif|avif)|video\/(?:mp4|webm|quicktime));base64,/i.exec(profileCoverUrl);
+      if (!coverMatch) {
+        return res.status(400).json({ error: "Фон должен быть изображением, GIF или видео" });
+      }
+      const coverBytes = Buffer.from(profileCoverUrl.slice(coverMatch[0].length), "base64").byteLength;
+      if (coverBytes > 12 * 1024 * 1024) {
+        return res.status(413).json({ error: "Файл фона не должен превышать 12 МБ" });
+      }
+      const detectedCoverType = coverMatch[1].toLowerCase().startsWith("video/") ? "video" : "image";
+      if (profileCoverType && profileCoverType !== detectedCoverType) {
+        return res.status(400).json({ error: "Тип файла фона не совпадает с содержимым" });
+      }
+      updateData.profileCoverUrl = await offloadDataUrl(profileCoverUrl, "profile-covers");
+      updateData.profileCoverType = detectedCoverType;
+    } else if (profileCoverType !== undefined) {
+      return res.status(400).json({ error: "Для изменения типа фона сначала загрузите файл" });
+    }
+    const offloadedAvatarUrl = avatarUrl !== undefined ? await offloadDataUrl(avatarUrl, "avatars") : undefined;
     if (offloadedAvatarUrl !== undefined) updateData.avatarUrl = offloadedAvatarUrl;
     if (statusText !== undefined) updateData.statusText = statusText;
     const [updated] = await db.update(usersTable).set(updateData as any).where(eq(usersTable.id, uid)).returning();

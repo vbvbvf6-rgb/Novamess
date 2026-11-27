@@ -88,6 +88,40 @@ export declare const usersTable: import("drizzle-orm/pg-core").PgTableWithColumn
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
+        profileCoverUrl: import("drizzle-orm/pg-core").PgColumn<{
+            name: "profile_cover_url";
+            tableName: "users";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        profileCoverType: import("drizzle-orm/pg-core").PgColumn<{
+            name: "profile_cover_type";
+            tableName: "users";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
         photoUrls: import("drizzle-orm/pg-core").PgColumn<{
             name: "photo_urls";
             tableName: "users";
@@ -827,6 +861,8 @@ export declare const insertUserSchema: z.ZodObject<{
     displayName: z.ZodString;
     bio: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     avatarUrl: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    profileCoverUrl: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    profileCoverType: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     photoUrls: z.ZodOptional<z.ZodString>;
     avatarColor: z.ZodOptional<z.ZodString>;
     avatarFrame: z.ZodOptional<z.ZodNullable<z.ZodString>>;

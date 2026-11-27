@@ -8,6 +8,11 @@
 export interface HealthStatus {
     status: string;
 }
+export type UserProfileCoverType = typeof UserProfileCoverType[keyof typeof UserProfileCoverType] | null;
+export declare const UserProfileCoverType: {
+    readonly image: "image";
+    readonly video: "video";
+};
 export type UserStatus = typeof UserStatus[keyof typeof UserStatus];
 export declare const UserStatus: {
     readonly online: "online";
@@ -20,6 +25,8 @@ export interface User {
     displayName: string;
     bio?: string | null;
     avatarUrl?: string | null;
+    profileCoverUrl?: string | null;
+    profileCoverType?: UserProfileCoverType;
     avatarColor: string;
     status: UserStatus;
     statusText?: string | null;
@@ -33,6 +40,11 @@ export interface User {
     totpEnabled?: boolean;
     createdAt: string;
 }
+export type UpdateUserBodyProfileCoverType = typeof UpdateUserBodyProfileCoverType[keyof typeof UpdateUserBodyProfileCoverType] | null;
+export declare const UpdateUserBodyProfileCoverType: {
+    readonly image: "image";
+    readonly video: "video";
+};
 export type UpdateUserBodyStatus = typeof UpdateUserBodyStatus[keyof typeof UpdateUserBodyStatus];
 export declare const UpdateUserBodyStatus: {
     readonly online: "online";
@@ -43,6 +55,8 @@ export interface UpdateUserBody {
     displayName?: string;
     bio?: string;
     avatarUrl?: string;
+    profileCoverUrl?: string | null;
+    profileCoverType?: UpdateUserBodyProfileCoverType;
     avatarColor?: string;
     statusText?: string;
     status?: UpdateUserBodyStatus;

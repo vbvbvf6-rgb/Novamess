@@ -9,6 +9,14 @@ export interface HealthStatus {
   status: string;
 }
 
+export type UserProfileCoverType = typeof UserProfileCoverType[keyof typeof UserProfileCoverType] | null;
+
+
+export const UserProfileCoverType = {
+  image: 'image',
+  video: 'video',
+} as const;
+
 export type UserStatus = typeof UserStatus[keyof typeof UserStatus];
 
 
@@ -24,6 +32,8 @@ export interface User {
   displayName: string;
   bio?: string | null;
   avatarUrl?: string | null;
+  profileCoverUrl?: string | null;
+  profileCoverType?: UserProfileCoverType;
   avatarColor: string;
   status: UserStatus;
   statusText?: string | null;
@@ -38,6 +48,14 @@ export interface User {
   createdAt: string;
 }
 
+export type UpdateUserBodyProfileCoverType = typeof UpdateUserBodyProfileCoverType[keyof typeof UpdateUserBodyProfileCoverType] | null;
+
+
+export const UpdateUserBodyProfileCoverType = {
+  image: 'image',
+  video: 'video',
+} as const;
+
 export type UpdateUserBodyStatus = typeof UpdateUserBodyStatus[keyof typeof UpdateUserBodyStatus];
 
 
@@ -51,6 +69,8 @@ export interface UpdateUserBody {
   displayName?: string;
   bio?: string;
   avatarUrl?: string;
+  profileCoverUrl?: string | null;
+  profileCoverType?: UpdateUserBodyProfileCoverType;
   avatarColor?: string;
   statusText?: string;
   status?: UpdateUserBodyStatus;

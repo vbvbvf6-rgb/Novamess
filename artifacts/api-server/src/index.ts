@@ -76,6 +76,8 @@ if (Number.isNaN(port) || port <= 0) {
     await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS nickname_style TEXT`);
     await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_frame TEXT`);
     await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS photo_urls TEXT NOT NULL DEFAULT '[]'`);
+    await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_cover_url TEXT`);
+    await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_cover_type TEXT`);
     await db.execute(sql`ALTER TABLE chats ADD COLUMN IF NOT EXISTS photo_urls TEXT NOT NULL DEFAULT '[]'`);
     await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS login_code_hash TEXT`);
     await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS login_code_expires_at TIMESTAMP WITH TIME ZONE`);

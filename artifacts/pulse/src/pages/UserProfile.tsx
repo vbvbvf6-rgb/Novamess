@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams, useLocation } from "wouter";
 import {
   useGetUserById,
@@ -6,9 +6,11 @@ import {
   useGetChats,
   useAddContact,
   useRemoveContact,
+  useUpdateMe,
   getGetContactsQueryKey,
   getGetChatsQueryKey,
   getGetUserByIdQueryKey,
+  getGetMeQueryKey,
 } from "@workspace/api-client-react";
 import {
   ArrowLeft,
@@ -28,6 +30,7 @@ import {
   ShieldBan,
   ShieldCheck,
   Image,
+  Video,
   Trash2,
   Gift,
 } from "lucide-react";
@@ -48,6 +51,7 @@ import { ProfileGifts } from "@/components/gifts/ProfileGifts";
 import { PrimeGiftDialog } from "@/components/gifts/PrimeGiftDialog";
 import { MediaGallery } from "@/components/media/MediaGallery";
 import { PhotoAlbum } from "@/components/PhotoAlbum";
+import { prepareVideoForUpload } from "@/lib/mediaCompression";
 
 const getToken = () => sessionStorage.getItem("pulse-token");
 
@@ -259,7 +263,10 @@ export default function UserProfile() {
   const [, setLocation] = useLocation();
   const { currentUserId, setSelectedChatId } = useAppContext();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const coverInputRef = useRef<HTMLInputElement>(null);
   const [isStartingChat, setIsStartingChat] = useState(false);
+  const [isSavingCover, setIsSavingCover] = useState(false);
   const [showGiftPicker, setShowGiftPicker] = useState(false);
   const [showPrimeGift, setShowPrimeGift] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
@@ -293,12 +300,82 @@ export default function UserProfile() {
   });
   const { data: contacts } = useGetContacts();
   const { data: chats } = useGetChats();
+  const updateMe = useUpdateMe();
   const addContact = useAddContact();
   const removeContact = useRemoveContact();
 
   const isContact = contacts?.some((c: { id: number }) => c.id === userId) ?? false;
   const isMe = userId === currentUserId;
   const isBot = Boolean((user as any)?.isBot ?? (user as any)?.is_bot);
+  const profileCoverUrl = (user as any)?.profileCoverUrl ?? null;
+  const profileCoverType = (user as any)?.profileCoverType ?? null;
+  const profileCoverIsVideo = profileCoverType === "video" || /\.(mp4|webm|mov)(?:$|[?#])/i.test(profileCoverUrl || "");
+
+  const handleProfileCoverChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.currentTarget.files?.[0];
+    event.currentTarget.value = "";
+    if (!file) return;
+
+    const isVideo = file.type.startsWith("video/");
+    const supportedImage = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif"].includes(file.type);
+    const supportedVideo = ["video/mp4", "video/webm", "video/quicktime"].includes(file.type);
+    if ((!isVideo && !supportedImage) || (isVideo && !supportedVideo)) {
+      toast({ title: "Неподдерживаемый формат", description: "Выберите JPG, PNG, WebP, GIF, AVIF или видео MP4/WebM/MOV.", variant: "destructive" });
+      return;
+    }
+    if (file.size > 100 * 1024 * 1024) {
+      toast({ title: "Видео слишком большое", description: "Максимальный размер исходного файла — 100 МБ.", variant: "destructive" });
+      return;
+    }
+
+    setIsSavingCover(true);
+    try {
+      const dataUrl = isVideo
+        ? await prepareVideoForUpload(file)
+        : await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(String(reader.result || ""));
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+          });
+      const encoded = dataUrl.slice(dataUrl.indexOf(",") + 1);
+      const padding = encoded.endsWith("==") ? 2 : encoded.endsWith("=") ? 1 : 0;
+      const decodedBytes = Math.floor(encoded.length * 0.75) - padding;
+      if (decodedBytes > 12 * 1024 * 1024) {
+        toast({ title: "Файл фона слишком большой", description: "После обработки файл должен быть не больше 12 МБ.", variant: "destructive" });
+        return;
+      }
+
+      await updateMe.mutateAsync({
+        data: { profileCoverUrl: dataUrl, profileCoverType: isVideo ? "video" : "image" },
+      });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: getGetMeQueryKey() }),
+        queryClient.invalidateQueries({ queryKey: getGetUserByIdQueryKey(userId) }),
+      ]);
+      toast({ title: "Фон профиля обновлён" });
+    } catch {
+      toast({ title: "Не удалось сохранить фон профиля", variant: "destructive" });
+    } finally {
+      setIsSavingCover(false);
+    }
+  };
+
+  const handleRemoveProfileCover = async () => {
+    setIsSavingCover(true);
+    try {
+      await updateMe.mutateAsync({ data: { profileCoverUrl: null, profileCoverType: null } });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: getGetMeQueryKey() }),
+        queryClient.invalidateQueries({ queryKey: getGetUserByIdQueryKey(userId) }),
+      ]);
+      toast({ title: "Фон профиля удалён" });
+    } catch {
+      toast({ title: "Не удалось удалить фон профиля", variant: "destructive" });
+    } finally {
+      setIsSavingCover(false);
+    }
+  };
 
   const commonChats = chats?.filter((chat: { type: string; otherUser?: { id: number } | null; members?: { userId: number }[] }) => {
     if (chat.type === "direct") return chat.otherUser?.id === userId;
@@ -449,7 +526,7 @@ export default function UserProfile() {
             className="rounded-[2rem] overflow-hidden bg-card border border-border shadow-[0_18px_60px_rgba(0,0,0,0.18)]"
           >
             <div
-              className="h-32 w-full relative"
+              className="h-32 w-full relative overflow-hidden"
               style={{
                 background: (user as any).hasPrime
                   ? (user as any).primeTier === "prime_plus"
@@ -458,7 +535,66 @@ export default function UserProfile() {
                   : `linear-gradient(135deg, ${user.avatarColor || "#3B82F6"}66, ${user.avatarColor || "#3B82F6"}22)`,
               }}
             >
-              <div className="absolute inset-0 opacity-20" style={{ backgroundImage: `radial-gradient(circle at 20% 80%, ${user.avatarColor}88 0%, transparent 60%)` }} />
+              {profileCoverUrl && (profileCoverIsVideo ? (
+                <video
+                  src={profileCoverUrl}
+                  className="absolute inset-0 h-full w-full object-cover"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  preload="metadata"
+                  aria-label="Анимированный фон профиля"
+                  data-testid="video-profile-cover"
+                />
+              ) : (
+                <img
+                  src={profileCoverUrl}
+                  alt="Фон профиля"
+                  className="absolute inset-0 h-full w-full object-cover"
+                  data-testid="img-profile-cover"
+                />
+              ))}
+              {profileCoverUrl ? (
+                <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/30 pointer-events-none" />
+              ) : (
+                <div className="absolute inset-0 opacity-20" style={{ backgroundImage: `radial-gradient(circle at 20% 80%, ${user.avatarColor}88 0%, transparent 60%)` }} />
+              )}
+              {isMe && (
+                <div className="absolute top-3 right-3 z-20 flex items-center gap-2">
+                  <input
+                    ref={coverInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif,image/avif,video/mp4,video/webm,video/quicktime"
+                    className="hidden"
+                    onChange={handleProfileCoverChange}
+                    data-testid="input-profile-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => coverInputRef.current?.click()}
+                    disabled={isSavingCover}
+                    className="flex items-center gap-1.5 rounded-full border border-white/25 bg-black/45 px-3 py-2 text-xs font-bold text-white shadow-lg backdrop-blur-md transition hover:bg-black/65 disabled:opacity-60"
+                    data-testid="button-change-profile-cover"
+                  >
+                    {profileCoverIsVideo ? <Video size={14} /> : <Image size={14} />}
+                    <span>{isSavingCover ? "Сохраняем…" : profileCoverUrl ? "Изменить фон" : "Добавить фон"}</span>
+                  </button>
+                  {profileCoverUrl && (
+                    <button
+                      type="button"
+                      onClick={handleRemoveProfileCover}
+                      disabled={isSavingCover}
+                      className="flex h-9 w-9 items-center justify-center rounded-full border border-white/25 bg-black/45 text-white shadow-lg backdrop-blur-md transition hover:bg-red-600/80 disabled:opacity-60"
+                      title="Удалить фон профиля"
+                      aria-label="Удалить фон профиля"
+                      data-testid="button-remove-profile-cover"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  )}
+                </div>
+              )}
               {(user as any).hasPrime && (
                 <div className="absolute inset-0 overflow-hidden">
                   {[...Array(6)].map((_, i) => (

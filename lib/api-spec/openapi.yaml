@@ -1021,6 +1021,13 @@ components:
         avatarUrl:
           type: string
           nullable: true
+        profileCoverUrl:
+          type: string
+          nullable: true
+        profileCoverType:
+          type: string
+          enum: [image, video]
+          nullable: true
         avatarColor:
           type: string
         status:
@@ -1069,6 +1076,13 @@ components:
           type: string
         avatarUrl:
           type: string
+        profileCoverUrl:
+          type: string
+          nullable: true
+        profileCoverType:
+          type: string
+          enum: [image, video]
+          nullable: true
         avatarColor:
           type: string
         statusText:

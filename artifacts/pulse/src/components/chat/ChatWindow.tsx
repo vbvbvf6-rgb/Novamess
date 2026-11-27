@@ -1153,7 +1153,19 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
   return (
     <div className="flex-1 flex flex-col h-full bg-background relative overflow-hidden z-30">
       {/* Header */}
-      <header className="border-b border-border flex items-center px-3 md:px-6 justify-between bg-card/95 backdrop-blur-md z-20 shrink-0 relative" style={{ minHeight: "calc(4rem + env(safe-area-inset-top, 0px))", paddingTop: "env(safe-area-inset-top, 0px)", boxShadow: "0 1px 0 0 hsl(var(--border)), 0 4px 20px -4px rgba(0,0,0,0.12)" }}>
+      <header
+        className={`border-b border-border flex items-center px-3 md:px-6 justify-between bg-card/95 backdrop-blur-md z-20 shrink-0 relative ${activeTheme ? "chat-header-theme" : ""}`}
+        style={{
+          ...(activeTheme?.bg ?? {}),
+          minHeight: "calc(4rem + env(safe-area-inset-top, 0px))",
+          paddingTop: "env(safe-area-inset-top, 0px)",
+          color: activeTheme ? "#172033" : undefined,
+          borderColor: activeTheme ? "rgba(31,41,55,0.16)" : undefined,
+          boxShadow: activeTheme
+            ? "0 1px 0 rgba(15,23,42,0.12), 0 4px 20px -4px rgba(0,0,0,0.08)"
+            : "0 1px 0 0 hsl(var(--border)), 0 4px 20px -4px rgba(0,0,0,0.12)",
+        }}
+      >
         <div className="flex items-center gap-2 md:gap-3 min-w-0">
           <button
             className="flex items-center justify-center p-2 -ml-1 text-foreground active:opacity-60 transition-opacity shrink-0 md:hidden rounded-full bg-transparent"
@@ -1961,6 +1973,7 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
 
       <ChatInput
         chatId={chatId}
+        selectedTheme={activeTheme}
         replyTo={replyTo}
         editMessage={editMessage}
         onCancelReply={() => setReplyTo(null)}

@@ -1057,4 +1057,33 @@ html[data-app-theme="halloween"] ::selection {
 .bg-white\/8  { background-color: rgba(255,255,255,0.08); }
 .bg-white\/10 { background-color: rgba(255,255,255,0.10); }
 .bg-white\/15 { background-color: rgba(255,255,255,0.15); }
+
+.chat-composer-theme {
+  color: #172033 !important;
+}
+.chat-composer-theme textarea {
+  color: #172033 !important;
+}
+.chat-composer-theme textarea::placeholder {
+  color: rgba(31, 41, 55, 0.58) !important;
+}
+.chat-composer-theme button:not(.bg-primary) {
+  color: #475569;
+}
+.chat-composer-theme button:not(.bg-primary):hover {
+  color: #0f172a;
+  background-color: rgba(15, 23, 42, 0.08);
+}
+.chat-header-theme {
+  color: #172033 !important;
+}
+.chat-header-theme .text-foreground {
+  color: #172033 !important;
+}
+.chat-header-theme .text-muted-foreground {
+  color: rgba(31, 41, 55, 0.68) !important;
+}
+.chat-header-theme button:hover {
+  background-color: rgba(15, 23, 42, 0.08);
+}
 .bg-white\/20 { background-color: rgba(255,255,255,0.20); }

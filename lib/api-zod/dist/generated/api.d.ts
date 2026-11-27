@@ -25,6 +25,8 @@ export declare const GetMeResponse: zod.ZodObject<{
     displayName: zod.ZodString;
     bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
     avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+    profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+    profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
     avatarColor: zod.ZodString;
     status: zod.ZodEnum<["online", "offline", "away"]>;
     statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -49,6 +51,8 @@ export declare const GetMeResponse: zod.ZodObject<{
     createdAt: string;
     bio?: string | null | undefined;
     avatarUrl?: string | null | undefined;
+    profileCoverUrl?: string | null | undefined;
+    profileCoverType?: "image" | "video" | null | undefined;
     statusText?: string | null | undefined;
     lastSeen?: string | null | undefined;
     phoneNumber?: string | null | undefined;
@@ -67,6 +71,8 @@ export declare const GetMeResponse: zod.ZodObject<{
     createdAt: string;
     bio?: string | null | undefined;
     avatarUrl?: string | null | undefined;
+    profileCoverUrl?: string | null | undefined;
+    profileCoverType?: "image" | "video" | null | undefined;
     statusText?: string | null | undefined;
     lastSeen?: string | null | undefined;
     phoneNumber?: string | null | undefined;
@@ -81,6 +87,8 @@ export declare const UpdateMeBody: zod.ZodObject<{
     displayName: zod.ZodOptional<zod.ZodString>;
     bio: zod.ZodOptional<zod.ZodString>;
     avatarUrl: zod.ZodOptional<zod.ZodString>;
+    profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+    profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
     avatarColor: zod.ZodOptional<zod.ZodString>;
     statusText: zod.ZodOptional<zod.ZodString>;
     status: zod.ZodOptional<zod.ZodEnum<["online", "offline", "away"]>>;
@@ -92,6 +100,8 @@ export declare const UpdateMeBody: zod.ZodObject<{
     displayName?: string | undefined;
     bio?: string | undefined;
     avatarUrl?: string | undefined;
+    profileCoverUrl?: string | null | undefined;
+    profileCoverType?: "image" | "video" | null | undefined;
     avatarColor?: string | undefined;
     statusText?: string | undefined;
     showOnlineStatus?: boolean | undefined;
@@ -102,6 +112,8 @@ export declare const UpdateMeBody: zod.ZodObject<{
     displayName?: string | undefined;
     bio?: string | undefined;
     avatarUrl?: string | undefined;
+    profileCoverUrl?: string | null | undefined;
+    profileCoverType?: "image" | "video" | null | undefined;
     avatarColor?: string | undefined;
     statusText?: string | undefined;
     showOnlineStatus?: boolean | undefined;
@@ -114,6 +126,8 @@ export declare const UpdateMeResponse: zod.ZodObject<{
     displayName: zod.ZodString;
     bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
     avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+    profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+    profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
     avatarColor: zod.ZodString;
     status: zod.ZodEnum<["online", "offline", "away"]>;
     statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -138,6 +152,8 @@ export declare const UpdateMeResponse: zod.ZodObject<{
     createdAt: string;
     bio?: string | null | undefined;
     avatarUrl?: string | null | undefined;
+    profileCoverUrl?: string | null | undefined;
+    profileCoverType?: "image" | "video" | null | undefined;
     statusText?: string | null | undefined;
     lastSeen?: string | null | undefined;
     phoneNumber?: string | null | undefined;
@@ -156,6 +172,8 @@ export declare const UpdateMeResponse: zod.ZodObject<{
     createdAt: string;
     bio?: string | null | undefined;
     avatarUrl?: string | null | undefined;
+    profileCoverUrl?: string | null | undefined;
+    profileCoverType?: "image" | "video" | null | undefined;
     statusText?: string | null | undefined;
     lastSeen?: string | null | undefined;
     phoneNumber?: string | null | undefined;
@@ -179,6 +197,8 @@ export declare const SearchUsersResponseItem: zod.ZodObject<{
     displayName: zod.ZodString;
     bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
     avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+    profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+    profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
     avatarColor: zod.ZodString;
     status: zod.ZodEnum<["online", "offline", "away"]>;
     statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -203,6 +223,8 @@ export declare const SearchUsersResponseItem: zod.ZodObject<{
     createdAt: string;
     bio?: string | null | undefined;
     avatarUrl?: string | null | undefined;
+    profileCoverUrl?: string | null | undefined;
+    profileCoverType?: "image" | "video" | null | undefined;
     statusText?: string | null | undefined;
     lastSeen?: string | null | undefined;
     phoneNumber?: string | null | undefined;
@@ -221,6 +243,8 @@ export declare const SearchUsersResponseItem: zod.ZodObject<{
     createdAt: string;
     bio?: string | null | undefined;
     avatarUrl?: string | null | undefined;
+    profileCoverUrl?: string | null | undefined;
+    profileCoverType?: "image" | "video" | null | undefined;
     statusText?: string | null | undefined;
     lastSeen?: string | null | undefined;
     phoneNumber?: string | null | undefined;
@@ -234,6 +258,8 @@ export declare const SearchUsersResponse: zod.ZodArray<zod.ZodObject<{
     displayName: zod.ZodString;
     bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
     avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+    profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+    profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
     avatarColor: zod.ZodString;
     status: zod.ZodEnum<["online", "offline", "away"]>;
     statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -258,6 +284,8 @@ export declare const SearchUsersResponse: zod.ZodArray<zod.ZodObject<{
     createdAt: string;
     bio?: string | null | undefined;
     avatarUrl?: string | null | undefined;
+    profileCoverUrl?: string | null | undefined;
+    profileCoverType?: "image" | "video" | null | undefined;
     statusText?: string | null | undefined;
     lastSeen?: string | null | undefined;
     phoneNumber?: string | null | undefined;
@@ -276,6 +304,8 @@ export declare const SearchUsersResponse: zod.ZodArray<zod.ZodObject<{
     createdAt: string;
     bio?: string | null | undefined;
     avatarUrl?: string | null | undefined;
+    profileCoverUrl?: string | null | undefined;
+    profileCoverType?: "image" | "video" | null | undefined;
     statusText?: string | null | undefined;
     lastSeen?: string | null | undefined;
     phoneNumber?: string | null | undefined;
@@ -296,6 +326,8 @@ export declare const GetUserByIdResponse: zod.ZodObject<{
     displayName: zod.ZodString;
     bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
     avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+    profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+    profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
     avatarColor: zod.ZodString;
     status: zod.ZodEnum<["online", "offline", "away"]>;
     statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -320,6 +352,8 @@ export declare const GetUserByIdResponse: zod.ZodObject<{
     createdAt: string;
     bio?: string | null | undefined;
     avatarUrl?: string | null | undefined;
+    profileCoverUrl?: string | null | undefined;
+    profileCoverType?: "image" | "video" | null | undefined;
     statusText?: string | null | undefined;
     lastSeen?: string | null | undefined;
     phoneNumber?: string | null | undefined;
@@ -338,6 +372,8 @@ export declare const GetUserByIdResponse: zod.ZodObject<{
     createdAt: string;
     bio?: string | null | undefined;
     avatarUrl?: string | null | undefined;
+    profileCoverUrl?: string | null | undefined;
+    profileCoverType?: "image" | "video" | null | undefined;
     statusText?: string | null | undefined;
     lastSeen?: string | null | undefined;
     phoneNumber?: string | null | undefined;
@@ -354,6 +390,8 @@ export declare const GetContactsResponseItem: zod.ZodObject<{
     displayName: zod.ZodString;
     bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
     avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+    profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+    profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
     avatarColor: zod.ZodString;
     status: zod.ZodEnum<["online", "offline", "away"]>;
     statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -378,6 +416,8 @@ export declare const GetContactsResponseItem: zod.ZodObject<{
     createdAt: string;
     bio?: string | null | undefined;
     avatarUrl?: string | null | undefined;
+    profileCoverUrl?: string | null | undefined;
+    profileCoverType?: "image" | "video" | null | undefined;
     statusText?: string | null | undefined;
     lastSeen?: string | null | undefined;
     phoneNumber?: string | null | undefined;
@@ -396,6 +436,8 @@ export declare const GetContactsResponseItem: zod.ZodObject<{
     createdAt: string;
     bio?: string | null | undefined;
     avatarUrl?: string | null | undefined;
+    profileCoverUrl?: string | null | undefined;
+    profileCoverType?: "image" | "video" | null | undefined;
     statusText?: string | null | undefined;
     lastSeen?: string | null | undefined;
     phoneNumber?: string | null | undefined;
@@ -409,6 +451,8 @@ export declare const GetContactsResponse: zod.ZodArray<zod.ZodObject<{
     displayName: zod.ZodString;
     bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
     avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+    profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+    profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
     avatarColor: zod.ZodString;
     status: zod.ZodEnum<["online", "offline", "away"]>;
     statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -433,6 +477,8 @@ export declare const GetContactsResponse: zod.ZodArray<zod.ZodObject<{
     createdAt: string;
     bio?: string | null | undefined;
     avatarUrl?: string | null | undefined;
+    profileCoverUrl?: string | null | undefined;
+    profileCoverType?: "image" | "video" | null | undefined;
     statusText?: string | null | undefined;
     lastSeen?: string | null | undefined;
     phoneNumber?: string | null | undefined;
@@ -451,6 +497,8 @@ export declare const GetContactsResponse: zod.ZodArray<zod.ZodObject<{
     createdAt: string;
     bio?: string | null | undefined;
     avatarUrl?: string | null | undefined;
+    profileCoverUrl?: string | null | undefined;
+    profileCoverType?: "image" | "video" | null | undefined;
     statusText?: string | null | undefined;
     lastSeen?: string | null | undefined;
     phoneNumber?: string | null | undefined;
@@ -474,6 +522,8 @@ export declare const AddContactResponse: zod.ZodObject<{
     displayName: zod.ZodString;
     bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
     avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+    profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+    profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
     avatarColor: zod.ZodString;
     status: zod.ZodEnum<["online", "offline", "away"]>;
     statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -498,6 +548,8 @@ export declare const AddContactResponse: zod.ZodObject<{
     createdAt: string;
     bio?: string | null | undefined;
     avatarUrl?: string | null | undefined;
+    profileCoverUrl?: string | null | undefined;
+    profileCoverType?: "image" | "video" | null | undefined;
     statusText?: string | null | undefined;
     lastSeen?: string | null | undefined;
     phoneNumber?: string | null | undefined;
@@ -516,6 +568,8 @@ export declare const AddContactResponse: zod.ZodObject<{
     createdAt: string;
     bio?: string | null | undefined;
     avatarUrl?: string | null | undefined;
+    profileCoverUrl?: string | null | undefined;
+    profileCoverType?: "image" | "video" | null | undefined;
     statusText?: string | null | undefined;
     lastSeen?: string | null | undefined;
     phoneNumber?: string | null | undefined;
@@ -565,6 +619,8 @@ export declare const GetChatsResponseItem: zod.ZodObject<{
                 displayName: zod.ZodString;
                 bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
                 avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+                profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+                profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
                 avatarColor: zod.ZodString;
                 status: zod.ZodEnum<["online", "offline", "away"]>;
                 statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -589,6 +645,8 @@ export declare const GetChatsResponseItem: zod.ZodObject<{
                 createdAt: string;
                 bio?: string | null | undefined;
                 avatarUrl?: string | null | undefined;
+                profileCoverUrl?: string | null | undefined;
+                profileCoverType?: "image" | "video" | null | undefined;
                 statusText?: string | null | undefined;
                 lastSeen?: string | null | undefined;
                 phoneNumber?: string | null | undefined;
@@ -607,6 +665,8 @@ export declare const GetChatsResponseItem: zod.ZodObject<{
                 createdAt: string;
                 bio?: string | null | undefined;
                 avatarUrl?: string | null | undefined;
+                profileCoverUrl?: string | null | undefined;
+                profileCoverType?: "image" | "video" | null | undefined;
                 statusText?: string | null | undefined;
                 lastSeen?: string | null | undefined;
                 phoneNumber?: string | null | undefined;
@@ -633,6 +693,8 @@ export declare const GetChatsResponseItem: zod.ZodObject<{
                 createdAt: string;
                 bio?: string | null | undefined;
                 avatarUrl?: string | null | undefined;
+                profileCoverUrl?: string | null | undefined;
+                profileCoverType?: "image" | "video" | null | undefined;
                 statusText?: string | null | undefined;
                 lastSeen?: string | null | undefined;
                 phoneNumber?: string | null | undefined;
@@ -658,6 +720,8 @@ export declare const GetChatsResponseItem: zod.ZodObject<{
                 createdAt: string;
                 bio?: string | null | undefined;
                 avatarUrl?: string | null | undefined;
+                profileCoverUrl?: string | null | undefined;
+                profileCoverType?: "image" | "video" | null | undefined;
                 statusText?: string | null | undefined;
                 lastSeen?: string | null | undefined;
                 phoneNumber?: string | null | undefined;
@@ -672,6 +736,8 @@ export declare const GetChatsResponseItem: zod.ZodObject<{
             displayName: zod.ZodString;
             bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
             avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+            profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+            profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
             avatarColor: zod.ZodString;
             status: zod.ZodEnum<["online", "offline", "away"]>;
             statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -696,6 +762,8 @@ export declare const GetChatsResponseItem: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -714,6 +782,8 @@ export declare const GetChatsResponseItem: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -861,7 +931,7 @@ export declare const GetChatsResponseItem: zod.ZodObject<{
         createdAt: zod.ZodString;
         updatedAt: zod.ZodString;
     }, "strip", zod.ZodTypeAny, {
-        type: "text" | "image" | "video" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
+        type: "image" | "video" | "text" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
         id: number;
         createdAt: string;
         chatId: number;
@@ -886,6 +956,8 @@ export declare const GetChatsResponseItem: zod.ZodObject<{
                 createdAt: string;
                 bio?: string | null | undefined;
                 avatarUrl?: string | null | undefined;
+                profileCoverUrl?: string | null | undefined;
+                profileCoverType?: "image" | "video" | null | undefined;
                 statusText?: string | null | undefined;
                 lastSeen?: string | null | undefined;
                 phoneNumber?: string | null | undefined;
@@ -910,6 +982,8 @@ export declare const GetChatsResponseItem: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -953,7 +1027,7 @@ export declare const GetChatsResponseItem: zod.ZodObject<{
             message?: string | null | undefined;
         } | null | undefined;
     }, {
-        type: "text" | "image" | "video" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
+        type: "image" | "video" | "text" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
         id: number;
         createdAt: string;
         chatId: number;
@@ -978,6 +1052,8 @@ export declare const GetChatsResponseItem: zod.ZodObject<{
                 createdAt: string;
                 bio?: string | null | undefined;
                 avatarUrl?: string | null | undefined;
+                profileCoverUrl?: string | null | undefined;
+                profileCoverType?: "image" | "video" | null | undefined;
                 statusText?: string | null | undefined;
                 lastSeen?: string | null | undefined;
                 phoneNumber?: string | null | undefined;
@@ -1002,6 +1078,8 @@ export declare const GetChatsResponseItem: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -1057,6 +1135,8 @@ export declare const GetChatsResponseItem: zod.ZodObject<{
             displayName: zod.ZodString;
             bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
             avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+            profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+            profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
             avatarColor: zod.ZodString;
             status: zod.ZodEnum<["online", "offline", "away"]>;
             statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -1081,6 +1161,8 @@ export declare const GetChatsResponseItem: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -1099,6 +1181,8 @@ export declare const GetChatsResponseItem: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -1124,6 +1208,8 @@ export declare const GetChatsResponseItem: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -1149,6 +1235,8 @@ export declare const GetChatsResponseItem: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -1163,6 +1251,8 @@ export declare const GetChatsResponseItem: zod.ZodObject<{
         displayName: zod.ZodString;
         bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
         avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
         avatarColor: zod.ZodString;
         status: zod.ZodEnum<["online", "offline", "away"]>;
         statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -1187,6 +1277,8 @@ export declare const GetChatsResponseItem: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -1205,6 +1297,8 @@ export declare const GetChatsResponseItem: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -1227,7 +1321,7 @@ export declare const GetChatsResponseItem: zod.ZodObject<{
     name?: string | null | undefined;
     description?: string | null | undefined;
     lastMessage?: {
-        type: "text" | "image" | "video" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
+        type: "image" | "video" | "text" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
         id: number;
         createdAt: string;
         chatId: number;
@@ -1252,6 +1346,8 @@ export declare const GetChatsResponseItem: zod.ZodObject<{
                 createdAt: string;
                 bio?: string | null | undefined;
                 avatarUrl?: string | null | undefined;
+                profileCoverUrl?: string | null | undefined;
+                profileCoverType?: "image" | "video" | null | undefined;
                 statusText?: string | null | undefined;
                 lastSeen?: string | null | undefined;
                 phoneNumber?: string | null | undefined;
@@ -1276,6 +1372,8 @@ export declare const GetChatsResponseItem: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -1337,6 +1435,8 @@ export declare const GetChatsResponseItem: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -1357,6 +1457,8 @@ export declare const GetChatsResponseItem: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -1377,7 +1479,7 @@ export declare const GetChatsResponseItem: zod.ZodObject<{
     name?: string | null | undefined;
     description?: string | null | undefined;
     lastMessage?: {
-        type: "text" | "image" | "video" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
+        type: "image" | "video" | "text" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
         id: number;
         createdAt: string;
         chatId: number;
@@ -1402,6 +1504,8 @@ export declare const GetChatsResponseItem: zod.ZodObject<{
                 createdAt: string;
                 bio?: string | null | undefined;
                 avatarUrl?: string | null | undefined;
+                profileCoverUrl?: string | null | undefined;
+                profileCoverType?: "image" | "video" | null | undefined;
                 statusText?: string | null | undefined;
                 lastSeen?: string | null | undefined;
                 phoneNumber?: string | null | undefined;
@@ -1426,6 +1530,8 @@ export declare const GetChatsResponseItem: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -1487,6 +1593,8 @@ export declare const GetChatsResponseItem: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -1507,6 +1615,8 @@ export declare const GetChatsResponseItem: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -1546,6 +1656,8 @@ export declare const GetChatsResponse: zod.ZodArray<zod.ZodObject<{
                 displayName: zod.ZodString;
                 bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
                 avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+                profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+                profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
                 avatarColor: zod.ZodString;
                 status: zod.ZodEnum<["online", "offline", "away"]>;
                 statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -1570,6 +1682,8 @@ export declare const GetChatsResponse: zod.ZodArray<zod.ZodObject<{
                 createdAt: string;
                 bio?: string | null | undefined;
                 avatarUrl?: string | null | undefined;
+                profileCoverUrl?: string | null | undefined;
+                profileCoverType?: "image" | "video" | null | undefined;
                 statusText?: string | null | undefined;
                 lastSeen?: string | null | undefined;
                 phoneNumber?: string | null | undefined;
@@ -1588,6 +1702,8 @@ export declare const GetChatsResponse: zod.ZodArray<zod.ZodObject<{
                 createdAt: string;
                 bio?: string | null | undefined;
                 avatarUrl?: string | null | undefined;
+                profileCoverUrl?: string | null | undefined;
+                profileCoverType?: "image" | "video" | null | undefined;
                 statusText?: string | null | undefined;
                 lastSeen?: string | null | undefined;
                 phoneNumber?: string | null | undefined;
@@ -1614,6 +1730,8 @@ export declare const GetChatsResponse: zod.ZodArray<zod.ZodObject<{
                 createdAt: string;
                 bio?: string | null | undefined;
                 avatarUrl?: string | null | undefined;
+                profileCoverUrl?: string | null | undefined;
+                profileCoverType?: "image" | "video" | null | undefined;
                 statusText?: string | null | undefined;
                 lastSeen?: string | null | undefined;
                 phoneNumber?: string | null | undefined;
@@ -1639,6 +1757,8 @@ export declare const GetChatsResponse: zod.ZodArray<zod.ZodObject<{
                 createdAt: string;
                 bio?: string | null | undefined;
                 avatarUrl?: string | null | undefined;
+                profileCoverUrl?: string | null | undefined;
+                profileCoverType?: "image" | "video" | null | undefined;
                 statusText?: string | null | undefined;
                 lastSeen?: string | null | undefined;
                 phoneNumber?: string | null | undefined;
@@ -1653,6 +1773,8 @@ export declare const GetChatsResponse: zod.ZodArray<zod.ZodObject<{
             displayName: zod.ZodString;
             bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
             avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+            profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+            profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
             avatarColor: zod.ZodString;
             status: zod.ZodEnum<["online", "offline", "away"]>;
             statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -1677,6 +1799,8 @@ export declare const GetChatsResponse: zod.ZodArray<zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -1695,6 +1819,8 @@ export declare const GetChatsResponse: zod.ZodArray<zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -1842,7 +1968,7 @@ export declare const GetChatsResponse: zod.ZodArray<zod.ZodObject<{
         createdAt: zod.ZodString;
         updatedAt: zod.ZodString;
     }, "strip", zod.ZodTypeAny, {
-        type: "text" | "image" | "video" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
+        type: "image" | "video" | "text" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
         id: number;
         createdAt: string;
         chatId: number;
@@ -1867,6 +1993,8 @@ export declare const GetChatsResponse: zod.ZodArray<zod.ZodObject<{
                 createdAt: string;
                 bio?: string | null | undefined;
                 avatarUrl?: string | null | undefined;
+                profileCoverUrl?: string | null | undefined;
+                profileCoverType?: "image" | "video" | null | undefined;
                 statusText?: string | null | undefined;
                 lastSeen?: string | null | undefined;
                 phoneNumber?: string | null | undefined;
@@ -1891,6 +2019,8 @@ export declare const GetChatsResponse: zod.ZodArray<zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -1934,7 +2064,7 @@ export declare const GetChatsResponse: zod.ZodArray<zod.ZodObject<{
             message?: string | null | undefined;
         } | null | undefined;
     }, {
-        type: "text" | "image" | "video" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
+        type: "image" | "video" | "text" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
         id: number;
         createdAt: string;
         chatId: number;
@@ -1959,6 +2089,8 @@ export declare const GetChatsResponse: zod.ZodArray<zod.ZodObject<{
                 createdAt: string;
                 bio?: string | null | undefined;
                 avatarUrl?: string | null | undefined;
+                profileCoverUrl?: string | null | undefined;
+                profileCoverType?: "image" | "video" | null | undefined;
                 statusText?: string | null | undefined;
                 lastSeen?: string | null | undefined;
                 phoneNumber?: string | null | undefined;
@@ -1983,6 +2115,8 @@ export declare const GetChatsResponse: zod.ZodArray<zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -2038,6 +2172,8 @@ export declare const GetChatsResponse: zod.ZodArray<zod.ZodObject<{
             displayName: zod.ZodString;
             bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
             avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+            profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+            profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
             avatarColor: zod.ZodString;
             status: zod.ZodEnum<["online", "offline", "away"]>;
             statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -2062,6 +2198,8 @@ export declare const GetChatsResponse: zod.ZodArray<zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -2080,6 +2218,8 @@ export declare const GetChatsResponse: zod.ZodArray<zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -2105,6 +2245,8 @@ export declare const GetChatsResponse: zod.ZodArray<zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -2130,6 +2272,8 @@ export declare const GetChatsResponse: zod.ZodArray<zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -2144,6 +2288,8 @@ export declare const GetChatsResponse: zod.ZodArray<zod.ZodObject<{
         displayName: zod.ZodString;
         bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
         avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
         avatarColor: zod.ZodString;
         status: zod.ZodEnum<["online", "offline", "away"]>;
         statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -2168,6 +2314,8 @@ export declare const GetChatsResponse: zod.ZodArray<zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -2186,6 +2334,8 @@ export declare const GetChatsResponse: zod.ZodArray<zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -2208,7 +2358,7 @@ export declare const GetChatsResponse: zod.ZodArray<zod.ZodObject<{
     name?: string | null | undefined;
     description?: string | null | undefined;
     lastMessage?: {
-        type: "text" | "image" | "video" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
+        type: "image" | "video" | "text" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
         id: number;
         createdAt: string;
         chatId: number;
@@ -2233,6 +2383,8 @@ export declare const GetChatsResponse: zod.ZodArray<zod.ZodObject<{
                 createdAt: string;
                 bio?: string | null | undefined;
                 avatarUrl?: string | null | undefined;
+                profileCoverUrl?: string | null | undefined;
+                profileCoverType?: "image" | "video" | null | undefined;
                 statusText?: string | null | undefined;
                 lastSeen?: string | null | undefined;
                 phoneNumber?: string | null | undefined;
@@ -2257,6 +2409,8 @@ export declare const GetChatsResponse: zod.ZodArray<zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -2318,6 +2472,8 @@ export declare const GetChatsResponse: zod.ZodArray<zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -2338,6 +2494,8 @@ export declare const GetChatsResponse: zod.ZodArray<zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -2358,7 +2516,7 @@ export declare const GetChatsResponse: zod.ZodArray<zod.ZodObject<{
     name?: string | null | undefined;
     description?: string | null | undefined;
     lastMessage?: {
-        type: "text" | "image" | "video" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
+        type: "image" | "video" | "text" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
         id: number;
         createdAt: string;
         chatId: number;
@@ -2383,6 +2541,8 @@ export declare const GetChatsResponse: zod.ZodArray<zod.ZodObject<{
                 createdAt: string;
                 bio?: string | null | undefined;
                 avatarUrl?: string | null | undefined;
+                profileCoverUrl?: string | null | undefined;
+                profileCoverType?: "image" | "video" | null | undefined;
                 statusText?: string | null | undefined;
                 lastSeen?: string | null | undefined;
                 phoneNumber?: string | null | undefined;
@@ -2407,6 +2567,8 @@ export declare const GetChatsResponse: zod.ZodArray<zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -2468,6 +2630,8 @@ export declare const GetChatsResponse: zod.ZodArray<zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -2488,6 +2652,8 @@ export declare const GetChatsResponse: zod.ZodArray<zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -2546,6 +2712,8 @@ export declare const CreateChatResponse: zod.ZodObject<{
                 displayName: zod.ZodString;
                 bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
                 avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+                profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+                profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
                 avatarColor: zod.ZodString;
                 status: zod.ZodEnum<["online", "offline", "away"]>;
                 statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -2570,6 +2738,8 @@ export declare const CreateChatResponse: zod.ZodObject<{
                 createdAt: string;
                 bio?: string | null | undefined;
                 avatarUrl?: string | null | undefined;
+                profileCoverUrl?: string | null | undefined;
+                profileCoverType?: "image" | "video" | null | undefined;
                 statusText?: string | null | undefined;
                 lastSeen?: string | null | undefined;
                 phoneNumber?: string | null | undefined;
@@ -2588,6 +2758,8 @@ export declare const CreateChatResponse: zod.ZodObject<{
                 createdAt: string;
                 bio?: string | null | undefined;
                 avatarUrl?: string | null | undefined;
+                profileCoverUrl?: string | null | undefined;
+                profileCoverType?: "image" | "video" | null | undefined;
                 statusText?: string | null | undefined;
                 lastSeen?: string | null | undefined;
                 phoneNumber?: string | null | undefined;
@@ -2614,6 +2786,8 @@ export declare const CreateChatResponse: zod.ZodObject<{
                 createdAt: string;
                 bio?: string | null | undefined;
                 avatarUrl?: string | null | undefined;
+                profileCoverUrl?: string | null | undefined;
+                profileCoverType?: "image" | "video" | null | undefined;
                 statusText?: string | null | undefined;
                 lastSeen?: string | null | undefined;
                 phoneNumber?: string | null | undefined;
@@ -2639,6 +2813,8 @@ export declare const CreateChatResponse: zod.ZodObject<{
                 createdAt: string;
                 bio?: string | null | undefined;
                 avatarUrl?: string | null | undefined;
+                profileCoverUrl?: string | null | undefined;
+                profileCoverType?: "image" | "video" | null | undefined;
                 statusText?: string | null | undefined;
                 lastSeen?: string | null | undefined;
                 phoneNumber?: string | null | undefined;
@@ -2653,6 +2829,8 @@ export declare const CreateChatResponse: zod.ZodObject<{
             displayName: zod.ZodString;
             bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
             avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+            profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+            profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
             avatarColor: zod.ZodString;
             status: zod.ZodEnum<["online", "offline", "away"]>;
             statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -2677,6 +2855,8 @@ export declare const CreateChatResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -2695,6 +2875,8 @@ export declare const CreateChatResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -2842,7 +3024,7 @@ export declare const CreateChatResponse: zod.ZodObject<{
         createdAt: zod.ZodString;
         updatedAt: zod.ZodString;
     }, "strip", zod.ZodTypeAny, {
-        type: "text" | "image" | "video" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
+        type: "image" | "video" | "text" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
         id: number;
         createdAt: string;
         chatId: number;
@@ -2867,6 +3049,8 @@ export declare const CreateChatResponse: zod.ZodObject<{
                 createdAt: string;
                 bio?: string | null | undefined;
                 avatarUrl?: string | null | undefined;
+                profileCoverUrl?: string | null | undefined;
+                profileCoverType?: "image" | "video" | null | undefined;
                 statusText?: string | null | undefined;
                 lastSeen?: string | null | undefined;
                 phoneNumber?: string | null | undefined;
@@ -2891,6 +3075,8 @@ export declare const CreateChatResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -2934,7 +3120,7 @@ export declare const CreateChatResponse: zod.ZodObject<{
             message?: string | null | undefined;
         } | null | undefined;
     }, {
-        type: "text" | "image" | "video" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
+        type: "image" | "video" | "text" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
         id: number;
         createdAt: string;
         chatId: number;
@@ -2959,6 +3145,8 @@ export declare const CreateChatResponse: zod.ZodObject<{
                 createdAt: string;
                 bio?: string | null | undefined;
                 avatarUrl?: string | null | undefined;
+                profileCoverUrl?: string | null | undefined;
+                profileCoverType?: "image" | "video" | null | undefined;
                 statusText?: string | null | undefined;
                 lastSeen?: string | null | undefined;
                 phoneNumber?: string | null | undefined;
@@ -2983,6 +3171,8 @@ export declare const CreateChatResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -3038,6 +3228,8 @@ export declare const CreateChatResponse: zod.ZodObject<{
             displayName: zod.ZodString;
             bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
             avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+            profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+            profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
             avatarColor: zod.ZodString;
             status: zod.ZodEnum<["online", "offline", "away"]>;
             statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -3062,6 +3254,8 @@ export declare const CreateChatResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -3080,6 +3274,8 @@ export declare const CreateChatResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -3105,6 +3301,8 @@ export declare const CreateChatResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -3130,6 +3328,8 @@ export declare const CreateChatResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -3144,6 +3344,8 @@ export declare const CreateChatResponse: zod.ZodObject<{
         displayName: zod.ZodString;
         bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
         avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
         avatarColor: zod.ZodString;
         status: zod.ZodEnum<["online", "offline", "away"]>;
         statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -3168,6 +3370,8 @@ export declare const CreateChatResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -3186,6 +3390,8 @@ export declare const CreateChatResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -3208,7 +3414,7 @@ export declare const CreateChatResponse: zod.ZodObject<{
     name?: string | null | undefined;
     description?: string | null | undefined;
     lastMessage?: {
-        type: "text" | "image" | "video" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
+        type: "image" | "video" | "text" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
         id: number;
         createdAt: string;
         chatId: number;
@@ -3233,6 +3439,8 @@ export declare const CreateChatResponse: zod.ZodObject<{
                 createdAt: string;
                 bio?: string | null | undefined;
                 avatarUrl?: string | null | undefined;
+                profileCoverUrl?: string | null | undefined;
+                profileCoverType?: "image" | "video" | null | undefined;
                 statusText?: string | null | undefined;
                 lastSeen?: string | null | undefined;
                 phoneNumber?: string | null | undefined;
@@ -3257,6 +3465,8 @@ export declare const CreateChatResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -3318,6 +3528,8 @@ export declare const CreateChatResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -3338,6 +3550,8 @@ export declare const CreateChatResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -3358,7 +3572,7 @@ export declare const CreateChatResponse: zod.ZodObject<{
     name?: string | null | undefined;
     description?: string | null | undefined;
     lastMessage?: {
-        type: "text" | "image" | "video" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
+        type: "image" | "video" | "text" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
         id: number;
         createdAt: string;
         chatId: number;
@@ -3383,6 +3597,8 @@ export declare const CreateChatResponse: zod.ZodObject<{
                 createdAt: string;
                 bio?: string | null | undefined;
                 avatarUrl?: string | null | undefined;
+                profileCoverUrl?: string | null | undefined;
+                profileCoverType?: "image" | "video" | null | undefined;
                 statusText?: string | null | undefined;
                 lastSeen?: string | null | undefined;
                 phoneNumber?: string | null | undefined;
@@ -3407,6 +3623,8 @@ export declare const CreateChatResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -3468,6 +3686,8 @@ export declare const CreateChatResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -3488,6 +3708,8 @@ export declare const CreateChatResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -3534,6 +3756,8 @@ export declare const GetChatByIdResponse: zod.ZodObject<{
                 displayName: zod.ZodString;
                 bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
                 avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+                profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+                profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
                 avatarColor: zod.ZodString;
                 status: zod.ZodEnum<["online", "offline", "away"]>;
                 statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -3558,6 +3782,8 @@ export declare const GetChatByIdResponse: zod.ZodObject<{
                 createdAt: string;
                 bio?: string | null | undefined;
                 avatarUrl?: string | null | undefined;
+                profileCoverUrl?: string | null | undefined;
+                profileCoverType?: "image" | "video" | null | undefined;
                 statusText?: string | null | undefined;
                 lastSeen?: string | null | undefined;
                 phoneNumber?: string | null | undefined;
@@ -3576,6 +3802,8 @@ export declare const GetChatByIdResponse: zod.ZodObject<{
                 createdAt: string;
                 bio?: string | null | undefined;
                 avatarUrl?: string | null | undefined;
+                profileCoverUrl?: string | null | undefined;
+                profileCoverType?: "image" | "video" | null | undefined;
                 statusText?: string | null | undefined;
                 lastSeen?: string | null | undefined;
                 phoneNumber?: string | null | undefined;
@@ -3602,6 +3830,8 @@ export declare const GetChatByIdResponse: zod.ZodObject<{
                 createdAt: string;
                 bio?: string | null | undefined;
                 avatarUrl?: string | null | undefined;
+                profileCoverUrl?: string | null | undefined;
+                profileCoverType?: "image" | "video" | null | undefined;
                 statusText?: string | null | undefined;
                 lastSeen?: string | null | undefined;
                 phoneNumber?: string | null | undefined;
@@ -3627,6 +3857,8 @@ export declare const GetChatByIdResponse: zod.ZodObject<{
                 createdAt: string;
                 bio?: string | null | undefined;
                 avatarUrl?: string | null | undefined;
+                profileCoverUrl?: string | null | undefined;
+                profileCoverType?: "image" | "video" | null | undefined;
                 statusText?: string | null | undefined;
                 lastSeen?: string | null | undefined;
                 phoneNumber?: string | null | undefined;
@@ -3641,6 +3873,8 @@ export declare const GetChatByIdResponse: zod.ZodObject<{
             displayName: zod.ZodString;
             bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
             avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+            profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+            profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
             avatarColor: zod.ZodString;
             status: zod.ZodEnum<["online", "offline", "away"]>;
             statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -3665,6 +3899,8 @@ export declare const GetChatByIdResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -3683,6 +3919,8 @@ export declare const GetChatByIdResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -3830,7 +4068,7 @@ export declare const GetChatByIdResponse: zod.ZodObject<{
         createdAt: zod.ZodString;
         updatedAt: zod.ZodString;
     }, "strip", zod.ZodTypeAny, {
-        type: "text" | "image" | "video" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
+        type: "image" | "video" | "text" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
         id: number;
         createdAt: string;
         chatId: number;
@@ -3855,6 +4093,8 @@ export declare const GetChatByIdResponse: zod.ZodObject<{
                 createdAt: string;
                 bio?: string | null | undefined;
                 avatarUrl?: string | null | undefined;
+                profileCoverUrl?: string | null | undefined;
+                profileCoverType?: "image" | "video" | null | undefined;
                 statusText?: string | null | undefined;
                 lastSeen?: string | null | undefined;
                 phoneNumber?: string | null | undefined;
@@ -3879,6 +4119,8 @@ export declare const GetChatByIdResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -3922,7 +4164,7 @@ export declare const GetChatByIdResponse: zod.ZodObject<{
             message?: string | null | undefined;
         } | null | undefined;
     }, {
-        type: "text" | "image" | "video" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
+        type: "image" | "video" | "text" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
         id: number;
         createdAt: string;
         chatId: number;
@@ -3947,6 +4189,8 @@ export declare const GetChatByIdResponse: zod.ZodObject<{
                 createdAt: string;
                 bio?: string | null | undefined;
                 avatarUrl?: string | null | undefined;
+                profileCoverUrl?: string | null | undefined;
+                profileCoverType?: "image" | "video" | null | undefined;
                 statusText?: string | null | undefined;
                 lastSeen?: string | null | undefined;
                 phoneNumber?: string | null | undefined;
@@ -3971,6 +4215,8 @@ export declare const GetChatByIdResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -4026,6 +4272,8 @@ export declare const GetChatByIdResponse: zod.ZodObject<{
             displayName: zod.ZodString;
             bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
             avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+            profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+            profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
             avatarColor: zod.ZodString;
             status: zod.ZodEnum<["online", "offline", "away"]>;
             statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -4050,6 +4298,8 @@ export declare const GetChatByIdResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -4068,6 +4318,8 @@ export declare const GetChatByIdResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -4093,6 +4345,8 @@ export declare const GetChatByIdResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -4118,6 +4372,8 @@ export declare const GetChatByIdResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -4132,6 +4388,8 @@ export declare const GetChatByIdResponse: zod.ZodObject<{
         displayName: zod.ZodString;
         bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
         avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
         avatarColor: zod.ZodString;
         status: zod.ZodEnum<["online", "offline", "away"]>;
         statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -4156,6 +4414,8 @@ export declare const GetChatByIdResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -4174,6 +4434,8 @@ export declare const GetChatByIdResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -4196,7 +4458,7 @@ export declare const GetChatByIdResponse: zod.ZodObject<{
     name?: string | null | undefined;
     description?: string | null | undefined;
     lastMessage?: {
-        type: "text" | "image" | "video" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
+        type: "image" | "video" | "text" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
         id: number;
         createdAt: string;
         chatId: number;
@@ -4221,6 +4483,8 @@ export declare const GetChatByIdResponse: zod.ZodObject<{
                 createdAt: string;
                 bio?: string | null | undefined;
                 avatarUrl?: string | null | undefined;
+                profileCoverUrl?: string | null | undefined;
+                profileCoverType?: "image" | "video" | null | undefined;
                 statusText?: string | null | undefined;
                 lastSeen?: string | null | undefined;
                 phoneNumber?: string | null | undefined;
@@ -4245,6 +4509,8 @@ export declare const GetChatByIdResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -4306,6 +4572,8 @@ export declare const GetChatByIdResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -4326,6 +4594,8 @@ export declare const GetChatByIdResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -4346,7 +4616,7 @@ export declare const GetChatByIdResponse: zod.ZodObject<{
     name?: string | null | undefined;
     description?: string | null | undefined;
     lastMessage?: {
-        type: "text" | "image" | "video" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
+        type: "image" | "video" | "text" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
         id: number;
         createdAt: string;
         chatId: number;
@@ -4371,6 +4641,8 @@ export declare const GetChatByIdResponse: zod.ZodObject<{
                 createdAt: string;
                 bio?: string | null | undefined;
                 avatarUrl?: string | null | undefined;
+                profileCoverUrl?: string | null | undefined;
+                profileCoverType?: "image" | "video" | null | undefined;
                 statusText?: string | null | undefined;
                 lastSeen?: string | null | undefined;
                 phoneNumber?: string | null | undefined;
@@ -4395,6 +4667,8 @@ export declare const GetChatByIdResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -4456,6 +4730,8 @@ export declare const GetChatByIdResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -4476,6 +4752,8 @@ export declare const GetChatByIdResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -4538,6 +4816,8 @@ export declare const UpdateChatResponse: zod.ZodObject<{
                 displayName: zod.ZodString;
                 bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
                 avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+                profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+                profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
                 avatarColor: zod.ZodString;
                 status: zod.ZodEnum<["online", "offline", "away"]>;
                 statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -4562,6 +4842,8 @@ export declare const UpdateChatResponse: zod.ZodObject<{
                 createdAt: string;
                 bio?: string | null | undefined;
                 avatarUrl?: string | null | undefined;
+                profileCoverUrl?: string | null | undefined;
+                profileCoverType?: "image" | "video" | null | undefined;
                 statusText?: string | null | undefined;
                 lastSeen?: string | null | undefined;
                 phoneNumber?: string | null | undefined;
@@ -4580,6 +4862,8 @@ export declare const UpdateChatResponse: zod.ZodObject<{
                 createdAt: string;
                 bio?: string | null | undefined;
                 avatarUrl?: string | null | undefined;
+                profileCoverUrl?: string | null | undefined;
+                profileCoverType?: "image" | "video" | null | undefined;
                 statusText?: string | null | undefined;
                 lastSeen?: string | null | undefined;
                 phoneNumber?: string | null | undefined;
@@ -4606,6 +4890,8 @@ export declare const UpdateChatResponse: zod.ZodObject<{
                 createdAt: string;
                 bio?: string | null | undefined;
                 avatarUrl?: string | null | undefined;
+                profileCoverUrl?: string | null | undefined;
+                profileCoverType?: "image" | "video" | null | undefined;
                 statusText?: string | null | undefined;
                 lastSeen?: string | null | undefined;
                 phoneNumber?: string | null | undefined;
@@ -4631,6 +4917,8 @@ export declare const UpdateChatResponse: zod.ZodObject<{
                 createdAt: string;
                 bio?: string | null | undefined;
                 avatarUrl?: string | null | undefined;
+                profileCoverUrl?: string | null | undefined;
+                profileCoverType?: "image" | "video" | null | undefined;
                 statusText?: string | null | undefined;
                 lastSeen?: string | null | undefined;
                 phoneNumber?: string | null | undefined;
@@ -4645,6 +4933,8 @@ export declare const UpdateChatResponse: zod.ZodObject<{
             displayName: zod.ZodString;
             bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
             avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+            profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+            profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
             avatarColor: zod.ZodString;
             status: zod.ZodEnum<["online", "offline", "away"]>;
             statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -4669,6 +4959,8 @@ export declare const UpdateChatResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -4687,6 +4979,8 @@ export declare const UpdateChatResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -4834,7 +5128,7 @@ export declare const UpdateChatResponse: zod.ZodObject<{
         createdAt: zod.ZodString;
         updatedAt: zod.ZodString;
     }, "strip", zod.ZodTypeAny, {
-        type: "text" | "image" | "video" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
+        type: "image" | "video" | "text" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
         id: number;
         createdAt: string;
         chatId: number;
@@ -4859,6 +5153,8 @@ export declare const UpdateChatResponse: zod.ZodObject<{
                 createdAt: string;
                 bio?: string | null | undefined;
                 avatarUrl?: string | null | undefined;
+                profileCoverUrl?: string | null | undefined;
+                profileCoverType?: "image" | "video" | null | undefined;
                 statusText?: string | null | undefined;
                 lastSeen?: string | null | undefined;
                 phoneNumber?: string | null | undefined;
@@ -4883,6 +5179,8 @@ export declare const UpdateChatResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -4926,7 +5224,7 @@ export declare const UpdateChatResponse: zod.ZodObject<{
             message?: string | null | undefined;
         } | null | undefined;
     }, {
-        type: "text" | "image" | "video" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
+        type: "image" | "video" | "text" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
         id: number;
         createdAt: string;
         chatId: number;
@@ -4951,6 +5249,8 @@ export declare const UpdateChatResponse: zod.ZodObject<{
                 createdAt: string;
                 bio?: string | null | undefined;
                 avatarUrl?: string | null | undefined;
+                profileCoverUrl?: string | null | undefined;
+                profileCoverType?: "image" | "video" | null | undefined;
                 statusText?: string | null | undefined;
                 lastSeen?: string | null | undefined;
                 phoneNumber?: string | null | undefined;
@@ -4975,6 +5275,8 @@ export declare const UpdateChatResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -5030,6 +5332,8 @@ export declare const UpdateChatResponse: zod.ZodObject<{
             displayName: zod.ZodString;
             bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
             avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+            profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+            profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
             avatarColor: zod.ZodString;
             status: zod.ZodEnum<["online", "offline", "away"]>;
             statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -5054,6 +5358,8 @@ export declare const UpdateChatResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -5072,6 +5378,8 @@ export declare const UpdateChatResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -5097,6 +5405,8 @@ export declare const UpdateChatResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -5122,6 +5432,8 @@ export declare const UpdateChatResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -5136,6 +5448,8 @@ export declare const UpdateChatResponse: zod.ZodObject<{
         displayName: zod.ZodString;
         bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
         avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
         avatarColor: zod.ZodString;
         status: zod.ZodEnum<["online", "offline", "away"]>;
         statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -5160,6 +5474,8 @@ export declare const UpdateChatResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -5178,6 +5494,8 @@ export declare const UpdateChatResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -5200,7 +5518,7 @@ export declare const UpdateChatResponse: zod.ZodObject<{
     name?: string | null | undefined;
     description?: string | null | undefined;
     lastMessage?: {
-        type: "text" | "image" | "video" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
+        type: "image" | "video" | "text" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
         id: number;
         createdAt: string;
         chatId: number;
@@ -5225,6 +5543,8 @@ export declare const UpdateChatResponse: zod.ZodObject<{
                 createdAt: string;
                 bio?: string | null | undefined;
                 avatarUrl?: string | null | undefined;
+                profileCoverUrl?: string | null | undefined;
+                profileCoverType?: "image" | "video" | null | undefined;
                 statusText?: string | null | undefined;
                 lastSeen?: string | null | undefined;
                 phoneNumber?: string | null | undefined;
@@ -5249,6 +5569,8 @@ export declare const UpdateChatResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -5310,6 +5632,8 @@ export declare const UpdateChatResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -5330,6 +5654,8 @@ export declare const UpdateChatResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -5350,7 +5676,7 @@ export declare const UpdateChatResponse: zod.ZodObject<{
     name?: string | null | undefined;
     description?: string | null | undefined;
     lastMessage?: {
-        type: "text" | "image" | "video" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
+        type: "image" | "video" | "text" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
         id: number;
         createdAt: string;
         chatId: number;
@@ -5375,6 +5701,8 @@ export declare const UpdateChatResponse: zod.ZodObject<{
                 createdAt: string;
                 bio?: string | null | undefined;
                 avatarUrl?: string | null | undefined;
+                profileCoverUrl?: string | null | undefined;
+                profileCoverType?: "image" | "video" | null | undefined;
                 statusText?: string | null | undefined;
                 lastSeen?: string | null | undefined;
                 phoneNumber?: string | null | undefined;
@@ -5399,6 +5727,8 @@ export declare const UpdateChatResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -5460,6 +5790,8 @@ export declare const UpdateChatResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -5480,6 +5812,8 @@ export declare const UpdateChatResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -5515,6 +5849,8 @@ export declare const GetChatMembersResponseItem: zod.ZodObject<{
         displayName: zod.ZodString;
         bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
         avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
         avatarColor: zod.ZodString;
         status: zod.ZodEnum<["online", "offline", "away"]>;
         statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -5539,6 +5875,8 @@ export declare const GetChatMembersResponseItem: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -5557,6 +5895,8 @@ export declare const GetChatMembersResponseItem: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -5582,6 +5922,8 @@ export declare const GetChatMembersResponseItem: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -5607,6 +5949,8 @@ export declare const GetChatMembersResponseItem: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -5627,6 +5971,8 @@ export declare const GetChatMembersResponse: zod.ZodArray<zod.ZodObject<{
         displayName: zod.ZodString;
         bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
         avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
         avatarColor: zod.ZodString;
         status: zod.ZodEnum<["online", "offline", "away"]>;
         statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -5651,6 +5997,8 @@ export declare const GetChatMembersResponse: zod.ZodArray<zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -5669,6 +6017,8 @@ export declare const GetChatMembersResponse: zod.ZodArray<zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -5694,6 +6044,8 @@ export declare const GetChatMembersResponse: zod.ZodArray<zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -5719,6 +6071,8 @@ export declare const GetChatMembersResponse: zod.ZodArray<zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -5757,6 +6111,8 @@ export declare const AddChatMemberResponse: zod.ZodObject<{
         displayName: zod.ZodString;
         bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
         avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
         avatarColor: zod.ZodString;
         status: zod.ZodEnum<["online", "offline", "away"]>;
         statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -5781,6 +6137,8 @@ export declare const AddChatMemberResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -5799,6 +6157,8 @@ export declare const AddChatMemberResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -5824,6 +6184,8 @@ export declare const AddChatMemberResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -5849,6 +6211,8 @@ export declare const AddChatMemberResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -5906,6 +6270,8 @@ export declare const PinChatResponse: zod.ZodObject<{
                 displayName: zod.ZodString;
                 bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
                 avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+                profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+                profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
                 avatarColor: zod.ZodString;
                 status: zod.ZodEnum<["online", "offline", "away"]>;
                 statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -5930,6 +6296,8 @@ export declare const PinChatResponse: zod.ZodObject<{
                 createdAt: string;
                 bio?: string | null | undefined;
                 avatarUrl?: string | null | undefined;
+                profileCoverUrl?: string | null | undefined;
+                profileCoverType?: "image" | "video" | null | undefined;
                 statusText?: string | null | undefined;
                 lastSeen?: string | null | undefined;
                 phoneNumber?: string | null | undefined;
@@ -5948,6 +6316,8 @@ export declare const PinChatResponse: zod.ZodObject<{
                 createdAt: string;
                 bio?: string | null | undefined;
                 avatarUrl?: string | null | undefined;
+                profileCoverUrl?: string | null | undefined;
+                profileCoverType?: "image" | "video" | null | undefined;
                 statusText?: string | null | undefined;
                 lastSeen?: string | null | undefined;
                 phoneNumber?: string | null | undefined;
@@ -5974,6 +6344,8 @@ export declare const PinChatResponse: zod.ZodObject<{
                 createdAt: string;
                 bio?: string | null | undefined;
                 avatarUrl?: string | null | undefined;
+                profileCoverUrl?: string | null | undefined;
+                profileCoverType?: "image" | "video" | null | undefined;
                 statusText?: string | null | undefined;
                 lastSeen?: string | null | undefined;
                 phoneNumber?: string | null | undefined;
@@ -5999,6 +6371,8 @@ export declare const PinChatResponse: zod.ZodObject<{
                 createdAt: string;
                 bio?: string | null | undefined;
                 avatarUrl?: string | null | undefined;
+                profileCoverUrl?: string | null | undefined;
+                profileCoverType?: "image" | "video" | null | undefined;
                 statusText?: string | null | undefined;
                 lastSeen?: string | null | undefined;
                 phoneNumber?: string | null | undefined;
@@ -6013,6 +6387,8 @@ export declare const PinChatResponse: zod.ZodObject<{
             displayName: zod.ZodString;
             bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
             avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+            profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+            profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
             avatarColor: zod.ZodString;
             status: zod.ZodEnum<["online", "offline", "away"]>;
             statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -6037,6 +6413,8 @@ export declare const PinChatResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -6055,6 +6433,8 @@ export declare const PinChatResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -6202,7 +6582,7 @@ export declare const PinChatResponse: zod.ZodObject<{
         createdAt: zod.ZodString;
         updatedAt: zod.ZodString;
     }, "strip", zod.ZodTypeAny, {
-        type: "text" | "image" | "video" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
+        type: "image" | "video" | "text" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
         id: number;
         createdAt: string;
         chatId: number;
@@ -6227,6 +6607,8 @@ export declare const PinChatResponse: zod.ZodObject<{
                 createdAt: string;
                 bio?: string | null | undefined;
                 avatarUrl?: string | null | undefined;
+                profileCoverUrl?: string | null | undefined;
+                profileCoverType?: "image" | "video" | null | undefined;
                 statusText?: string | null | undefined;
                 lastSeen?: string | null | undefined;
                 phoneNumber?: string | null | undefined;
@@ -6251,6 +6633,8 @@ export declare const PinChatResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -6294,7 +6678,7 @@ export declare const PinChatResponse: zod.ZodObject<{
             message?: string | null | undefined;
         } | null | undefined;
     }, {
-        type: "text" | "image" | "video" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
+        type: "image" | "video" | "text" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
         id: number;
         createdAt: string;
         chatId: number;
@@ -6319,6 +6703,8 @@ export declare const PinChatResponse: zod.ZodObject<{
                 createdAt: string;
                 bio?: string | null | undefined;
                 avatarUrl?: string | null | undefined;
+                profileCoverUrl?: string | null | undefined;
+                profileCoverType?: "image" | "video" | null | undefined;
                 statusText?: string | null | undefined;
                 lastSeen?: string | null | undefined;
                 phoneNumber?: string | null | undefined;
@@ -6343,6 +6729,8 @@ export declare const PinChatResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -6398,6 +6786,8 @@ export declare const PinChatResponse: zod.ZodObject<{
             displayName: zod.ZodString;
             bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
             avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+            profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+            profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
             avatarColor: zod.ZodString;
             status: zod.ZodEnum<["online", "offline", "away"]>;
             statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -6422,6 +6812,8 @@ export declare const PinChatResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -6440,6 +6832,8 @@ export declare const PinChatResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -6465,6 +6859,8 @@ export declare const PinChatResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -6490,6 +6886,8 @@ export declare const PinChatResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -6504,6 +6902,8 @@ export declare const PinChatResponse: zod.ZodObject<{
         displayName: zod.ZodString;
         bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
         avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
         avatarColor: zod.ZodString;
         status: zod.ZodEnum<["online", "offline", "away"]>;
         statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -6528,6 +6928,8 @@ export declare const PinChatResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -6546,6 +6948,8 @@ export declare const PinChatResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -6568,7 +6972,7 @@ export declare const PinChatResponse: zod.ZodObject<{
     name?: string | null | undefined;
     description?: string | null | undefined;
     lastMessage?: {
-        type: "text" | "image" | "video" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
+        type: "image" | "video" | "text" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
         id: number;
         createdAt: string;
         chatId: number;
@@ -6593,6 +6997,8 @@ export declare const PinChatResponse: zod.ZodObject<{
                 createdAt: string;
                 bio?: string | null | undefined;
                 avatarUrl?: string | null | undefined;
+                profileCoverUrl?: string | null | undefined;
+                profileCoverType?: "image" | "video" | null | undefined;
                 statusText?: string | null | undefined;
                 lastSeen?: string | null | undefined;
                 phoneNumber?: string | null | undefined;
@@ -6617,6 +7023,8 @@ export declare const PinChatResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -6678,6 +7086,8 @@ export declare const PinChatResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -6698,6 +7108,8 @@ export declare const PinChatResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -6718,7 +7130,7 @@ export declare const PinChatResponse: zod.ZodObject<{
     name?: string | null | undefined;
     description?: string | null | undefined;
     lastMessage?: {
-        type: "text" | "image" | "video" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
+        type: "image" | "video" | "text" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
         id: number;
         createdAt: string;
         chatId: number;
@@ -6743,6 +7155,8 @@ export declare const PinChatResponse: zod.ZodObject<{
                 createdAt: string;
                 bio?: string | null | undefined;
                 avatarUrl?: string | null | undefined;
+                profileCoverUrl?: string | null | undefined;
+                profileCoverType?: "image" | "video" | null | undefined;
                 statusText?: string | null | undefined;
                 lastSeen?: string | null | undefined;
                 phoneNumber?: string | null | undefined;
@@ -6767,6 +7181,8 @@ export declare const PinChatResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -6828,6 +7244,8 @@ export declare const PinChatResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -6848,6 +7266,8 @@ export declare const PinChatResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -6894,6 +7314,8 @@ export declare const GetMessagesResponseItem: zod.ZodObject<{
             displayName: zod.ZodString;
             bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
             avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+            profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+            profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
             avatarColor: zod.ZodString;
             status: zod.ZodEnum<["online", "offline", "away"]>;
             statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -6918,6 +7340,8 @@ export declare const GetMessagesResponseItem: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -6936,6 +7360,8 @@ export declare const GetMessagesResponseItem: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -6962,6 +7388,8 @@ export declare const GetMessagesResponseItem: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -6987,6 +7415,8 @@ export declare const GetMessagesResponseItem: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -7001,6 +7431,8 @@ export declare const GetMessagesResponseItem: zod.ZodObject<{
         displayName: zod.ZodString;
         bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
         avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
         avatarColor: zod.ZodString;
         status: zod.ZodEnum<["online", "offline", "away"]>;
         statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -7025,6 +7457,8 @@ export declare const GetMessagesResponseItem: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -7043,6 +7477,8 @@ export declare const GetMessagesResponseItem: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -7190,7 +7626,7 @@ export declare const GetMessagesResponseItem: zod.ZodObject<{
     createdAt: zod.ZodString;
     updatedAt: zod.ZodString;
 }, "strip", zod.ZodTypeAny, {
-    type: "text" | "image" | "video" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
+    type: "image" | "video" | "text" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
     id: number;
     createdAt: string;
     chatId: number;
@@ -7215,6 +7651,8 @@ export declare const GetMessagesResponseItem: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -7239,6 +7677,8 @@ export declare const GetMessagesResponseItem: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -7282,7 +7722,7 @@ export declare const GetMessagesResponseItem: zod.ZodObject<{
         message?: string | null | undefined;
     } | null | undefined;
 }, {
-    type: "text" | "image" | "video" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
+    type: "image" | "video" | "text" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
     id: number;
     createdAt: string;
     chatId: number;
@@ -7307,6 +7747,8 @@ export declare const GetMessagesResponseItem: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -7331,6 +7773,8 @@ export declare const GetMessagesResponseItem: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -7395,6 +7839,8 @@ export declare const GetMessagesResponse: zod.ZodArray<zod.ZodObject<{
             displayName: zod.ZodString;
             bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
             avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+            profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+            profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
             avatarColor: zod.ZodString;
             status: zod.ZodEnum<["online", "offline", "away"]>;
             statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -7419,6 +7865,8 @@ export declare const GetMessagesResponse: zod.ZodArray<zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -7437,6 +7885,8 @@ export declare const GetMessagesResponse: zod.ZodArray<zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -7463,6 +7913,8 @@ export declare const GetMessagesResponse: zod.ZodArray<zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -7488,6 +7940,8 @@ export declare const GetMessagesResponse: zod.ZodArray<zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -7502,6 +7956,8 @@ export declare const GetMessagesResponse: zod.ZodArray<zod.ZodObject<{
         displayName: zod.ZodString;
         bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
         avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
         avatarColor: zod.ZodString;
         status: zod.ZodEnum<["online", "offline", "away"]>;
         statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -7526,6 +7982,8 @@ export declare const GetMessagesResponse: zod.ZodArray<zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -7544,6 +8002,8 @@ export declare const GetMessagesResponse: zod.ZodArray<zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -7691,7 +8151,7 @@ export declare const GetMessagesResponse: zod.ZodArray<zod.ZodObject<{
     createdAt: zod.ZodString;
     updatedAt: zod.ZodString;
 }, "strip", zod.ZodTypeAny, {
-    type: "text" | "image" | "video" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
+    type: "image" | "video" | "text" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
     id: number;
     createdAt: string;
     chatId: number;
@@ -7716,6 +8176,8 @@ export declare const GetMessagesResponse: zod.ZodArray<zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -7740,6 +8202,8 @@ export declare const GetMessagesResponse: zod.ZodArray<zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -7783,7 +8247,7 @@ export declare const GetMessagesResponse: zod.ZodArray<zod.ZodObject<{
         message?: string | null | undefined;
     } | null | undefined;
 }, {
-    type: "text" | "image" | "video" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
+    type: "image" | "video" | "text" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
     id: number;
     createdAt: string;
     chatId: number;
@@ -7808,6 +8272,8 @@ export declare const GetMessagesResponse: zod.ZodArray<zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -7832,6 +8298,8 @@ export declare const GetMessagesResponse: zod.ZodArray<zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -7886,14 +8354,14 @@ export declare const SendMessageBody: zod.ZodObject<{
     mediaUrl: zod.ZodOptional<zod.ZodString>;
     replyToId: zod.ZodOptional<zod.ZodNumber>;
 }, "strip", zod.ZodTypeAny, {
-    type: "text" | "image" | "video" | "audio" | "file" | "sticker" | "album" | "document";
+    type: "image" | "video" | "text" | "audio" | "file" | "sticker" | "album" | "document";
     chatId: number;
     text?: string | undefined;
     mediaUrl?: string | undefined;
     replyToId?: number | undefined;
 }, {
     chatId: number;
-    type?: "text" | "image" | "video" | "audio" | "file" | "sticker" | "album" | "document" | undefined;
+    type?: "image" | "video" | "text" | "audio" | "file" | "sticker" | "album" | "document" | undefined;
     text?: string | undefined;
     mediaUrl?: string | undefined;
     replyToId?: number | undefined;
@@ -7919,6 +8387,8 @@ export declare const SendMessageResponse: zod.ZodObject<{
             displayName: zod.ZodString;
             bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
             avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+            profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+            profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
             avatarColor: zod.ZodString;
             status: zod.ZodEnum<["online", "offline", "away"]>;
             statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -7943,6 +8413,8 @@ export declare const SendMessageResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -7961,6 +8433,8 @@ export declare const SendMessageResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -7987,6 +8461,8 @@ export declare const SendMessageResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -8012,6 +8488,8 @@ export declare const SendMessageResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -8026,6 +8504,8 @@ export declare const SendMessageResponse: zod.ZodObject<{
         displayName: zod.ZodString;
         bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
         avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
         avatarColor: zod.ZodString;
         status: zod.ZodEnum<["online", "offline", "away"]>;
         statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -8050,6 +8530,8 @@ export declare const SendMessageResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -8068,6 +8550,8 @@ export declare const SendMessageResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -8215,7 +8699,7 @@ export declare const SendMessageResponse: zod.ZodObject<{
     createdAt: zod.ZodString;
     updatedAt: zod.ZodString;
 }, "strip", zod.ZodTypeAny, {
-    type: "text" | "image" | "video" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
+    type: "image" | "video" | "text" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
     id: number;
     createdAt: string;
     chatId: number;
@@ -8240,6 +8724,8 @@ export declare const SendMessageResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -8264,6 +8750,8 @@ export declare const SendMessageResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -8307,7 +8795,7 @@ export declare const SendMessageResponse: zod.ZodObject<{
         message?: string | null | undefined;
     } | null | undefined;
 }, {
-    type: "text" | "image" | "video" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
+    type: "image" | "video" | "text" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
     id: number;
     createdAt: string;
     chatId: number;
@@ -8332,6 +8820,8 @@ export declare const SendMessageResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -8356,6 +8846,8 @@ export declare const SendMessageResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -8434,6 +8926,8 @@ export declare const EditMessageResponse: zod.ZodObject<{
             displayName: zod.ZodString;
             bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
             avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+            profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+            profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
             avatarColor: zod.ZodString;
             status: zod.ZodEnum<["online", "offline", "away"]>;
             statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -8458,6 +8952,8 @@ export declare const EditMessageResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -8476,6 +8972,8 @@ export declare const EditMessageResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -8502,6 +9000,8 @@ export declare const EditMessageResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -8527,6 +9027,8 @@ export declare const EditMessageResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -8541,6 +9043,8 @@ export declare const EditMessageResponse: zod.ZodObject<{
         displayName: zod.ZodString;
         bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
         avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
         avatarColor: zod.ZodString;
         status: zod.ZodEnum<["online", "offline", "away"]>;
         statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -8565,6 +9069,8 @@ export declare const EditMessageResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -8583,6 +9089,8 @@ export declare const EditMessageResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -8730,7 +9238,7 @@ export declare const EditMessageResponse: zod.ZodObject<{
     createdAt: zod.ZodString;
     updatedAt: zod.ZodString;
 }, "strip", zod.ZodTypeAny, {
-    type: "text" | "image" | "video" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
+    type: "image" | "video" | "text" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
     id: number;
     createdAt: string;
     chatId: number;
@@ -8755,6 +9263,8 @@ export declare const EditMessageResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -8779,6 +9289,8 @@ export declare const EditMessageResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -8822,7 +9334,7 @@ export declare const EditMessageResponse: zod.ZodObject<{
         message?: string | null | undefined;
     } | null | undefined;
 }, {
-    type: "text" | "image" | "video" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
+    type: "image" | "video" | "text" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
     id: number;
     createdAt: string;
     chatId: number;
@@ -8847,6 +9359,8 @@ export declare const EditMessageResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -8871,6 +9385,8 @@ export declare const EditMessageResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -8947,6 +9463,8 @@ export declare const AddReactionResponse: zod.ZodObject<{
         displayName: zod.ZodString;
         bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
         avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
         avatarColor: zod.ZodString;
         status: zod.ZodEnum<["online", "offline", "away"]>;
         statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -8971,6 +9489,8 @@ export declare const AddReactionResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -8989,6 +9509,8 @@ export declare const AddReactionResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -9015,6 +9537,8 @@ export declare const AddReactionResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -9040,6 +9564,8 @@ export declare const AddReactionResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -9082,6 +9608,8 @@ export declare const GetCallHistoryResponseItem: zod.ZodObject<{
         displayName: zod.ZodString;
         bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
         avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
         avatarColor: zod.ZodString;
         status: zod.ZodEnum<["online", "offline", "away"]>;
         statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -9106,6 +9634,8 @@ export declare const GetCallHistoryResponseItem: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -9124,6 +9654,8 @@ export declare const GetCallHistoryResponseItem: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -9137,6 +9669,8 @@ export declare const GetCallHistoryResponseItem: zod.ZodObject<{
         displayName: zod.ZodString;
         bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
         avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
         avatarColor: zod.ZodString;
         status: zod.ZodEnum<["online", "offline", "away"]>;
         statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -9161,6 +9695,8 @@ export declare const GetCallHistoryResponseItem: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -9179,6 +9715,8 @@ export declare const GetCallHistoryResponseItem: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -9189,7 +9727,7 @@ export declare const GetCallHistoryResponseItem: zod.ZodObject<{
     createdAt: zod.ZodString;
 }, "strip", zod.ZodTypeAny, {
     status: "ringing" | "active" | "ended" | "missed" | "declined";
-    type: "group" | "video" | "audio";
+    type: "video" | "group" | "audio";
     id: number;
     createdAt: string;
     callerId: number;
@@ -9210,6 +9748,8 @@ export declare const GetCallHistoryResponseItem: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -9229,6 +9769,8 @@ export declare const GetCallHistoryResponseItem: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -9238,7 +9780,7 @@ export declare const GetCallHistoryResponseItem: zod.ZodObject<{
     } | null | undefined;
 }, {
     status: "ringing" | "active" | "ended" | "missed" | "declined";
-    type: "group" | "video" | "audio";
+    type: "video" | "group" | "audio";
     id: number;
     createdAt: string;
     callerId: number;
@@ -9259,6 +9801,8 @@ export declare const GetCallHistoryResponseItem: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -9278,6 +9822,8 @@ export declare const GetCallHistoryResponseItem: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -9302,6 +9848,8 @@ export declare const GetCallHistoryResponse: zod.ZodArray<zod.ZodObject<{
         displayName: zod.ZodString;
         bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
         avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
         avatarColor: zod.ZodString;
         status: zod.ZodEnum<["online", "offline", "away"]>;
         statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -9326,6 +9874,8 @@ export declare const GetCallHistoryResponse: zod.ZodArray<zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -9344,6 +9894,8 @@ export declare const GetCallHistoryResponse: zod.ZodArray<zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -9357,6 +9909,8 @@ export declare const GetCallHistoryResponse: zod.ZodArray<zod.ZodObject<{
         displayName: zod.ZodString;
         bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
         avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
         avatarColor: zod.ZodString;
         status: zod.ZodEnum<["online", "offline", "away"]>;
         statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -9381,6 +9935,8 @@ export declare const GetCallHistoryResponse: zod.ZodArray<zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -9399,6 +9955,8 @@ export declare const GetCallHistoryResponse: zod.ZodArray<zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -9409,7 +9967,7 @@ export declare const GetCallHistoryResponse: zod.ZodArray<zod.ZodObject<{
     createdAt: zod.ZodString;
 }, "strip", zod.ZodTypeAny, {
     status: "ringing" | "active" | "ended" | "missed" | "declined";
-    type: "group" | "video" | "audio";
+    type: "video" | "group" | "audio";
     id: number;
     createdAt: string;
     callerId: number;
@@ -9430,6 +9988,8 @@ export declare const GetCallHistoryResponse: zod.ZodArray<zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -9449,6 +10009,8 @@ export declare const GetCallHistoryResponse: zod.ZodArray<zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -9458,7 +10020,7 @@ export declare const GetCallHistoryResponse: zod.ZodArray<zod.ZodObject<{
     } | null | undefined;
 }, {
     status: "ringing" | "active" | "ended" | "missed" | "declined";
-    type: "group" | "video" | "audio";
+    type: "video" | "group" | "audio";
     id: number;
     createdAt: string;
     callerId: number;
@@ -9479,6 +10041,8 @@ export declare const GetCallHistoryResponse: zod.ZodArray<zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -9498,6 +10062,8 @@ export declare const GetCallHistoryResponse: zod.ZodArray<zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -9514,11 +10080,11 @@ export declare const InitiateCallBody: zod.ZodObject<{
     chatId: zod.ZodOptional<zod.ZodNumber>;
     type: zod.ZodEnum<["audio", "video", "group"]>;
 }, "strip", zod.ZodTypeAny, {
-    type: "group" | "video" | "audio";
+    type: "video" | "group" | "audio";
     chatId?: number | undefined;
     calleeId?: number | undefined;
 }, {
-    type: "group" | "video" | "audio";
+    type: "video" | "group" | "audio";
     chatId?: number | undefined;
     calleeId?: number | undefined;
 }>;
@@ -9538,6 +10104,8 @@ export declare const InitiateCallResponse: zod.ZodObject<{
         displayName: zod.ZodString;
         bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
         avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
         avatarColor: zod.ZodString;
         status: zod.ZodEnum<["online", "offline", "away"]>;
         statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -9562,6 +10130,8 @@ export declare const InitiateCallResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -9580,6 +10150,8 @@ export declare const InitiateCallResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -9593,6 +10165,8 @@ export declare const InitiateCallResponse: zod.ZodObject<{
         displayName: zod.ZodString;
         bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
         avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
         avatarColor: zod.ZodString;
         status: zod.ZodEnum<["online", "offline", "away"]>;
         statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -9617,6 +10191,8 @@ export declare const InitiateCallResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -9635,6 +10211,8 @@ export declare const InitiateCallResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -9645,7 +10223,7 @@ export declare const InitiateCallResponse: zod.ZodObject<{
     createdAt: zod.ZodString;
 }, "strip", zod.ZodTypeAny, {
     status: "ringing" | "active" | "ended" | "missed" | "declined";
-    type: "group" | "video" | "audio";
+    type: "video" | "group" | "audio";
     id: number;
     createdAt: string;
     callerId: number;
@@ -9666,6 +10244,8 @@ export declare const InitiateCallResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -9685,6 +10265,8 @@ export declare const InitiateCallResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -9694,7 +10276,7 @@ export declare const InitiateCallResponse: zod.ZodObject<{
     } | null | undefined;
 }, {
     status: "ringing" | "active" | "ended" | "missed" | "declined";
-    type: "group" | "video" | "audio";
+    type: "video" | "group" | "audio";
     id: number;
     createdAt: string;
     callerId: number;
@@ -9715,6 +10297,8 @@ export declare const InitiateCallResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -9734,6 +10318,8 @@ export declare const InitiateCallResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -9765,6 +10351,8 @@ export declare const GetCallByIdResponse: zod.ZodObject<{
         displayName: zod.ZodString;
         bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
         avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
         avatarColor: zod.ZodString;
         status: zod.ZodEnum<["online", "offline", "away"]>;
         statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -9789,6 +10377,8 @@ export declare const GetCallByIdResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -9807,6 +10397,8 @@ export declare const GetCallByIdResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -9820,6 +10412,8 @@ export declare const GetCallByIdResponse: zod.ZodObject<{
         displayName: zod.ZodString;
         bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
         avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
         avatarColor: zod.ZodString;
         status: zod.ZodEnum<["online", "offline", "away"]>;
         statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -9844,6 +10438,8 @@ export declare const GetCallByIdResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -9862,6 +10458,8 @@ export declare const GetCallByIdResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -9872,7 +10470,7 @@ export declare const GetCallByIdResponse: zod.ZodObject<{
     createdAt: zod.ZodString;
 }, "strip", zod.ZodTypeAny, {
     status: "ringing" | "active" | "ended" | "missed" | "declined";
-    type: "group" | "video" | "audio";
+    type: "video" | "group" | "audio";
     id: number;
     createdAt: string;
     callerId: number;
@@ -9893,6 +10491,8 @@ export declare const GetCallByIdResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -9912,6 +10512,8 @@ export declare const GetCallByIdResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -9921,7 +10523,7 @@ export declare const GetCallByIdResponse: zod.ZodObject<{
     } | null | undefined;
 }, {
     status: "ringing" | "active" | "ended" | "missed" | "declined";
-    type: "group" | "video" | "audio";
+    type: "video" | "group" | "audio";
     id: number;
     createdAt: string;
     callerId: number;
@@ -9942,6 +10544,8 @@ export declare const GetCallByIdResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -9961,6 +10565,8 @@ export declare const GetCallByIdResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -9999,6 +10605,8 @@ export declare const UpdateCallStatusResponse: zod.ZodObject<{
         displayName: zod.ZodString;
         bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
         avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
         avatarColor: zod.ZodString;
         status: zod.ZodEnum<["online", "offline", "away"]>;
         statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -10023,6 +10631,8 @@ export declare const UpdateCallStatusResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -10041,6 +10651,8 @@ export declare const UpdateCallStatusResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -10054,6 +10666,8 @@ export declare const UpdateCallStatusResponse: zod.ZodObject<{
         displayName: zod.ZodString;
         bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
         avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
         avatarColor: zod.ZodString;
         status: zod.ZodEnum<["online", "offline", "away"]>;
         statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -10078,6 +10692,8 @@ export declare const UpdateCallStatusResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -10096,6 +10712,8 @@ export declare const UpdateCallStatusResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -10106,7 +10724,7 @@ export declare const UpdateCallStatusResponse: zod.ZodObject<{
     createdAt: zod.ZodString;
 }, "strip", zod.ZodTypeAny, {
     status: "ringing" | "active" | "ended" | "missed" | "declined";
-    type: "group" | "video" | "audio";
+    type: "video" | "group" | "audio";
     id: number;
     createdAt: string;
     callerId: number;
@@ -10127,6 +10745,8 @@ export declare const UpdateCallStatusResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -10146,6 +10766,8 @@ export declare const UpdateCallStatusResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -10155,7 +10777,7 @@ export declare const UpdateCallStatusResponse: zod.ZodObject<{
     } | null | undefined;
 }, {
     status: "ringing" | "active" | "ended" | "missed" | "declined";
-    type: "group" | "video" | "audio";
+    type: "video" | "group" | "audio";
     id: number;
     createdAt: string;
     callerId: number;
@@ -10176,6 +10798,8 @@ export declare const UpdateCallStatusResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -10195,6 +10819,8 @@ export declare const UpdateCallStatusResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -11462,6 +12088,8 @@ export declare const SendGiftResponse: zod.ZodObject<{
                 displayName: zod.ZodString;
                 bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
                 avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+                profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+                profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
                 avatarColor: zod.ZodString;
                 status: zod.ZodEnum<["online", "offline", "away"]>;
                 statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -11486,6 +12114,8 @@ export declare const SendGiftResponse: zod.ZodObject<{
                 createdAt: string;
                 bio?: string | null | undefined;
                 avatarUrl?: string | null | undefined;
+                profileCoverUrl?: string | null | undefined;
+                profileCoverType?: "image" | "video" | null | undefined;
                 statusText?: string | null | undefined;
                 lastSeen?: string | null | undefined;
                 phoneNumber?: string | null | undefined;
@@ -11504,6 +12134,8 @@ export declare const SendGiftResponse: zod.ZodObject<{
                 createdAt: string;
                 bio?: string | null | undefined;
                 avatarUrl?: string | null | undefined;
+                profileCoverUrl?: string | null | undefined;
+                profileCoverType?: "image" | "video" | null | undefined;
                 statusText?: string | null | undefined;
                 lastSeen?: string | null | undefined;
                 phoneNumber?: string | null | undefined;
@@ -11530,6 +12162,8 @@ export declare const SendGiftResponse: zod.ZodObject<{
                 createdAt: string;
                 bio?: string | null | undefined;
                 avatarUrl?: string | null | undefined;
+                profileCoverUrl?: string | null | undefined;
+                profileCoverType?: "image" | "video" | null | undefined;
                 statusText?: string | null | undefined;
                 lastSeen?: string | null | undefined;
                 phoneNumber?: string | null | undefined;
@@ -11555,6 +12189,8 @@ export declare const SendGiftResponse: zod.ZodObject<{
                 createdAt: string;
                 bio?: string | null | undefined;
                 avatarUrl?: string | null | undefined;
+                profileCoverUrl?: string | null | undefined;
+                profileCoverType?: "image" | "video" | null | undefined;
                 statusText?: string | null | undefined;
                 lastSeen?: string | null | undefined;
                 phoneNumber?: string | null | undefined;
@@ -11569,6 +12205,8 @@ export declare const SendGiftResponse: zod.ZodObject<{
             displayName: zod.ZodString;
             bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
             avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+            profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+            profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
             avatarColor: zod.ZodString;
             status: zod.ZodEnum<["online", "offline", "away"]>;
             statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -11593,6 +12231,8 @@ export declare const SendGiftResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -11611,6 +12251,8 @@ export declare const SendGiftResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -11758,7 +12400,7 @@ export declare const SendGiftResponse: zod.ZodObject<{
         createdAt: zod.ZodString;
         updatedAt: zod.ZodString;
     }, "strip", zod.ZodTypeAny, {
-        type: "text" | "image" | "video" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
+        type: "image" | "video" | "text" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
         id: number;
         createdAt: string;
         chatId: number;
@@ -11783,6 +12425,8 @@ export declare const SendGiftResponse: zod.ZodObject<{
                 createdAt: string;
                 bio?: string | null | undefined;
                 avatarUrl?: string | null | undefined;
+                profileCoverUrl?: string | null | undefined;
+                profileCoverType?: "image" | "video" | null | undefined;
                 statusText?: string | null | undefined;
                 lastSeen?: string | null | undefined;
                 phoneNumber?: string | null | undefined;
@@ -11807,6 +12451,8 @@ export declare const SendGiftResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -11850,7 +12496,7 @@ export declare const SendGiftResponse: zod.ZodObject<{
             message?: string | null | undefined;
         } | null | undefined;
     }, {
-        type: "text" | "image" | "video" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
+        type: "image" | "video" | "text" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
         id: number;
         createdAt: string;
         chatId: number;
@@ -11875,6 +12521,8 @@ export declare const SendGiftResponse: zod.ZodObject<{
                 createdAt: string;
                 bio?: string | null | undefined;
                 avatarUrl?: string | null | undefined;
+                profileCoverUrl?: string | null | undefined;
+                profileCoverType?: "image" | "video" | null | undefined;
                 statusText?: string | null | undefined;
                 lastSeen?: string | null | undefined;
                 phoneNumber?: string | null | undefined;
@@ -11899,6 +12547,8 @@ export declare const SendGiftResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -11946,7 +12596,7 @@ export declare const SendGiftResponse: zod.ZodObject<{
     chatId: zod.ZodNullable<zod.ZodNumber>;
 }, "strip", zod.ZodTypeAny, {
     message: {
-        type: "text" | "image" | "video" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
+        type: "image" | "video" | "text" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
         id: number;
         createdAt: string;
         chatId: number;
@@ -11971,6 +12621,8 @@ export declare const SendGiftResponse: zod.ZodObject<{
                 createdAt: string;
                 bio?: string | null | undefined;
                 avatarUrl?: string | null | undefined;
+                profileCoverUrl?: string | null | undefined;
+                profileCoverType?: "image" | "video" | null | undefined;
                 statusText?: string | null | undefined;
                 lastSeen?: string | null | undefined;
                 phoneNumber?: string | null | undefined;
@@ -11995,6 +12647,8 @@ export declare const SendGiftResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -12076,7 +12730,7 @@ export declare const SendGiftResponse: zod.ZodObject<{
     balance: number;
 }, {
     message: {
-        type: "text" | "image" | "video" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
+        type: "image" | "video" | "text" | "audio" | "file" | "gift" | "call" | "sticker" | "system";
         id: number;
         createdAt: string;
         chatId: number;
@@ -12101,6 +12755,8 @@ export declare const SendGiftResponse: zod.ZodObject<{
                 createdAt: string;
                 bio?: string | null | undefined;
                 avatarUrl?: string | null | undefined;
+                profileCoverUrl?: string | null | undefined;
+                profileCoverType?: "image" | "video" | null | undefined;
                 statusText?: string | null | undefined;
                 lastSeen?: string | null | undefined;
                 phoneNumber?: string | null | undefined;
@@ -12125,6 +12781,8 @@ export declare const SendGiftResponse: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -13073,6 +13731,8 @@ export declare const GetStoriesResponseItem: zod.ZodObject<{
         displayName: zod.ZodString;
         bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
         avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
         avatarColor: zod.ZodString;
         status: zod.ZodEnum<["online", "offline", "away"]>;
         statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -13097,6 +13757,8 @@ export declare const GetStoriesResponseItem: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -13115,6 +13777,8 @@ export declare const GetStoriesResponseItem: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -13138,6 +13802,8 @@ export declare const GetStoriesResponseItem: zod.ZodObject<{
             displayName: zod.ZodString;
             bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
             avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+            profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+            profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
             avatarColor: zod.ZodString;
             status: zod.ZodEnum<["online", "offline", "away"]>;
             statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -13162,6 +13828,8 @@ export declare const GetStoriesResponseItem: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -13180,6 +13848,8 @@ export declare const GetStoriesResponseItem: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -13189,7 +13859,7 @@ export declare const GetStoriesResponseItem: zod.ZodObject<{
         }>, zod.ZodNull]>>;
         createdAt: zod.ZodString;
     }, "strip", zod.ZodTypeAny, {
-        type: "text" | "image";
+        type: "image" | "text";
         id: number;
         createdAt: string;
         userId: number;
@@ -13210,6 +13880,8 @@ export declare const GetStoriesResponseItem: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -13219,7 +13891,7 @@ export declare const GetStoriesResponseItem: zod.ZodObject<{
         } | null | undefined;
         backgroundColor?: string | null | undefined;
     }, {
-        type: "text" | "image";
+        type: "image" | "text";
         id: number;
         createdAt: string;
         userId: number;
@@ -13240,6 +13912,8 @@ export declare const GetStoriesResponseItem: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -13263,6 +13937,8 @@ export declare const GetStoriesResponseItem: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -13271,7 +13947,7 @@ export declare const GetStoriesResponseItem: zod.ZodObject<{
         totpEnabled?: boolean | undefined;
     };
     stories: {
-        type: "text" | "image";
+        type: "image" | "text";
         id: number;
         createdAt: string;
         userId: number;
@@ -13292,6 +13968,8 @@ export declare const GetStoriesResponseItem: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -13315,6 +13993,8 @@ export declare const GetStoriesResponseItem: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -13323,7 +14003,7 @@ export declare const GetStoriesResponseItem: zod.ZodObject<{
         totpEnabled?: boolean | undefined;
     };
     stories: {
-        type: "text" | "image";
+        type: "image" | "text";
         id: number;
         createdAt: string;
         userId: number;
@@ -13344,6 +14024,8 @@ export declare const GetStoriesResponseItem: zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -13362,6 +14044,8 @@ export declare const GetStoriesResponse: zod.ZodArray<zod.ZodObject<{
         displayName: zod.ZodString;
         bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
         avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
         avatarColor: zod.ZodString;
         status: zod.ZodEnum<["online", "offline", "away"]>;
         statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -13386,6 +14070,8 @@ export declare const GetStoriesResponse: zod.ZodArray<zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -13404,6 +14090,8 @@ export declare const GetStoriesResponse: zod.ZodArray<zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -13427,6 +14115,8 @@ export declare const GetStoriesResponse: zod.ZodArray<zod.ZodObject<{
             displayName: zod.ZodString;
             bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
             avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+            profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+            profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
             avatarColor: zod.ZodString;
             status: zod.ZodEnum<["online", "offline", "away"]>;
             statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -13451,6 +14141,8 @@ export declare const GetStoriesResponse: zod.ZodArray<zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -13469,6 +14161,8 @@ export declare const GetStoriesResponse: zod.ZodArray<zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -13478,7 +14172,7 @@ export declare const GetStoriesResponse: zod.ZodArray<zod.ZodObject<{
         }>, zod.ZodNull]>>;
         createdAt: zod.ZodString;
     }, "strip", zod.ZodTypeAny, {
-        type: "text" | "image";
+        type: "image" | "text";
         id: number;
         createdAt: string;
         userId: number;
@@ -13499,6 +14193,8 @@ export declare const GetStoriesResponse: zod.ZodArray<zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -13508,7 +14204,7 @@ export declare const GetStoriesResponse: zod.ZodArray<zod.ZodObject<{
         } | null | undefined;
         backgroundColor?: string | null | undefined;
     }, {
-        type: "text" | "image";
+        type: "image" | "text";
         id: number;
         createdAt: string;
         userId: number;
@@ -13529,6 +14225,8 @@ export declare const GetStoriesResponse: zod.ZodArray<zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -13552,6 +14250,8 @@ export declare const GetStoriesResponse: zod.ZodArray<zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -13560,7 +14260,7 @@ export declare const GetStoriesResponse: zod.ZodArray<zod.ZodObject<{
         totpEnabled?: boolean | undefined;
     };
     stories: {
-        type: "text" | "image";
+        type: "image" | "text";
         id: number;
         createdAt: string;
         userId: number;
@@ -13581,6 +14281,8 @@ export declare const GetStoriesResponse: zod.ZodArray<zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -13604,6 +14306,8 @@ export declare const GetStoriesResponse: zod.ZodArray<zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -13612,7 +14316,7 @@ export declare const GetStoriesResponse: zod.ZodArray<zod.ZodObject<{
         totpEnabled?: boolean | undefined;
     };
     stories: {
-        type: "text" | "image";
+        type: "image" | "text";
         id: number;
         createdAt: string;
         userId: number;
@@ -13633,6 +14337,8 @@ export declare const GetStoriesResponse: zod.ZodArray<zod.ZodObject<{
             createdAt: string;
             bio?: string | null | undefined;
             avatarUrl?: string | null | undefined;
+            profileCoverUrl?: string | null | undefined;
+            profileCoverType?: "image" | "video" | null | undefined;
             statusText?: string | null | undefined;
             lastSeen?: string | null | undefined;
             phoneNumber?: string | null | undefined;
@@ -13653,12 +14359,12 @@ export declare const CreateStoryBody: zod.ZodObject<{
     text: zod.ZodOptional<zod.ZodString>;
     backgroundColor: zod.ZodOptional<zod.ZodString>;
 }, "strip", zod.ZodTypeAny, {
-    type: "text" | "image";
+    type: "image" | "text";
     text?: string | undefined;
     mediaUrl?: string | undefined;
     backgroundColor?: string | undefined;
 }, {
-    type: "text" | "image";
+    type: "image" | "text";
     text?: string | undefined;
     mediaUrl?: string | undefined;
     backgroundColor?: string | undefined;
@@ -13679,6 +14385,8 @@ export declare const CreateStoryResponse: zod.ZodObject<{
         displayName: zod.ZodString;
         bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
         avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
         avatarColor: zod.ZodString;
         status: zod.ZodEnum<["online", "offline", "away"]>;
         statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -13703,6 +14411,8 @@ export declare const CreateStoryResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -13721,6 +14431,8 @@ export declare const CreateStoryResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -13730,7 +14442,7 @@ export declare const CreateStoryResponse: zod.ZodObject<{
     }>, zod.ZodNull]>>;
     createdAt: zod.ZodString;
 }, "strip", zod.ZodTypeAny, {
-    type: "text" | "image";
+    type: "image" | "text";
     id: number;
     createdAt: string;
     userId: number;
@@ -13751,6 +14463,8 @@ export declare const CreateStoryResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -13760,7 +14474,7 @@ export declare const CreateStoryResponse: zod.ZodObject<{
     } | null | undefined;
     backgroundColor?: string | null | undefined;
 }, {
-    type: "text" | "image";
+    type: "image" | "text";
     id: number;
     createdAt: string;
     userId: number;
@@ -13781,6 +14495,8 @@ export declare const CreateStoryResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -13826,6 +14542,8 @@ export declare const GetPostsResponseItem: zod.ZodObject<{
         displayName: zod.ZodString;
         bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
         avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
         avatarColor: zod.ZodString;
         status: zod.ZodEnum<["online", "offline", "away"]>;
         statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -13850,6 +14568,8 @@ export declare const GetPostsResponseItem: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -13868,6 +14588,8 @@ export declare const GetPostsResponseItem: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -13897,6 +14619,8 @@ export declare const GetPostsResponseItem: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -13925,6 +14649,8 @@ export declare const GetPostsResponseItem: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -13947,6 +14673,8 @@ export declare const GetPostsResponse: zod.ZodArray<zod.ZodObject<{
         displayName: zod.ZodString;
         bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
         avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
         avatarColor: zod.ZodString;
         status: zod.ZodEnum<["online", "offline", "away"]>;
         statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -13971,6 +14699,8 @@ export declare const GetPostsResponse: zod.ZodArray<zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -13989,6 +14719,8 @@ export declare const GetPostsResponse: zod.ZodArray<zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -14018,6 +14750,8 @@ export declare const GetPostsResponse: zod.ZodArray<zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -14046,6 +14780,8 @@ export declare const GetPostsResponse: zod.ZodArray<zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -14081,6 +14817,8 @@ export declare const CreatePostResponse: zod.ZodObject<{
         displayName: zod.ZodString;
         bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
         avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
         avatarColor: zod.ZodString;
         status: zod.ZodEnum<["online", "offline", "away"]>;
         statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -14105,6 +14843,8 @@ export declare const CreatePostResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -14123,6 +14863,8 @@ export declare const CreatePostResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -14152,6 +14894,8 @@ export declare const CreatePostResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -14180,6 +14924,8 @@ export declare const CreatePostResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -14217,6 +14963,8 @@ export declare const LikePostResponse: zod.ZodObject<{
         displayName: zod.ZodString;
         bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
         avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
         avatarColor: zod.ZodString;
         status: zod.ZodEnum<["online", "offline", "away"]>;
         statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -14241,6 +14989,8 @@ export declare const LikePostResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -14259,6 +15009,8 @@ export declare const LikePostResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -14288,6 +15040,8 @@ export declare const LikePostResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -14316,6 +15070,8 @@ export declare const LikePostResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -14342,6 +15098,8 @@ export declare const GetPostCommentsResponseItem: zod.ZodObject<{
         displayName: zod.ZodString;
         bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
         avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
         avatarColor: zod.ZodString;
         status: zod.ZodEnum<["online", "offline", "away"]>;
         statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -14366,6 +15124,8 @@ export declare const GetPostCommentsResponseItem: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -14384,6 +15144,8 @@ export declare const GetPostCommentsResponseItem: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -14410,6 +15172,8 @@ export declare const GetPostCommentsResponseItem: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -14435,6 +15199,8 @@ export declare const GetPostCommentsResponseItem: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -14454,6 +15220,8 @@ export declare const GetPostCommentsResponse: zod.ZodArray<zod.ZodObject<{
         displayName: zod.ZodString;
         bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
         avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
         avatarColor: zod.ZodString;
         status: zod.ZodEnum<["online", "offline", "away"]>;
         statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -14478,6 +15246,8 @@ export declare const GetPostCommentsResponse: zod.ZodArray<zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -14496,6 +15266,8 @@ export declare const GetPostCommentsResponse: zod.ZodArray<zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -14522,6 +15294,8 @@ export declare const GetPostCommentsResponse: zod.ZodArray<zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -14547,6 +15321,8 @@ export declare const GetPostCommentsResponse: zod.ZodArray<zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -14580,6 +15356,8 @@ export declare const CreatePostCommentResponse: zod.ZodObject<{
         displayName: zod.ZodString;
         bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
         avatarUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        profileCoverType: zod.ZodOptional<zod.ZodNullable<zod.ZodEnum<["image", "video"]>>>;
         avatarColor: zod.ZodString;
         status: zod.ZodEnum<["online", "offline", "away"]>;
         statusText: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
@@ -14604,6 +15382,8 @@ export declare const CreatePostCommentResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -14622,6 +15402,8 @@ export declare const CreatePostCommentResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -14648,6 +15430,8 @@ export declare const CreatePostCommentResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;
@@ -14673,6 +15457,8 @@ export declare const CreatePostCommentResponse: zod.ZodObject<{
         createdAt: string;
         bio?: string | null | undefined;
         avatarUrl?: string | null | undefined;
+        profileCoverUrl?: string | null | undefined;
+        profileCoverType?: "image" | "video" | null | undefined;
         statusText?: string | null | undefined;
         lastSeen?: string | null | undefined;
         phoneNumber?: string | null | undefined;

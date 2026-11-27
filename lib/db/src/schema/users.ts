@@ -8,6 +8,8 @@ export const usersTable = pgTable("users", {
   displayName: text("display_name").notNull(),
   bio: text("bio"),
   avatarUrl: text("avatar_url"),
+  profileCoverUrl: text("profile_cover_url"),
+  profileCoverType: text("profile_cover_type"),
   photoUrls: text("photo_urls").notNull().default("[]"),
   avatarColor: text("avatar_color").notNull().default("#3B82F6"),
   avatarFrame: text("avatar_frame"),
